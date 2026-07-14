@@ -1,10 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
-using NSubstitute.ReturnsExtensions;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.AzureStorage;
-using Purview.EventSourcing.AzureStorage.StorageClients.Blob;
-using Purview.EventSourcing.AzureStorage.StorageClients.Table;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.Services;
 using TUnit.Core.Interfaces;
@@ -64,12 +61,12 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		var cache = CreateDistributedCache();
 		Cache = cache;
 
-		var telemetry = Substitute.For<ITableEventStoreTelemetry>();
+		var telemetry = ITableEventStoreTelemetry.Mock();
 		Telemetry = telemetry;
 
 		_eventNameMapper = new AggregateEventNameMapper();
 
-		var aggregateRequirementsManager = Substitute.For<IAggregateRequirementsManager>();
+		var aggregateRequirementsManager = IAggregateRequirementsManager.Mock();
 		AzureStorageEventStoreOptions azureStorageOptions = new()
 		{
 			ConnectionString = _azuriteContainer.GetConnectionString(),

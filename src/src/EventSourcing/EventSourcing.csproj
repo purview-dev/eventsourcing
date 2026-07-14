@@ -9,7 +9,7 @@
 
 	<ItemGroup>
 		<ProjectReference
-			Include="..\EventSourcing.SourceGenerator\EventSourcing.SourceGenerator.csproj"
+			Include="..\SourceGenerator\SourceGenerator.csproj"
 			OutputItemType="Analyzer"
 			ReferenceOutputAssembly="false"
 			PrivateAssets="all"
@@ -19,7 +19,7 @@
 	<!-- Ship the generator DLL and build props file inside the NuGet package. -->
 	<Target Name="IncludeAnalyzerInPackage" BeforeTargets="_GetPackageFiles">
 		<MSBuild
-			Projects="..\EventSourcing.SourceGenerator\EventSourcing.SourceGenerator.csproj"
+			Projects="..\SourceGenerator\SourceGenerator.csproj"
 			Targets="GetTargetPath"
 			Properties="Configuration=$(Configuration)"
 			RebaseOutputs="true"

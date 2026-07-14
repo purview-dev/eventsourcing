@@ -1,4 +1,4 @@
-set quiet := true
+set quiet
 
 # Variables
 root_folder := "./src"
@@ -24,17 +24,17 @@ vs:
     open "{{ solution_file }}"
 
 # Build the solution
-build project=solution_file configuration=build_configuration:
-    echo "==> Building {{ BLUE }}{{ project }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) with configuration {{ YELLOW }}{{ configuration }}{{ NORMAL }}"
-    dotnet build {{ project }} --configuration {{configuration}}
+build *args:
+    echo "==> Building {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }}"
+    dotnet build {{ solution_file }} --configuration {{ build_configuration }} {{ args }}
 
 # Restore local .NET tools
 tools:
     dotnet tool restore
 
 # Restore NuGet packages for the solution
-restore:
-    dotnet restore {{ solution_file }}
+restore *args:
+    dotnet restore {{ solution_file }} {{ args }}
 
 # Displays the current package version from package.json
 current_version:
@@ -49,14 +49,14 @@ perf-sql-server *args:
     dotnet run --project {{ sql_perf_tests }} --configuration {{ build_configuration }} -- {{ args }}
 
 # Run tests for a specific project with a filter (e.g., "/*/*/*/*/") and configuration (e.g., "Release")
-test project=solution_file filter="/*/*/*/*/" configuration=build_configuration:
-    echo "==> Testing {{ BLUE }}{{ project }}{{ NORMAL }} ({{ GREEN }}{{ configuration }}{{ NORMAL }}) with filter {{ YELLOW }}{{ filter }}{{ NORMAL }}"
-    dotnet test --project {{ project }} --configuration {{ configuration }} --treenode-filter "{{ filter }}" --ignore-exit-code 8
+test filter="/*/*/*/*/" *args:
+    echo "==> Testing {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ build_configuration }}{{ NORMAL }}) with filter {{ YELLOW }}{{ filter }}{{ NORMAL }}"
+    dotnet test --project {{ solution_file }} --configuration {{ build_configuration }} --treenode-filter "{{ filter }}" --ignore-exit-code 8 {{ args }}
 
 # Pack all packable projects
-pack project=solution_file configuration=build_configuration artifact_folder=artifacts_folder:
-    echo "==> Packing {{ BLUE }}{{ project }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) to {{ YELLOW }}{{ artifact_folder }}{{ NORMAL }}"
-    dotnet pack "{{ project }}" --configuration "{{ configuration }}" --output "{{ artifact_folder }}"
+pack artifact_folder=artifacts_folder *args:
+    echo "==> Packing {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) to {{ YELLOW }}{{ artifact_folder }}{{ NORMAL }}"
+    dotnet pack "{{ solution_file }}" --configuration "{{ build_configuration }}" --output "{{ artifact_folder }}" {{ args }}
 
 # Format the code with CSharpier
 lint-fix:

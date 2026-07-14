@@ -1,13 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("EventSourcing.InMemory.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.AzureStorage.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.CosmosDb.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.MongoDB.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.SqlServer.IntegrationTests")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.AzureStorage.IntegrationTests")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.CosmosDb.IntegrationTests")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.MongoDB.IntegrationTests")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.SqlServer.IntegrationTests")]
 
-[assembly: InternalsVisibleTo("EventSourcing.InMemory")]
-[assembly: InternalsVisibleTo("EventSourcing.AzureStorage")]
-[assembly: InternalsVisibleTo("EventSourcing.CosmosDb")]
-[assembly: InternalsVisibleTo("EventSourcing.MongoDB")]
-[assembly: InternalsVisibleTo("EventSourcing.SqlServer")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.InMemory")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.AzureStorage")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.CosmosDb")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.MongoDB")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.SqlServer")]
