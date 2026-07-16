@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\EventSourcing.Samples.Web\EventSourcing.Samples.Web.csproj" />
+		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />
 	</ItemGroup>
 </Project>

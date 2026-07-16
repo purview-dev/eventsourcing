@@ -59,12 +59,12 @@ public sealed class MongoDBSnapshotTestContext
 		MongoDBSnapshotEventStore<PersistenceAggregate> eventStore = new(
 			tableEventStore,
 			Microsoft.Extensions.Options.Options.Create(config),
-			Substitute.For<IMongoDBSnapshotEventStoreTelemetry>(),
-			Substitute.For<IMongoDBClientTelemetry>()
+			IMongoDBSnapshotEventStoreTelemetry.Mock(),
+			IMongoDBClientTelemetry.Mock()
 		);
 
 		MongoDBClient = new(
-			Substitute.For<IMongoDBClientTelemetry>(),
+			IMongoDBClientTelemetry.Mock(),
 			new()
 			{
 				ConnectionString = config.ConnectionString,
@@ -86,7 +86,7 @@ public sealed class MongoDBSnapshotTestContext
 			.ToArray();
 
 		_eventNameMapper = new AggregateEventNameMapper();
-		_telemetry = Substitute.For<ITableEventStoreTelemetry>();
+		_telemetry = ITableEventStoreTelemetry.Mock();
 
 		AzureStorageEventStoreOptions azureStorageOptions = new()
 		{
@@ -100,10 +100,10 @@ public sealed class MongoDBSnapshotTestContext
 		TableEventStore<PersistenceAggregate> eventStore = new(
 			eventNameMapper: _eventNameMapper,
 			azureStorageOptions: Microsoft.Extensions.Options.Options.Create(azureStorageOptions),
-			distributedCache: Substitute.For<IDistributedCache>(),
-			aggregateChangeNotifier: Substitute.For<IAggregateChangeFeedNotifier<PersistenceAggregate>>(),
+			distributedCache: IDistributedCache.Mock(),
+			aggregateChangeNotifier: IAggregateChangeFeedNotifier<PersistenceAggregate>.Mock(),
 			eventStoreTelemetry: _telemetry,
-			aggregateRequirementsManager: Substitute.For<IAggregateRequirementsManager>()
+			aggregateRequirementsManager: IAggregateRequirementsManager.Mock()
 		);
 
 		TableClient = new(azureStorageOptions, eventStore.TableName);

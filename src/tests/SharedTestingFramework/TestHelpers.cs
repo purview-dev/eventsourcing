@@ -57,12 +57,12 @@ public static class TestHelpers
 
 	public static IServiceProvider ServiceProvider(params ServiceDefinition[] serviceDefinitions)
 	{
-		var serviceProvider = Substitute.For<IServiceProvider>();
+		var serviceProvider = IServiceProvider.Mock();
 		if (serviceDefinitions != null)
 		{
 			foreach (var serviceDef in serviceDefinitions)
 			{
-				serviceProvider.GetService(Arg.Is(serviceDef.ServiceType)).Returns(serviceDef.Instance);
+				serviceProvider.GetService(Is(serviceDef.ServiceType)).Returns(serviceDef.Instance);
 			}
 		}
 

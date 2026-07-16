@@ -2,6 +2,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.AzureStorage;
+using Purview.EventSourcing.AzureStorage.StorageClients.Blob;
+using Purview.EventSourcing.AzureStorage.StorageClients.Table;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.Services;
 using TUnit.Core.Interfaces;
@@ -80,8 +82,7 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			eventNameMapper: _eventNameMapper,
 			azureStorageOptions: Microsoft.Extensions.Options.Options.Create(azureStorageOptions),
 			distributedCache: cache,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			eventStoreTelemetry: telemetry,
 			aggregateRequirementsManager: aggregateRequirementsManager,
 			snapshotStrategy: new IntervalSnapshotStrategy<TAggregate>(snapshotRecalculationInterval)
@@ -100,8 +101,8 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 
 	public static IDistributedCache CreateDistributedCache()
 	{
-		var cache = Substitute.For<IDistributedCache>();
-		cache.GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ReturnsNullForAnyArgs();
+		var cache = IDistributedCache.Mock();
+		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);
 
 		return cache;
 	}

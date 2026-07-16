@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Caching.Distributed;
-using NSubstitute.ReturnsExtensions;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.Services;
@@ -51,12 +50,12 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		runId ??= Guid.NewGuid();
 		var cache = CreateDistributedCache();
 		Cache = cache;
-		var telemetry = Substitute.For<ISqlServerEventStoreTelemetry>();
+		var telemetry = ISqlServerEventStoreTelemetry.Mock();
 		Telemetry = telemetry;
 		_eventNameMapper = new AggregateEventNameMapper();
 
 		var connectionString = _msSqlContainer.GetConnectionString();
-		var aggregateRequirementsManager = Substitute.For<IAggregateRequirementsManager>();
+		var aggregateRequirementsManager = IAggregateRequirementsManager.Mock();
 
 		SqlServerEventStoreOptions options = new()
 		{
@@ -76,8 +75,7 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			sqlServerOptions: Microsoft.Extensions.Options.Options.Create(options),
 			distributedCache: cache,
 			eventStoreTelemetry: telemetry,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			aggregateRequirementsManager: aggregateRequirementsManager
 		);
 
@@ -86,8 +84,8 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 
 	public static IDistributedCache CreateDistributedCache()
 	{
-		var cache = Substitute.For<IDistributedCache>();
-		cache.GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ReturnsNullForAnyArgs();
+		var cache = IDistributedCache.Mock();
+		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);
 		return cache;
 	}
 

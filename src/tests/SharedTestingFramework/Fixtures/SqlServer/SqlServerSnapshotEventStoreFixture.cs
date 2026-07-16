@@ -30,7 +30,7 @@ public class SqlServerSnapshotEventStoreFixture : SqlServerEventStoreFixture
 		SqlServerSnapshotEventStore<TAggregate> snapshotStore = new(
 			eventStore,
 			Microsoft.Extensions.Options.Options.Create(config),
-			Substitute.For<ISqlServerSnapshotEventStoreTelemetry>(),
+			ISqlServerSnapshotEventStoreTelemetry.Mock(),
 			snapshotStrategy: snapshotStrategy,
 			snapshotStrategySelector: snapshotStrategySelector
 		);

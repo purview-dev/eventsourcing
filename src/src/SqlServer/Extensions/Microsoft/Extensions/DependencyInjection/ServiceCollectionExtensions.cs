@@ -11,9 +11,39 @@ namespace Microsoft.Extensions.DependencyInjection;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {
+	static readonly string[] EventsConnectionStringNames =
+	[
+		"eventstore-events-sqlserver",
+		"EventStore_Events_SqlServer",
+		"Events_SqlServer",
+		"eventstore-events-sql",
+		"EventStore_Events_Sql",
+		"Events_Sql",
+	];
+
+	static readonly string[] SnapshotsConnectionStringNames =
+	[
+		"eventstore-snapshots-sqlserver",
+		"EventStore_Snapshots_SqlServer",
+		"Snapshots_SqlServer",
+		"eventstore-snapshots-sql",
+		"EventStore_Snapshots_Sql",
+		"Snapshots_Sql",
+	];
+
+	static readonly string[] DefaultConnectionStringNames =
+	[
+		"eventstore-sqlserver",
+		"EventStore_SqlServer",
+		"SqlServer",
+		"eventstore-sql",
+		"EventStore_Sql",
+		"Sql",
+	];
+
 	extension(IServiceCollection services)
 	{
-		public IServiceCollection AddSqlServerEventStore()
+		public IServiceCollection AddSqlServerEventStore(string? connectionStringName = null)
 		{
 			services.AddEventSourcing();
 
@@ -32,15 +62,13 @@ public static class ServiceCollectionExtensions
 					(options, configuration) =>
 					{
 						configuration.GetSection(SqlServerEventStoreOptions.SqlServerEventStore).Bind(options);
-
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
-							options.ConnectionString =
-								configuration.GetConnectionString("eventstore-sqlserver")
-								?? configuration.GetConnectionString("EventStore_SqlServer")
-								?? configuration.GetConnectionString("SqlServer")
-								// This will get picked up by the validation.
-								?? default!;
+							options.ConnectionString = configuration.GetRequiredConnectionString([
+								connectionStringName,
+								.. EventsConnectionStringNames,
+								.. DefaultConnectionStringNames,
+							]);
 						}
 					}
 				)
@@ -49,7 +77,10 @@ public static class ServiceCollectionExtensions
 			return services;
 		}
 
-		public IServiceCollection AddSqlServerSnapshotQueryableEventStore(bool registerAsIEventStore = false)
+		public IServiceCollection AddSqlServerSnapshotQueryableEventStore(
+			string? connectionStringName = null,
+			bool registerAsIEventStore = false
+		)
 		{
 			services.AddEventSourcing();
 
@@ -72,15 +103,13 @@ public static class ServiceCollectionExtensions
 					(options, configuration) =>
 					{
 						configuration.GetSection(SqlServerSnapshotEventStoreOptions.SqlServerEventStore).Bind(options);
-
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
-							options.ConnectionString ??=
-								configuration.GetConnectionString("eventstore-sqlserver")
-								?? configuration.GetConnectionString("EventStore_SqlServer")
-								?? configuration.GetConnectionString("SqlServer")
-								// This will get picked up by the validation.
-								?? default!;
+							options.ConnectionString = configuration.GetRequiredConnectionString([
+								connectionStringName,
+								.. SnapshotsConnectionStringNames,
+								.. DefaultConnectionStringNames,
+							]);
 						}
 					}
 				)

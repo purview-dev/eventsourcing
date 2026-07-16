@@ -4,17 +4,12 @@
 		<Title>Purview Event Store for MongoDB</Title>
 		<Description>MongoDB event stream and snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageId>Purview.EventSourcing.MongoDB</PackageId>
-		<PackageTags>$(PackageTags);purview;kjldev;dotnet;event-sourcing;event-store;mongodb;events;snapshots;</PackageTags>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;mongodb;events;snapshots;</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-			<_Parameter1>EventSourcing.UnitTests</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

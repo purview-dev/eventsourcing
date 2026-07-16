@@ -4,17 +4,12 @@
 		<Title>Purview Queryable Snapshot Store for Azure Cosmos DB</Title>
 		<Description>Azure Cosmos DB queryable snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageId>Purview.EventSourcing.CosmosDb</PackageId>
-		<PackageTags>$(PackageTags);purview;kjldev;dotnet;event-sourcing;event-store;queryable-store;snapshot;azure-cosmosdb;cosmosdb;</PackageTags>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;queryable-store;snapshot;azure-cosmosdb;cosmosdb;</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-			<_Parameter1>EventSourcing.UnitTests</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

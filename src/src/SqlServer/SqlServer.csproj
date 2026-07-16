@@ -4,14 +4,8 @@
 		<Title>Purview Event Store for Azure SQL and SQL Server</Title>
 		<Description>Azure SQL and SQL Server event stream storage provider for Purview EventSourcing.</Description>
 		<PackageId>Purview.EventSourcing.SqlServer</PackageId>
-		<PackageTags>$(PackageTags);purview;kjldev;dotnet;event-sourcing;event-store;sql-server;azure-sql;events;</PackageTags>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;sql-server;azure-sql;events;</PackageTags>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-			<_Parameter1>EventSourcing.UnitTests</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="LinqKit" />
@@ -28,5 +22,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" />
 	</ItemGroup>
 </Project>

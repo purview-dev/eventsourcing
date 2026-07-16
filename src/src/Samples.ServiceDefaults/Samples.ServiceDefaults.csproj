@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<PackageId>Purview.EventSourcing.Samples.ServiceDefaults</PackageId>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />

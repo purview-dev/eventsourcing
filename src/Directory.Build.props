@@ -3,7 +3,7 @@
 		<NamespacePrefix>Purview.EventSourcing</NamespacePrefix>
 		<IsPackable>false</IsPackable>
 		<UsePackageJsonVersion>Strict</UsePackageJsonVersion>
-		<RepositoryUrl>https://github.com/kjldev/purview-eventsourcing</RepositoryUrl>
+		<RepositoryUrl>https://github.com/purview-dev/purview-eventsourcing</RepositoryUrl>
 	</PropertyGroup>
 
 	<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />
@@ -21,12 +21,12 @@
 
 	<PropertyGroup Label="NuGet package metadata">
 		<Authors>Kieron Lanning</Authors>
-		<Company>KJL Solutions Ltd.</Company>
-		<Copyright>Copyright © $(CurrentYear) KJL Solutions</Copyright>
+		<Company>Purview-Dev</Company>
+		<Copyright>Copyright © $(CurrentYear) Purview-Dev</Copyright>
 		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-		<PackageIcon>kjldev-logo.png</PackageIcon>
+		<PackageIcon>purview-logo.jpg</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
 	</PropertyGroup>
@@ -35,7 +35,7 @@
 		<None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" />
 		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Pack="true" PackagePath="/" />
 		<None
-			Include="$(MSBuildThisFileDirectory)../assets/images/kjldev-logo.png"
+			Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg"
 			Pack="true"
 			PackagePath="/"
 		/>
