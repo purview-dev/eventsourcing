@@ -1,9 +1,24 @@
-﻿using Purview.EventSourcing.Aggregates;
+﻿using Microsoft.Extensions.Caching.Distributed;
+using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.ChangeFeed;
+using Purview.EventSourcing.SqlServer.Events;
+using Purview.EventSourcing.SqlServer.Snapshots;
 
 namespace Purview.EventSourcing;
 
 public static class TestHelpers
 {
+	public static IDistributedCacheMock CreateDistributedCache() => IDistributedCache.Mock();
+
+	public static IAggregateChangeFeedNotifier_T_Mock<TAggregate> CreateAggregateChangeFeedNotified<TAggregate>()
+		where TAggregate : class, IAggregate, new() => IAggregateChangeFeedNotifier<TAggregate>.Mock();
+
+	public static ISqlServerSnapshotEventStoreTelemetryMock CreateSqlServerSnapshotEventStoreTelemetry() =>
+		ISqlServerSnapshotEventStoreTelemetry.Mock();
+
+	public static ISqlServerEventStoreTelemetryMock CreateISqlServerEventStoreTelemetry() =>
+		ISqlServerEventStoreTelemetry.Mock();
+
 	public static string GenName(Guid? value = null)
 	{
 		var guidString = Convert.ToBase64String((value ?? Guid.NewGuid()).ToByteArray());

@@ -74,7 +74,7 @@ public sealed class EventHistoryExtensionsTests
 	public async Task GetEventHistoryAsync_GivenStoreWithoutHistorySupport_ThrowsNotSupportedException()
 	{
 		// Arrange
-		var store = Substitute.For<IEventStoreCore<TestAggregate>>();
+		var store = IEventStoreCore<TestAggregate>.Mock();
 
 		// Act
 		var exception = (

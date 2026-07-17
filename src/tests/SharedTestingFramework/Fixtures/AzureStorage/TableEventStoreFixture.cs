@@ -22,9 +22,9 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 	}
 
-	public IDistributedCache Cache { get; private set; } = default!;
+	public IDistributedCacheMock Cache { get; private set; } = default!;
 
-	public ITableEventStoreTelemetry Telemetry { get; private set; } = default!;
+	public ITableEventStoreTelemetryMock Telemetry { get; private set; } = default!;
 
 	internal AzureTableClient TableClient { get; private set; } = default!;
 
@@ -44,8 +44,8 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 
 	internal (
 		TableEventStore<TAggregate> EventStore,
-		ITableEventStoreTelemetry Telemetry,
-		IDistributedCache Cache,
+		ITableEventStoreTelemetryMock Telemetry,
+		IDistributedCacheMock Cache,
 		AzureTableClient TableClient,
 		AzureBlobClient BlobClient
 	) CreateEventStoreContext<TAggregate>(
@@ -99,7 +99,7 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		return (eventStore, telemetry, cache, tableClient, blobClient);
 	}
 
-	public static IDistributedCache CreateDistributedCache()
+	public static IDistributedCacheMock CreateDistributedCache()
 	{
 		var cache = IDistributedCache.Mock();
 		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);

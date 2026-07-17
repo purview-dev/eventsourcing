@@ -160,15 +160,15 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Assert
 		telemetry
-			.Received(numberOfOldEventsToCreate)
 			.CannotApplyEvent(
 				aggregateId,
-				Arg.Any<string>(),
-				Arg.Any<string>(),
-				Arg.Any<string>(),
-				Arg.Is<string>(eventType => eventType.Contains(typeof(OldEvent).Name, StringComparison.Ordinal)),
-				Arg.Any<int>()
-			);
+				Any<string>(),
+				Any<string>(),
+				Any<string>(),
+				Is<string>(eventType => eventType.Contains(typeof(OldEvent).Name, StringComparison.Ordinal)),
+				Any<int>()
+			)
+			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result.IsNew()).IsFalse();
@@ -240,8 +240,8 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Assert
 		telemetry
-			.Received(numberOfOldEventsToCreate)
-			.SkippedUnknownEvent(aggregateId, Arg.Any<string>(), Arg.Any<string>(), unknownEventType, Arg.Any<int>());
+			.SkippedUnknownEvent(aggregateId, Any<string>(), Any<string>(), unknownEventType, Any<int>())
+			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result.IsNew()).IsFalse();

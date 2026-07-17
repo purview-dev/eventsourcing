@@ -1,6 +1,4 @@
-﻿using NSubstitute.ReturnsExtensions;
-
-namespace Purview.EventSourcing;
+﻿namespace Purview.EventSourcing;
 
 public class TypeNameHelperTests
 {
@@ -24,9 +22,9 @@ public class TypeNameHelperTests
 	)
 	{
 		// Arrange
-		var type = Substitute.For<Type>();
+		var type = Type.Mock();
 		type.Name.Returns(aggregateName);
-		type.FullName.ReturnsNull();
+		type.FullName.Returns((string?)null);
 
 		// Act
 		var result = TypeNameHelper.GetName(type, trimNamePart);
@@ -51,9 +49,9 @@ public class TypeNameHelperTests
 	)
 	{
 		// Arrange
-		var type = Substitute.For<Type>();
+		var type = Type.Mock();
 		type.Name.Returns(aggregateName);
-		type.FullName.ReturnsNull();
+		type.FullName.Returns((string?)null);
 
 		// Act
 		var result = TypeNameHelper.GetName(type, trimNamePart);
@@ -76,7 +74,7 @@ public class TypeNameHelperTests
 	)
 	{
 		// Arrange
-		var type = Substitute.For<Type>();
+		var type = Type.Mock();
 		type.Name.Returns("anything");
 		type.FullName.Returns(aggregateName);
 
@@ -101,9 +99,9 @@ public class TypeNameHelperTests
 	)
 	{
 		// Arrange
-		var type = Substitute.For<Type>();
+		var type = Type.Mock();
 		type.Name.Returns(aggregateName);
-		type.FullName.ReturnsNull();
+		type.FullName.Returns((string?)null);
 
 		// Act
 		var result = TypeNameHelper.GetName(type, trimNamePart);

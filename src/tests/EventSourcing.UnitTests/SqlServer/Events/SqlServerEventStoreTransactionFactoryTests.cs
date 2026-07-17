@@ -9,7 +9,7 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 	[Test]
 	public async Task CreateSqlServerTransaction_GivenNullCorrelationId_UsesAmbientProviderValue()
 	{
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 
@@ -21,20 +21,20 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 	[Test]
 	public async Task CreateSqlServerTransaction_GivenExplicitCorrelationId_PrefersExplicitValueOverAmbientProvider()
 	{
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 
 		await using var transaction = factory.CreateSqlServerTransaction("explicit-sql-correlation");
 
 		await Assert.That(transaction.CorrelationId).IsEqualTo("explicit-sql-correlation");
-		correlationIdProvider.DidNotReceive().GetCorrelationId();
+		correlationIdProvider.GetCorrelationId().WasNeverCalled();
 	}
 
 	[Test]
 	public async Task Create_GivenNullCorrelationId_ReturnsSqlServerTransaction()
 	{
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 

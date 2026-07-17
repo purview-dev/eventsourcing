@@ -24,8 +24,8 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
-		eventStore.CreateAsync(Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(expectedAggregate);
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
+		eventStore.CreateAsync(Any<string?>(), Any<CancellationToken>()).Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
 
@@ -34,7 +34,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
-		await eventStore.Received(1).CreateAsync("test-id", Arg.Any<CancellationToken>());
+		eventStore.CreateAsync("test-id", Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -42,9 +42,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.GetAsync(Arg.Any<string>(), Arg.Any<EventStoreOperationContext?>(), Arg.Any<CancellationToken>())
+			.GetAsync(Any<string>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
 			.Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
@@ -54,7 +54,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
-		await eventStore.Received(1).GetAsync("test-id", null, Arg.Any<CancellationToken>());
+		eventStore
+			.GetAsync(Is("test-id"), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -62,9 +64,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.GetOrCreateAsync(Arg.Any<string?>(), Arg.Any<EventStoreOperationContext?>(), Arg.Is(cancellationToken))
+			.GetOrCreateAsync(Any<string?>(), Any<EventStoreOperationContext?>(), Is(cancellationToken))
 			.Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
@@ -74,7 +76,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
-		await eventStore.Received(1).GetOrCreateAsync("test-id", null, cancellationToken);
+		eventStore
+			.GetOrCreateAsync("test-id", Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -82,14 +86,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.GetAtAsync(
-				Arg.Any<string>(),
-				Arg.Any<int>(),
-				Arg.Any<EventStoreOperationContext?>(),
-				Arg.Is(cancellationToken)
-			)
+			.GetAtAsync(Any<string>(), Any<int>(), Any<EventStoreOperationContext?>(), Is(cancellationToken))
 			.Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
@@ -99,15 +98,17 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
-		await eventStore.Received(1).GetAtAsync("test-id", 5, null, cancellationToken);
+		eventStore
+			.GetAtAsync(Is("test-id"), Is(5), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
 	public async Task IsDeletedAsync_DelegatesToEventStore(CancellationToken cancellationToken)
 	{
 		// Arrange
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
-		eventStore.IsDeletedAsync(Arg.Any<string>(), cancellationToken).Returns(true);
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
+		eventStore.IsDeletedAsync(Any<string>(), Is(cancellationToken)).Returns(true);
 
 		var store = CreateStore(eventStore);
 
@@ -116,7 +117,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsTrue();
-		await eventStore.Received(1).IsDeletedAsync("test-id", cancellationToken);
+		eventStore.IsDeletedAsync(Is("test-id"), Is(cancellationToken)).WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -124,8 +125,8 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
-		eventStore.GetDeletedAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(expectedAggregate);
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
+		eventStore.GetDeletedAsync(Any<string>(), Any<CancellationToken>()).Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
 
@@ -134,7 +135,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
-		await eventStore.Received(1).GetDeletedAsync("test-id", cancellationToken);
+		eventStore.GetDeletedAsync(Is("test-id"), Is(cancellationToken)).WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -142,8 +143,8 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedState = ExistsState.Exists;
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
-		eventStore.ExistsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(expectedState);
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
+		eventStore.ExistsAsync(Any<string>(), Any<CancellationToken>()).Returns(expectedState);
 
 		var store = CreateStore(eventStore);
 
@@ -152,7 +153,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedState);
-		await eventStore.Received(1).ExistsAsync("test-id", Arg.Any<CancellationToken>());
+		eventStore.ExistsAsync(Is("test-id"), Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -160,8 +161,8 @@ public sealed class SqlServerSnapshotEventStoreTests
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
-		eventStore.FulfilRequirements(Arg.Any<TestAggregate>()).Returns(expectedAggregate);
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
+		eventStore.FulfilRequirements(Any<TestAggregate>()).Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
 
@@ -170,28 +171,33 @@ public sealed class SqlServerSnapshotEventStoreTests
 
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
-		eventStore.Received(1).FulfilRequirements(expectedAggregate);
+		eventStore.FulfilRequirements(expectedAggregate).WasCalled(Times.Once);
 	}
 
 	[Test]
 	public async Task SaveAsync_GivenNeverSnapshotStrategy_DoesNotWriteSnapshot(CancellationToken cancellationToken)
 	{
 		var aggregate = TestHelpers.Aggregate<TestAggregate>(creator: a => a.RecordEvent(), clearEvents: false);
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.SaveAsync(Arg.Any<TestAggregate>(), Arg.Any<EventStoreOperationContext?>(), Arg.Any<CancellationToken>())
-			.Returns(args => new SaveResult<TestAggregate>(
-				args.Arg<TestAggregate>(),
-				new FluentValidation.Results.ValidationResult(),
-				saved: true,
-				skipped: false
-			));
+			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.Returns(
+				static (a, _, _) =>
+					new SaveResult<TestAggregate>(
+						a,
+						new FluentValidation.Results.ValidationResult(),
+						saved: true,
+						skipped: false
+					)
+			);
 		var store = CreateStore(eventStore, snapshotStrategy: new NeverSnapshotStrategy<TestAggregate>());
 
 		var result = await store.SaveAsync(aggregate, null, cancellationToken);
 
 		await Assert.That(result.Saved).IsTrue();
-		await eventStore.Received(1).SaveAsync(aggregate, null, Arg.Any<CancellationToken>());
+		eventStore
+			.SaveAsync(Is(aggregate), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -200,15 +206,18 @@ public sealed class SqlServerSnapshotEventStoreTests
 	)
 	{
 		var aggregate = TestHelpers.Aggregate<TestAggregate>(creator: a => a.RecordEvent(), clearEvents: false);
-		var eventStore = Substitute.For<INonQueryableEventStore<TestAggregate>>();
+		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.SaveAsync(Arg.Any<TestAggregate>(), Arg.Any<EventStoreOperationContext?>(), Arg.Any<CancellationToken>())
-			.Returns(args => new SaveResult<TestAggregate>(
-				args.Arg<TestAggregate>(),
-				new FluentValidation.Results.ValidationResult(),
-				saved: true,
-				skipped: false
-			));
+			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.Returns(
+				static (a, _, _) =>
+					new SaveResult<TestAggregate>(
+						a,
+						new FluentValidation.Results.ValidationResult(),
+						saved: true,
+						skipped: false
+					)
+			);
 
 		var store = CreateStore(eventStore, snapshotStrategy: new AlwaysSnapshotStrategy<TestAggregate>());
 		var context = new EventStoreOperationContext().SetSnapshotStrategy(new NeverSnapshotStrategy<TestAggregate>());
@@ -216,7 +225,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 		var result = await store.SaveAsync(aggregate, context, cancellationToken);
 
 		await Assert.That(result.Saved).IsTrue();
-		await eventStore.Received(1).SaveAsync(aggregate, context, Arg.Any<CancellationToken>());
+		eventStore.SaveAsync(Is(aggregate), context, Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -258,9 +267,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 		ISnapshotStrategySelector? snapshotStrategySelector = null
 	)
 	{
-		eventStore ??= Substitute.For<INonQueryableEventStore<TestAggregate>>();
+		eventStore ??= INonQueryableEventStore<TestAggregate>.Mock();
 		var wrappedOptions = Options.Create(options ?? CreateDefaultOptions());
-		var telemetry = Substitute.For<ISqlServerSnapshotEventStoreTelemetry>();
+		var telemetry = TestHelpers.CreateSqlServerSnapshotEventStoreTelemetry();
 
 		return new(eventStore, wrappedOptions, telemetry, snapshotStrategy, snapshotStrategySelector);
 	}

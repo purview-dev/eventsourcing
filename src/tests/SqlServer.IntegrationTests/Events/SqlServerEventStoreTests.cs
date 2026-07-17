@@ -6,7 +6,7 @@ namespace Purview.EventSourcing.SqlServer.Events;
 public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -17,7 +17,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task DeleteAsync_GivenDelete_NotifiesChangeFeed(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -28,7 +28,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -39,7 +39,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task DeleteAsync_WhenTableStoreConfigRemoveDeletedFromCacheIsTrueAndPreviouslySavedAggregate_RemovesFromCache(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -101,7 +101,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task GetAsync_GivenAggregateIsDeletedAndDeletedModeIsSetToThrow_ThrowsEventStoreAggregateDeletedException(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -193,7 +193,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -244,7 +244,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -255,7 +255,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task IsDeletedAsync_GivenDeletedAggregates_ReturnsTrue(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -266,7 +266,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task IsDeletedAsync_GivenNonDeletedAggregates_ReturnsFalse(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -277,7 +277,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task RestoreAsync_GivenPreviouslySavedAndDeletedAggregate_MarksAsNotDeleted(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -300,7 +300,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task SaveAsync_GivenAggregateWithDataAnnotationsAndInvalidProperties_NoChangesAreMadeAndNotSaved(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -313,7 +313,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -324,7 +324,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -335,7 +335,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
 		Type aggregateType,
 		CancellationToken cancellationToken
@@ -346,7 +346,7 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	}
 
 	[Test]
-	[MethodDataSource(nameof(GetAggregateTestTypes))]
+	[MethodDataSource(nameof(GetAggregateTypes))]
 	public async Task SaveAsync_GivenAggregateWithComplexProperty_SavesEventWithComplexProperty(
 		Type aggregateType,
 		CancellationToken cancellationToken

@@ -19,9 +19,9 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 	}
 
-	public IDistributedCache Cache { get; private set; } = default!;
+	public IDistributedCacheMock Cache { get; private set; } = default!;
 
-	public ISqlServerEventStoreTelemetry Telemetry { get; private set; } = default!;
+	public ISqlServerEventStoreTelemetryMock Telemetry { get; private set; } = default!;
 
 	internal SqlServerEventStoreClient Client { get; private set; } = default!;
 
@@ -38,8 +38,8 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 	internal (
 		SqlServerEventStore<TAggregate> EventStore,
 		SqlServerEventStoreClient Client,
-		IDistributedCache Cache,
-		ISqlServerEventStoreTelemetry Telemetry
+		IDistributedCacheMock Cache,
+		ISqlServerEventStoreTelemetryMock Telemetry
 	) CreateEventStoreContext<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
 		bool removeFromCacheOnDelete = false,
@@ -82,7 +82,7 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		return (eventStore, client, cache, telemetry);
 	}
 
-	public static IDistributedCache CreateDistributedCache()
+	public static IDistributedCacheMock CreateDistributedCache()
 	{
 		var cache = IDistributedCache.Mock();
 		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);

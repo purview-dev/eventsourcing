@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Distributed;
 using Purview.EventSourcing.ChangeFeed;
 
 namespace Purview.EventSourcing.MongoDB.Events;
@@ -55,13 +56,13 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		// Assert
 		await Assert.That(result).IsTrue();
 
-		await cache.Received(1).RemoveAsync(cacheKey, Arg.Any<CancellationToken>());
+		cache.RemoveAsync(cacheKey, Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 
 	public async Task DeleteAsync_GivenDelete_NotifiesChangeFeed(CancellationToken cancellationToken)
 	{
 		// Arrange
-		var aggregateChangeNotifier = Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>();
+		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
 
 		var beforeWasCalled = false;
 		var afterWasCalled = false;
@@ -69,15 +70,15 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 		aggregate.IncrementInt32Value();
 
-		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		aggregateChangeNotifier
-			.When(m => m.BeforeDeleteAsync(aggregate, Arg.Any<CancellationToken>()))
-			.Do(_ => beforeWasCalled = true);
+			.BeforeDeleteAsync(aggregate, Any<CancellationToken>())
+			.Callback(() => beforeWasCalled = true);
 
 		aggregateChangeNotifier
-			.When(m => m.AfterDeleteAsync(aggregate, Arg.Any<CancellationToken>()))
-			.Do(_ => afterWasCalled = true);
+			.AfterDeleteAsync(aggregate, Any<CancellationToken>())
+			.Callback(() => afterWasCalled = true);
 
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
@@ -88,8 +89,8 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(beforeWasCalled).IsTrue();
 		await Assert.That(afterWasCalled).IsTrue();
 
-		await aggregateChangeNotifier.Received(1).BeforeDeleteAsync(aggregate, Arg.Any<CancellationToken>());
+		aggregateChangeNotifier.BeforeDeleteAsync(aggregate, Any<CancellationToken>()).WasCalled(Times.Once);
 
-		await aggregateChangeNotifier.Received(1).AfterDeleteAsync(aggregate, Arg.Any<CancellationToken>());
+		aggregateChangeNotifier.AfterDeleteAsync(aggregate, Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 }

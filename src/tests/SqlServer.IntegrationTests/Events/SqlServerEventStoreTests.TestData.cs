@@ -2,121 +2,98 @@ namespace Purview.EventSourcing.SqlServer.Events;
 
 partial class SqlServerEventStoreTests
 {
-	public static IEnumerable<(Type, int)> TooManyEventCountTestData()
+	public static IEnumerable<Func<(Type, int)>> TooManyEventCountTestData()
 	{
-		List<(Type, int)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 1_001));
-			data.Add((aggregateType, 10_000));
-			data.Add((aggregateType, 100_000));
+			yield return () => (aggregateType, 1_001);
+			yield return () => (aggregateType, 10_000);
+			yield return () => (aggregateType, 100_000);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<(Type, int, int)> SteppedAggregateCountWithDeletedAggregateIdCountTestData()
+	public static IEnumerable<Func<(Type, int, int)>> SteppedAggregateCountWithDeletedAggregateIdCountTestData()
 	{
-		List<(Type, int, int)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 1, 1));
-			data.Add((aggregateType, 1, 10));
-			data.Add((aggregateType, 5, 5));
-			data.Add((aggregateType, 5, 10));
-			data.Add((aggregateType, 10, 10));
-			data.Add((aggregateType, 10, 20));
-			data.Add((aggregateType, 20, 20));
-			data.Add((aggregateType, 20, 40));
+			yield return () => (aggregateType, 1, 1);
+			yield return () => (aggregateType, 1, 10);
+			yield return () => (aggregateType, 5, 5);
+			yield return () => (aggregateType, 5, 10);
+			yield return () => (aggregateType, 10, 10);
+			yield return () => (aggregateType, 10, 20);
+			yield return () => (aggregateType, 20, 20);
+			yield return () => (aggregateType, 20, 40);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<(Type, int, int, int?)> RequestedRangeOfEventsTestData()
+	public static IEnumerable<Func<(Type, int, int, int?)>> RequestedRangeOfEventsTestData()
 	{
-		List<(Type, int, int, int?)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 5, 1, 5));
-			data.Add((aggregateType, 5, 1, null));
-			data.Add((aggregateType, 10, 2, 5));
-			data.Add((aggregateType, 10, 2, null));
-			data.Add((aggregateType, 15, 15, null));
-			data.Add((aggregateType, 15, 15, 15));
-			data.Add((aggregateType, 5, 1, 20));
-			data.Add((aggregateType, 5, 1, 20000));
+			yield return () => (aggregateType, 5, 1, 5);
+			yield return () => (aggregateType, 5, 1, null);
+			yield return () => (aggregateType, 10, 2, 5);
+			yield return () => (aggregateType, 10, 2, null);
+			yield return () => (aggregateType, 15, 15, null);
+			yield return () => (aggregateType, 15, 15, 15);
+			yield return () => (aggregateType, 5, 1, 20);
+			yield return () => (aggregateType, 5, 1, 20000);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<(Type, int, int, int?, int)> RequestedRangeOfEventsWithExpectedEventCountTestData()
+	public static IEnumerable<Func<(Type, int, int, int?, int)>> RequestedRangeOfEventsWithExpectedEventCountTestData()
 	{
-		List<(Type, int, int, int?, int)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 5, 1, 5, 5));
-			data.Add((aggregateType, 5, 1, null, 5));
-			data.Add((aggregateType, 10, 2, 5, 4));
-			data.Add((aggregateType, 10, 2, null, 9));
-			data.Add((aggregateType, 15, 15, null, 1));
-			data.Add((aggregateType, 15, 15, 15, 1));
-			data.Add((aggregateType, 5, 1, 20, 5));
-			data.Add((aggregateType, 5, 1, 20000, 5));
+			yield return () => (aggregateType, 5, 1, 5, 5);
+			yield return () => (aggregateType, 5, 1, null, 5);
+			yield return () => (aggregateType, 10, 2, 5, 4);
+			yield return () => (aggregateType, 10, 2, null, 9);
+			yield return () => (aggregateType, 15, 15, null, 1);
+			yield return () => (aggregateType, 15, 15, 15, 1);
+			yield return () => (aggregateType, 5, 1, 20, 5);
+			yield return () => (aggregateType, 5, 1, 20000, 5);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<(Type, int)> SteppedCountTestData()
+	public static IEnumerable<Func<(Type, int)>> SteppedCountTestData()
 	{
-		List<(Type, int)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 1));
-			data.Add((aggregateType, 10));
-			data.Add((aggregateType, 20));
-			data.Add((aggregateType, 50));
+			yield return () => (aggregateType, 1);
+			yield return () => (aggregateType, 10);
+			yield return () => (aggregateType, 20);
+			yield return () => (aggregateType, 50);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<(Type, int, int)> SteppedEventCountWithOldEventCountTestData()
+	public static IEnumerable<Func<(Type, int, int)>> SteppedEventCountWithOldEventCountTestData()
 	{
-		List<(Type, int, int)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 1, 1));
-			data.Add((aggregateType, 5, 2));
-			data.Add((aggregateType, 10, 5));
-			data.Add((aggregateType, 20, 20));
+			yield return () => (aggregateType, 1, 1);
+			yield return () => (aggregateType, 5, 2);
+			yield return () => (aggregateType, 10, 5);
+			yield return () => (aggregateType, 20, 20);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<(Type, int)> SnapshotEventCountTestData()
+	public static IEnumerable<Func<(Type, int)>> SnapshotEventCountTestData()
 	{
-		List<(Type, int)> data = [];
-		foreach (var aggregateType in GetAggregateTestTypes())
+		foreach (var aggregateType in GetAggregateTypes())
 		{
-			data.Add((aggregateType, 10));
-			data.Add((aggregateType, 20));
-			data.Add((aggregateType, 50));
-			data.Add((aggregateType, 80));
-			data.Add((aggregateType, 100));
+			yield return () => (aggregateType, 10);
+			yield return () => (aggregateType, 20);
+			yield return () => (aggregateType, 50);
+			yield return () => (aggregateType, 80);
+			yield return () => (aggregateType, 100);
 		}
-
-		return data;
 	}
 
-	public static IEnumerable<Type> GetAggregateTestTypes()
+	public static IEnumerable<Type> GetAggregateTypes()
 	{
-		List<Type> data = [];
-		data.Add(typeof(Aggregates.Persistence.PersistenceAggregate));
-		return data;
+		yield return typeof(Aggregates.Persistence.PersistenceAggregate);
 	}
 
 	internal ISqlServerEventStoreTests CreateSqlServerStoreTests(Type aggregateType)

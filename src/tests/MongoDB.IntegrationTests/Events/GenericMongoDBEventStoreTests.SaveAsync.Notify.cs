@@ -11,7 +11,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 	)
 	{
 		// Arrange
-		var aggregateChangeNotifier = Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>();
+		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
 
 		var beforeWasCalled = false;
 		var afterWasCalled = false;
@@ -20,29 +20,22 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		for (var i = 0; i < eventsToCreate; i++)
 			aggregate.AppendString($"{i + 1} of {eventsToCreate}(s) to created.");
 
-		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		aggregateChangeNotifier
-			.When(m => m.BeforeSaveAsync(Arg.Is(aggregate), Arg.Is(true), Arg.Any<CancellationToken>()))
-			.Do(callInfo =>
-			{
-				var a = callInfo.ArgAt<TAggregate>(0);
-				a.AppendString(nameof(aggregateChangeNotifier.AfterSaveAsync));
+			.BeforeSaveAsync(aggregate, true, Any<CancellationToken>())
+			.Callback(
+				(a, _, _) =>
+				{
+					a.AppendString(nameof(IAggregateChangeFeedProcessor.AfterSaveAsync));
 
-				beforeWasCalled = true;
-			});
+					beforeWasCalled = true;
+				}
+			);
 
 		aggregateChangeNotifier
-			.When(m =>
-				m.AfterSaveAsync(
-					Arg.Is(aggregate),
-					Arg.Is(0),
-					Arg.Is(true),
-					Arg.Any<IEvent[]>(),
-					Arg.Any<CancellationToken>()
-				)
-			)
-			.Do(_ => afterWasCalled = true);
+			.AfterSaveAsync(aggregate, 0, true, Any<IEvent[]>(), Any<CancellationToken>())
+			.Callback(() => afterWasCalled = true);
 
 		// Act
 		bool result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
@@ -51,35 +44,35 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(beforeWasCalled).IsTrue();
 		await Assert.That(afterWasCalled).IsTrue();
 
-		await aggregateChangeNotifier.Received(1).BeforeSaveAsync(aggregate, true, Arg.Any<CancellationToken>());
+		aggregateChangeNotifier.BeforeSaveAsync(aggregate, true, Any<CancellationToken>()).WasCalled(Times.Once);
 
-		await aggregateChangeNotifier
-			.Received(1)
+		aggregateChangeNotifier
 			.AfterSaveAsync(
 				aggregate,
 				0,
 				true,
-				Arg.Is<IEvent[]>(events => events.Length == eventsToCreate),
-				Arg.Any<CancellationToken>()
-			);
+				Is<IEvent[]>(events => events.Length == eventsToCreate),
+				Any<CancellationToken>()
+			)
+			.WasCalled(Times.Once);
 	}
 
 	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(CancellationToken cancellationToken)
 	{
 		// Arrange
-		var aggregateChangeNotifier = Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>();
+		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
 
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 
-		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		// Act
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Assert
-		await aggregateChangeNotifier
-			.DidNotReceive()
-			.AfterSaveAsync(aggregate, 0, true, Arg.Any<IEvent[]>(), Arg.Any<CancellationToken>());
+		aggregateChangeNotifier
+			.AfterSaveAsync(aggregate, 0, true, Any<IEvent[]>(), Any<CancellationToken>())
+			.WasNeverCalled();
 	}
 }

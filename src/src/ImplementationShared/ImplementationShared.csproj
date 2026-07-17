@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<RootNamespace>$(NamespacePrefix)</RootNamespace>
-		<AssemblyName>$(NamespacePrefix).$(MSBuildThisFileDirectory).5</AssemblyName>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 

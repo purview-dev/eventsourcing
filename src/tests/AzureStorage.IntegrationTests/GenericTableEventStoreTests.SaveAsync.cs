@@ -69,7 +69,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		// Assert
 		await Assert.That(result).IsFalse();
 
-		telemetry.Received(1).SaveContainedNoChanges(aggregateId, Arg.Any<string>(), Arg.Any<string>());
+		telemetry.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>()).WasCalled(Times.Once);
 	}
 
 	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(CancellationToken cancellationToken)

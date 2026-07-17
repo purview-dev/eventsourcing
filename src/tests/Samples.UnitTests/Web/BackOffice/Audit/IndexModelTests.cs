@@ -11,7 +11,7 @@ public sealed class IndexModelTests
 	public async Task OnGetAsync_GivenDateRangeWithoutAggregateId_LoadsRecentEvents(CancellationToken cancellationToken)
 	{
 		// Arrange
-		var auditService = Substitute.For<IAggregateAuditService>();
+		var auditService = IAggregateAuditService.Mock();
 		var recentEvent = new AggregateEventHistoryItem
 		{
 			AggregateId = "order-1",
@@ -27,7 +27,7 @@ public sealed class IndexModelTests
 			CausationId = "cause-1",
 		};
 		auditService
-			.GetLatestHistoryAsync("order", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>())
+			.GetLatestHistoryAsync("order", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
 			.Returns([recentEvent]);
 
 		var model = CreateModel(auditService, cancellationToken);
@@ -41,22 +41,29 @@ public sealed class IndexModelTests
 		await Assert.That(model.IsRecentMode).IsTrue();
 		await Assert.That(model.Events).Count().IsEqualTo(1);
 		await Assert.That(model.Events[0].EventType).IsEqualTo("OrderConfirmedEvent");
-		await auditService
-			.Received(1)
-			.GetLatestHistoryAsync("order", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>());
-		await auditService
-			.Received(1)
-			.GetLatestHistoryAsync("customer", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>());
-		await auditService.DidNotReceiveWithAnyArgs().GetHistoryAsync(default!, default!, default!, default);
+		auditService
+			.GetLatestHistoryAsync("order", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
+		auditService
+			.GetLatestHistoryAsync("customer", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
+		auditService
+			.GetHistoryAsync(
+				Any<string>(),
+				Any<string>(),
+				Any<AggregateEventHistoryRequest>(),
+				Any<CancellationToken>()
+			)
+			.WasNeverCalled();
 	}
 
 	[Test]
 	public async Task OnGetAsync_GivenNoAggregateIdAndNoDateRange_LoadsRecentEvents(CancellationToken cancellationToken)
 	{
 		// Arrange
-		var auditService = Substitute.For<IAggregateAuditService>();
+		var auditService = IAggregateAuditService.Mock();
 		auditService
-			.GetLatestHistoryAsync("order", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>())
+			.GetLatestHistoryAsync("order", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
 			.Returns([]);
 		var model = CreateModel(auditService, cancellationToken);
 
@@ -67,13 +74,20 @@ public sealed class IndexModelTests
 		await Assert.That(result).IsTypeOf<PageResult>();
 		await Assert.That(model.IsRecentMode).IsTrue();
 		await Assert.That(model.Events).Count().IsEqualTo(0);
-		await auditService.DidNotReceiveWithAnyArgs().GetHistoryAsync(default!, default!, default!, default);
-		await auditService
-			.Received(1)
-			.GetLatestHistoryAsync("order", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>());
-		await auditService
-			.Received(1)
-			.GetLatestHistoryAsync("customer", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>());
+		auditService
+			.GetHistoryAsync(
+				Any<string>(),
+				Any<string>(),
+				Any<AggregateEventHistoryRequest>(),
+				Any<CancellationToken>()
+			)
+			.WasNeverCalled();
+		auditService
+			.GetLatestHistoryAsync("order", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
+		auditService
+			.GetLatestHistoryAsync("customer", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -82,12 +96,12 @@ public sealed class IndexModelTests
 	)
 	{
 		// Arrange
-		var auditService = Substitute.For<IAggregateAuditService>();
+		var auditService = IAggregateAuditService.Mock();
 		auditService
 			.GetLatestHistoryAsync(
 				"order",
-				Arg.Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
-				Arg.Any<CancellationToken>()
+				Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
+				Any<CancellationToken>()
 			)
 			.Returns([]);
 
@@ -98,29 +112,29 @@ public sealed class IndexModelTests
 
 		// Assert
 		await Assert.That(model.IsRecentMode).IsTrue();
-		await auditService
-			.Received(1)
+		auditService
 			.GetLatestHistoryAsync(
 				"order",
-				Arg.Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
-				Arg.Any<CancellationToken>()
-			);
-		await auditService
-			.Received(1)
+				Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
+				Any<CancellationToken>()
+			)
+			.WasCalled(Times.Once);
+		auditService
 			.GetLatestHistoryAsync(
 				"customer",
-				Arg.Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
-				Arg.Any<CancellationToken>()
-			);
+				Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
+				Any<CancellationToken>()
+			)
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
 	public async Task OnGetAsync_GivenAggregateId_LoadsAggregateHistory(CancellationToken cancellationToken)
 	{
 		// Arrange
-		var auditService = Substitute.For<IAggregateAuditService>();
+		var auditService = IAggregateAuditService.Mock();
 		auditService
-			.GetHistoryAsync("order", "agg-1", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>())
+			.GetHistoryAsync("order", "agg-1", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
 			.Returns(
 				new ContinuationResponse<AggregateEventHistoryItem>
 				{
@@ -150,10 +164,12 @@ public sealed class IndexModelTests
 		await Assert.That(model.IsRecentMode).IsFalse();
 		await Assert.That(model.AggregateId).IsEqualTo("agg-1");
 		await Assert.That(model.Events).Count().IsEqualTo(1);
-		await auditService
-			.Received(1)
-			.GetHistoryAsync("order", "agg-1", Arg.Any<AggregateEventHistoryRequest>(), Arg.Any<CancellationToken>());
-		await auditService.DidNotReceiveWithAnyArgs().GetLatestHistoryAsync(default!, default!, default);
+		auditService
+			.GetHistoryAsync("order", "agg-1", Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
+			.WasCalled(Times.Once);
+		auditService
+			.GetLatestHistoryAsync(Any<string>(), Any<AggregateEventHistoryRequest>(), Any<CancellationToken>())
+			.WasNeverCalled();
 	}
 
 	static IndexModel CreateModel(

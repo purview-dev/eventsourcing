@@ -1437,7 +1437,7 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 	static bool ImplementsSelfEquatable(INamedTypeSymbol typeSymbol) =>
 		typeSymbol.AllInterfaces.Any(interfaceSymbol =>
 			interfaceSymbol is INamedTypeSymbol namedTypeSymbol
-			&& namedTypeSymbol.OriginalDefinition.Name == nameof(IEquatable<int>)
+			&& namedTypeSymbol.OriginalDefinition.Name == nameof(IEquatable<>)
 			&& namedTypeSymbol.OriginalDefinition.ContainingNamespace.ToDisplayString() == "System"
 			&& namedTypeSymbol.TypeArguments.Length == 1
 			&& SymbolEqualityComparer.Default.Equals(namedTypeSymbol.TypeArguments[0], typeSymbol)

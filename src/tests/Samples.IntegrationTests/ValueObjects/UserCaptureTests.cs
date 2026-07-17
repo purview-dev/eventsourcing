@@ -15,10 +15,10 @@ public class UserCaptureTests(SqlServerSnapshotEventStoreFixture fixture)
 		var aggregate = CreateTestAggregate();
 
 		// Act
-		var act = () => eventStore.SnapshotAsync(aggregate, cancellationToken);
+		Task Act() => eventStore.SnapshotAsync(aggregate, cancellationToken);
 
 		// Assert
-		await Assert.That(act).ThrowsNothing();
+		await Assert.That(Act).ThrowsNothing();
 	}
 
 	[Test]

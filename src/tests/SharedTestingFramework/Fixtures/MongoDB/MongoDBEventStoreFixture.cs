@@ -22,9 +22,9 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 		_mongoDBContainer = ContainerHelper.CreateMongoDB();
 	}
 
-	public IDistributedCache Cache { get; private set; } = default!;
+	public IDistributedCacheMock Cache { get; private set; } = default!;
 
-	public IMongoDBEventStoreTelemetry Telemetry { get; private set; } = default!;
+	public IMongoDBEventStoreTelemetryMock Telemetry { get; private set; } = default!;
 
 	internal MongoDBClient EventClient { get; private set; } = default!;
 
@@ -39,8 +39,8 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 
 	internal (
 		MongoDBEventStore<TAggregate> EventStore,
-		IMongoDBEventStoreTelemetry Telemetry,
-		IDistributedCache Cache,
+		IMongoDBEventStoreTelemetryMock Telemetry,
+		IDistributedCacheMock Cache,
 		MongoDBClient EventClient,
 		MongoDBClient SnapshotClient
 	) CreateEventStoreContext<TAggregate>(
@@ -104,7 +104,7 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 		return (eventStore, telemetry, cache, eventClient, snapshotClient);
 	}
 
-	public static IDistributedCache CreateDistributedCache()
+	public static IDistributedCacheMock CreateDistributedCache()
 	{
 		var cache = IDistributedCache.Mock();
 		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);

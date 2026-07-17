@@ -12,7 +12,7 @@ public static class ContainerHelper
 {
 	public static AzuriteContainer CreateAzurite(Action<AzuriteBuilder>? config = null)
 	{
-		var builder = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.35.0").WithCommand(
+		var builder = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.36.0").WithCommand(
 			"--skipApiVersionCheck"
 		)
 		//.WithWaitStrategy(Wait.ForUnixContainer()

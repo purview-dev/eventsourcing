@@ -19,7 +19,17 @@ public readonly partial record struct UserCaptureRecordStruct1(UserDetails User,
 public sealed partial record class UserCaptureRecordClass(UserDetails User, DateTimeOffset OccurredAt);
 
 [ValueObject]
-public sealed partial class UserCaptureClass(UserDetails User, DateTimeOffset OccurredAt);
+public sealed partial class UserCaptureClass(UserDetails user, DateTimeOffset occurredAt)
+{
+	public UserDetails User { get; } = user;
+
+	public DateTimeOffset OccurredAt { get; } = occurredAt;
+}
 
 [ValueObject]
-public partial struct UserCaptureStruct(UserDetails User, DateTimeOffset OccurredAt);
+public readonly partial struct UserCaptureStruct(UserDetails user, DateTimeOffset occurredAt)
+{
+	public UserDetails User { get; } = user;
+
+	public DateTimeOffset OccurredAt { get; } = occurredAt;
+}
