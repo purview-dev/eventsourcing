@@ -156,7 +156,8 @@ public sealed class CustomerPageTests(AppHostFixture fixture)
 			customer.RegisterCustomer($"{prefix}-customer-{i:D2}", $"{prefix}-{i:D2}@example.com");
 			var result = await store.SaveAsync(customer, cancellationToken);
 
-			await Assert.That(result.IsValid).IsTrue().Because(result.ValidationResult.ToString());
+			await Assert.That(result).IsNotNull();
+			await Assert.That(result.IsValid).IsTrue().Because(result.ValidationResult.ToString()!);
 		}
 
 		var totalCount = await store.CountAsync<CustomerAggregate>(cancellationToken);

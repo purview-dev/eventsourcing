@@ -73,5 +73,6 @@
 		<PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
 		<PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
 		<PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+		<PackageVersion Include="ZodSharp" Version="2.0.0-prerelease.1" />
 	</ItemGroup>
 </Project>

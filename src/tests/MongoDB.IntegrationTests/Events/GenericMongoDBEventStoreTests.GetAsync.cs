@@ -170,7 +170,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 				Any<string>(),
 				Any<string>(),
 				Any<string>(),
-				Is<string>(eventType => eventType.Contains(typeof(OldEvent).Name, StringComparison.Ordinal)),
+				Is<string>(eventType => eventType!.Contains(typeof(OldEvent).Name, StringComparison.Ordinal)),
 				Any<int>()
 			)
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));

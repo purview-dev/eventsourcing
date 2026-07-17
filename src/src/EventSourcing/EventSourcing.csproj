@@ -3,7 +3,6 @@
 		<IsPackable>true</IsPackable>
 		<Title>Purview Event Sourcing</Title>
 		<Description>Core abstractions, aggregate types, facades, transactions, and dependency injection extensions for building event-sourced .NET applications.</Description>
-		<PackageId>Purview.EventSourcing</PackageId>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;eventstore;event-store;aggregate;domain-driven-design;</PackageTags>
 	</PropertyGroup>
 
@@ -24,7 +23,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
 	</ItemGroup>

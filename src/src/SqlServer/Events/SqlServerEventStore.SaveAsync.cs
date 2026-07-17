@@ -3,13 +3,13 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Claims;
-using FluentValidation.Results;
 using Microsoft.Data.SqlClient;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.Services;
 using Purview.EventSourcing.SqlServer.Events.Exceptions;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 

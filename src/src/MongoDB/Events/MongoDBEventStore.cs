@@ -38,13 +38,13 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 		IAggregateRequirementsManager aggregateRequirementsManager,
 		IMongoDBEventStoreStorageNameBuilder? storageNameBuilder = null,
-		FluentValidation.IValidator<T>? validator = null,
+		IAggregateValidator<T>? validator = null,
 		IAggregateIdFactory? aggregateIdFactory = null
 	)
 	{
 		_eventNameMapper = eventNameMapper;
 		_eventStoreOptions = mongoDbOptions;
-		_validator = AggregateValidatorAdapter.Adapt(validator);
+		_validator = validator;
 		_aggregateIdFactory = aggregateIdFactory;
 		_distributedCache = distributedCache;
 		_eventStoreTelemetry = eventStoreTelemetry;

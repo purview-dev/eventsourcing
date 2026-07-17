@@ -97,13 +97,7 @@ public sealed class IndexModelTests
 	{
 		// Arrange
 		var auditService = IAggregateAuditService.Mock();
-		auditService
-			.GetLatestHistoryAsync(
-				"order",
-				Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
-				Any<CancellationToken>()
-			)
-			.Returns([]);
+		auditService.GetLatestHistoryAsync("order", m => m.FromUtc.HasValue, Any<CancellationToken>()).Returns([]);
 
 		var model = CreateModel(auditService, cancellationToken, "?fromUtc=2026-06-23T00:15");
 
@@ -113,18 +107,10 @@ public sealed class IndexModelTests
 		// Assert
 		await Assert.That(model.IsRecentMode).IsTrue();
 		auditService
-			.GetLatestHistoryAsync(
-				"order",
-				Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
-				Any<CancellationToken>()
-			)
+			.GetLatestHistoryAsync("order", m => m.FromUtc.HasValue, Any<CancellationToken>())
 			.WasCalled(Times.Once);
 		auditService
-			.GetLatestHistoryAsync(
-				"customer",
-				Is<AggregateEventHistoryRequest>(m => m.FromUtc.HasValue),
-				Any<CancellationToken>()
-			)
+			.GetLatestHistoryAsync("customer", m => m.FromUtc.HasValue, Any<CancellationToken>())
 			.WasCalled(Times.Once);
 	}
 

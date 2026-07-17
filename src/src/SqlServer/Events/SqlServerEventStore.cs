@@ -42,14 +42,14 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 		ISqlServerEventStoreTelemetry eventStoreTelemetry,
 		ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 		IAggregateRequirementsManager aggregateRequirementsManager,
-		FluentValidation.IValidator<T>? validator = null,
+		IAggregateValidator<T>? validator = null,
 		IAggregateIdFactory? aggregateIdFactory = null,
 		IEventUpcasterRegistry? eventUpcasterRegistry = null
 	)
 	{
 		_eventNameMapper = eventNameMapper;
 		_eventStoreOptions = sqlServerOptions;
-		_validator = AggregateValidatorAdapter.Adapt(validator);
+		_validator = validator;
 		_aggregateIdFactory = aggregateIdFactory;
 		_distributedCache = distributedCache;
 		_eventStoreTelemetry = eventStoreTelemetry;

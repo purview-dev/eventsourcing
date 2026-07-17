@@ -1,16 +1,16 @@
 ﻿using System.Collections.Concurrent;
 using System.Security.Claims;
-using FluentValidation.Results;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Services;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.InMemory.Events;
 
 public partial class InMemoryEventStore<T>(
 	ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 	IAggregateRequirementsManager aggregateRequirementsManager,
-	FluentValidation.IValidator<T>? validator = null,
+	IAggregateValidator<T>? validator = null,
 	IAggregateIdFactory? aggregateIdFactory = null
 ) : IInMemoryEventStore<T>, IDisposable
 	where T : class, IAggregate, new()
@@ -18,7 +18,7 @@ public partial class InMemoryEventStore<T>(
 	readonly ConcurrentDictionary<string, T> _aggregates = new(StringComparer.OrdinalIgnoreCase);
 	readonly ConcurrentDictionary<string, ConcurrentDictionary<int, IEvent>> _events = new();
 
-	readonly IAggregateValidator<T>? _validator = AggregateValidatorAdapter.Adapt(validator);
+	readonly IAggregateValidator<T>? _validator = validator;
 
 	protected IEnumerable<T> Aggregates => _aggregates.Values;
 

@@ -40,7 +40,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		ITableEventStoreTelemetry eventStoreTelemetry,
 		ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 		IAggregateRequirementsManager aggregateRequirementsManager,
-		FluentValidation.IValidator<T>? validator = null,
+		IAggregateValidator<T>? validator = null,
 		ITableEventStoreStorageNameBuilder? nameBuilder = null,
 		IAggregateIdFactory? aggregateIdFactory = null,
 		ISnapshotStrategy<T>? snapshotStrategy = null,
@@ -49,7 +49,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 	{
 		_eventNameMapper = eventNameMapper;
 		_eventStoreOptions = azureStorageOptions;
-		_validator = AggregateValidatorAdapter.Adapt(validator);
+		_validator = validator;
 		_aggregateIdFactory = aggregateIdFactory;
 		_distributedCache = distributedCache;
 		_eventStoreTelemetry = eventStoreTelemetry;

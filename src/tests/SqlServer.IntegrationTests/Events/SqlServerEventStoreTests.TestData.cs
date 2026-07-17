@@ -91,6 +91,7 @@ partial class SqlServerEventStoreTests
 		}
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1024:Use properties where appropriate")]
 	public static IEnumerable<Type> GetAggregateTypes()
 	{
 		yield return typeof(Aggregates.Persistence.PersistenceAggregate);

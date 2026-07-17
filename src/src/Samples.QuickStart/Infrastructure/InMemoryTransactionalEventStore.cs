@@ -6,10 +6,10 @@ using System.Globalization;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using FluentValidation.Results;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Internal;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.Samples.QuickStart.Infrastructure;
 

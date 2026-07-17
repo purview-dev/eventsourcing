@@ -51,7 +51,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 				aggregate,
 				0,
 				true,
-				Is<IEvent[]>(events => events.Length == eventsToCreate),
+				Is<IEvent[]>(events => events!.Length == eventsToCreate),
 				Any<CancellationToken>()
 			)
 			.WasCalled(Times.Once);

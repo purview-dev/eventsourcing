@@ -9,7 +9,7 @@ namespace Purview.EventSourcing.InMemory.Snapshots;
 public sealed class InMemorySnapshotStore<T>(
 	ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 	IAggregateRequirementsManager aggregateRequirementsManager,
-	FluentValidation.IValidator<T>? validator = null,
+	IAggregateValidator<T>? validator = null,
 	IAggregateIdFactory? aggregateIdFactory = null
 )
 	: Events.InMemoryEventStore<T>(

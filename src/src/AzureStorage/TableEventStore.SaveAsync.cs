@@ -4,7 +4,6 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Azure;
-using FluentValidation.Results;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Aggregates.Snapshotting;
@@ -13,6 +12,7 @@ using Purview.EventSourcing.AzureStorage.Events;
 using Purview.EventSourcing.AzureStorage.StorageClients.Table;
 using Purview.EventSourcing.Serialization;
 using Purview.EventSourcing.Services;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.AzureStorage;
 

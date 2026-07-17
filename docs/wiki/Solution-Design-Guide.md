@@ -358,7 +358,9 @@ Because `On<Property>Changed` runs during replay, keep it deterministic and free
 
 ### Save-Time Validation
 
-Stores run aggregate validation before persistence. With no custom validator, the current implementation uses `DefaultAggregateValidator<TAggregate>`, which validates standard DataAnnotations such as `[Range]`. Stores can also adapt FluentValidation validators through `IValidator<TAggregate>` and `IAggregateValidator<TAggregate>`.
+Stores run aggregate validation before persistence. With no custom validator, the current implementation uses `DefaultAggregateValidator<TAggregate>`, which validates standard DataAnnotations such as `[Range]`. Store constructors accept `IAggregateValidator<TAggregate>?` — when null, the default DataAnnotations validator is used.
+
+FluentValidation integration is available in the separate `Purview.EventSourcing.FluentValidation` package, which provides `FluentValidationAggregateValidator<TAggregate>` to adapt `FluentValidation.IValidator<T>` to `IAggregateValidator<T>`. Register it via `AddFluentValidationAdapter<TAggregate, TValidator>()` or `AddFluentValidationAdapter<TAggregate>()` DI extensions.
 
 Use save-time validation for aggregate-wide consistency checks that should pass before persistence:
 

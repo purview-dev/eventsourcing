@@ -8,7 +8,9 @@
 	</Folder>
 	<Folder Name="/src/">
 		<Project Path="src/EventSourcing/EventSourcing.csproj" />
+		<Project Path="src/FluentValidationImpl/FluentValidationImpl.csproj" />
 		<Project Path="src/SourceGenerator/SourceGenerator.csproj" />
+		<Project Path="src/ZodSharpImpl/ZodSharpImpl.csproj" />
 	</Folder>
 	<Folder Name="/src/implementations/">
 		<Project Path="src/CosmosDb/CosmosDb.csproj" />
@@ -27,6 +29,8 @@
 	</Folder>
 	<Folder Name="/tests/">
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
+		<Project Path="tests/FluentValidationImpl.UnitTests/FluentValidationImpl.UnitTests.csproj" />
+		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
 		<Project Path="tests/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj" />
 		<Project Path="tests/SourceGenerator.UnitTests/SourceGenerator.UnitTests.csproj" />

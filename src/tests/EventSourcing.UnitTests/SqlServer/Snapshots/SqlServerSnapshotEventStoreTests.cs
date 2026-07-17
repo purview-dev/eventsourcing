@@ -4,6 +4,8 @@ using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.Aggregates.Test;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.SqlServer.Snapshot;
+using ValidationFailure = Purview.EventSourcing.Validation.ValidationFailure;
+using ValidationResult = Purview.EventSourcing.Validation.ValidationResult;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
@@ -183,12 +185,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
 			.Returns(
 				static (a, _, _) =>
-					new SaveResult<TestAggregate>(
-						a,
-						new FluentValidation.Results.ValidationResult(),
-						saved: true,
-						skipped: false
-					)
+					new SaveResult<TestAggregate>(a, new ValidationResult(), saved: true, skipped: false)
 			);
 		var store = CreateStore(eventStore, snapshotStrategy: new NeverSnapshotStrategy<TestAggregate>());
 
@@ -211,12 +208,7 @@ public sealed class SqlServerSnapshotEventStoreTests
 			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
 			.Returns(
 				static (a, _, _) =>
-					new SaveResult<TestAggregate>(
-						a,
-						new FluentValidation.Results.ValidationResult(),
-						saved: true,
-						skipped: false
-					)
+					new SaveResult<TestAggregate>(a, new ValidationResult(), saved: true, skipped: false)
 			);
 
 		var store = CreateStore(eventStore, snapshotStrategy: new AlwaysSnapshotStrategy<TestAggregate>());

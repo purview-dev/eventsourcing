@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security.Claims;
-using FluentValidation.Results;
 using MongoDB.Driver;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
@@ -10,6 +9,7 @@ using Purview.EventSourcing.MongoDB.Events.Entities;
 using Purview.EventSourcing.MongoDB.Events.Exceptions;
 using Purview.EventSourcing.MongoDB.StorageClient;
 using Purview.EventSourcing.Services;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.MongoDB;
 
