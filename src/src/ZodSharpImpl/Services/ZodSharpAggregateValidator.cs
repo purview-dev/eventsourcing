@@ -9,13 +9,22 @@ public sealed class ZodSharpAggregateValidator<TAggregate>(IZodSchemaValidator<T
 	: IAggregateValidator<TAggregate>
 	where TAggregate : IAggregate
 {
-	public ValidationResult Validate(TAggregate aggregate)
+	public ValidationResult Validate(TAggregate aggregate) => Convert(validator.Validate(aggregate));
+
+	public async Task<ValidationResult> ValidateAsync(
+		TAggregate aggregate,
+		CancellationToken cancellationToken = default
+	)
 	{
-		throw new NotImplementedException();
+		var result = await validator.ValidateAsync(aggregate, cancellationToken);
+
+		return Convert(result);
 	}
 
-	public Task<ValidationResult> ValidateAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
-	{
-		throw new NotImplementedException();
-	}
+	static ValidationResult Convert(ValidationResult<TAggregate> validationResult) =>
+		validationResult.IsSuccess
+			? ValidationResult.Success
+			: new ValidationResult(
+				validationResult.Errors.Select(e => new ValidationFailure(string.Join('.', e.Path), e.Message))
+			);
 }
