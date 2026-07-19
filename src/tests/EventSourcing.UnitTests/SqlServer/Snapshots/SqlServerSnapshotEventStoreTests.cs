@@ -4,7 +4,6 @@ using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.Aggregates.Test;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.SqlServer.Snapshot;
-using ValidationFailure = Purview.EventSourcing.Validation.ValidationFailure;
 using ValidationResult = Purview.EventSourcing.Validation.ValidationResult;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;

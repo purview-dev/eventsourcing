@@ -18,7 +18,7 @@ namespace Purview.EventSourcing.SqlServer;
 
 sealed class SqlServerStorePerformanceRunner
 {
-	public Task<SqlServerStorePerformanceRun> RunQuickAsync() =>
+	public Task<SqlServerStorePerformanceRun> RunQuickAsync(CancellationToken cancellationToken) =>
 		RunAsync(
 			mode: "Quick",
 			workload: new SqlServerPerformanceWorkload
@@ -32,10 +32,11 @@ sealed class SqlServerStorePerformanceRunner
 				EventGetAverageMs: 30,
 				SnapshotWriteAverageMs: 35,
 				SnapshotQueryAverageMs: 40
-			)
+			),
+			cancellationToken
 		);
 
-	public Task<SqlServerStorePerformanceRun> RunBenchmarkAsync() =>
+	public Task<SqlServerStorePerformanceRun> RunBenchmarkAsync(CancellationToken cancellationToken) =>
 		RunAsync(
 			mode: "Benchmark",
 			workload: new SqlServerPerformanceWorkload
@@ -49,20 +50,22 @@ sealed class SqlServerStorePerformanceRunner
 				EventGetAverageMs: 70,
 				SnapshotWriteAverageMs: 80,
 				SnapshotQueryAverageMs: 90
-			)
+			),
+			cancellationToken
 		);
 
 	async Task<SqlServerStorePerformanceRun> RunAsync(
 		string mode,
 		SqlServerPerformanceWorkload workload,
-		ScenarioThresholds thresholds
+		ScenarioThresholds thresholds,
+		CancellationToken cancellationToken
 	)
 	{
 		var previousRequiresPrincipal = EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault;
 		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 
 		await using var msSqlContainer = ContainerHelper.CreateMsSql();
-		await msSqlContainer.StartAsync();
+		await msSqlContainer.StartAsync(cancellationToken);
 
 		try
 		{
@@ -91,7 +94,8 @@ sealed class SqlServerStorePerformanceRunner
 						if (!result.Saved || !result.IsValid)
 							throw new InvalidOperationException($"Save failed for aggregate '{aggregateIds[i]}'.");
 					}
-				}
+				},
+				cancellationToken
 			);
 
 			var loadedAggregates = new List<PersistenceAggregate>(aggregateIds.Length);
@@ -111,7 +115,8 @@ sealed class SqlServerStorePerformanceRunner
 						ValidateAggregate(aggregate, i, workload.EventsPerAggregate);
 						loadedAggregates.Add(aggregate);
 					}
-				}
+				},
+				cancellationToken
 			);
 
 			var snapshotWriteScenario = await MeasureAsync(
@@ -122,10 +127,14 @@ sealed class SqlServerStorePerformanceRunner
 				{
 					foreach (var aggregate in loadedAggregates)
 						await snapshotStore.SnapshotAsync(aggregate, cancellationToken);
-				}
+				},
+				cancellationToken
 			);
 
-			var count = await snapshotStore.CountAsync(static aggregate => aggregate.IncrementInt32 > 0);
+			var count = await snapshotStore.CountAsync(
+				static aggregate => aggregate.IncrementInt32 > 0,
+				cancellationToken
+			);
 			if (count != workload.AggregateCount)
 			{
 				throw new InvalidOperationException(
@@ -155,13 +164,15 @@ sealed class SqlServerStorePerformanceRunner
 							$"Snapshot total count mismatch. Expected at least {workload.AggregateCount}, got {page.TotalCount}."
 						);
 					}
-				}
+				},
+				cancellationToken
 			);
 
 			var complexSnapshotQueryScenario = await RunComplexSnapshotQueryScenarioAsync(
 				connectionString,
 				$"PerfComplexSnapshots_{runId}",
-				workload.QueryIterations
+				workload.QueryIterations,
+				cancellationToken
 			);
 
 			return new SqlServerStorePerformanceRun
@@ -283,6 +294,7 @@ sealed class SqlServerStorePerformanceRunner
 			);
 		}
 
+		// Valid up to this point, so run the test...
 		return await MeasureAsync(
 			"SnapshotStore.Query.ComplexAggregate",
 			queryIterations * 2,
@@ -573,7 +585,7 @@ sealed class SqlServerStorePerformanceRunner
 			where T : class => DispatchProxy.Create<T, NoOpDispatchProxy>();
 	}
 
-	sealed class NoOpDispatchProxy : DispatchProxy
+	class NoOpDispatchProxy : DispatchProxy
 	{
 		protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
 		{

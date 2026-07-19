@@ -4,23 +4,37 @@
 		<Title>Purview Event Sourcing</Title>
 		<Description>Core abstractions, aggregate types, facades, transactions, and dependency injection extensions for building event-sourced .NET applications.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;eventstore;event-store;aggregate;domain-driven-design;</PackageTags>
+		<PackageId>Purview.EventSourcing</PackageId>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<EventStoreSourceGeneratorProject>$(MSBuildThisFileDirectory)..\SourceGenerator\SourceGenerator.csproj</EventStoreSourceGeneratorProject>
+		<EventStoreSourceGeneratorTargetFramework>netstandard2.0</EventStoreSourceGeneratorTargetFramework>
+		<EventStoreSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\SourceGenerator\bin\$(Configuration)\$(EventStoreSourceGeneratorTargetFramework)\Purview.EventSourcing.SourceGeneration.dll</EventStoreSourceGeneratorAssembly>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeEventStoreSourceGenerator</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference
-			Include="..\SourceGenerator\SourceGenerator.csproj"
+			Include="$(EventStoreSourceGeneratorProject)"
 			PrivateAssets="all"
 			ReferenceOutputAssembly="false"
 			OutputItemType="Analyzer"
 		/>
-
-		<None
-			Include="../SourceGenerator/bin/$(Configuration)/netstandard2.0/Purview.EventSourcing.SourceGenerator.dll"
-			Condition="Exists('../SourceGenerator/bin/$(Configuration)/netstandard2.0/Purview.EventSourcing.SourceGenerator.dll')"
-			Pack="true"
-			PackagePath="analyzers/dotnet/cs"
-		/>
 	</ItemGroup>
+
+	<Target Name="IncludeEventStoreSourceGenerator" DependsOnTargets="Build">
+		<Error
+			Condition="!Exists('$(EventStoreSourceGeneratorAssembly)')"
+			Text="The Event Souring source generator was not found at '$(EventStoreSourceGeneratorAssembly)'."
+		/>
+
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="$(EventStoreSourceGeneratorAssembly)">
+				<PackagePath>analyzers/dotnet/cs/</PackagePath>
+			</TfmSpecificPackageFile>
+		</ItemGroup>
+	</Target>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />

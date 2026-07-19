@@ -1,5 +1,4 @@
 using Azure.Storage.Blobs;
-using Purview.EventSourcing;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
 using Purview.EventSourcing.SqlServer.Events.Exceptions;

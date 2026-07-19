@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Purview.EventSourcing;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.ValueObjects;
 

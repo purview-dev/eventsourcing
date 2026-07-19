@@ -18,7 +18,7 @@ sealed class SqlServerStorePerformanceHistoryStore
 			? JsonSerializer.Deserialize<SqlServerStorePerformanceRun>(File.ReadAllText(LatestPath), SerializerOptions)
 			: null;
 
-	public string Save(SqlServerStorePerformanceRun run)
+	public async Task<string> SaveAsync(SqlServerStorePerformanceRun run, CancellationToken cancellationToken)
 	{
 		Directory.CreateDirectory(HistoryDirectory);
 
@@ -26,8 +26,8 @@ sealed class SqlServerStorePerformanceHistoryStore
 		var historyPath = Path.Combine(HistoryDirectory, $"{timestamp}-{run.Mode.ToUpperInvariant()}.json");
 		var json = JsonSerializer.Serialize(run, SerializerOptions);
 
-		File.WriteAllText(historyPath, json);
-		File.WriteAllText(LatestPath, json);
+		await File.WriteAllTextAsync(historyPath, json, cancellationToken);
+		await File.WriteAllTextAsync(LatestPath, json, cancellationToken);
 
 		return historyPath;
 	}

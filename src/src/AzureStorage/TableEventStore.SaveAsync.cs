@@ -256,6 +256,8 @@ partial class TableEventStore<T>
 		if (aggregate.Details.IsDeleted || events.OfType<Restored>().Any())
 			return true;
 
+		// If the aggregate hasn't been deleted or restored, run the strategy to
+		// find out if we should snapshot or not.
 		return SnapshotStrategyResolver.ShouldSnapshot(
 			aggregate,
 			events.Length,

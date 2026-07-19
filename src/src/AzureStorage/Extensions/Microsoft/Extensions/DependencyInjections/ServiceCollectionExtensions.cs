@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using Microsoft.Extensions.Configuration;
-using Purview.EventSourcing.AzureStorage;
 using Purview.EventSourcing.Internal;
 
 namespace Microsoft.Extensions.DependencyInjection;

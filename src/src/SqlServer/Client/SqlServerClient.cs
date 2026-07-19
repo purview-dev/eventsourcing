@@ -686,6 +686,7 @@ sealed partial class SqlServerClient
 		if (!type.IsGenericType)
 			return false;
 
+		// Test for our own collection types or if the type implements IEnumerable<T> somewhere...
 		return IsEventStoreCollectionType(type)
 			|| type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 	}
@@ -772,7 +773,7 @@ sealed partial class SqlServerClient
 			var visitedLeft = Visit(node.Left);
 			var visitedRight = Visit(node.Right);
 
-			if (
+			return
 				(node.NodeType == ExpressionType.Equal || node.NodeType == ExpressionType.NotEqual)
 				&& TryRewriteScalarPrimitiveComparison(
 					visitedLeft,
@@ -780,12 +781,8 @@ sealed partial class SqlServerClient
 					out var rewrittenLeft,
 					out var rewrittenRight
 				)
-			)
-			{
-				return Expression.MakeBinary(node.NodeType, rewrittenLeft, rewrittenRight);
-			}
-
-			return node.Update(visitedLeft, node.Conversion, visitedRight);
+				? Expression.MakeBinary(node.NodeType, rewrittenLeft, rewrittenRight)
+				: node.Update(visitedLeft, node.Conversion, visitedRight);
 		}
 
 		protected override Expression VisitMember(MemberExpression node)

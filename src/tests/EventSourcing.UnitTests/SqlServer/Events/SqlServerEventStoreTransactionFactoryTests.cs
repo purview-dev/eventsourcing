@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Purview.EventSourcing.SqlServer.Events;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 

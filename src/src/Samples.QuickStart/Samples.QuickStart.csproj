@@ -8,6 +8,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\InMemory\InMemory.csproj" />
 		<ProjectReference Include="..\Samples\Samples.csproj" />
 		<!-- Direct reference required when not used via a NuGet package -->
 		<ProjectReference

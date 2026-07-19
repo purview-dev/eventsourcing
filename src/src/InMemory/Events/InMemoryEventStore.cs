@@ -233,6 +233,7 @@ public partial class InMemoryEventStore<T>(
 		if (!_events.TryGetValue(aggregateId, out var eventList))
 			return AsyncEnumerable.Empty<(IEvent @event, string eventType)>();
 
+		// We have some events... so query and return.
 		return eventList
 			.Where(kvp => kvp.Key >= versionFrom && (!versionTo.HasValue || kvp.Key <= versionTo.Value))
 			.OrderBy(kvp => kvp.Key)

@@ -6,8 +6,8 @@ test_root := root_folder + "/tests"
 
 solution_file := root_folder + "/Purview.EventSourcing.slnx"
 
-sg_perf_tests := test_root + "/EventSourcing.SourceGenerator.PerformanceTests/EventSourcing.SourceGenerator.PerformanceTests.csproj"
-sql_perf_tests := test_root + "/EventSourcing.SqlServer.PerformanceTests/EventSourcing.SqlServer.PerformanceTests.csproj"
+sg_perf_tests := test_root + "/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj"
+sql_perf_tests := test_root + "/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj"
 
 build_configuration := "Release"
 artifacts_folder := "./artifacts"

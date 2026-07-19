@@ -4,6 +4,7 @@
 		<Title>Purview Event Store for MongoDB</Title>
 		<Description>MongoDB event stream and snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;mongodb;events;snapshots;</PackageTags>
+		<PackageId>Purview.EventSourcing.MongoDB</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using FluentValidation;
 using Purview.EventSourcing.FluentValidation.Services;
 using Purview.EventSourcing.Services;
@@ -16,15 +17,18 @@ public static class ServiceCollectionExtensions
 	/// <typeparam name="TAggregate">The aggregate type.</typeparam>
 	/// <typeparam name="TValidator">The FluentValidation validator implementation.</typeparam>
 	/// <param name="services">The service collection.</param>
+	/// <param name="lifetime">The lifetime used to register the validator</param>
 	/// <returns>The <paramref name="services"/> for fluent chaining.</returns>
 	public static IServiceCollection AddFluentValidationAdapter<TAggregate, TValidator>(
-		this IServiceCollection services
+		[NotNull] this IServiceCollection services,
+		ServiceLifetime lifetime = ServiceLifetime.Singleton
 	)
 		where TAggregate : Purview.EventSourcing.Aggregates.IAggregate
 		where TValidator : class, IValidator<TAggregate>
 	{
-		services.AddSingleton<IValidator<TAggregate>, TValidator>();
+		services.Add(new(typeof(IValidator<TAggregate>), typeof(TValidator), lifetime));
 		services.AddSingleton<IAggregateValidator<TAggregate>, FluentValidationAggregateValidator<TAggregate>>();
+
 		return services;
 	}
 
@@ -35,15 +39,26 @@ public static class ServiceCollectionExtensions
 	/// </summary>
 	/// <typeparam name="TAggregate">The aggregate type.</typeparam>
 	/// <param name="services">The service collection.</param>
+	/// <param name="lifetime">The lifetime used to register the validator</param>
 	/// <returns>The <paramref name="services"/> for fluent chaining.</returns>
-	public static IServiceCollection AddFluentValidationAdapter<TAggregate>(this IServiceCollection services)
+	public static IServiceCollection AddFluentValidationAdapter<TAggregate>(
+		[NotNull] this IServiceCollection services,
+		ServiceLifetime lifetime = ServiceLifetime.Singleton
+	)
 		where TAggregate : Purview.EventSourcing.Aggregates.IAggregate
 	{
-		services.AddSingleton<IAggregateValidator<TAggregate>>(sp =>
-		{
-			var validator = sp.GetService<IValidator<TAggregate>>();
-			return validator is null ? null! : new FluentValidationAggregateValidator<TAggregate>(validator);
-		});
+		services.Add(
+			new(
+				typeof(IValidator<TAggregate>),
+				sp =>
+				{
+					var validator = sp.GetService<IValidator<TAggregate>>();
+					return validator is null ? null! : new FluentValidationAggregateValidator<TAggregate>(validator);
+				},
+				lifetime
+			)
+		);
+
 		return services;
 	}
 }

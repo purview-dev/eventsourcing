@@ -1,5 +1,7 @@
+using System.ComponentModel.DataAnnotations;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.ValueObjects;
+using ZodSharp;
 
 namespace Purview.EventSourcing.Samples.Domain;
 
@@ -8,12 +10,14 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// Shows: single-property events, string manipulation, validation.
 /// </summary>
 [GenerateAggregate]
+[ZodSchema]
 public sealed partial class CustomerAggregate : AggregateBase
 {
 	public Name Name { get; private set; }
 
 	public EmailAddress Email { get; private set; }
 
+	[StringLength(10)]
 	public string? PhoneNumber { get; private set; }
 
 	public bool IsActive { get; private set; }

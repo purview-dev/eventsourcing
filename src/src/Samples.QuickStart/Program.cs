@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Purview.EventSourcing;
 using Purview.EventSourcing.Samples.Domain;
 using Purview.EventSourcing.Samples.QuickStart.Infrastructure;
 
 EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
+
+using CancellationTokenSource cts = new();
+Console.CancelKeyPress += (_, _) => cts.Cancel();
 
 var services = new ServiceCollection();
 services.AddEventSourcing();
@@ -25,6 +27,15 @@ Console.WriteLine();
 await SeedAsync(store);
 await RunSuccessfulCheckoutAsync(store, transactionFactory);
 await RunRollbackDemoAsync(store, transactionFactory, failurePlan);
+
+await TestValidatorsAsync(cts.Token);
+
+static async Task TestValidatorsAsync(CancellationToken cancellationToken)
+{
+	await using ValidatorScenarios scenarios = new();
+
+	await scenarios.ValidateAsync(cancellationToken);
+}
 
 static async Task SeedAsync(IQueryableEventStore store)
 {

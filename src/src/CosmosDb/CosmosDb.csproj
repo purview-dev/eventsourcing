@@ -4,6 +4,7 @@
 		<Title>Purview Queryable Snapshot Store for Azure Cosmos DB</Title>
 		<Description>Azure Cosmos DB queryable snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;queryable-store;snapshot;azure-cosmosdb;cosmosdb;</PackageTags>
+		<PackageId>Purview.EventSourcing.CosmosDb</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

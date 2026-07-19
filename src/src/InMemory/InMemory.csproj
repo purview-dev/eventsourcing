@@ -4,6 +4,7 @@
 		<Title>Purview In-Memory Non-Queryable and Queryable Snapshot Store</Title>
 		<Description>In-memory non-queryable and queryable snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;testing;event-sourcing;event-store;queryable-store;snapshot;in-memory;</PackageTags>
+		<PackageId>Purview.EventSourcing.InMemory</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

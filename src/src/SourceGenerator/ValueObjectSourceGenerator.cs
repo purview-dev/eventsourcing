@@ -999,12 +999,9 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 		return false;
 	}
 
-	static bool IsValueObjectPropertyCandidate(INamedTypeSymbol typeSymbol, IPropertySymbol property)
-	{
-		if (!property.IsImplicitlyDeclared)
-			return true;
-
-		return typeSymbol.IsRecord
+	static bool IsValueObjectPropertyCandidate(INamedTypeSymbol typeSymbol, IPropertySymbol property) =>
+		!property.IsImplicitlyDeclared
+		|| typeSymbol.IsRecord
 			&& typeSymbol
 				.InstanceConstructors.Where(static ctor => !ctor.IsStatic)
 				.SelectMany(static ctor => ctor.Parameters)
@@ -1012,7 +1009,6 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 					SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)
 					&& string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)
 				);
-	}
 
 	static bool HasAttribute(INamedTypeSymbol typeSymbol, string metadataName) =>
 		typeSymbol.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
@@ -1408,18 +1404,18 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 
 	static string GetEmptyValueExpression(ITypeSymbol typeSymbol)
 	{
-		if (typeSymbol.IsReferenceType)
-			return typeSymbol.NullableAnnotation == NullableAnnotation.Annotated ? "null" : "null!";
-
-		return
-			typeSymbol is INamedTypeSymbol namedTypeSymbol
+		return typeSymbol.IsReferenceType
+			? typeSymbol.NullableAnnotation == NullableAnnotation.Annotated
+				? "null"
+				: "null!"
+			: typeSymbol is INamedTypeSymbol namedTypeSymbol
 			&& namedTypeSymbol.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
-			? "null"
-			: typeSymbol.ToDisplayString() switch
-			{
-				"System.Guid" => "global::System.Guid.Empty",
-				_ => "default",
-			};
+				? "null"
+				: typeSymbol.ToDisplayString() switch
+				{
+					"System.Guid" => "global::System.Guid.Empty",
+					_ => "default",
+				};
 	}
 
 	static IFieldSymbol[] GetEnumFields(ITypeSymbol enumTypeSymbol) =>
