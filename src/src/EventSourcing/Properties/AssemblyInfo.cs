@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Purview.Telemetry;
 
 [assembly: InternalsVisibleTo("SharedTestingFramework")]
 [assembly: InternalsVisibleTo("AzureStorage.IntegrationTests")]
@@ -12,3 +13,6 @@
 [assembly: InternalsVisibleTo("CosmosDb")]
 [assembly: InternalsVisibleTo("MongoDB")]
 [assembly: InternalsVisibleTo("SqlServer")]
+
+[assembly: ActivitySourceGeneration("Purview.EventSourcing")]
+[assembly: MeterGeneration("Purview.EventSourcing")]

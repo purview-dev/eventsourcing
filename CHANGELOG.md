@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-prerelease.28
+
+### Patch Changes
+
+- fix: added telemetry activity source and meter names
+
 ## 2.0.0-prerelease.27
 
 ### Patch Changes
