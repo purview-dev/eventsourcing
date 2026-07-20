@@ -22,6 +22,8 @@ public sealed partial class ReportUploadAggregate
 
 	public ReportSummary? ReportSummary { get; private set; }
 
+	public ParserReportSummary? ReportSummaryScalar { get; private set; }
+
 	public ReportUploadAggregate MarkAsProcessing() => SetReportProcessingStatus(ReportProcessingStatus.Processing);
 
 	public ReportUploadAggregate AddExcelReport(GuidObjectId projectId, BlobUri excelReportBlob) =>
@@ -36,6 +38,7 @@ public sealed partial class ReportUploadAggregate
 	)]
 	public partial ReportUploadAggregate MarkAsComplete(
 		ReportSummary reportSummary,
+		[Computed] ParserReportSummary? reportSummaryScalar = null,
 		[Computed] ReportProcessingStatus status = default
 	);
 
@@ -55,6 +58,7 @@ public sealed partial class ReportUploadAggregate
 	public partial ReportUploadAggregate MarkAsFailed(
 		string failureReason,
 		ReportSummary? reportSummary = null,
+		[Computed] ParserReportSummary? reportSummaryScalar = null,
 		[Computed] ReportProcessingStatus status = default
 	);
 

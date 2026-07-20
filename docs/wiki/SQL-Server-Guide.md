@@ -2,10 +2,8 @@
 
 Purview Event Sourcing ships separate SQL Server-backed event and snapshot implementations in a single NuGet package:
 
-| Package | Class | Purpose |
-|---------|-------|---------|
-| `Purview.EventSourcing.SqlServer` | `SqlServerEventStore<T>` | Pure event-sourced store — events are the source of truth |
-| `Purview.EventSourcing.SqlServer` | `SqlServerSnapshotEventStore<T>` | Queryable snapshot store — optimized for query/list/count over snapshots |
+- `Purview.EventSourcing.SqlServer` + `SqlServerEventStore<T>`: pure event-sourced store where events remain the source of truth.
+- `Purview.EventSourcing.SqlServer` + `SqlServerSnapshotEventStore<T>`: queryable snapshot store optimized for query/list/count over snapshots.
 
 Both stores create their tables automatically on first use (configurable) and use a **single shared table** for all aggregate types.
 
@@ -111,7 +109,7 @@ builder.Services.AddSqlServerSnapshotQueryableEventStore();
 ### Events Store (`SqlServerEventStoreOptions`)
 
 | Property | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `ConnectionString` | `string` | *(required)* | ADO.NET connection string |
 | `SchemaName` | `string` | `"dbo"` | Default schema for the events table |
 | `TableName` | `string` | `"EventStore"` | Default table name for events |
@@ -129,7 +127,7 @@ builder.Services.AddSqlServerSnapshotQueryableEventStore();
 ### Snapshot Store (`SqlServerSnapshotEventStoreOptions`)
 
 | Property | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `ConnectionString` | `string` | *(required)* | ADO.NET connection string |
 | `SchemaName` | `string` | `"dbo"` | Default schema for the snapshots table |
 | `TableName` | `string` | `"Snapshots"` | Default table name |
@@ -203,7 +201,7 @@ Both stores use a **single shared table** by default. All aggregate types are st
 
 ### Events table schema
 
-```
+```text
 [Id]            NVARCHAR(450)     PK
 [EntityType]    INT               0=StreamVersion, 1=Event, 2=IdempotencyMarker, 3=Snapshot
 [AggregateId]   NVARCHAR(450)     The aggregate's id
@@ -219,7 +217,7 @@ Both stores use a **single shared table** by default. All aggregate types are st
 Three covering indices are created automatically:
 
 | Index | Columns | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `IX_EventStore_AggregateId_EntityType` | `(AggregateId, EntityType)` INCLUDE all | Stream lookups |
 | `IX_EventStore_EventRange` | `(AggregateId, EntityType, Version)` WHERE EntityType=1 | Event replay |
 | `IX_EventStore_AggregateType_EntityType` | `(AggregateType, EntityType, IsDeleted)` INCLUDE AggregateId | Aggregate ID enumeration |
@@ -279,6 +277,7 @@ builder.Services.Configure<SqlServerEventStoreOptions>(options =>
 ### How it works
 
 When `SqlServerEventStore<T>` is constructed it looks up `T`'s `AggregateType` name in `AggregateTableOverrides`. If a match is found:
+
 - `SchemaName` override (if set) replaces the global `SchemaName`
 - `TableName` override (if set) replaces the global `TableName`
 - All other options (compression, timeouts, caching…) are inherited from the global options
@@ -417,13 +416,22 @@ Supported members include:
 - complex objects composed of supported members,
 - `EventStoreList<T>` / `EventStoreSet<T>` collections of supported primitive/complex members.
 
+Important distinction for SQL translation:
+
+- A `[Scalar]` value object with a **primitive** inner value behaves like a scalar in queries.
+- A `[Scalar]` value object with a **complex** inner value is persisted correctly, but deep predicates through `.Value` are not guaranteed to translate in SQL snapshot queries.
+- If you need deep SQL predicates for a complex concept, expose the underlying complex type directly on the aggregate/query snapshot model (for example, a `ParserReportSummary` mirror property) and test the exact nested predicate you expect to support.
+- Directly mapped complex snapshot members can support deep predicates such as `ParserDetails.FailedLines > 0`, subject to the provider's supported payload-shape rules.
+
 Unsupported members fail during model creation, including:
 
 - arrays,
 - collection types other than `EventStoreList<T>` / `EventStoreSet<T>` (for example `List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`, `HashSet<T>`, `ImmutableArray<T>`),
-- unsupported object types such as dictionaries.
+- unsupported object types that are not explicitly mapped for JSON conversion.
 
 Read-only and `[JsonIgnore]` members are excluded from snapshot payload mapping.
+
+Some nested collection/dictionary members inside directly mapped complex graphs may be supported through provider JSON conversion rather than direct relational collection mapping. Treat those shapes as provider-specific and verify them with integration tests.
 
 ### Examples
 
@@ -469,19 +477,19 @@ For generator/framework behavior (aggregate inheritance paths, hooks, event nami
 
 ### Local development (Windows auth)
 
-```
+```text
 Server=(localdb)\MSSQLLocalDB;Database=MyApp;Trusted_Connection=True;
 ```
 
 ### SQL Server with SQL auth
 
-```
+```text
 Server=my-server.database.windows.net;Database=MyApp;User Id=app_login;Password=…;
 ```
 
 ### Azure SQL with Managed Identity
 
-```
+```text
 Server=my-server.database.windows.net;Database=MyApp;Authentication=Active Directory Default;
 ```
 

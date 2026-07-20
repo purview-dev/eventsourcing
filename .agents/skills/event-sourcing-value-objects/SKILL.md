@@ -1,6 +1,6 @@
 ---
 name: event-sourcing-value-objects
-description: Model scalar and complex value objects with source-generated normalization and validation.
+description: Model scalar and complex value objects with source-generated normalization, validation, and query-translation awareness.
 category: architecture
 roles:
   - architecture
@@ -11,6 +11,8 @@ tags:
   - value-objects
   - source-generator
   - validation
+  - snapshots
+  - sql
 ---
 
 # Event Sourcing Value Objects Skill
@@ -23,6 +25,7 @@ Use this skill when defining value objects in `Purview.EventSourcing` with sourc
 - Normalize incoming values consistently.
 - Validate strict creation paths while preserving replay/hydration semantics.
 - Support aggregate-aware validation through contextual value object creation.
+- Make query-translation tradeoffs explicit when value objects are used in snapshot-backed SQL queries.
 
 ## Scalar value object rules (`[Scalar]`)
 
@@ -34,6 +37,13 @@ Use this skill when defining value objects in `Purview.EventSourcing` with sourc
 - Use `Hydrate(...)` for replay/deserialization where strict checks should not be re-run.
 - Use `ValueObjectDeserializationMode.Strict` only when strict `Create(...)` behavior is required during deserialization.
 - Prefer explicit null/empty guards and domain-specific exceptions.
+
+### Scalar queryability rules
+
+- Scalar value objects with primitive inner values are the most query-friendly shape for provider-backed snapshot filters.
+- Scalar value objects that wrap complex CLR types preserve invariants and serialization, but SQL providers may treat them as provider-converted scalars.
+- Do **not** assume nested predicates such as `Aggregate.ComplexScalar.Value.Child.Prop` are SQL-translatable.
+- If deep SQL filtering is required, expose the underlying complex type separately on the aggregate/query model and test the exact predicate path.
 
 ### Scalar template
 
@@ -112,6 +122,7 @@ public readonly partial record struct OrderStatus
 - Put primitive-format and canonicalization rules in value objects (`OnNormalize`/`OnValidate`).
 - Put aggregate lifecycle/state-machine rules in aggregate hooks and contextual `Create(...)`.
 - Keep replay-safe behavior by separating strict creation (`Create`) from hydration (`Hydrate`).
+- Put SQL snapshot query-shape decisions in aggregate/query-model design rather than inside the value object itself.
 
 ## Output template to use
 
@@ -120,4 +131,4 @@ public readonly partial record struct OrderStatus
 3. Validation/invariant rules with expected exceptions.
 4. Strict create vs hydrate behavior.
 5. Aggregate-context dependencies (if contextual).
-
+6. Queryability notes for snapshot-backed providers when relevant.

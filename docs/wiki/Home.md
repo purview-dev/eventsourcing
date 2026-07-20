@@ -26,6 +26,7 @@ This wiki is the project documentation hub for framework features, provider capa
   - Azure Storage: table-backed event streams with blob support for snapshots/large payloads.
   - MongoDB: event streams + queryable snapshots.
   - Cosmos DB: queryable snapshot store.
+  - SQL snapshot translation distinguishes between provider-converted scalar value objects and directly mapped complex snapshot graphs; see the provider matrix and SQL guide for details.
 - **Generator behavior**
   - `[GenerateAggregate]` supports no base, direct `AggregateBase`, and transitive base-chain inheritance.
   - Property hooks are property-scoped across generated events that map that property.

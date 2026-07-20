@@ -1,6 +1,6 @@
 ---
 name: event-sourcing-aggregate-design
-description: Define and model event-sourced aggregates, events, and state transitions.
+description: Define and model event-sourced aggregates, events, state transitions, and snapshot-queryable mirror properties.
 category: architecture
 roles:
   - architecture
@@ -11,6 +11,8 @@ tags:
   - aggregates
   - domain-modeling
   - ddd
+  - snapshots
+  - sql
 ---
 
 # Event Sourcing Aggregate Design Skill
@@ -28,6 +30,7 @@ For deeper implementation details, pair with:
 - Produce clear aggregate property names, event names, and transition rules.
 - Support implementation guidance for event-sourcing solutions.
 - Follow source-generator-first patterns for aggregate/event implementation.
+- Distinguish canonical domain properties from query-facing snapshot mirror properties when SQL translation matters.
 
 ## Rules for aggregate design
 
@@ -37,6 +40,7 @@ For deeper implementation details, pair with:
 - Rebuild state only by replaying events.
 - Do not store mutable aggregate state as source-of-truth outside event history.
 - Keep events immutable and append-only.
+- Snapshots and snapshot-query properties are optimizations/read models, not source-of-truth.
 
 ## Source-generator implementation rules (Purview.EventSourcing style)
 
@@ -60,6 +64,14 @@ For deeper implementation details, pair with:
 - Use `Manual = true` only when providing a manual event-body implementation is required.
 - Do not hand-roll registration boilerplate already generated (event types, registration, apply plumbing).
 - Prefer invariant enforcement in aggregate hooks and contextual value-object `Create(...)` methods.
+
+## Query-facing mirror property rules
+
+- If a `[Scalar]` value object wraps a complex CLR type and SQL snapshot queries must filter on inner members, do **not** assume `MyScalar.Value.Nested.Property` will translate.
+- Prefer a separate aggregate property that stores the underlying complex type for snapshot/query usage when deep SQL predicates are required.
+- Populate mirror properties via `[Computed]` event parameters and generated hooks so callers cannot drift them away from canonical state.
+- Treat mirror properties as derived snapshot state: they must always be recomputable from persisted events.
+- Prove queryability with provider integration tests for the exact predicate path you expect to support.
 
 ### Property-hook behavior rules
 
@@ -103,6 +115,7 @@ public sealed partial class OrderAggregate : AggregateBase
 - Event names: past tense, business meaning first (for example: `OrderPlaced`, `PaymentCaptured`, `SubscriptionCancelled`).
 - Command names: intent/action phrasing (for example: `PlaceOrder`, `CapturePayment`, `CancelSubscription`).
 - Properties: domain language and explicit meaning (`CurrentStatus`, `TotalAmount`, `Revision`, `OccurredAtUtc`), avoid vague names (`Data`, `Value`, `Info`).
+- Query-facing mirror properties should be explicit (`ReportSummaryScalar`, `SnapshotSummary`, `SearchModel`) rather than generic (`QueryData`).
 
 ## Property/state to event mapping process
 
@@ -112,6 +125,7 @@ public sealed partial class OrderAggregate : AggregateBase
 4. Emit one or more domain events that describe facts in past tense.
 5. Update aggregate state by applying those events.
 6. Confirm each new property is derivable from event history.
+7. If a property exists for snapshot/query translation, confirm it is recomputed rather than caller-supplied.
 
 ## Support checklist for event-sourcing solutions
 
@@ -122,6 +136,7 @@ public sealed partial class OrderAggregate : AggregateBase
 - Snapshots (if used) are optimization only, never source-of-truth.
 - Idempotency and optimistic concurrency expectations are defined.
 - Projection/read-model requirements are separated from write model concerns.
+- SQL/query-provider translation assumptions are covered by tests when query-facing mirrors are introduced.
 
 ## Output template to use
 
@@ -132,4 +147,4 @@ When applying this skill, provide:
 3. Command list with validation rules.
 4. Event catalog with payload schema, version, and naming rationale.
 5. State transition table (current state + command -> event(s) + new state).
-6. Implementation notes (generated apply/replay flow, concurrency, versioning, snapshots).
+6. Implementation notes (generated apply/replay flow, concurrency, versioning, snapshots, and query-facing mirrors).

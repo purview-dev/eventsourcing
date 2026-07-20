@@ -218,6 +218,13 @@ Use query-side models for relational questions:
 
 The project supports queryable snapshot stores for providers such as SQL Server, MongoDB, and Cosmos DB, and a null queryable store for core-only scenarios. Design relational views as projections/snapshots that can be rebuilt from event streams when possible.
 
+When designing snapshot-backed SQL queries, distinguish between:
+
+- provider-converted scalar value objects, which are ideal for invariants and serialization but may not support deep translation through `.Value`, and
+- directly mapped complex snapshot members, which can support deep JSON-path predicates when the payload shape is explicitly supported and covered by integration tests.
+
+If deep snapshot filtering is a hard requirement for a complex concept, model that query-facing shape deliberately instead of assuming a scalar wrapper will remain queryable.
+
 The current repository also includes an in-memory provider and quick-start sample. Treat in-memory storage as a development/testing convenience unless a production use case has explicitly accepted its durability limits.
 
 ### Cross-Aggregate Rules

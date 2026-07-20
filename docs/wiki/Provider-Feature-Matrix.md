@@ -20,6 +20,15 @@ This page summarizes feature availability by package so provider selection is ex
 - Choose **MongoDB** when you want both event and snapshot stores on MongoDB.
 - Choose **Cosmos DB** when you only need a queryable snapshot store.
 
+### SQL Server query translation notes
+
+- SQL snapshot queries support predicates over JSON-mapped primitive members and supported value-object shapes.
+- For provider-converted members (for example, a `[Scalar]` value object whose inner `Value` is a complex type), deep predicates on inner members are **not SQL-translatable** (for example: `a.ReportSummary.Value.ParserDetails.FailedLines > 0`).
+- The same conceptual data **can** be queried deeply when exposed as a directly mapped complex property in the snapshot graph (for example: `a.ReportSummaryScalar.ParserDetails.FailedLines > 0`, where `ReportSummaryScalar` is a `ParserReportSummary`).
+- `EventStoreList<T>` / `EventStoreSet<T>` members with `[ValueObject]` struct elements are persisted via JSON conversion for compatibility; treat nested element member filtering as non-translatable unless explicitly covered by tests.
+- Nested dictionary/interface-collection members inside directly mapped complex snapshot graphs require explicit mapper support; when supported, prove the exact predicate path with provider integration tests.
+- Recommended pattern: query by SQL-translatable fields first, or expose a directly mapped complex mirror property when deep SQL filtering is a real requirement.
+
 ## Related docs
 
 - [Getting Started](Getting-Started.md)

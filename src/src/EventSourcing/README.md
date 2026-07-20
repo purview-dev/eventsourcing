@@ -40,5 +40,8 @@ await store.SaveAsync(order, cancellationToken);
 
 ## Documentation
 
-- Repository README: https://github.com/kjldev/purview-eventsourcing/blob/main/README.md
-- SQL Server guide: https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/SQL-Server-Guide.md
+- [Repository README](https://github.com/kjldev/purview-eventsourcing/blob/main/README.md)
+- [SQL Server guide](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/SQL-Server-Guide.md)
+- [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
+
+When using snapshot-backed providers, especially SQL Server, read the provider docs before assuming deep predicates through complex scalar value object `.Value` members will translate.

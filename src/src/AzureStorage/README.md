@@ -22,4 +22,5 @@ builder.Services.AddAzureTableEventStore();
 
 ## Documentation
 
-- Repository README: https://github.com/kjldev/purview-eventsourcing/blob/main/README.md
+- [Repository README](https://github.com/kjldev/purview-eventsourcing/blob/main/README.md)
+- [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)

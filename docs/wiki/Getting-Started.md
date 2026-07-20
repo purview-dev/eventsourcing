@@ -101,3 +101,5 @@ foreach (var item in history.Results)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
 - [Release Flow](Release-Flow.md)
+
+If you plan to query snapshot JSON deeply in SQL providers, read the SQL Server guide and provider matrix before relying on nested predicates through scalar value object `.Value` members.

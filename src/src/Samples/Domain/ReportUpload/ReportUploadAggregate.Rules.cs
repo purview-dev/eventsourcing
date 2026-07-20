@@ -27,13 +27,30 @@ partial class ReportUploadAggregate
 			throw new InvalidOperationException("Cannot change uploaded information after report creation.");
 	}
 
-	partial void OnComputingMarkAsCompletedEvent(ref ReportProcessingStatus status) =>
-		status = ReportProcessingStatus.Completed;
+	partial void OnComputingMarkAsCompletedEvent(
+		ref ParserReportSummary? reportSummaryScalar,
+		ref ReportProcessingStatus status
+	) => status = ReportProcessingStatus.Completed;
+
+	partial void OnComputingMarkAsCompletedEvent(
+		ref ReportSummary? reportSummary,
+		ref ParserReportSummary? reportSummaryScalar,
+		ref ReportProcessingStatus status
+	) => reportSummaryScalar = reportSummary?.Value;
 
 	partial void OnRaisingMarkAsCompletedEvent(ref ReportSummary? reportSummary) => reportSummary.Required();
 
-	partial void OnComputingMarkAsFailedEvent(ref ReportProcessingStatus status) =>
-		status = ReportProcessingStatus.Failed;
+	partial void OnComputingMarkAsFailedEvent(
+		ref ParserReportSummary? reportSummaryScalar,
+		ref ReportProcessingStatus status
+	) => status = ReportProcessingStatus.Failed;
+
+	partial void OnComputingMarkAsFailedEvent(
+		ref string? failureReason,
+		ref ReportSummary? reportSummary,
+		ref ParserReportSummary? reportSummaryScalar,
+		ref ReportProcessingStatus status
+	) => reportSummaryScalar = reportSummary?.Value;
 
 	partial void OnRaisingMarkAsFailedEvent(ref string? failureReason, ref ReportSummary? reportSummary) =>
 		failureReason.Required(true);

@@ -370,7 +370,10 @@ sealed partial class SqlServerClient
 				$"'{scalarType.Name}' missing scalar property '{scalarAttribute.PropertyName}'."
 			);
 
-		var converterType = typeof(ScalarValueConverter<,>).MakeGenericType(scalarType, scalarProperty.PropertyType);
+		var scalarPropertyType = scalarProperty.PropertyType;
+		var converterType = IsPrimitiveLike(scalarPropertyType)
+			? typeof(ScalarValueConverter<,>).MakeGenericType(scalarType, scalarPropertyType)
+			: typeof(JsonScalarValueConverter<,>).MakeGenericType(scalarType, scalarPropertyType);
 		configurationBuilder.Properties(scalarType, builder => builder.HaveConversion(converterType));
 	}
 
@@ -410,6 +413,12 @@ sealed partial class SqlServerClient
 				if (!IsEventStoreCollectionType(propertyType))
 					throw CreateUnsupportedCollectionTypeException(type, property, propertyType);
 
+				if (IsStructValueObjectType(elementType))
+				{
+					MapCollectionAsJsonProperty(builder, propertyType, property.Name);
+					continue;
+				}
+
 				if (IsPrimitiveLike(elementType) || elementType.GetCustomAttribute<ScalarAttribute>() is not null)
 					builder.PrimitiveCollection(propertyType, property.Name);
 				else if (ShouldInspectType(elementType))
@@ -421,6 +430,12 @@ sealed partial class SqlServerClient
 				else
 					throw CreateUnsupportedShapeException(type, property);
 
+				continue;
+			}
+
+			if (IsDictionaryLikeType(propertyType) || IsJsonConvertibleCollectionType(propertyType))
+			{
+				MapJsonProperty(builder, propertyType, property.Name);
 				continue;
 			}
 
@@ -477,6 +492,12 @@ sealed partial class SqlServerClient
 				if (!IsEventStoreCollectionType(propertyType))
 					throw CreateUnsupportedCollectionTypeException(type, property, propertyType);
 
+				if (IsStructValueObjectType(elementType))
+				{
+					MapCollectionAsJsonProperty(builder, propertyType, property.Name);
+					continue;
+				}
+
 				if (IsPrimitiveLike(elementType) || elementType.GetCustomAttribute<ScalarAttribute>() is not null)
 					builder.PrimitiveCollection(propertyType, property.Name);
 				else if (ShouldInspectType(elementType))
@@ -488,6 +509,12 @@ sealed partial class SqlServerClient
 				else
 					throw CreateUnsupportedShapeException(type, property);
 
+				continue;
+			}
+
+			if (IsDictionaryLikeType(propertyType) || IsJsonConvertibleCollectionType(propertyType))
+			{
+				MapJsonProperty(builder, propertyType, property.Name);
 				continue;
 			}
 
@@ -566,7 +593,11 @@ sealed partial class SqlServerClient
 				if (!IsEventStoreCollectionType(propertyType))
 					throw CreateUnsupportedCollectionTypeException(type, property, propertyType);
 
-				if (!IsPrimitiveLike(elementType) && elementType.GetCustomAttribute<ScalarAttribute>() is null)
+				if (
+					!IsPrimitiveLike(elementType)
+					&& elementType.GetCustomAttribute<ScalarAttribute>() is null
+					&& !IsStructValueObjectType(elementType)
+				)
 				{
 					if (!ShouldInspectType(elementType))
 						throw CreateUnsupportedShapeException(type, property);
@@ -576,6 +607,9 @@ sealed partial class SqlServerClient
 
 				continue;
 			}
+
+			if (IsDictionaryLikeType(propertyType) || IsJsonConvertibleCollectionType(propertyType))
+				continue;
 
 			if (IsCollectionLikeType(propertyType))
 				throw CreateUnsupportedCollectionTypeException(type, property, propertyType);
@@ -589,6 +623,37 @@ sealed partial class SqlServerClient
 			if (!IsPrimitiveLike(propertyType))
 				throw CreateUnsupportedShapeException(type, property);
 		}
+	}
+
+	static bool IsStructValueObjectType(Type type) =>
+		type.IsValueType && type.GetCustomAttribute<ValueObjectAttribute>() is not null;
+
+	static void MapCollectionAsJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
+		propertyBuilder.HasConversion(converterType);
+	}
+
+	static void MapCollectionAsJsonProperty(ComplexCollectionBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
+		propertyBuilder.HasConversion(converterType);
+	}
+
+	static void MapJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
+		propertyBuilder.HasConversion(converterType);
+	}
+
+	static void MapJsonProperty(ComplexCollectionBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
+		propertyBuilder.HasConversion(converterType);
 	}
 
 	static bool ShouldOwnType(Type type) =>
@@ -689,6 +754,37 @@ sealed partial class SqlServerClient
 		// Test for our own collection types or if the type implements IEnumerable<T> somewhere...
 		return IsEventStoreCollectionType(type)
 			|| type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+	}
+
+	static bool IsDictionaryLikeType(Type type)
+	{
+		if (!type.IsGenericType)
+			return false;
+
+		var genericTypeDefinition = type.GetGenericTypeDefinition();
+		if (
+			genericTypeDefinition == typeof(Dictionary<,>)
+			|| genericTypeDefinition == typeof(IDictionary<,>)
+			|| genericTypeDefinition == typeof(IReadOnlyDictionary<,>)
+		)
+			return true;
+
+		return type.GetInterfaces()
+			.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
+	}
+
+	static bool IsJsonConvertibleCollectionType(Type type)
+	{
+		if (type == typeof(string) || type == typeof(byte[]))
+			return false;
+
+		if (!type.IsGenericType || IsEventStoreCollectionType(type) || IsDictionaryLikeType(type))
+			return false;
+
+		if (type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+			return true;
+
+		return type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 	}
 
 	static InvalidOperationException CreateUnsupportedShapeException(Type containingType, MemberInfo member) =>

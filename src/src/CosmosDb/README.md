@@ -22,4 +22,7 @@ builder.Services.AddCosmosDbQueryableEventStore();
 
 ## Documentation
 
-- Repository README: https://github.com/kjldev/purview-eventsourcing/blob/main/README.md
+- [Repository README](https://github.com/kjldev/purview-eventsourcing/blob/main/README.md)
+- [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
+
+Snapshot query translation capabilities differ by provider; consult the provider matrix before relying on deep nested predicates for complex value-object shapes.

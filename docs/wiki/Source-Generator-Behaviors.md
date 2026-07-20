@@ -16,7 +16,7 @@ Other eligibility rules:
 - Nested and generic aggregate types are not supported.
 - `RegisterEvents()` is generated and cannot be manually declared.
 
-### Examples
+### Inheritance examples
 
 ```csharp
 // 1) No declared base class (generator adds AggregateBase on generated partial)
@@ -62,7 +62,7 @@ Default event type naming:
 
 Namespace can be overridden per method (`EventNamespace`) or by aggregate defaults.
 
-### Examples
+### Event naming examples
 
 ```csharp
 namespace Testing;
@@ -109,7 +109,7 @@ Manual behavior:
 
 - `Manual = true` does not auto-wire property hooks unless manual code invokes them.
 
-### Example
+### Property hook example
 
 ```csharp
 [GenerateAggregate]
@@ -155,8 +155,10 @@ public partial class ReportAggregate : AggregateBase
 - Generated mapping paths use `Create(...)` semantics for strict command-time conversion/validation.
 - Contextual `Create(TValue, in ValueObjectContext<TAggregate>)` is used when available.
 - Replay/hydration paths apply event payloads through generated `Apply(...)` logic.
+- Snapshot-query translation depends on how the provider maps the resulting property graph, not only on the value-object generator behavior.
+- A `[Scalar]` value object that wraps a complex CLR type may serialize correctly while still requiring a separate directly mapped complex mirror property for deep SQL predicates.
 
-### Examples
+### Value-object conversion examples
 
 ```csharp
 // Scalar conversion

@@ -40,10 +40,17 @@ The snapshot payload is the fully serialized aggregate graph stored in a single 
 
 Supported members are writable primitives, `[Scalar]` value objects, complex objects composed of supported members, and `EventStoreList<T>` / `EventStoreSet<T>` collections of supported primitive or complex members.
 
-Unsupported shapes fail during model creation, including arrays and collection types other than `EventStoreList<T>` / `EventStoreSet<T>` (for example `List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`, `HashSet<T>`, `ImmutableArray<T>`) and unsupported object types such as dictionaries. Read-only and `[JsonIgnore]` members are excluded from the JSON payload.
+Important query distinction:
+
+- A `[Scalar]` value object with a primitive inner value is generally query-friendly.
+- A `[Scalar]` value object with a complex inner value is persisted correctly, but deep predicates through `.Value` are not guaranteed to translate in SQL snapshot queries.
+- If deep SQL predicates are required for a complex concept, expose the underlying complex type directly on the aggregate/query snapshot model (for example, a `ParserReportSummary` mirror property) and verify the exact nested predicate with integration tests.
+
+Unsupported shapes fail during model creation, including arrays and collection types other than `EventStoreList<T>` / `EventStoreSet<T>` (for example `List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`, `HashSet<T>`, `ImmutableArray<T>`), except where a provider-specific JSON conversion path is explicitly supported and tested. Read-only and `[JsonIgnore]` members are excluded from the JSON payload.
 
 ## Documentation
 
-- Repository README: https://github.com/kjldev/purview-eventsourcing/blob/main/README.md
-- SQL Server guide: https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/SQL-Server-Guide.md
+- [Repository README](https://github.com/kjldev/purview-eventsourcing/blob/main/README.md)
+- [SQL Server guide](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/SQL-Server-Guide.md)
   - Includes behavior notes/caveats (`IsDeletedAsync` missing behavior, tolerant replay, principal requirements)
+  - Includes snapshot payload/query-translation guidance for scalar value objects vs directly mapped complex mirrors

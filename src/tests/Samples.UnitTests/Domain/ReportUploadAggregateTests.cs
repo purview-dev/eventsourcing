@@ -49,7 +49,7 @@ public sealed class ReportUploadAggregateTests
 
 		// Act & Assert
 		Assert.Throws<ArgumentException>(() =>
-			sut.MarkAsComplete(CreateReportSummary(), ReportProcessingStatus.Failed)
+			sut.MarkAsComplete(CreateReportSummary(), status: ReportProcessingStatus.Failed)
 		);
 	}
 
