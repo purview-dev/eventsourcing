@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.0-prerelease.27
+
+### Patch Changes
+
+- ff8bad5: fixed GetOrCreateAsync always calling creator func/ action
+- fixed another GetOrCreateAsync issue calling creator action/ func on non-new aggregates
+
 ## 2.0.0-prerelease.25
 
 ### Patch Changes
