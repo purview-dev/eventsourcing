@@ -1,16 +1,15 @@
-﻿using Microsoft.Extensions.Primitives;
-using Purview.EventSourcing.Aggregates.Events;
+﻿using Purview.EventSourcing.Aggregates.Events;
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
-public class AddStringValuesDictionaryKVPsEvent : EventBase
+public class KVPsAddedEvent : EventBase
 {
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
 		"Performance",
 		"CA1819:Properties should not return arrays",
 		Justification = "DTO"
 	)]
-	public KeyValuePair<string, StringValues>[] KVPs { get; set; } = default!;
+	public KeyValuePair<string, string>[] KVPs { get; set; } = default!;
 
 	protected override void BuildEventHash(ref HashCode hash)
 	{

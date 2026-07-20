@@ -2,12 +2,12 @@
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
-public class SetInt32ValueEvent : EventBase
+public class ComplexPropertySetEvent : EventBase
 {
-	public int Value { get; set; }
+	public ComplexTestType ComplexProperty { get; set; } = default!;
 
 	protected override void BuildEventHash(ref HashCode hash)
 	{
-		hash.Add(Value);
+		hash.Add(ComplexProperty);
 	}
 }

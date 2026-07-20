@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Samples.Domain;
+﻿using Purview.EventSourcing.Samples.Domain.ReportUpload;
 using Purview.EventSourcing.Serialization;
 using Purview.EventSourcing.ValueObjects;
 
@@ -9,6 +9,8 @@ public readonly partial record struct ReportProcessingStatus
 	: IContextualValueObject<ReportProcessingStatus, ReportProcessingStatusCode, ReportUploadAggregate>
 {
 	public ReportProcessingStatusCode Value { get; }
+
+	ReportProcessingStatus(ReportProcessingStatusCode code) => Value = code;
 
 	public static ReportProcessingStatus Create(
 		ReportProcessingStatusCode value,

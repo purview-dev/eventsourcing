@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using Purview.EventSourcing.Guards;
 
 namespace Microsoft.Extensions.Configuration;
 

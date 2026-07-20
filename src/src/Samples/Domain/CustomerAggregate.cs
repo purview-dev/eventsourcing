@@ -17,7 +17,7 @@ public sealed partial class CustomerAggregate : AggregateBase
 
 	public EmailAddress Email { get; private set; }
 
-	[StringLength(10)]
+	[StringLength(20)]
 	public string? PhoneNumber { get; private set; }
 
 	public bool IsActive { get; private set; }

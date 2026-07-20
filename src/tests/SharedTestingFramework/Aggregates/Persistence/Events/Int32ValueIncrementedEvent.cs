@@ -2,7 +2,7 @@
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
-public class IncrementInt32ValueEvent : EventBase
+public class Int32ValueIncrementedEvent : EventBase
 {
 	protected override void BuildEventHash(ref HashCode hash) { }
 }

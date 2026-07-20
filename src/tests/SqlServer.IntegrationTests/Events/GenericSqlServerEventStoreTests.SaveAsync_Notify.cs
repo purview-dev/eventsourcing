@@ -18,7 +18,7 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		for (var i = 0; i < eventsToCreate; i++)
 			aggregate.IncrementInt32Value();
 
-		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		aggregateChangeNotifier
 			.BeforeSaveAsync(aggregate, true, Any<CancellationToken>())
@@ -45,7 +45,7 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 
-		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		var result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 

@@ -2,7 +2,7 @@
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
-public class SetIncrementEvent : EventBase
+public class IncrementValueSetEvent : EventBase
 {
 	public int Value { get; set; }
 

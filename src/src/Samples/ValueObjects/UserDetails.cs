@@ -1,14 +1,19 @@
-using Purview.EventSourcing.Serialization;
+﻿using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.Samples.ValueObjects;
 
 [ValueObject]
-public sealed partial record UserDetails(Guid Id, string? DisplayName, bool IsActive = true)
+public partial record struct UserDetails(Guid Id, string? DisplayName, bool IsActive = true)
 {
+	public static readonly Guid LocalUserId = Guid.Parse("10000000-0000-0000-0000-000000000000");
+
 	static partial void OnNormalize(ref Guid id, ref string? displayName, ref bool isActive)
 	{
 		if (!isActive)
-			displayName = null;
+		{
+			if (string.IsNullOrWhiteSpace(displayName))
+				displayName = null;
+		}
 	}
 
 	partial void OnValidate(Guid id, string? displayName, bool isActive)
@@ -17,6 +22,9 @@ public sealed partial record UserDetails(Guid Id, string? DisplayName, bool IsAc
 			throw new ArgumentException("Id must be a valid GUID.", nameof(id));
 
 		if (isActive && string.IsNullOrWhiteSpace(displayName))
-			throw new ArgumentException("DisplayName cannot be null or empty.", nameof(displayName));
+			throw new ArgumentException(
+				"DisplayName cannot be null or empty when a user is active.",
+				nameof(displayName)
+			);
 	}
 }

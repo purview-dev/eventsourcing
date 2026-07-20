@@ -8,11 +8,11 @@ using Testcontainers.MsSql;
 
 namespace Purview.EventSourcing;
 
-public static class ContainerHelper
+public static partial class ContainerHelper
 {
 	public static AzuriteContainer CreateAzurite(Action<AzuriteBuilder>? config = null)
 	{
-		var builder = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:3.36.0").WithCommand(
+		var builder = new AzuriteBuilder($"mcr.microsoft.com/azure-storage/azurite:{AzuriteImageTag}").WithCommand(
 			"--skipApiVersionCheck"
 		)
 		//.WithWaitStrategy(Wait.ForUnixContainer()
@@ -29,7 +29,7 @@ public static class ContainerHelper
 
 	public static CosmosDbContainer CreateCosmosDB(Action<CosmosDbBuilder>? config = null)
 	{
-		var builder = new CosmosDbBuilder("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+		var builder = new CosmosDbBuilder($"mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:{CosmosDbImageTag}")
 			.WithWaitStrategy(
 				Wait.ForUnixContainer()
 					.AddCustomWaitStrategy(new CosmosDbWaitUntil(), ws => ws.WithTimeout(TimeSpan.FromMinutes(5)))
@@ -74,7 +74,7 @@ public static class ContainerHelper
 
 	public static MongoDbContainer CreateMongoDB(Action<MongoDbBuilder>? config = null)
 	{
-		var builder = new MongoDbBuilder("mongo:7.0").WithReplicaSet()
+		var builder = new MongoDbBuilder($"mongo:{MongoDbImageTag}").WithReplicaSet()
 		//.WithAutoRemove(true)
 		//.WithCleanUp(true)
 		//.WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(27017))
@@ -87,7 +87,7 @@ public static class ContainerHelper
 
 	public static MsSqlContainer CreateMsSql(Action<MsSqlBuilder>? config = null)
 	{
-		var builder = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2025-latest");
+		var builder = new MsSqlBuilder($"mcr.microsoft.com/mssql/server:{SqlServerImageTag}");
 
 		config?.Invoke(builder);
 

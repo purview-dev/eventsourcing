@@ -183,7 +183,7 @@ partial class SqlServerSnapshotEventStoreTests
 		await Assert.That(saveResult).IsTrue();
 
 		// Verify via direct SQL Server read
-		var fromDb = await store.GetAsync<PersistenceAggregate>(aggregateId, cancellationToken: cancellationToken);
+		var fromDb = await store.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert.That(fromDb).IsNotNull();
 		await Assert.That(fromDb.IncrementInt32).IsEqualTo(3);

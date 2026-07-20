@@ -14,7 +14,7 @@ if (!isTesting)
 	builder.AddAspireC4();
 
 var sqlPassword = builder.AddParameter("sql-password", "PaSsw0rd!!1!", secret: true);
-var sql = builder.AddSqlServer("sql", password: sqlPassword).WithImageTag("2025-latest");
+var sql = builder.AddSqlServer("sql", password: sqlPassword).WithImageTag(ContainerHelper.SqlServerImageTag);
 var db = sql.AddDatabase("eventstore-sqlserver", databaseName);
 
 var blobs = builder
@@ -23,6 +23,8 @@ var blobs = builder
 	{
 		if (!isTesting)
 			e.WithDataVolume("eventsourcing-sample-azurite-data");
+
+		e.WithImageTag(ContainerHelper.AzuriteImageTag);
 	})
 	.AddBlobs(isTesting ? $"ess-{Guid.NewGuid():N}"[..8] : "blob-storage");
 

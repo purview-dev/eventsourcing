@@ -5,8 +5,8 @@ namespace Purview.EventSourcing.Samples.ValueObjects;
 [GenerateAggregate]
 sealed partial class ValueObjectTestAggregate
 {
-	public UserCaptureRecord UserCaptureRecord { get; private set; }
+	public UserCapture UserCapture { get; private set; }
 
 	[GenerateAggregateEvent]
-	public partial void SetUserCapture(UserCaptureRecord userCaptureRecord);
+	public partial void SetUserCapture(UserCapture userCapture);
 }

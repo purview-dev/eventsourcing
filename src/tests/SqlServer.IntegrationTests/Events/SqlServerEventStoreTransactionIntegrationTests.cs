@@ -71,7 +71,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlSe
 		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-ef"));
 		await using var transaction = factory.CreateSqlServerTransaction();
 		transaction.Enlist(aggregate, eventStore);
-		transaction.Enlist<TransactionAuditDbContext>(
+		transaction.Enlist(
 			connection => new TransactionAuditDbContext(connection, tableName),
 			async (dbContext, token) =>
 			{

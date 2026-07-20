@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace System;
+namespace Purview.EventSourcing.Guards;
 
 [StackTraceHidden]
 [EditorBrowsable(EditorBrowsableState.Never)]
@@ -11,7 +11,8 @@ public static class GuardStrings
 {
 	const char DefaultKeySeparator = '_';
 
-	public static string? NullIfEmpty(this string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
+	public static string? NullIfEmpty(this string? value, bool trim = true) =>
+		string.IsNullOrWhiteSpace(value) ? null : value.Required(trim: trim);
 
 	[return: NotNull]
 	public static string Required(this string? value, bool trim = true, [CallerMemberName] string? paramName = null)

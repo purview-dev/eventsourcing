@@ -1,9 +1,12 @@
+using Purview.EventSourcing.Samples.Domain.ReportUpload;
 using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.Samples.Domain;
 
 public sealed class ReportUploadAggregateTests
 {
+	static readonly Faker Faker = new();
+
 	[Test]
 	public async Task MarkAsComplete_GivenReportIsMarkedAsComplete_SetsStatusToCompleteAsSideEffect()
 	{
@@ -13,7 +16,7 @@ public sealed class ReportUploadAggregateTests
 		await Assert.That(sut.Status).IsNotEqualTo(ReportProcessingStatus.Completed);
 
 		// Act (status is not passed by caller)
-		sut.MarkAsComplete(CreateValidBlobUri(), new object());
+		sut.MarkAsComplete(CreateReportSummary());
 
 		// Assert
 		await Assert.That(sut.Status).IsEqualTo(ReportProcessingStatus.Completed);
@@ -27,7 +30,7 @@ public sealed class ReportUploadAggregateTests
 		sut.Create(CreateProjectId(), "report.json", CreateValidBlobUri(), CreateUploadedUser());
 
 		// Act
-		sut.MarkAsComplete(CreateValidBlobUri(), new object());
+		sut.MarkAsComplete(CreateReportSummary());
 
 		// Assert (event contains the computed status value)
 		var completedEvent = sut.GetUnsavedEvents()
@@ -46,7 +49,7 @@ public sealed class ReportUploadAggregateTests
 
 		// Act & Assert
 		Assert.Throws<ArgumentException>(() =>
-			sut.MarkAsComplete(CreateValidBlobUri(), new object(), ReportProcessingStatus.Failed)
+			sut.MarkAsComplete(CreateReportSummary(), ReportProcessingStatus.Failed)
 		);
 	}
 
@@ -57,6 +60,26 @@ public sealed class ReportUploadAggregateTests
 	static BlobUri CreateValidBlobUri() =>
 		BlobUri.Create(new Uri($"/example/nesting/{Guid.NewGuid()}/blob.json", UriKind.Relative));
 
-	static UserCaptureRecord CreateUploadedUser() =>
-		UserCaptureRecord.Create(UserDetails.Create(Guid.NewGuid(), "Uploader", true), DateTimeOffset.UtcNow);
+	static UserCapture CreateUploadedUser() =>
+		UserCapture.Create(UserDetails.Create(Guid.NewGuid(), "Uploader", true), DateTimeOffset.UtcNow);
+
+	static ReportSummary CreateReportSummary()
+	{
+		return ReportSummary.Create(
+			new()
+			{
+				AssetDetails = new AssetDetails(
+					new Dictionary<PlatformID, int>
+					{
+						{ PlatformID.Win32NT, Faker.Random.Int(1, 100) },
+						{ PlatformID.Unix, Faker.Random.Int(1, 100) },
+						{ PlatformID.Other, Faker.Random.Int(1, 100) },
+					}
+				),
+				ParserDetails = new(10, 5, 5, TimeSpan.FromMinutes(1)),
+				Projects = Faker.Make(2, i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")),
+				VulnerabilityDetails = new VulnerabilityDetails(100, 10, 10, 20, 30, 40),
+			}
+		);
+	}
 }

@@ -613,7 +613,7 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 			: new EventTypeValidationResult([
 				Diagnostic.Create(
 					GeneratorDiagnostics.EventNameShouldBePastTense,
-					typeDeclaration.GetLocation(),
+					typeDeclaration.Identifier.GetLocation(),
 					displayName
 				),
 			]);

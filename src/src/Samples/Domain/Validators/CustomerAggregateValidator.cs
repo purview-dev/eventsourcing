@@ -6,6 +6,6 @@ public sealed class CustomerAggregateValidator : AbstractValidator<CustomerAggre
 {
 	public CustomerAggregateValidator()
 	{
-		RuleFor(m => m.PhoneNumber).MaximumLength(10);
+		RuleFor(m => m.PhoneNumber).MaximumLength(20);
 	}
 }

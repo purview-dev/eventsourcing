@@ -2,9 +2,9 @@
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
-public class StringValueEvent : EventBase
+public class Int32ValueSetEvent : EventBase
 {
-	public string Value { get; set; } = default!;
+	public int Value { get; set; }
 
 	protected override void BuildEventHash(ref HashCode hash)
 	{

@@ -6,8 +6,6 @@ namespace Purview.EventSourcing.SqlServer.Events;
 /// </summary>
 public sealed class SqlServerEventStoreClientTests
 {
-	#region Identifier Validation Tests
-
 	[Test]
 	public async Task Constructor_GivenDefaultOptions_CreatesClientWithoutThrowing()
 	{
@@ -142,10 +140,6 @@ public sealed class SqlServerEventStoreClientTests
 			.Throws<ArgumentException>();
 	}
 
-	#endregion
-
-	#region Per-Aggregate Table Override Tests
-
 	[Test]
 	public async Task SqlServerEventStoreOptions_GivenNoOverride_AggregateTableOverridesIsEmpty()
 	{
@@ -210,6 +204,4 @@ public sealed class SqlServerEventStoreClientTests
 		await Assert.That(ovr.SchemaName).IsEqualTo("orders");
 		await Assert.That(ovr.TableName).IsEqualTo("Events");
 	}
-
-	#endregion
 }

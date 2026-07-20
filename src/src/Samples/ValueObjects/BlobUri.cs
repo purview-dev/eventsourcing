@@ -14,6 +14,4 @@ public sealed partial record BlobUri
 		if (value.IsAbsoluteUri)
 			throw new ArgumentException("Only relative Uris to blob storage are valid");
 	}
-
-	public static BlobUri Empty => Hydrate(null!);
 }

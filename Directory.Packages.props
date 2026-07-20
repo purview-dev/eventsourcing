@@ -4,7 +4,7 @@
 		<!-- Keep compiler-facing Roslyn packages aligned with the minimum SDK pinned in global.json so analyser ProjectReferences load on build machines. -->
 		<RoslynCompilerVersion>[5.0.0]</RoslynCompilerVersion>
 		<RoslynAnalyzersVersion>5.6.0</RoslynAnalyzersVersion>
-		<TUnitVersion>1.61.0</TUnitVersion>
+		<TUnitVersion>1.61.15</TUnitVersion>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageVersion Include="AspireC4.Hosting" Version="13.3.2" />

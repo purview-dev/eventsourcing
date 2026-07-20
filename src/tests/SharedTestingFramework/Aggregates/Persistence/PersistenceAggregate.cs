@@ -38,22 +38,22 @@ public sealed class PersistenceAggregate : AggregateBase, IAggregateTest
 
 	protected override void RegisterEvents()
 	{
-		Register<IncrementInt32ValueEvent>(_ => IncrementInt32++);
-		Register<SetIncrementEvent>(@event => IncrementInt32 = @event.Value);
-		Register<SetInt32ValueEvent>(@event => Int32Value = @event.Value);
-		Register<StringValueEvent>(@event => StringProperty += @event.Value);
-		Register<SetComplexPropertyEvent>(@event => ComplexTestType = @event.ComplexProperty);
-		Register<AddStringValuesDictionaryKVPsEvent>(Apply);
-		Register<AddStringDictionaryKVPsEvent>(Apply);
+		Register<Int32ValueIncrementedEvent>(_ => IncrementInt32++);
+		Register<IncrementValueSetEvent>(@event => IncrementInt32 = @event.Value);
+		Register<Int32ValueSetEvent>(@event => Int32Value = @event.Value);
+		Register<StringValueSetEvent>(@event => StringProperty += @event.Value);
+		Register<ComplexPropertySetEvent>(@event => ComplexTestType = @event.ComplexProperty);
+		Register<StringValueKVPsAddedEvent>(Apply);
+		Register<KVPsAddedEvent>(Apply);
 	}
 
-	void Apply(AddStringValuesDictionaryKVPsEvent obj)
+	void Apply(StringValueKVPsAddedEvent obj)
 	{
 		foreach (var kvp in obj.KVPs)
 			StringValuesDictionary.Add(kvp.Key, kvp.Value);
 	}
 
-	void Apply(AddStringDictionaryKVPsEvent obj)
+	void Apply(KVPsAddedEvent obj)
 	{
 		foreach (var kvp in obj.KVPs)
 			StringsDictionary.Add(kvp.Key, kvp.Value);
@@ -61,26 +61,26 @@ public sealed class PersistenceAggregate : AggregateBase, IAggregateTest
 
 	void Apply(OldEvent @event) => OldEventValue = @event.Value;
 
-	public void SetValidatedProperty(int value) => RecordAndApply(new SetIncrementEvent { Value = value });
+	public void SetValidatedProperty(int value) => RecordAndApply(new IncrementValueSetEvent { Value = value });
 
-	public void IncrementInt32Value() => RecordAndApply(new IncrementInt32ValueEvent());
+	public void IncrementInt32Value() => RecordAndApply(new Int32ValueIncrementedEvent());
 
 	public void SetInt32Value(int value)
 	{
 		if (Int32Value != value)
-			RecordAndApply(new SetInt32ValueEvent { Value = value });
+			RecordAndApply(new Int32ValueSetEvent { Value = value });
 	}
 
 	public void AppendString(string value)
 	{
-		RecordAndApply(new StringValueEvent { Value = value });
+		RecordAndApply(new StringValueSetEvent { Value = value });
 	}
 
 	public void AddKVPs(params KeyValuePair<string, StringValues>[] pairs) =>
-		RecordAndApply(new AddStringValuesDictionaryKVPsEvent { KVPs = pairs });
+		RecordAndApply(new StringValueKVPsAddedEvent { KVPs = pairs });
 
 	public void AddKVPs(params KeyValuePair<string, string>[] pairs) =>
-		RecordAndApply(new AddStringDictionaryKVPsEvent { KVPs = pairs });
+		RecordAndApply(new KVPsAddedEvent { KVPs = pairs });
 
 	public void SetOldEventValue(Guid value)
 	{
@@ -91,5 +91,5 @@ public sealed class PersistenceAggregate : AggregateBase, IAggregateTest
 	}
 
 	public void SetComplexProperty(ComplexTestType complexTestType) =>
-		RecordAndApply(new SetComplexPropertyEvent { ComplexProperty = complexTestType });
+		RecordAndApply(new ComplexPropertySetEvent { ComplexProperty = complexTestType });
 }

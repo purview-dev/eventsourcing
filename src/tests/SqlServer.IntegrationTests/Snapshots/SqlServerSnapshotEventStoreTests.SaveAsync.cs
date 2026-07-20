@@ -23,10 +23,7 @@ partial class SqlServerSnapshotEventStoreTests
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate directly from SQL Server, not via the event store.
-		var aggregateFromSqlServer = await store.GetAsync<PersistenceAggregate>(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromSqlServer = await store.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert.That(aggregateFromSqlServer).IsNotNull();
 		await Assert.That(aggregateFromSqlServer.Id()).IsEqualTo(aggregate.Id());

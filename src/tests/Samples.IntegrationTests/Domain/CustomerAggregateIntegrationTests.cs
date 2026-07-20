@@ -38,7 +38,9 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 		customer.ChangePhoneNumber("+1-555-0199");
 
 		var store = fixture.CreateEventStore<CustomerAggregate>();
-		await store.SaveAsync(customer, cancellationToken);
+		var result = await store.SaveAsync(customer, cancellationToken);
+
+		await Assert.That(result.EnsureValid).ThrowsNothing();
 
 		var loaded = await store.GetAsync(id, cancellationToken);
 
@@ -119,7 +121,9 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 		customer.ChangePhoneNumber("+44-20-0000-0001"); // v3
 
 		var store = fixture.CreateEventStore<CustomerAggregate>();
-		await store.SaveAsync(customer, cancellationToken);
+		var result = await store.SaveAsync(customer, cancellationToken);
+
+		await Assert.That(result.EnsureValid).ThrowsNothing();
 
 		var loaded = await store.GetAsync(id, cancellationToken);
 

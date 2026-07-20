@@ -55,7 +55,7 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 		aggregate.IncrementInt32Value();
 
-		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier.Object);
+		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier.Object);
 
 		aggregateChangeNotifier
 			.BeforeDeleteAsync(aggregate, Any<CancellationToken>())
