@@ -9,7 +9,10 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
-		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" />
+		<ProjectReference
+			Include="..\ImplementationShared\ImplementationShared.csproj"
+			PrivateAssets="All"
+		/>
 	</ItemGroup>
 
 	<ItemGroup>

@@ -8,6 +8,12 @@
 	<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.props" />
 
 	<PropertyGroup>
+		<TargetsForTfmSpecificBuildOutput>
+			$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage
+		</TargetsForTfmSpecificBuildOutput>
+	</PropertyGroup>
+
+	<PropertyGroup>
 		<NoWarn>$(NoWarn);CS0436;</NoWarn>
 		<!-- Ignoring XML comments for now -->
 		<NoWarn>$(NoWarn);CS1574;CS1591;</NoWarn>
