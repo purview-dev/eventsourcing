@@ -5,12 +5,16 @@
 			Link="Extensions\Purview\EventSourcing\ContainerHelper.Resources.cs"
 		/>
 	</ItemGroup>
+	<PropertyGroup>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Aspire.Hosting" />
 		<PackageReference Include="Aspire.Hosting.Azure.Storage" />
 		<PackageReference Include="Aspire.Hosting.Redis" />
 		<PackageReference Include="Aspire.Hosting.SqlServer" />
 		<PackageReference Include="AspireC4.Hosting" />
+		<PackageReference Include="Purview.Aspire.ResourceKit" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Samples.Web\Samples.Web.csproj" />
