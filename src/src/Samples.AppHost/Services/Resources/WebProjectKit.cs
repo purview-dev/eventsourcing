@@ -8,17 +8,17 @@ sealed partial class WebProjectKit
 	protected override IResourceBuilder<ProjectResource> BuildResource(IDistributedApplicationBuilder builder) =>
 		builder.AddProject<Projects.Samples_Web>(Name).WithExternalHttpEndpoints();
 
-	protected override void ConfigureResource(KitApp app)
+	protected override void ConfigureResource()
 	{
 		ResourceBuilder
-			.WithReference(app.SqlServer.Database)
-			.WaitFor(app.SqlServer.Database)
-			.WithReference(app.AzureStorage.Blobs)
-			.WaitFor(app.AzureStorage.Blobs);
+			.WithReference(HostKit.SqlServer.Database)
+			.WaitFor(HostKit.SqlServer.Database)
+			.WithReference(HostKit.AzureStorage.Blobs)
+			.WaitFor(HostKit.AzureStorage.Blobs);
 
-		if (app.Redis.IsEnabled)
+		if (HostKit.Redis.IsEnabled)
 		{
-			ResourceBuilder.WithReference(app.Redis.ResourceBuilder).WaitFor(app.Redis.ResourceBuilder);
+			ResourceBuilder.WithReference(HostKit.Redis).WaitFor(HostKit.Redis);
 		}
 	}
 }

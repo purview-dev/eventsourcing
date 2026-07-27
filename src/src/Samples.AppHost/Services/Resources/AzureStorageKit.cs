@@ -1,4 +1,5 @@
-﻿using Aspire.Hosting.Azure;
+﻿using System.ComponentModel.DataAnnotations;
+using Aspire.Hosting.Azure;
 using Purview.Aspire.ResourceKit;
 
 namespace Purview.EventSourcing.Samples.AppHost.Services.Resources;
@@ -14,17 +15,23 @@ sealed partial class AzureStorageKit
 			.AddAzureStorage("storage")
 			.RunAsEmulator(e =>
 			{
-				//if (!isTesting)
-				//	e.WithDataVolume("eventsourcing-sample-azurite-data");
+				if (!HostKit.Options.IsTestRun)
+					e.WithDataVolume();
 
 				e.WithImageTag(ContainerHelper.AzuriteImageTag);
 			});
 
 		Blobs = storage.AddBlobs(
 			//isTesting ? $"ess-{Guid.NewGuid():N}"[..8] : "blob-storage"
-			""
+			Options.BlobName
 		);
 
 		return storage;
+	}
+
+	partial class AzureStorageKitOptions
+	{
+		[Required(AllowEmptyStrings = false)]
+		public string BlobName { get; set; } = "blob";
 	}
 }

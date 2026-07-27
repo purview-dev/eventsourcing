@@ -1,8 +1,9 @@
-using Purview.EventSourcing.Samples.AppHost.Services;
-
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddKitAppResourceKit();
+if (Environment.UserInteractive)
+	Console.Title = $"[{builder.Environment.EnvironmentName}] Samples.AppHost v{AssemblyInfo.Version}";
+
+builder.AddAspireResourceKit();
 
 var app = builder.Build();
 

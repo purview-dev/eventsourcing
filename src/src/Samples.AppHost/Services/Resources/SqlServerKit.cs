@@ -20,18 +20,15 @@ sealed partial class SqlServerKit
 		var sql = builder.AddSqlServer(Name, sqlPassword).WithImageTag(ContainerHelper.SqlServerImageTag);
 		sql.AddDatabase("eventstore-db", Options.DatabaseName);
 
+		if (!HostKit.Options.IsTestRun)
+			ResourceBuilder.WithDataVolume("eventsourcing-sample-sql-data");
+
 		return sql;
 	}
 
-	protected override void ConfigureResource(KitApp app)
+	partial class SqlServerKitOptions
 	{
-		if (!app.Options.IsTestRun)
-			ResourceBuilder.WithDataVolume("eventsourcing-sample-sql-data");
+		[Required(AllowEmptyStrings = false)]
+		public string DatabaseName { get; set; } = "EventSourcingSampleDb";
 	}
-}
-
-partial class SqlServerKitOptions
-{
-	[Required(AllowEmptyStrings = false)]
-	public string DatabaseName { get; set; } = "EventSourcingSampleDb";
 }
