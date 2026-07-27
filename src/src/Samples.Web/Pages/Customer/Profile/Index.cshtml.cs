@@ -108,7 +108,7 @@ sealed class IndexModel(IQueryableEventStore store) : EventSourcingPageModel
 			: await TrySaveAsync(
 				async () =>
 				{
-					customer.UpdateDetails(name: newName, email: newEmail, phoneNumber: phoneNumber.OrNull());
+					customer.UpdateDetails(name: newName, email: newEmail, phoneNumber: phoneNumber);
 					await store.SaveAsync(customer, HttpContext.RequestAborted);
 				},
 				"Profile updated.",

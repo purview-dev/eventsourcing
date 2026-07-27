@@ -59,7 +59,7 @@ sealed class EditModel(IQueryableEventStore store) : EventSourcingPageModel
 			: await TrySaveAsync(
 				async () =>
 				{
-					customer.ChangePhoneNumber(phoneNumber.OrNull());
+					customer.ChangePhoneNumber(phoneNumber);
 					await store.SaveAsync(customer, HttpContext.RequestAborted);
 				},
 				"Phone number updated.",
