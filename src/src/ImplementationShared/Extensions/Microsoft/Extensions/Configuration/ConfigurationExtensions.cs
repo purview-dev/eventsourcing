@@ -8,15 +8,27 @@ public static class ConfigurationExtensions
 {
 	extension(IConfiguration configuration)
 	{
-		public string GetRequiredConnectionString(params string?[] keys) =>
-			GetConnectionString(configuration, keys).Required(trim: true);
+		public string GetRequiredConnectionString(params string?[] keys)
+		{
+			keys = NotNull(keys);
+
+			var result = GetConnectionString(configuration, keys);
+
+			return result.Required(
+				trim: true,
+				customExceptionMessage: $"No connection string found for keys: {string.Join(", ", keys)}"
+			);
+		}
 
 		public string GetRequiredConnectionString(IEnumerable<string?> keys) =>
-			GetConnectionString(configuration, keys?.ToArray()!).Required(trim: true);
+			GetRequiredConnectionString(configuration, keys?.ToArray()!);
 
 		public string? GetConnectionString(string?[] keys) =>
-			keys.Where(key => !string.IsNullOrWhiteSpace(key))
+			NotNull(keys)
 				.Select(x => configuration.GetConnectionString(x!))
 				.FirstOrDefault(key => !string.IsNullOrWhiteSpace(key));
+
+		static string[] NotNull(IEnumerable<string?> keys) =>
+			keys?.Where(key => !string.IsNullOrWhiteSpace(key)).Cast<string>().ToArray() ?? [];
 	}
 }

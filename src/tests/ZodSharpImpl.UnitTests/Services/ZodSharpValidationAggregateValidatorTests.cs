@@ -24,7 +24,7 @@ public sealed class ZodSharpAggregateValidatorTests
 		"Performance",
 		"CA1849:Call async methods when in an async method"
 	)]
-	public async Task Validate_UsesNonAsyncRules(CancellationToken cancellationToken)
+	public async Task Validate_UsesNonAsyncRules()
 	{
 		TestAggregate aggregate = new() { Name = "valid" };
 		var validator = IZodSchemaValidator<TestAggregate>.Mock();

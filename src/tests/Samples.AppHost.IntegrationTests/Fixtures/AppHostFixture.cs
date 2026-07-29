@@ -1,4 +1,3 @@
-using System.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Purview.Aspire.ResourceKit;
@@ -14,7 +13,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 
 	readonly Lazy<AppServiceHelper> _appService;
 
-	//string? _databaseConnectionString;
+	string? _databaseConnectionString;
 
 	public AppHostFixture()
 	{
@@ -44,7 +43,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 
 	void ConfigureAppServiceHelper(IServiceCollection services, IConfigurationBuilder configurationBuilder)
 	{
-		//ArgumentException.ThrowIfNullOrWhiteSpace(_databaseConnectionString);
+		ArgumentException.ThrowIfNullOrWhiteSpace(_databaseConnectionString);
 
 		services
 			// The event stores...
@@ -53,24 +52,18 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 			// Domain services...
 			.AddDomainServices();
 
-		//configurationBuilder.AddInMemoryCollection([
-		//	new KeyValuePair<string, string?>("ConnectionStrings:eventstore-sqlserver", _databaseConnectionString),
-		//]);
+		configurationBuilder.AddInMemoryCollection([
+			new KeyValuePair<string, string?>($"ConnectionStrings:{Platform.SqlDatabase}", _databaseConnectionString),
+		]);
 	}
 
-	//public override async Task InitializeAsync()
-	//{
-	//	await base.InitializeAsync();
+	public override async Task InitializeAsync()
+	{
+		await base.InitializeAsync();
 
-	//	_databaseConnectionString =
-	//		await GetConnectionStringAsync("eventstore-sqlserver")
-	//		?? BuildDatabaseConnectionString(
-	//			await GetConnectionStringAsync("sql")
-	//				?? throw new InvalidOperationException("The AppHost did not expose a database connection string.")
-	//		);
-
-	//	await WaitForWebAppAsync(CancellationToken.None);
-	//}
+		_databaseConnectionString = await GetConnectionStringAsync(Platform.SqlDatabase);
+		//	await WaitForWebAppAsync(CancellationToken.None);
+	}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -89,53 +82,59 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		return new(new HttpClientHandler() { AllowAutoRedirect = false }) { BaseAddress = httpClient.BaseAddress };
 	}
 
-	async Task WaitForWebAppAsync(CancellationToken cancellationToken)
-	{
-		using var client = CreateWebClient();
-		client.Timeout = TimeSpan.FromSeconds(10);
+	//async Task WaitForWebAppAsync(CancellationToken cancellationToken)
+	//{
+	//	using var client = CreateWebClient();
+	//	client.Timeout = TimeSpan.FromSeconds(10);
 
-		var timeoutAt = DateTimeOffset.UtcNow.AddMinutes(3);
-		while (DateTimeOffset.UtcNow < timeoutAt)
-		{
-			try
-			{
-				using var response = await client.GetAsync("/pingz", cancellationToken);
+	//	var timeoutAt = DateTimeOffset.UtcNow.AddMinutes(3);
+	//	while (DateTimeOffset.UtcNow < timeoutAt)
+	//	{
+	//		try
+	//		{
+	//			using var response = await client.GetAsync("/pingz", cancellationToken);
 
-				if (TestContext.Current != null)
-					await TestContext.Current.OutputWriter.WriteLineAsync("Pingz Response: " + response.StatusCode);
+	//			if (TestContext.Current != null)
+	//				await TestContext.Current.OutputWriter.WriteLineAsync("Pingz Response: " + response.StatusCode);
 
-				Console.WriteLine("Pingz Response: " + response.StatusCode);
+	//			Console.WriteLine("Pingz Response: " + response.StatusCode);
 
-				if (response.IsSuccessStatusCode)
-					return;
-			}
-			catch (Exception ex) when (DateTimeOffset.UtcNow < timeoutAt)
-			{
-				// Resource may still be starting.
-				if (TestContext.Current != null)
-					await TestContext.Current.OutputWriter.WriteLineAsync("Waiting for Web Failure: " + ex.Message);
+	//			if (response.IsSuccessStatusCode)
+	//				return;
+	//		}
+	//		catch (Exception ex) when (DateTimeOffset.UtcNow < timeoutAt)
+	//		{
+	//			// Resource may still be starting.
+	//			if (TestContext.Current != null)
+	//				await TestContext.Current.OutputWriter.WriteLineAsync("Waiting for Web Failure: " + ex.Message);
 
-				Console.WriteLine("Waiting for Web Failure: " + ex.Message);
-			}
+	//			Console.WriteLine("Waiting for Web Failure: " + ex.Message);
+	//		}
 
-			await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
-		}
+	//		await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+	//	}
 
-		throw new InvalidOperationException("The web app resource did not become ready in time.");
-	}
+	//	throw new InvalidOperationException("The web app resource did not become ready in time.");
+	//}
 
-	string BuildDatabaseConnectionString(string connectionString)
-	{
-		SqlConnectionStringBuilder builder = new(connectionString) { InitialCatalog = _databaseName };
+	//string BuildDatabaseConnectionString(string connectionString)
+	//{
+	//	SqlConnectionStringBuilder builder = new(connectionString) { InitialCatalog = _databaseName };
 
-		return builder.ConnectionString;
-	}
+	//	return builder.ConnectionString;
+	//}
 
 	public IQueryableEventStore QueryableEventStore() => _appService.Value.GetRequiredService<IQueryableEventStore>();
 
 	public IEventStore EventStore() => _appService.Value.GetRequiredService<IEventStore>();
 
 	public object? GetService(Type serviceType) => _appService.Value.GetService(serviceType);
+
+	//public object? GetService(Type serviceType) => App.Services.GetService(serviceType);
+
+	//public IQueryableEventStore QueryableEventStore() => App.Services.GetRequiredService<IQueryableEventStore>();
+
+	//public IEventStore EventStore() => App.Services.GetRequiredService<IEventStore>();
 
 	public IServiceProvider CloneServices(Action<IServiceCollection>? configure) =>
 		_appService.Value.CloneServices(configure);

@@ -15,9 +15,20 @@ public static class GuardStrings
 		string.IsNullOrWhiteSpace(value) ? null : value.Required(trim: trim);
 
 	[return: NotNull]
-	public static string Required(this string? value, bool trim = true, [CallerMemberName] string? paramName = null)
+	public static string Required(
+		this string? value,
+		bool trim = true,
+		string? customExceptionMessage = null,
+		[CallerMemberName] string? paramName = null
+	)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
+		if (string.IsNullOrWhiteSpace(value))
+		{
+			if (customExceptionMessage != null)
+				throw new ArgumentException(customExceptionMessage, paramName);
+
+			ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
+		}
 
 		return trim ? value.TrimText() : value!;
 	}
