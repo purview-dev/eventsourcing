@@ -8,7 +8,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// These tests verify that independent aggregates can be saved and reloaded independently
 /// while reflecting a coherent multi-aggregate business scenario.
 /// </summary>
-[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class MultiAggregateIntegrationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]

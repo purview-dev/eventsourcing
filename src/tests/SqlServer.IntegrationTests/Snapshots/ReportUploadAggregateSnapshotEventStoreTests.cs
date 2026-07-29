@@ -4,7 +4,7 @@ using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
-[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	static readonly Faker Faker = new();

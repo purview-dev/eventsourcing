@@ -4,7 +4,7 @@ using Purview.EventSourcing.Samples.Domain;
 
 namespace Purview.EventSourcing.Samples.Web.Services;
 
-[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class AggregateAuditServiceIntegrationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]

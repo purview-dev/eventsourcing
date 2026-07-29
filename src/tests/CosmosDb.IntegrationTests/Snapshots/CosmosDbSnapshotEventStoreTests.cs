@@ -3,7 +3,7 @@ using Purview.EventSourcing.Fixtures.CosmosDb;
 
 namespace Purview.EventSourcing.CosmosDb.Snapshots;
 
-[ClassDataSource<CosmosDbSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<CosmosDbSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 [NotInParallel(nameof(CosmosDbClient))]
 public partial class CosmosDbSnapshotEventStoreTests(CosmosDbSnapshotEventStoreFixture fixture)
 {

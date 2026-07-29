@@ -7,7 +7,7 @@ using Purview.EventSourcing.Fixtures.SqlServer;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
-[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]

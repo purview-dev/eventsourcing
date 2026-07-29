@@ -608,6 +608,9 @@ sealed partial class SqlServerClient
 				continue;
 			}
 
+			if (IsReadOnlyCollectionType(propertyType))
+				throw CreateUnsupportedCollectionTypeException(type, property, propertyType);
+
 			if (IsDictionaryLikeType(propertyType) || IsJsonConvertibleCollectionType(propertyType))
 				continue;
 
@@ -754,6 +757,16 @@ sealed partial class SqlServerClient
 		// Test for our own collection types or if the type implements IEnumerable<T> somewhere...
 		return IsEventStoreCollectionType(type)
 			|| type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+	}
+
+	static bool IsReadOnlyCollectionType(Type type)
+	{
+		if (!type.IsGenericType)
+			return false;
+
+		var genericTypeDefinition = type.GetGenericTypeDefinition();
+		return genericTypeDefinition == typeof(IReadOnlyList<>)
+			|| genericTypeDefinition == typeof(IReadOnlyCollection<>);
 	}
 
 	static bool IsDictionaryLikeType(Type type)

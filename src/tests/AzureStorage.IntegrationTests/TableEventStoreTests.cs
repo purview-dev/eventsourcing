@@ -2,7 +2,7 @@
 
 namespace Purview.EventSourcing.AzureStorage;
 
-[ClassDataSource<TableEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<TableEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 {
 	[Test]

@@ -3,7 +3,7 @@ using Purview.EventSourcing.Fixtures.SqlServer;
 
 namespace Purview.EventSourcing.Samples.Domain;
 
-[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	#region Round-Trip Persistence

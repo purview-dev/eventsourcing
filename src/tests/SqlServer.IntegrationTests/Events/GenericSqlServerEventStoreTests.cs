@@ -4,7 +4,7 @@ using Purview.EventSourcing.Fixtures.SqlServer;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
-[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public partial class GenericSqlServerEventStoreTests<TAggregate>(SqlServerEventStoreFixture fixture)
 	: ISqlServerEventStoreTests
 	where TAggregate : class, IAggregateTest, new()

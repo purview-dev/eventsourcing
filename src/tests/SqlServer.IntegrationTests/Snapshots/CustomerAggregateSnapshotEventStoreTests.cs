@@ -3,7 +3,7 @@ using Purview.EventSourcing.Samples.Domain;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
-[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class CustomerAggregateSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	[Test]

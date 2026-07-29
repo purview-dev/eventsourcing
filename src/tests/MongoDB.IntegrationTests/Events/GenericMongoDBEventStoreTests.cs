@@ -5,7 +5,7 @@ using Purview.EventSourcing.MongoDb.Events;
 
 namespace Purview.EventSourcing.MongoDB.Events;
 
-[ClassDataSource<MongoDBEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<MongoDBEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public partial class GenericMongoDBEventStoreTests<TAggregate>(MongoDBEventStoreFixture fixture)
 	: IMongoDBEventStoreTests
 	where TAggregate : class, IAggregateTest, new()

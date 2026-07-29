@@ -5,7 +5,7 @@ using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
-[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class SqlServerSnapshotValueObjectPersistenceTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	[Test]

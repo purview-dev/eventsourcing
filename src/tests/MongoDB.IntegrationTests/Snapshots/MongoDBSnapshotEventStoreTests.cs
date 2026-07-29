@@ -4,7 +4,7 @@ using Purview.EventSourcing.Fixtures.MongoDB;
 
 namespace Purview.EventSourcing.MongoDB.Snapshots;
 
-[ClassDataSource<MongoDBSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<MongoDBSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public partial class MongoDBSnapshotEventStoreTests(MongoDBSnapshotEventStoreFixture fixture)
 {
 	static PersistenceAggregate CreateAggregate(string? id = null, Action<PersistenceAggregate>? action = null)

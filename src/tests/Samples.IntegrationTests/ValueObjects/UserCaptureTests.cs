@@ -2,7 +2,7 @@
 
 namespace Purview.EventSourcing.Samples.ValueObjects;
 
-[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public class UserCaptureTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	static readonly Faker Faker = new();

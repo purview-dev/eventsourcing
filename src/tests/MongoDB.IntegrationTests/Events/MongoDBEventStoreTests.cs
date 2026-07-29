@@ -2,7 +2,7 @@ using Purview.EventSourcing.Fixtures.MongoDB;
 
 namespace Purview.EventSourcing.MongoDB.Events;
 
-[ClassDataSource<MongoDBEventStoreFixture>(Shared = SharedType.PerAssembly)]
+[ClassDataSource<MongoDBEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixture)
 {
 	[Test]
