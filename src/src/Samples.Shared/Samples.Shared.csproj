@@ -1,0 +1,5 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
+	</PropertyGroup>
+</Project>

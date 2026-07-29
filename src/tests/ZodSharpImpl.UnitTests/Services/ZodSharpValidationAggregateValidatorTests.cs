@@ -8,16 +8,15 @@ public sealed class ZodSharpAggregateValidatorTests
 	[Test]
 	public async Task ValidateAsync_UsesAsyncRules(CancellationToken cancellationToken)
 	{
-		var asyncRuleInvoked = false;
-		var aggregate = new TestAggregate { Name = "invalid" };
+		TestAggregate aggregate = new() { Name = "valid" };
 		var validator = IZodSchemaValidator<TestAggregate>.Mock();
+		validator.ValidateAsync(Any(), Any()).Returns(ValidationResult<TestAggregate>.Success(aggregate));
 
-		var adapter = new ZodSharpAggregateValidator<TestAggregate>(validator);
+		ZodSharpAggregateValidator<TestAggregate> adapter = new(validator);
 
-		var result = await adapter.ValidateAsync(aggregate, cancellationToken);
+		await adapter.ValidateAsync(aggregate, cancellationToken);
 
-		await Assert.That(asyncRuleInvoked).IsTrue();
-		await Assert.That(result.IsValid).IsTrue();
+		validator.ValidateAsync(AnyArgs()).WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -25,18 +24,65 @@ public sealed class ZodSharpAggregateValidatorTests
 		"Performance",
 		"CA1849:Call async methods when in an async method"
 	)]
-	public async Task Validate_WhenFluentValidationFails_MapsToCoreValidationResult()
+	public async Task Validate_UsesNonAsyncRules(CancellationToken cancellationToken)
 	{
-		var aggregate = new TestAggregate { Name = "" };
+		TestAggregate aggregate = new() { Name = "valid" };
 		var validator = IZodSchemaValidator<TestAggregate>.Mock();
+		validator.Validate(Any()).Returns(ValidationResult<TestAggregate>.Success(aggregate));
 
-		var adapter = new ZodSharpAggregateValidator<TestAggregate>(validator);
+		ZodSharpAggregateValidator<TestAggregate> adapter = new(validator);
+
+		adapter.Validate(aggregate);
+
+		validator.Validate(Any()).WasCalled(Times.Once);
+	}
+
+	[Test]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Performance",
+		"CA1849:Call async methods when in an async method"
+	)]
+	public async Task Validate_WhenValidationFails_MapsToCoreValidationResult()
+	{
+		TestAggregate aggregate = new() { Name = "" };
+		var validator = IZodSchemaValidator<TestAggregate>.Mock();
+		validator
+			.Validate(Any())
+			.Returns(
+				ValidationResult<TestAggregate>.Failure(
+					ValidationError.Create("any", "error", [nameof(TestAggregate.Name)])
+				)
+			);
+
+		ZodSharpAggregateValidator<TestAggregate> adapter = new(validator);
 
 		var result = adapter.Validate(aggregate);
 
 		await Assert.That(result.IsValid).IsFalse();
 		await Assert.That(result.Errors).Count().IsEqualTo(1);
-		await Assert.That(result.Errors[0].PropertyName).IsEqualTo("Name");
+		await Assert.That(result.Errors[0].PropertyName).IsEqualTo(nameof(TestAggregate.Name));
+	}
+
+	[Test]
+	public async Task ValidateAsync_WhenValidationFails_MapsToCoreValidationResult()
+	{
+		TestAggregate aggregate = new() { Name = "" };
+		var validator = IZodSchemaValidator<TestAggregate>.Mock();
+		validator
+			.ValidateAsync(AnyArgs())
+			.Returns(
+				ValidationResult<TestAggregate>.Failure(
+					ValidationError.Create("any", "error", [nameof(TestAggregate.Name)])
+				)
+			);
+
+		ZodSharpAggregateValidator<TestAggregate> adapter = new(validator);
+
+		var result = await adapter.ValidateAsync(aggregate);
+
+		await Assert.That(result.IsValid).IsFalse();
+		await Assert.That(result.Errors).Count().IsEqualTo(1);
+		await Assert.That(result.Errors[0].PropertyName).IsEqualTo(nameof(TestAggregate.Name));
 	}
 
 	sealed class TestAggregate : AggregateBase

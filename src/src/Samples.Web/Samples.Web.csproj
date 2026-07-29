@@ -4,11 +4,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Aspire.Azure.Storage.Blobs" />
 		<PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
-		<PackageReference Include="Azure.Storage.Blobs" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Samples.Shared\Samples.Shared.csproj" />
 		<ProjectReference Include="..\Samples\Samples.csproj" />
 		<ProjectReference Include="..\Samples.ServiceDefaults\Samples.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\SqlServer\SqlServer.csproj" />

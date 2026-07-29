@@ -1,17 +1,20 @@
 using System.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Purview.Aspire.ResourceKit;
 using Purview.EventSourcing.Fixtures;
 using TUnit.Aspire;
 
-namespace Purview.EventSourcing.Samples.AppHost.Fixtures;
+namespace Purview.EventSourcing.Samples.Fixtures;
 
 public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IServiceProvider
 {
 	readonly string _databaseName = $"EventStoreSample_" + $"{Guid.NewGuid():N}"[..8];
+	readonly string _snapshotBlobName = $"es-snapshot-" + $"{Guid.NewGuid():N}"[..8];
+
 	readonly Lazy<AppServiceHelper> _appService;
 
-	string? _databaseConnectionString;
+	//string? _databaseConnectionString;
 
 	public AppHostFixture()
 	{
@@ -20,7 +23,16 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		_appService = new(() => new(ConfigureAppServiceHelper));
 	}
 
-	protected override string[] Args => [$"--DatabaseName={_databaseName}", "--IsTestRun"];
+	protected override string[] Args =>
+		[
+			.. base.Args,
+			.. OptionsHelper.For<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
+				c => c.IsTestRun = true,
+				c => c.IsLocal = false,
+				c => c.SqlServer.DatabaseName = _databaseName,
+				c => c.AzureStorage.BlobName = _snapshotBlobName
+			),
+		];
 
 	public override async ValueTask DisposeAsync()
 	{
@@ -32,33 +44,33 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 
 	void ConfigureAppServiceHelper(IServiceCollection services, IConfigurationBuilder configurationBuilder)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(_databaseConnectionString);
+		//ArgumentException.ThrowIfNullOrWhiteSpace(_databaseConnectionString);
 
 		services
 			// The event stores...
-			.AddSqlServerEventStore()
-			.AddSqlServerSnapshotQueryableEventStore()
+			.AddSqlServerEventStore(Platform.SqlDatabase)
+			.AddSqlServerSnapshotQueryableEventStore(Platform.SqlDatabase)
 			// Domain services...
 			.AddDomainServices();
 
-		configurationBuilder.AddInMemoryCollection([
-			new KeyValuePair<string, string?>("ConnectionStrings:eventstore-sqlserver", _databaseConnectionString),
-		]);
+		//configurationBuilder.AddInMemoryCollection([
+		//	new KeyValuePair<string, string?>("ConnectionStrings:eventstore-sqlserver", _databaseConnectionString),
+		//]);
 	}
 
-	public override async Task InitializeAsync()
-	{
-		await base.InitializeAsync();
+	//public override async Task InitializeAsync()
+	//{
+	//	await base.InitializeAsync();
 
-		_databaseConnectionString =
-			await GetConnectionStringAsync("eventstore-sqlserver")
-			?? BuildDatabaseConnectionString(
-				await GetConnectionStringAsync("sql")
-					?? throw new InvalidOperationException("The AppHost did not expose a database connection string.")
-			);
+	//	_databaseConnectionString =
+	//		await GetConnectionStringAsync("eventstore-sqlserver")
+	//		?? BuildDatabaseConnectionString(
+	//			await GetConnectionStringAsync("sql")
+	//				?? throw new InvalidOperationException("The AppHost did not expose a database connection string.")
+	//		);
 
-		await WaitForWebAppAsync(CancellationToken.None);
-	}
+	//	await WaitForWebAppAsync(CancellationToken.None);
+	//}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -67,7 +79,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	)]
 	public HttpClient CreateWebClient(bool followRedirects = false)
 	{
-		var httpClient = CreateHttpClient("web", "http");
+		var httpClient = CreateHttpClient(Platform.WebApp, "http");
 		if (followRedirects)
 			return httpClient;
 

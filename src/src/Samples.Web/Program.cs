@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
 using Purview.EventSourcing.SqlServer.Events.Exceptions;
@@ -11,22 +12,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 // Use Redis when available (e.g. via Aspire AppHost); fall back to in-memory for standalone dev runs
-if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("redis")))
+if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString(Platform.Redis)))
 	builder.Services.AddDistributedMemoryCache();
 else
-	builder.AddRedisDistributedCache("redis");
+	builder.AddRedisDistributedCache(Platform.Redis);
 
 // Register SQL Server event store (event stream + snapshots for querying)
-builder.Services.AddSqlServerEventStore();
-builder.Services.AddSqlServerSnapshotQueryableEventStore();
+builder.Services.AddSqlServerEventStore(Platform.SqlDatabase);
+builder.Services.AddSqlServerSnapshotQueryableEventStore(Platform.SqlDatabase);
 
 builder.Services.AddDomainServices();
 builder.Services.AddScoped<IAggregateAuditService, AggregateAuditService>();
 
 // Register product image service — uses Azure Blob Storage when configured, no-op otherwise
-var blobConnectionString = builder.Configuration.GetConnectionString("blob-storage");
+var blobConnectionString = builder.Configuration.GetConnectionString(Platform.AzureStorageBlob);
 if (!string.IsNullOrWhiteSpace(blobConnectionString))
 {
+	builder.AddAzureBlobContainerClient(Platform.AzureStorageBlob);
+
 	builder.Services.AddSingleton(new BlobServiceClient(blobConnectionString));
 	builder.Services.AddSingleton<IProductImageService, ProductImageService>();
 }

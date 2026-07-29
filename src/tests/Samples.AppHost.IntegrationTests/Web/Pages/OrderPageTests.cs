@@ -1,7 +1,7 @@
-using Purview.EventSourcing.Samples.AppHost.Fixtures;
 using Purview.EventSourcing.Samples.Domain;
+using Purview.EventSourcing.Samples.Fixtures;
 
-namespace Purview.EventSourcing.Samples.AppHost.Pages;
+namespace Purview.EventSourcing.Samples.Web.Pages;
 
 [ClassDataSource<AppHostFixture>(Shared = SharedType.PerTestSession)]
 public sealed class OrderPageTests(AppHostFixture fixture)

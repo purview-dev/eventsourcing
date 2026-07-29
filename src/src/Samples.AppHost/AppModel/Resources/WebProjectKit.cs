@@ -1,8 +1,8 @@
 ﻿using Purview.Aspire.ResourceKit;
 
-namespace Purview.EventSourcing.Samples.AppHost.Services.Resources;
+namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 
-[ResourceDefinition<ProjectResource>]
+[ResourceDefinition<ProjectResource>(Platform.WebApp)]
 sealed partial class WebProjectKit
 {
 	protected override IResourceBuilder<ProjectResource> BuildResource(IDistributedApplicationBuilder builder) =>
@@ -10,11 +10,12 @@ sealed partial class WebProjectKit
 
 	protected override void ConfigureResource()
 	{
-		ResourceBuilder
-			.WithReference(HostKit.SqlServer.Database)
-			.WaitFor(HostKit.SqlServer.Database)
-			.WithReference(HostKit.AzureStorage.Blobs)
-			.WaitFor(HostKit.AzureStorage.Blobs);
+		ResourceBuilder.WithReference(HostKit.SqlServer.Database).WaitFor(HostKit.SqlServer.Database);
+
+		if (HostKit.AzureStorage.IsEnabled)
+		{
+			ResourceBuilder.WithReference(HostKit.AzureStorage.SnapshotBlob).WaitFor(HostKit.AzureStorage.SnapshotBlob);
+		}
 
 		if (HostKit.Redis.IsEnabled)
 		{

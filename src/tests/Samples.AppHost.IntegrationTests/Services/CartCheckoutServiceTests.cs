@@ -1,11 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Aggregates;
-using Purview.EventSourcing.Samples.AppHost.Fixtures;
 using Purview.EventSourcing.Samples.Domain;
-using Purview.EventSourcing.Samples.Services;
+using Purview.EventSourcing.Samples.Fixtures;
 using Purview.EventSourcing.Samples.ValueObjects;
 
-namespace Purview.EventSourcing.Samples.AppHost.Services;
+namespace Purview.EventSourcing.Samples.Services;
 
 [ClassDataSource<AppHostFixture>(Shared = SharedType.PerTestSession)]
 public sealed class CartCheckoutServiceTests(AppHostFixture fixture)

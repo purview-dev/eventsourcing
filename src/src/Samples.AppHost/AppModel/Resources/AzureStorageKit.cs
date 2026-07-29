@@ -2,29 +2,28 @@
 using Aspire.Hosting.Azure;
 using Purview.Aspire.ResourceKit;
 
-namespace Purview.EventSourcing.Samples.AppHost.Services.Resources;
+namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 
-[ResourceDefinition<AzureStorageResource>]
+[ResourceDefinition<AzureStorageResource>(Platform.AzureStorage)]
 sealed partial class AzureStorageKit
 {
-	public IResourceBuilder<AzureBlobStorageResource> Blobs { get; set; } = default!;
+	public IResourceBuilder<AzureBlobStorageContainerResource> SnapshotBlob { get; set; } = default!;
 
 	protected override IResourceBuilder<AzureStorageResource> BuildResource(IDistributedApplicationBuilder builder)
 	{
-		var storage = builder
-			.AddAzureStorage("storage")
-			.RunAsEmulator(e =>
+		var storage = builder.AddAzureStorage(Name);
+		if (!builder.ExecutionContext.IsPublishMode)
+		{
+			storage.RunAsEmulator(e =>
 			{
 				if (!HostKit.Options.IsTestRun)
 					e.WithDataVolume();
 
 				e.WithImageTag(ContainerHelper.AzuriteImageTag);
 			});
+		}
 
-		Blobs = storage.AddBlobs(
-			//isTesting ? $"ess-{Guid.NewGuid():N}"[..8] : "blob-storage"
-			Options.BlobName
-		);
+		SnapshotBlob = storage.AddBlobContainer(Platform.AzureStorageBlob, Options.BlobName);
 
 		return storage;
 	}

@@ -1,7 +1,0 @@
-[mcp_servers.git]
-command = "uvx"
-args = [
-    "mcp-server-git",
-    "--repository",
-    ".",
-]

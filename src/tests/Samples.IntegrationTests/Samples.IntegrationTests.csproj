@@ -1,8 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-	</ItemGroup>
-	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />
 		<!-- Direct reference required when not used via a NuGet package -->
 		<ProjectReference

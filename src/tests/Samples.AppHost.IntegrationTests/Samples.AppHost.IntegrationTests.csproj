@@ -1,9 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
+	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="TUnit.Aspire" />
 		<PackageReference Include="Aspire.Hosting.Testing" />
+		<PackageReference Include="Purview.Aspire.ResourceKit" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
+		<ProjectReference Include="..\..\src\Samples.Shared\Samples.Shared.csproj" />
+		<!--<ProjectReference Include="..\..\src\Samples.AppHost\Samples.AppHost.csproj" />-->
 	</ItemGroup>
 </Project>

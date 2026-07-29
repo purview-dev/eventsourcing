@@ -1,9 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Fixtures.SqlServer;
 using Purview.EventSourcing.Samples.Domain;
-using Purview.EventSourcing.Samples.Web.Services;
 
-namespace Purview.EventSourcing.Samples.Services;
+namespace Purview.EventSourcing.Samples.Web.Services;
 
 [ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerAssembly)]
 public sealed class AggregateAuditServiceIntegrationTests(SqlServerEventStoreFixture fixture)
@@ -40,7 +39,7 @@ public sealed class AggregateAuditServiceIntegrationTests(SqlServerEventStoreFix
 	{
 		var services = new ServiceCollection();
 		services.AddSingleton(orderStore);
-		services.AddSingleton<IEventStoreCore<OrderAggregate>>(orderStore);
+		services.AddSingleton(orderStore);
 		services.AddSingleton<IEventStore, EventStoreFacade>();
 		return services.BuildServiceProvider().GetRequiredService<IEventStore>();
 	}

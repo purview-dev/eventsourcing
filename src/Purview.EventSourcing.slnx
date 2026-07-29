@@ -14,28 +14,32 @@
 		<Project Path="src/ZodSharpImpl/ZodSharpImpl.csproj" />
 	</Folder>
 	<Folder Name="/src/implementations/">
+		<Project Path="src/AzureStorage/AzureStorage.csproj" />
 		<Project Path="src/CosmosDb/CosmosDb.csproj" />
 		<Project Path="src/ImplementationShared/ImplementationShared.csproj" />
 		<Project Path="src/InMemory/InMemory.csproj" />
 		<Project Path="src/MongoDB/MongoDB.csproj" />
 		<Project Path="src/SqlServer/SqlServer.csproj" />
-		<Project Path="src/AzureStorage/AzureStorage.csproj" />
 	</Folder>
 	<Folder Name="/src/samples/">
 		<Project Path="src/Samples.AppHost/Samples.AppHost.csproj" />
 		<Project Path="src/Samples.QuickStart/Samples.QuickStart.csproj" />
 		<Project Path="src/Samples.ServiceDefaults/Samples.ServiceDefaults.csproj" />
+		<Project
+			Path="src/Samples.Shared/Samples.Shared.csproj"
+			Id="73f6c7dd-ce43-419a-9d32-57f273536ff4"
+		/>
 		<Project Path="src/Samples.Web/Samples.Web.csproj" />
 		<Project Path="src/Samples/Samples.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
 		<Project Path="tests/FluentValidationImpl.UnitTests/FluentValidationImpl.UnitTests.csproj" />
-		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
 		<Project Path="tests/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj" />
 		<Project Path="tests/SourceGenerator.UnitTests/SourceGenerator.UnitTests.csproj" />
 		<Project Path="tests/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj" />
+		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
 	</Folder>
 	<Folder Name="/tests/implementations/">
 		<Project Path="tests/AzureStorage.IntegrationTests/AzureStorage.IntegrationTests.csproj" />
