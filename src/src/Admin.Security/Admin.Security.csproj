@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<Title>Purview Event Sourcing Admin Portal Security</Title>
+		<Description>Authorization policies and handlers for Purview EventSourcing Admin Portal.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;security;authorization;</PackageTags>
+		<PackageId>Purview.EventSourcing.Admin.Security</PackageId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Authorization" />
+	</ItemGroup>
+</Project>

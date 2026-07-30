@@ -13,6 +13,12 @@
 		<Project Path="src/SourceGenerator/SourceGenerator.csproj" />
 		<Project Path="src/ZodSharpImpl/ZodSharpImpl.csproj" />
 	</Folder>
+	<Folder Name="/src/admin/">
+		<Project Path="src/Admin.Abstractions/Admin.Abstractions.csproj" />
+		<Project Path="src/Admin.Security/Admin.Security.csproj" />
+		<Project Path="src/Admin.Api/Admin.Api.csproj" />
+		<Project Path="src/Admin.SqlServer/Admin.SqlServer.csproj" />
+	</Folder>
 	<Folder Name="/src/implementations/">
 		<Project Path="src/AzureStorage/AzureStorage.csproj" />
 		<Project Path="src/CosmosDb/CosmosDb.csproj" />
@@ -33,6 +39,8 @@
 		<Project Path="src/Samples/Samples.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
+		<Project Path="tests/Admin.UnitTests/Admin.UnitTests.csproj" />
+		<Project Path="tests/Admin.SqlServer.UnitTests/Admin.SqlServer.UnitTests.csproj" />
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
 		<Project Path="tests/FluentValidationImpl.UnitTests/FluentValidationImpl.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
