@@ -55,59 +55,59 @@ public sealed class CartCheckoutServiceTests(AppHostFixture fixture)
 		CancellationToken cancellationToken
 	)
 	{
-		//var inventoryId = string.Empty;
+		var inventoryId = string.Empty;
 
-		//var serviceProvider = fixture.CloneServices(services =>
-		//{
-		//	var descriptor = services.Last(service => service.ServiceType == typeof(IEventStoreTransactionFactory));
-		//	services.Remove(descriptor);
-		//	services.AddSingleton<IEventStoreTransactionFactory>(serviceProvider => new HookedTransactionFactory(
-		//		CreateService<IEventStoreTransactionFactory>(serviceProvider, descriptor),
-		//		async hookCancellationToken =>
-		//		{
-		//			await using var hookScope = serviceProvider.CreateAsyncScope();
-		//			var inventoryStore = hookScope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
-		//			var inventory = await inventoryStore.GetAsync<InventoryAggregate>(
-		//				inventoryId,
-		//				hookCancellationToken
-		//			);
+		var serviceProvider = fixture.CloneServices(services =>
+		{
+			var descriptor = services.Last(service => service.ServiceType == typeof(IEventStoreTransactionFactory));
+			services.Remove(descriptor);
+			services.AddSingleton<IEventStoreTransactionFactory>(serviceProvider => new HookedTransactionFactory(
+				CreateService<IEventStoreTransactionFactory>(serviceProvider, descriptor),
+				async hookCancellationToken =>
+				{
+					await using var hookScope = serviceProvider.CreateAsyncScope();
+					var inventoryStore = hookScope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
+					var inventory = await inventoryStore.GetAsync<InventoryAggregate>(
+						inventoryId,
+						hookCancellationToken
+					);
 
-		//			inventory!.ReserveStock(3, "concurrent-order");
-		//			await inventoryStore.SaveAsync(inventory, hookCancellationToken);
-		//		}
-		//	));
-		//});
+					inventory!.ReserveStock(3, "concurrent-order");
+					await inventoryStore.SaveAsync(inventory, hookCancellationToken);
+				}
+			));
+		});
 
-		//await using var scope = serviceProvider.CreateAsyncScope();
+		await using var scope = serviceProvider.CreateAsyncScope();
 
-		//var checkoutService = scope.ServiceProvider.GetRequiredService<ICartCheckoutService>();
-		//var customerStore = scope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
-		//var inventoryStore = scope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
-		//var orderStore = scope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
+		var checkoutService = scope.ServiceProvider.GetRequiredService<ICartCheckoutService>();
+		var customerStore = scope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
+		var inventoryStore = scope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
+		var orderStore = scope.ServiceProvider.GetRequiredService<IQueryableEventStore>();
 
-		//var customer = await CreateCustomerAsync(customerStore, cancellationToken);
-		//var inventory = await CreateInventoryAsync(inventoryStore, quantityOnHand: 10, cancellationToken);
-		//inventoryId = inventory.Id();
+		var customer = await CreateCustomerAsync(customerStore, cancellationToken);
+		var inventory = await CreateInventoryAsync(inventoryStore, quantityOnHand: 10, cancellationToken);
+		inventoryId = inventory.Id();
 
-		//var result = await checkoutService.CheckoutAsync(
-		//	customer.Id(),
-		//	[new CartItem(inventory.ProductId, inventory.ProductName, inventory.Id(), 8, 19.99m)],
-		//	"2 Event Sourcing Way",
-		//	cancellationToken
-		//);
+		var result = await checkoutService.CheckoutAsync(
+			customer.Id(),
+			[new CartItem(inventory.ProductId, inventory.ProductName, inventory.Id(), 8, 19.99m)],
+			"2 Event Sourcing Way",
+			cancellationToken
+		);
 
-		//var orderCount = await orderStore.CountAsync<OrderAggregate>(
-		//	order => order.CustomerId == customer.Id(),
-		//	cancellationToken
-		//);
-		//var savedInventory = await inventoryStore.GetAsync<InventoryAggregate>(inventory.Id(), cancellationToken);
+		var orderCount = await orderStore.CountAsync<OrderAggregate>(
+			order => order.CustomerId == customer.Id(),
+			cancellationToken
+		);
+		var savedInventory = await inventoryStore.GetAsync<InventoryAggregate>(inventory.Id(), cancellationToken);
 
-		//await Assert.That(result.Succeeded).IsFalse();
-		//await Assert.That(result.ErrorMessage).Contains("Nothing was saved");
-		//await Assert.That(orderCount).IsEqualTo(0L);
-		//await Assert.That(savedInventory).IsNotNull();
-		//await Assert.That(savedInventory!.ReservedQuantity).IsEqualTo(3);
-		//await Assert.That(savedInventory.AvailableQuantity).IsEqualTo(7);
+		await Assert.That(result.Succeeded).IsFalse();
+		await Assert.That(result.ErrorMessage).Contains("Nothing was saved");
+		await Assert.That(orderCount).IsEqualTo(0L);
+		await Assert.That(savedInventory).IsNotNull();
+		await Assert.That(savedInventory!.ReservedQuantity).IsEqualTo(3);
+		await Assert.That(savedInventory.AvailableQuantity).IsEqualTo(7);
 	}
 
 	static T CreateService<T>(IServiceProvider serviceProvider, ServiceDescriptor descriptor)
