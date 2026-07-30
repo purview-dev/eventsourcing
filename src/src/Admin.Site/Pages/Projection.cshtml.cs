@@ -4,14 +4,10 @@ using Purview.EventSourcing.Admin.Abstractions;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
-public class ProjectionModel : PageModel
+public class ProjectionModel(IAdminProjectionService projectionService) : PageModel
 {
-	private readonly IAdminProjectionService _projectionService;
-
-	public ProjectionModel(IAdminProjectionService projectionService)
-	{
-		_projectionService = projectionService ?? throw new ArgumentNullException(nameof(projectionService));
-	}
+	readonly IAdminProjectionService _projectionService =
+		projectionService ?? throw new ArgumentNullException(nameof(projectionService));
 
 	[BindProperty(SupportsGet = true)]
 	public required string AggregateType { get; set; }

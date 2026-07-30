@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Purview.EventSourcing.Admin.Api;
 
 public sealed class AdminPortalOptions
@@ -21,7 +19,7 @@ public sealed class AdminPortalOptions
 		if (string.IsNullOrWhiteSpace(RoutePrefix))
 			throw new InvalidOperationException("AdminPortalOptions.RoutePrefix cannot be empty.");
 
-		if (!RoutePrefix.StartsWith("/"))
+		if (!RoutePrefix.StartsWith('/'))
 			throw new InvalidOperationException("AdminPortalOptions.RoutePrefix must start with '/'.");
 
 		Features.Validate();
@@ -36,7 +34,7 @@ public sealed class AdminFeatureOptions
 	public bool ViewAggregate { get; set; } = true;
 	public bool ViewEvents { get; set; } = true;
 	public bool ProjectPointInTime { get; set; } = true;
-	public bool ExportEvents { get; set; } = false;
+	public bool ExportEvents { get; set; }
 
 	public void Validate() { }
 }

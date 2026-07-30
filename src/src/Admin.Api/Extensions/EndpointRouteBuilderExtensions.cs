@@ -1,14 +1,15 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Purview.EventSourcing.Admin.Api.Endpoints;
 
 namespace Purview.EventSourcing.Admin.Api;
 
 public static class AdminApiEndpointRouteBuilderExtensions
 {
 	public static void MapPurviewEventSourcingAdminApi(
-		this WebApplication app,
+		[NotNull] this WebApplication app,
 		IOptions<AdminPortalOptions>? optionsAccessor = null
 	)
 	{
@@ -18,7 +19,7 @@ public static class AdminApiEndpointRouteBuilderExtensions
 		if (!options.Enabled)
 			return;
 
-		var group = app.MapGroup(options.RoutePrefix).WithName("AdminPortal").WithOpenApi().RequireAuthorization();
+		var group = app.MapGroup(options.RoutePrefix).WithName("AdminPortal").RequireAuthorization();
 
 		// Map endpoint groups
 		if (options.Features.SearchAggregates)

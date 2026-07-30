@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Purview.EventSourcing.Admin.Abstractions.Models;
 
 namespace Purview.EventSourcing.Admin.Abstractions;
 

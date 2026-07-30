@@ -1,13 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Authorization;
 using Purview.EventSourcing.Admin.Abstractions;
 
-namespace Purview.EventSourcing.Admin.Security;
+namespace Purview.EventSourcing.Admin.Security.Handlers;
 
 public sealed class AdminFeatureAuthorizationHandler(IAdminPermissionProvider permissionProvider)
 	: AuthorizationHandler<AdminFeatureRequirement>
 {
 	protected override async Task HandleRequirementAsync(
-		AuthorizationHandlerContext context,
+		[NotNull] AuthorizationHandlerContext context,
 		AdminFeatureRequirement requirement
 	)
 	{

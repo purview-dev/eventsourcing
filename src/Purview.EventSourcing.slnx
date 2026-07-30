@@ -41,8 +41,6 @@
 		<Project Path="src/Samples/Samples.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
-		<Project Path="tests/Admin.UnitTests/Admin.UnitTests.csproj" />
-		<Project Path="tests/Admin.SqlServer.UnitTests/Admin.SqlServer.UnitTests.csproj" />
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
 		<Project Path="tests/FluentValidationImpl.UnitTests/FluentValidationImpl.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
@@ -50,6 +48,10 @@
 		<Project Path="tests/SourceGenerator.UnitTests/SourceGenerator.UnitTests.csproj" />
 		<Project Path="tests/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj" />
 		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
+	</Folder>
+	<Folder Name="/tests/admin/">
+		<Project Path="tests/Admin.SqlServer.UnitTests/Admin.SqlServer.UnitTests.csproj" />
+		<Project Path="tests/Admin.UnitTests/Admin.UnitTests.csproj" />
 	</Folder>
 	<Folder Name="/tests/implementations/">
 		<Project Path="tests/AzureStorage.IntegrationTests/AzureStorage.IntegrationTests.csproj" />

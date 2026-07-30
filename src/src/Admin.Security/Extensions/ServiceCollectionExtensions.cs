@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Security.Handlers;
 
 namespace Purview.EventSourcing.Admin.Security;
 
@@ -21,7 +23,7 @@ public static class AdminSecurityServiceCollectionExtensions
 		return services;
 	}
 
-	public static AuthorizationBuilder AddPurviewEventSourcingAdminPolicies(this AuthorizationBuilder builder)
+	public static AuthorizationBuilder AddPurviewEventSourcingAdminPolicies([NotNull] this AuthorizationBuilder builder)
 	{
 		builder.AddPolicy(
 			AdminPortalPolicies.SearchAggregates,

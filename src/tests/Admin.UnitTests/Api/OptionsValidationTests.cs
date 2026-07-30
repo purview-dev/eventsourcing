@@ -1,9 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Purview.EventSourcing.Admin.Api;
-using TUnit.Core;
 
-namespace Purview.EventSourcing.Admin.UnitTests.Api;
+namespace Purview.EventSourcing.Admin.Api;
 
 public sealed class OptionsValidationTests
 {
@@ -21,7 +19,7 @@ public sealed class OptionsValidationTests
 		}
 		catch (InvalidOperationException ex)
 		{
-			if (!ex.Message.Contains("RoutePrefix"))
+			if (!ex.Message.Contains("RoutePrefix", StringComparison.Ordinal))
 				throw;
 		}
 	}
@@ -40,7 +38,7 @@ public sealed class OptionsValidationTests
 		}
 		catch (InvalidOperationException ex)
 		{
-			if (!ex.Message.Contains("must start with"))
+			if (!ex.Message.Contains("must start with", StringComparison.Ordinal))
 				throw;
 		}
 	}
@@ -69,7 +67,7 @@ public sealed class OptionsValidationTests
 		}
 		catch (InvalidOperationException ex)
 		{
-			if (!ex.Message.Contains("DefaultPageSize"))
+			if (!ex.Message.Contains("DefaultPageSize", StringComparison.Ordinal))
 				throw;
 		}
 	}
@@ -88,7 +86,7 @@ public sealed class OptionsValidationTests
 		}
 		catch (InvalidOperationException ex)
 		{
-			if (!ex.Message.Contains("DefaultPageSize"))
+			if (!ex.Message.Contains("DefaultPageSize", StringComparison.Ordinal))
 				throw;
 		}
 	}

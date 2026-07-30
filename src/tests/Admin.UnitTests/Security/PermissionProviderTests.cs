@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Security;
 using TUnit.Core;
 

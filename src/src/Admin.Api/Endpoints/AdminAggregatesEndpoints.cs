@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions;
 using Purview.EventSourcing.Admin.Security;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.Api.Endpoints;
 
 public static class AdminAggregatesEndpoints
 {
@@ -18,7 +18,6 @@ public static class AdminAggregatesEndpoints
 			.WithName("SearchAggregates")
 			.WithSummary("Search for aggregates")
 			.WithDescription("Search aggregates by type, id, date range, or status flags with pagination support.")
-			.WithOpenApi()
 			.RequireAuthorization(AdminPortalPolicies.SearchAggregates);
 	}
 
@@ -29,7 +28,6 @@ public static class AdminAggregatesEndpoints
 			.WithName("GetAggregateEventRange")
 			.WithSummary("Get aggregate event range")
 			.WithDescription("Returns the aggregate event stream within version and timestamp bounds.")
-			.WithOpenApi()
 			.RequireAuthorization(AdminPortalPolicies.ViewEvents);
 	}
 
@@ -40,7 +38,6 @@ public static class AdminAggregatesEndpoints
 			.WithName("GetAggregateProjectionAtVersion")
 			.WithSummary("Get aggregate projection at version")
 			.WithDescription("Projects aggregate state at a specific version.")
-			.WithOpenApi()
 			.RequireAuthorization(AdminPortalPolicies.ProjectPointInTime);
 	}
 
@@ -51,7 +48,6 @@ public static class AdminAggregatesEndpoints
 			.WithName("GetAggregateProjectionAtTime")
 			.WithSummary("Get aggregate projection at time")
 			.WithDescription("Projects aggregate state at a specific UTC timestamp.")
-			.WithOpenApi()
 			.RequireAuthorization(AdminPortalPolicies.ProjectPointInTime);
 	}
 

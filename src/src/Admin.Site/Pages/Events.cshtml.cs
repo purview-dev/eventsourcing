@@ -4,14 +4,10 @@ using Purview.EventSourcing.Admin.Abstractions;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
-public class EventsModel : PageModel
+public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 {
-	private readonly IAdminEventQueryService _eventQueryService;
-
-	public EventsModel(IAdminEventQueryService eventQueryService)
-	{
-		_eventQueryService = eventQueryService ?? throw new ArgumentNullException(nameof(eventQueryService));
-	}
+	readonly IAdminEventQueryService _eventQueryService =
+		eventQueryService ?? throw new ArgumentNullException(nameof(eventQueryService));
 
 	[BindProperty(SupportsGet = true)]
 	public required string AggregateType { get; set; }
@@ -31,8 +27,8 @@ public class EventsModel : PageModel
 	[BindProperty(SupportsGet = true)]
 	public DateTime? TimeToUtc { get; set; }
 
-	[BindProperty(SupportsGet = true)]
-	public int Page { get; set; } = 1;
+	[BindProperty(SupportsGet = true, Name = "page")]
+	public int PageNo { get; set; } = 1;
 
 	[BindProperty(SupportsGet = true)]
 	public int PageSize { get; set; } = 25;
@@ -53,7 +49,7 @@ public class EventsModel : PageModel
 				VersionTo,
 				TimeFromUtc is not null ? new DateTimeOffset(TimeFromUtc.Value, TimeSpan.Zero) : null,
 				TimeToUtc is not null ? new DateTimeOffset(TimeToUtc.Value, TimeSpan.Zero) : null,
-				Page,
+				PageNo,
 				PageSize,
 				"Version asc"
 			);

@@ -99,14 +99,14 @@
 				</div>
 
 				<div class="pagination">
-					@if (Model.Page > 1)
+					@if (Model.PageNo > 1)
 					{
-						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.Page - 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Previous</a>
+						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.PageNo - 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Previous</a>
 					}
 
 					@if (Model.EventRange.Page * Model.EventRange.PageSize < Model.EventRange.TotalCount)
 					{
-						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.Page + 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Next</a>
+						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.PageNo + 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Next</a>
 					}
 				</div>
 			}

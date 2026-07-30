@@ -1,5 +1,7 @@
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
+using Purview.EventSourcing.Admin.Site;
+using Purview.EventSourcing.Admin.SqlServer;
 using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
@@ -21,6 +23,7 @@ else
 // Register SQL Server event store (event stream + snapshots for querying)
 builder.Services.AddSqlServerEventStore(Platform.SqlDatabase);
 builder.Services.AddSqlServerSnapshotQueryableEventStore(Platform.SqlDatabase);
+builder.Services.AddPurviewEventSourcingAdminSqlServer();
 
 builder.Services.AddDomainServices();
 builder.Services.AddScoped<IAggregateAuditService, AggregateAuditService>();
@@ -46,7 +49,7 @@ builder.Services.AddSingleton<IProductImageService>(serviceProvider =>
 	}
 });
 
-builder.Services.AddRazorPages();
+builder.Services.AddPurviewEventSourcingAdminSite(enableRazorRuntimeCompilation: builder.Environment.IsDevelopment());
 builder.Services.AddSession(options =>
 {
 	options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -62,7 +65,7 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
-app.MapRazorPages();
+app.MapPurviewEventSourcingAdminSite();
 app.MapGroup("/api/audit")
 	.MapGet(
 		"/aggregates/{aggregateType}/{aggregateId}/events",

@@ -11,16 +11,9 @@ public static class AdminSiteServiceCollectionExtensions
 	)
 	{
 		ArgumentNullException.ThrowIfNull(services);
-
-		var mvcBuilder = services
-			.AddRazorPages()
-			.AddRazorRuntimeCompilation(options =>
-			{
-				if (!enableRazorRuntimeCompilation)
-				{
-					options.FileProviders.Clear();
-				}
-			});
+		var mvcBuilder = services.AddRazorPages();
+		if (enableRazorRuntimeCompilation)
+			mvcBuilder.AddRazorRuntimeCompilation();
 
 		return mvcBuilder;
 	}

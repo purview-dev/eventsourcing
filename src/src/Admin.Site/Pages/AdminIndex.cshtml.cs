@@ -4,15 +4,10 @@ using Purview.EventSourcing.Admin.Abstractions;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
-public class IndexModel : PageModel
+public class AdminIndexModel(IAdminAggregateQueryService aggregateQueryService) : PageModel
 {
-	private readonly IAdminAggregateQueryService _aggregateQueryService;
-
-	public IndexModel(IAdminAggregateQueryService aggregateQueryService)
-	{
-		_aggregateQueryService =
-			aggregateQueryService ?? throw new ArgumentNullException(nameof(aggregateQueryService));
-	}
+	readonly IAdminAggregateQueryService _aggregateQueryService =
+		aggregateQueryService ?? throw new ArgumentNullException(nameof(aggregateQueryService));
 
 	[BindProperty(SupportsGet = true)]
 	public string? AggregateType { get; set; }
@@ -20,8 +15,8 @@ public class IndexModel : PageModel
 	[BindProperty(SupportsGet = true)]
 	public string? AggregateId { get; set; }
 
-	[BindProperty(SupportsGet = true)]
-	public int Page { get; set; } = 1;
+	[BindProperty(SupportsGet = true, Name = "page")]
+	public int PageNo { get; set; } = 1;
 
 	[BindProperty(SupportsGet = true)]
 	public int PageSize { get; set; } = 25;
@@ -39,7 +34,7 @@ public class IndexModel : PageModel
 				null,
 				null,
 				null,
-				Page,
+				PageNo,
 				PageSize,
 				"LastUpdatedUtc desc"
 			);
