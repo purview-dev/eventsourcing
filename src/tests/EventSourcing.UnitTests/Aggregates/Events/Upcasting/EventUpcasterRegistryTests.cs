@@ -25,6 +25,15 @@ public sealed class EventUpcasterRegistryTests
 		protected override void BuildEventHash(ref HashCode hash) => hash.Add(MidField);
 	}
 
+	sealed class V3Event : EventBase
+	{
+		public string V3Field { get; set; } = default!;
+
+		public override int SchemaVersion => 3;
+
+		protected override void BuildEventHash(ref HashCode hash) => hash.Add(V3Field);
+	}
+
 	sealed class LegacyToCurrentUpcaster : IEventUpcaster<LegacyEvent, CurrentEvent>
 	{
 		public CurrentEvent Upcast(LegacyEvent source) =>
@@ -41,6 +50,12 @@ public sealed class EventUpcasterRegistryTests
 	{
 		public CurrentEvent Upcast(IntermediateEvent source) =>
 			new() { Details = source.Details, NewField = source.MidField + "_final" };
+	}
+
+	sealed class IntermediateToV3Upcaster : IEventUpcaster<IntermediateEvent, V3Event>
+	{
+		public V3Event Upcast(IntermediateEvent source) =>
+			new() { Details = source.Details, V3Field = source.MidField + "_v3" };
 	}
 
 	#endregion
@@ -174,5 +189,80 @@ public sealed class EventUpcasterRegistryTests
 
 		// Act & Assert
 		await Assert.That(() => descriptor.Upcast(wrongEvent)).Throws<InvalidOperationException>();
+	}
+
+	[Test]
+	public async Task Upcast_PreservesEventDetailsMetadata()
+	{
+		// Arrange
+		var now = DateTime.UtcNow;
+		var descriptor = new EventUpcasterDescriptor<LegacyEvent, CurrentEvent>(new LegacyToCurrentUpcaster());
+		var registry = new EventUpcasterRegistry([descriptor]);
+
+		var legacyEvent = new LegacyEvent
+		{
+			OldField = "test",
+			Details =
+			{
+				IdempotencyId = "idempotency-123",
+				When = now,
+				UserId = "user-456",
+				CorrelationId = "correlation-789",
+				AggregateVersion = 42,
+			},
+		};
+
+		// Act
+		var result = registry.Upcast(legacyEvent);
+
+		// Assert
+		await Assert.That(result).IsTypeOf<CurrentEvent>();
+		var upcastEvent = (CurrentEvent)result;
+		await Assert.That(upcastEvent.Details.IdempotencyId).IsEqualTo("idempotency-123");
+		await Assert.That(upcastEvent.Details.When).IsEqualTo(now);
+		await Assert.That(upcastEvent.Details.UserId).IsEqualTo("user-456");
+		await Assert.That(upcastEvent.Details.CorrelationId).IsEqualTo("correlation-789");
+		await Assert.That(upcastEvent.Details.AggregateVersion).IsEqualTo(42);
+	}
+
+	[Test]
+	public async Task Upcast_GivenThreeHopChain_AppliesAllStepsInOrder()
+	{
+		// Arrange: LegacyEvent → IntermediateEvent → V3Event (three hops)
+		var legacyToMid = new EventUpcasterDescriptor<LegacyEvent, IntermediateEvent>(
+			new LegacyToIntermediateUpcaster()
+		);
+		var midToV3 = new EventUpcasterDescriptor<IntermediateEvent, V3Event>(new IntermediateToV3Upcaster());
+		var registry = new EventUpcasterRegistry([legacyToMid, midToV3]);
+
+		var legacyEvent = new LegacyEvent { OldField = "source" };
+
+		// Act
+		var result = registry.Upcast(legacyEvent);
+
+		// Assert
+		await Assert.That(result).IsTypeOf<V3Event>();
+		// LegacyEvent.OldField "source" → IntermediateEvent.MidField "source_mid" → V3Event.V3Field "source_mid_v3"
+		await Assert.That(((V3Event)result).V3Field).IsEqualTo("source_mid_v3");
+		await Assert.That(((V3Event)result).SchemaVersion).IsEqualTo(3);
+	}
+
+	[Test]
+	public async Task CanUpcast_GivenThreeHopChain_ReturnsTrue()
+	{
+		// Arrange: chain LegacyEvent → IntermediateEvent → V3Event
+		var legacyToMid = new EventUpcasterDescriptor<LegacyEvent, IntermediateEvent>(
+			new LegacyToIntermediateUpcaster()
+		);
+		var midToV3 = new EventUpcasterDescriptor<IntermediateEvent, V3Event>(new IntermediateToV3Upcaster());
+		var registry = new EventUpcasterRegistry([legacyToMid, midToV3]);
+
+		var legacyEvent = new LegacyEvent { OldField = "test" };
+
+		// Act
+		var result = registry.CanUpcast(legacyEvent);
+
+		// Assert
+		await Assert.That(result).IsTrue();
 	}
 }

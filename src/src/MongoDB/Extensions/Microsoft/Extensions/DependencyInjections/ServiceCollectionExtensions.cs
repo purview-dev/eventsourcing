@@ -7,7 +7,7 @@ using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Snapshots;
 
-namespace Microsoft.Extensions.DependencyInjections;
+namespace Microsoft.Extensions.DependencyInjection;
 
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions

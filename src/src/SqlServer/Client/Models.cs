@@ -19,4 +19,6 @@ sealed record SqlServerClientOptions(string ConnectionString, bool UseDataCompre
 	public string SchemaName { get; init; } = "dbo";
 
 	public bool AutoCreateTable { get; init; } = true;
+
+	public SqlServerJsonIndexOptions JsonIndexOptions { get; init; } = new();
 }

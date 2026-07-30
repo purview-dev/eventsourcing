@@ -15,10 +15,13 @@ Purview EventSourcing is a .NET event sourcing framework for building aggregate-
 | Package ID | Purpose | Project README |
 | --- | --- | --- |
 | `Purview.EventSourcing` | Core abstractions, aggregate types, facades, transactions, DI extensions, and source generation support | [`src/src/EventSourcing/README.md`](src/src/EventSourcing/README.md) |
-| `Purview.EventSourcing.SqlServer` | Azure SQL / SQL Server event stream and queryable snapshot stores | [`src/src/EventSourcing.SqlServer/README.md`](src/src/EventSourcing.SqlServer/README.md) |
-| `Purview.EventSourcing.AzureStorage` | Azure Table / Blob event store | [`src/src/EventSourcing.AzureStorage/README.md`](src/src/EventSourcing.AzureStorage/README.md) |
-| `Purview.EventSourcing.MongoDB` | MongoDB event stream and queryable snapshot stores | [`src/src/EventSourcing.MongoDB/README.md`](src/src/EventSourcing.MongoDB/README.md) |
-| `Purview.EventSourcing.CosmosDb` | Azure Cosmos DB queryable snapshot store | [`src/src/EventSourcing.CosmosDb/README.md`](src/src/EventSourcing.CosmosDb/README.md) |
+| `Purview.EventSourcing.SqlServer` | Azure SQL / SQL Server event stream and queryable snapshot stores | [`src/src/SqlServer/README.md`](src/src/SqlServer/README.md) |
+| `Purview.EventSourcing.AzureStorage` | Azure Table / Blob event store | [`src/src/AzureStorage/README.md`](src/src/AzureStorage/README.md) |
+| `Purview.EventSourcing.MongoDB` | MongoDB event stream and queryable snapshot stores | [`src/src/MongoDB/README.md`](src/src/MongoDB/README.md) |
+| `Purview.EventSourcing.CosmosDb` | Azure Cosmos DB queryable snapshot store | [`src/src/CosmosDb/README.md`](src/src/CosmosDb/README.md) |
+| `Purview.EventSourcing.InMemory` | In-memory event/snapshot store implementation for local and test scenarios | (see package source at `src/src/InMemory`) |
+| `Purview.EventSourcing.FluentValidation` | `FluentValidation` adapter for aggregate save-time validation | (see package source at `src/src/FluentValidationImpl`) |
+| `Purview.EventSourcing.ZodSharp` | `ZodSharp` adapter for aggregate save-time validation | (see package source at `src/src/ZodSharpImpl`) |
 
 ## Install the packages you need
 
@@ -28,6 +31,23 @@ dotnet add package Purview.EventSourcing.SqlServer
 ```
 
 Provider packages layer on top of the core `Purview.EventSourcing` package. Add only the providers required for your chosen persistence strategy.
+
+### Validation adapters
+
+```bash
+dotnet add package Purview.EventSourcing.FluentValidation
+dotnet add package Purview.EventSourcing.ZodSharp
+```
+
+### ZodSharp direct-reference requirement
+
+If your project directly references `ZodSharpImpl` (project reference) and uses types from `ZodSharp`, you must include a direct package reference:
+
+```xml
+<PackageReference Include="ZodSharp" />
+```
+
+`Purview.EventSourcing.ZodSharp` now ships a build-time guard target (`ValidateZodSharpDirectReference`) via NuGet `buildTransitive` assets. If the direct `ZodSharp` reference is missing, the consumer build fails with remediation guidance instead of allowing a runtime assembly-load failure.
 
 ## Quick start
 
@@ -182,8 +202,10 @@ Do not create release tags manually.
 - [Wiki home](docs/wiki/Home.md)
 - [Source generator behaviors](docs/wiki/Source-Generator-Behaviors.md)
 - [SQL Server event store guide](docs/wiki/SQL-Server-Guide.md)
+- [Dependency guardrails](docs/wiki/Dependency-Guardrails.md)
 - [Release flow](docs/wiki/Release-Flow.md)
 - [Core package README](src/src/EventSourcing/README.md)
-- [SQL Server provider README](src/src/EventSourcing.SqlServer/README.md)
-- [MongoDB provider README](src/src/EventSourcing.MongoDB/README.md)
-- [Cosmos DB provider README](src/src/EventSourcing.CosmosDb/README.md)
+- [SQL Server provider README](src/src/SqlServer/README.md)
+- [Azure Storage provider README](src/src/AzureStorage/README.md)
+- [MongoDB provider README](src/src/MongoDB/README.md)
+- [Cosmos DB provider README](src/src/CosmosDb/README.md)

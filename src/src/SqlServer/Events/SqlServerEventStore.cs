@@ -257,6 +257,7 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 				CacheMode = options.CacheMode,
 				DefaultCacheSlidingDuration = options.DefaultCacheSlidingDuration,
 				RequiresValidPrincipalIdentifier = options.RequiresValidPrincipalIdentifier,
+				JsonIndexOptions = options.JsonIndexOptions,
 			};
 	}
 

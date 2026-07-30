@@ -30,10 +30,11 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 	public SqlServerEventStore<TAggregate> CreateEventStore<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
 		bool removeFromCacheOnDelete = false,
-		Guid? runId = null
+		Guid? runId = null,
+		Action<SqlServerEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new() =>
-		CreateEventStoreContext(aggregateChangeNotifier, removeFromCacheOnDelete, runId).EventStore;
+		CreateEventStoreContext(aggregateChangeNotifier, removeFromCacheOnDelete, runId, configureOptions).EventStore;
 
 	internal (
 		SqlServerEventStore<TAggregate> EventStore,
@@ -43,7 +44,8 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 	) CreateEventStoreContext<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
 		bool removeFromCacheOnDelete = false,
-		Guid? runId = null
+		Guid? runId = null,
+		Action<SqlServerEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new()
 	{
@@ -66,6 +68,7 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			TimeoutInSeconds = 60,
 			RemoveDeletedFromCache = removeFromCacheOnDelete,
 		};
+		configureOptions?.Invoke(options);
 
 		var client = new SqlServerEventStoreClient(options);
 		Client = client;

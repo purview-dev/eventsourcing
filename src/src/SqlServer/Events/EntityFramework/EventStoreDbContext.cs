@@ -51,24 +51,21 @@ public class EventStoreDbContext(DbContextOptions<EventStoreDbContext> options, 
 
 			// Covers: GetByAggregateIdAndEntityType, GetIdempotencyMarkers, DeleteByAggregateId
 			entity
-				.HasIndex(e => new { e.AggregateId, e.EntityType })
-				.HasDatabaseName($"IX_{_tableName}_AggregateId_EntityType")
-				.IncludeProperties(e => new
+				.HasIndex(e => new
 				{
-					e.Version,
-					e.IsDeleted,
+					e.AggregateId,
 					e.AggregateType,
-					e.EventType,
-					e.IdempotencyId,
-					e.Timestamp,
-				});
+					e.EntityType,
+				})
+				.HasDatabaseName($"IX_{_tableName}_AggregateId_EntityType")
+				.IncludeProperties(e => new { e.Version, e.IsDeleted });
 
-			// Covers: GetEventRange (AggregateId + EntityType=1 + Version range, ORDER BY Version)
+			// Covers: GetEventRange (AggregateId + AggregateType + EntityType=1 + Version range, ORDER BY Version)
 			entity
 				.HasIndex(e => new
 				{
 					e.AggregateId,
-					e.EntityType,
+					e.AggregateType,
 					e.Version,
 				})
 				.HasDatabaseName($"IX_{_tableName}_EventRange")
@@ -78,8 +75,6 @@ public class EventStoreDbContext(DbContextOptions<EventStoreDbContext> options, 
 					e.Payload,
 					e.EventType,
 					e.IdempotencyId,
-					e.IsDeleted,
-					e.AggregateType,
 					e.Timestamp,
 				});
 

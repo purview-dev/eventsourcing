@@ -28,7 +28,7 @@ public sealed class OrderPageTests(AppHostFixture fixture)
 	public async Task CustomerOrders_WithMultiplePages_RendersNextPageLink(CancellationToken cancellationToken)
 	{
 		var customerId = await CreateCustomerWithOrdersAsync(11, cancellationToken);
-		var antiForgery = await GetAntiForgeryTokenAsync("/Customer", cancellationToken);
+		var antiForgery = await GetAntiForgeryTokenAsync(_client, "/Customer", cancellationToken);
 
 		using var content = new FormUrlEncodedContent([
 			new("id", customerId),
@@ -57,7 +57,7 @@ public sealed class OrderPageTests(AppHostFixture fixture)
 	{
 		using var client = fixture.CreateWebClient(followRedirects: true);
 		var (sourceInventoryId, destinationLocationId) = await CreateTransferScenarioAsync(cancellationToken);
-		var antiForgery = await GetAntiForgeryTokenAsync("/BackOffice/Stock/Transfer", cancellationToken);
+		var antiForgery = await GetAntiForgeryTokenAsync(client, "/BackOffice/Stock/Transfer", cancellationToken);
 
 		var form = new Dictionary<string, string>
 		{
@@ -127,9 +127,9 @@ public sealed class OrderPageTests(AppHostFixture fixture)
 		return (saveResult.Aggregate.Id(), destinationLocationId);
 	}
 
-	async Task<string> GetAntiForgeryTokenAsync(string url, CancellationToken cancellationToken)
+	async Task<string> GetAntiForgeryTokenAsync(HttpClient client, string url, CancellationToken cancellationToken)
 	{
-		var response = await _client.GetAsync(url, cancellationToken);
+		var response = await client.GetAsync(url, cancellationToken);
 		var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
 		var start = html.IndexOf("__RequestVerificationToken", StringComparison.Ordinal);

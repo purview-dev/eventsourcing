@@ -8,6 +8,7 @@ This wiki is the project documentation hub for framework features, provider capa
 - [Solution Design Guide](Solution-Design-Guide.md)
 - [Solution Design Worksheet](Solution-Design-Worksheet.md)
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)
+- [Dependency Guardrails](Dependency-Guardrails.md)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
 - [Release Flow](Release-Flow.md)
@@ -26,6 +27,8 @@ This wiki is the project documentation hub for framework features, provider capa
   - Azure Storage: table-backed event streams with blob support for snapshots/large payloads.
   - MongoDB: event streams + queryable snapshots.
   - Cosmos DB: queryable snapshot store.
+  - In-memory provider: non-persistent event/snapshot store for local/test scenarios.
+  - Validation adapters: FluentValidation and ZodSharp adapters for `IAggregateValidator<T>`.
   - SQL snapshot translation distinguishes between provider-converted scalar value objects and directly mapped complex snapshot graphs; see the provider matrix and SQL guide for details.
 - **Generator behavior**
   - `[GenerateAggregate]` supports no base, direct `AggregateBase`, and transitive base-chain inheritance.

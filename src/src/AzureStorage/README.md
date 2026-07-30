@@ -11,7 +11,7 @@ dotnet add package Purview.EventSourcing.AzureStorage
 ## Register the provider
 
 ```csharp
-builder.Services.AddAzureTableEventStore();
+builder.Services.AddAzureStorageEventStore();
 ```
 
 ## What it provides

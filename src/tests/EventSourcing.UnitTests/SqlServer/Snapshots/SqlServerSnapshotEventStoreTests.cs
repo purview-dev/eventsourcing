@@ -251,6 +251,75 @@ public sealed class SqlServerSnapshotEventStoreTests
 		await Assert.That(store).IsNotNull();
 	}
 
+	[Test]
+	public async Task Constructor_GivenDefaults_JsonIndexOptionsIsInitialized()
+	{
+		var options = CreateDefaultOptions();
+
+		await Assert.That(options.JsonIndexOptions).IsNotNull();
+		await Assert.That(options.JsonIndexOptions.Indexes).IsEmpty();
+	}
+
+	[Test]
+	public async Task Constructor_GivenUnsupportedJsonIndexIncludeColumn_ThrowsArgumentException()
+	{
+		var options = CreateDefaultOptions();
+		options.JsonIndexOptions = new SqlServerJsonIndexOptions
+		{
+			Enabled = true,
+			Indexes =
+			[
+				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Version"] },
+			],
+		};
+
+		await Assert.That(() => CreateStore(options: options)).Throws<ArgumentException>();
+	}
+
+	[Test]
+	public async Task Constructor_GivenJsonIndexWithDuplicateDefinition_ThrowsArgumentException()
+	{
+		var options = CreateDefaultOptions();
+		options.JsonIndexOptions = new SqlServerJsonIndexOptions
+		{
+			Enabled = true,
+			Indexes =
+			[
+				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Id"] },
+				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Id"] },
+			],
+		};
+
+		await Assert.That(() => CreateStore(options: options)).Throws<ArgumentException>();
+	}
+
+	[Test]
+	public async Task Constructor_GivenJsonIndexWithConflictingComputedColumnName_ThrowsArgumentException()
+	{
+		var options = CreateDefaultOptions();
+		options.JsonIndexOptions = new SqlServerJsonIndexOptions
+		{
+			Enabled = true,
+			Indexes =
+			[
+				new SqlServerJsonIndexDefinition
+				{
+					JsonPath = "$.StringProperty",
+					ComputedColumnName = "Json_Value",
+					SqlType = "nvarchar(450)",
+				},
+				new SqlServerJsonIndexDefinition
+				{
+					JsonPath = "$.IncrementInt32",
+					ComputedColumnName = "Json_Value",
+					SqlType = "int",
+				},
+			],
+		};
+
+		await Assert.That(() => CreateStore(options: options)).Throws<ArgumentException>();
+	}
+
 	static SqlServerSnapshotEventStore<TestAggregate> CreateStore(
 		INonQueryableEventStore<TestAggregate>? eventStore = null,
 		SqlServerSnapshotEventStoreOptions? options = null,

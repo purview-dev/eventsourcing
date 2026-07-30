@@ -27,7 +27,7 @@ builder.Services.AddSqlServerSnapshotQueryableEventStore();
 
 - Event-stream persistence for aggregates loaded through `IEventStore`
 - Query/list/count snapshot-backed reads through `IQueryableEventStore`
-- SQL-specific transaction factory (`ISqlServerEventStoreTransactionFactory`) for enlisting additional SQL/EF work in the same commit
+- SQL-specific transaction factory (`ISqlServerEventStoreTransactionFactory`) for enlisting additional SQL/EF work in the same commit (all enlisted stores must share the same SQL transaction boundary)
 - SQL Server and Azure SQL configuration binding for both event and snapshot stores
 - Entity Framework-backed schema creation and CRUD paths
 - JSON-column-backed event and snapshot payload storage

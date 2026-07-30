@@ -11,7 +11,8 @@ This page summarizes feature availability by package so provider selection is ex
 | Snapshot-backed query/list/count | Null provider only | Yes | No | Yes | Yes |
 | Blob-backed snapshots / large payloads | No | No | Yes | No | No |
 | SQL-specific transaction factory (`ISqlServerEventStoreTransactionFactory`) | No | Yes | No | No | No |
-| DI registration helpers | `AddNullQueryableEventStore()` | `AddSqlServerEventStore()`, `AddSqlServerSnapshotQueryableEventStore()` | `AddAzureTableEventStore()` | `AddMongoDBEventStore()`, `AddMongoDBSnapshotQueryableEventStore()` | `AddCosmosDbQueryableEventStore()` |
+| Runtime-configured JSON payload indexes | No | Yes (event + snapshot stores, auto-create path) | No | No | No |
+| DI registration helpers | `AddNullQueryableEventStore()` | `AddSqlServerEventStore()`, `AddSqlServerSnapshotQueryableEventStore()` | `AddAzureStorageEventStore()` | `AddMongoDBEventStore()`, `AddMongoDBSnapshotQueryableEventStore()` | `AddCosmosDbSnapshotQueryableEventStore()` |
 
 ## Selection guidance
 
@@ -23,6 +24,7 @@ This page summarizes feature availability by package so provider selection is ex
 ### SQL Server query translation notes
 
 - SQL snapshot queries support predicates over JSON-mapped primitive members and supported value-object shapes.
+- SQL Server can additionally create runtime-managed indexes over supported JSON scalar paths when `JsonIndexOptions.Enabled = true` and `AutoCreateTable = true`.
 - For provider-converted members (for example, a `[Scalar]` value object whose inner `Value` is a complex type), deep predicates on inner members are **not SQL-translatable** (for example: `a.ReportSummary.Value.ParserDetails.FailedLines > 0`).
 - The same conceptual data **can** be queried deeply when exposed as a directly mapped complex property in the snapshot graph (for example: `a.ReportSummaryScalar.ParserDetails.FailedLines > 0`, where `ReportSummaryScalar` is a `ParserReportSummary`).
 - `EventStoreList<T>` / `EventStoreSet<T>` members with `[ValueObject]` struct elements are persisted via JSON conversion for compatibility; treat nested element member filtering as non-translatable unless explicitly covered by tests.
@@ -32,9 +34,10 @@ This page summarizes feature availability by package so provider selection is ex
 ## Related docs
 
 - [Getting Started](Getting-Started.md)
+- [Dependency Guardrails](Dependency-Guardrails.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
 - Core package README: `src/src/EventSourcing/README.md`
-- SQL Server package README: `src/src/EventSourcing.SqlServer/README.md`
-- Azure Storage package README: `src/src/EventSourcing.AzureStorage/README.md`
-- MongoDB package README: `src/src/EventSourcing.MongoDB/README.md`
-- Cosmos DB package README: `src/src/EventSourcing.CosmosDb/README.md`
+- SQL Server package README: `src/src/SqlServer/README.md`
+- Azure Storage package README: `src/src/AzureStorage/README.md`
+- MongoDB package README: `src/src/MongoDB/README.md`
+- Cosmos DB package README: `src/src/CosmosDb/README.md`

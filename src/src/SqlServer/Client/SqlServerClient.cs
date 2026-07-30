@@ -16,6 +16,7 @@ sealed partial class SqlServerClient
 {
 	static readonly ConcurrentDictionary<string, SemaphoreSlim> EnsureTableLocks = new(StringComparer.Ordinal);
 	static readonly ConcurrentDictionary<string, byte> EnsuredTables = new(StringComparer.Ordinal);
+	static readonly HashSet<string> SupportedSnapshotIncludeColumns = ["Id", "AggregateType", "Payload"];
 
 	readonly SqlServerClientOptions _options;
 	readonly string _tableEnsureKey;
@@ -27,6 +28,13 @@ sealed partial class SqlServerClient
 
 		ValidateIdentifier(_options.SchemaName);
 		ValidateIdentifier(_options.TableName);
+		SqlServerJsonIndexSchemaManager.ValidateOrThrow(
+			_options.JsonIndexOptions,
+			_options.SchemaName,
+			_options.TableName,
+			SupportedSnapshotIncludeColumns,
+			nameof(SqlServerClientOptions.JsonIndexOptions)
+		);
 	}
 
 	public async Task EnsureTableExistsAsync(CancellationToken cancellationToken = default)
@@ -1047,6 +1055,17 @@ sealed partial class SqlServerClient
 			{
 				await using var context = CreateStorageContext();
 				await CreateStorageTablesWithEfAsync(context, cancellationToken);
+				await using var connection = new SqlConnection(_options.ConnectionString);
+				await connection.OpenAsync(cancellationToken);
+				await SqlServerJsonIndexSchemaManager.ApplyAsync(
+					connection,
+					transaction: null,
+					_options.SchemaName,
+					_options.TableName,
+					_options.JsonIndexOptions,
+					SupportedSnapshotIncludeColumns,
+					cancellationToken
+				);
 			}
 			catch (Exception ex) when (IsDuplicateTableCreateError(ex, _options.TableName))
 			{
@@ -1083,6 +1102,15 @@ sealed partial class SqlServerClient
 				if (transaction is not null)
 					await context.Database.UseTransactionAsync(transaction, cancellationToken);
 				await CreateStorageTablesWithEfAsync(context, cancellationToken);
+				await SqlServerJsonIndexSchemaManager.ApplyAsync(
+					connection,
+					transaction,
+					_options.SchemaName,
+					_options.TableName,
+					_options.JsonIndexOptions,
+					SupportedSnapshotIncludeColumns,
+					cancellationToken
+				);
 			}
 			catch (Exception ex) when (IsDuplicateTableCreateError(ex, _options.TableName))
 			{

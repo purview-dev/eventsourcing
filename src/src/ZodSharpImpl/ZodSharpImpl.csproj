@@ -11,6 +11,13 @@
 		<PackageReference Include="ZodSharp" />
 	</ItemGroup>
 	<ItemGroup>
+		<None
+			Include="buildTransitive\Purview.EventSourcing.ZodSharp.targets"
+			Pack="true"
+			PackagePath="buildTransitive\Purview.EventSourcing.ZodSharp.targets"
+		/>
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
 	</ItemGroup>
 </Project>

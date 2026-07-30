@@ -3,7 +3,7 @@
 partial class CosmosDbSnapshotEventStoreTests
 {
 	[Test]
-	public async Task FirstOrDefaultAsync_GivenMultipleMatchingAggregatesHonoursDescendingOrder_ReturnsCorrectAggregate(
+	public async Task FirstOrDefaultAsync_GivenMultipleMatchingAggregatesHonorsDescendingOrder_ReturnsCorrectAggregate(
 		CancellationToken cancellationToken
 	)
 	{
@@ -39,7 +39,7 @@ partial class CosmosDbSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task FirstOrDefaultAsync_GivenMultipleMatchingAggregatesHonoursAscendingOrder_ReturnsCorrectAggregate(
+	public async Task FirstOrDefaultAsync_GivenMultipleMatchingAggregatesHonorsAscendingOrder_ReturnsCorrectAggregate(
 		CancellationToken cancellationToken
 	)
 	{

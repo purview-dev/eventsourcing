@@ -13,12 +13,18 @@ public class SqlServerSnapshotEventStoreFixture : SqlServerEventStoreFixture
 		ISnapshotStrategySelector? snapshotStrategySelector = null,
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
 		bool removeFromCacheOnDelete = false,
-		Guid? runId = null
+		Guid? runId = null,
+		Action<SqlServerSnapshotEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new()
 	{
 		runId ??= Guid.NewGuid();
-		var eventStore = CreateEventStore(aggregateChangeNotifier, removeFromCacheOnDelete, runId);
+		var eventStore = CreateEventStore(
+			aggregateChangeNotifier,
+			removeFromCacheOnDelete,
+			runId,
+			configureOptions: null
+		);
 		SqlServerSnapshotEventStoreOptions config = new()
 		{
 			ConnectionString = ConnectionString,
@@ -26,6 +32,7 @@ public class SqlServerSnapshotEventStoreFixture : SqlServerEventStoreFixture
 			SchemaName = "dbo",
 			AutoCreateTable = true,
 		};
+		configureOptions?.Invoke(config);
 
 		SqlServerSnapshotEventStore<TAggregate> snapshotStore = new(
 			eventStore,

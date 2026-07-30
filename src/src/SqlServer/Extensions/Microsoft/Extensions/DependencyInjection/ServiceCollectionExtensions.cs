@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.SqlServer.Events;
 using Purview.EventSourcing.SqlServer.Snapshot;
@@ -46,6 +47,12 @@ public static class ServiceCollectionExtensions
 		public IServiceCollection AddSqlServerEventStore(string? connectionStringName = null)
 		{
 			services.AddEventSourcing();
+			services.TryAddEnumerable(
+				ServiceDescriptor.Singleton<
+					IValidateOptions<SqlServerEventStoreOptions>,
+					SqlServerEventStoreOptionsValidator
+				>()
+			);
 
 			services
 				.AddTransient(typeof(IEventStoreCore<>), typeof(SqlServerEventStore<>))
@@ -83,6 +90,12 @@ public static class ServiceCollectionExtensions
 		)
 		{
 			services.AddEventSourcing();
+			services.TryAddEnumerable(
+				ServiceDescriptor.Singleton<
+					IValidateOptions<SqlServerSnapshotEventStoreOptions>,
+					SqlServerSnapshotEventStoreOptionsValidator
+				>()
+			);
 
 			services
 				.AddTransient(typeof(IQueryableEventStoreCore<>), typeof(SqlServerSnapshotEventStore<>))

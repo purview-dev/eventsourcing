@@ -12,6 +12,19 @@ sealed partial class SqlServerEventStoreClient
 {
 	static readonly ConcurrentDictionary<string, SemaphoreSlim> EnsureTableLocks = new(StringComparer.Ordinal);
 	static readonly ConcurrentDictionary<string, byte> EnsuredTables = new(StringComparer.Ordinal);
+	static readonly HashSet<string> SupportedEventIncludeColumns =
+	[
+		"Id",
+		"EntityType",
+		"AggregateId",
+		"AggregateType",
+		"Version",
+		"IsDeleted",
+		"Payload",
+		"EventType",
+		"IdempotencyId",
+		"Timestamp",
+	];
 
 	readonly SqlServerEventStoreOptions _options;
 	readonly string _tableEnsureKey;
@@ -21,6 +34,13 @@ sealed partial class SqlServerEventStoreClient
 		_options = options ?? throw new ArgumentNullException(nameof(options));
 		ValidateIdentifier(_options.SchemaName);
 		ValidateIdentifier(_options.TableName);
+		SqlServerJsonIndexSchemaManager.ValidateOrThrow(
+			_options.JsonIndexOptions,
+			_options.SchemaName,
+			_options.TableName,
+			SupportedEventIncludeColumns,
+			nameof(SqlServerEventStoreOptions.JsonIndexOptions)
+		);
 		_tableEnsureKey = $"{_options.ConnectionString}|{_options.SchemaName}|{_options.TableName}";
 	}
 
@@ -240,15 +260,9 @@ sealed partial class SqlServerEventStoreClient
 	{
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
-		var entities = await context
+		return await context
 			.EventStoreEntities.Where(x => x.AggregateId == aggregateId && x.AggregateType == aggregateType)
-			.ToListAsync(cancellationToken);
-		if (entities.Count == 0)
-			return 0;
-
-		context.EventStoreEntities.RemoveRange(entities);
-		await context.SaveChangesAsync(cancellationToken);
-		return entities.Count;
+			.ExecuteDeleteAsync(cancellationToken);
 	}
 
 	public async Task<RowData?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -336,10 +350,23 @@ sealed partial class SqlServerEventStoreClient
 				&& x.Version <= versionTo
 			)
 			.OrderBy(x => x.Version)
+			.Select(x => new RowData
+			{
+				Id = x.Id,
+				EntityType = x.EntityType,
+				AggregateId = x.AggregateId,
+				AggregateType = x.AggregateType,
+				Version = x.Version,
+				IsDeleted = x.IsDeleted,
+				Payload = x.Payload,
+				EventType = x.EventType,
+				IdempotencyId = x.IdempotencyId,
+				Timestamp = x.Timestamp,
+			})
 			.AsAsyncEnumerable();
 
 		await foreach (var entity in events.WithCancellation(cancellationToken))
-			yield return ToRow(entity);
+			yield return entity;
 	}
 
 	public async Task<List<string>> GetIdempotencyMarkerIdsByAggregateIdAsync(
@@ -397,6 +424,17 @@ sealed partial class SqlServerEventStoreClient
 			{
 				await using var context = CreateContext();
 				await CreateStorageTablesWithEfAsync(context, cancellationToken);
+				await using var connection = new SqlConnection(_options.ConnectionString);
+				await connection.OpenAsync(cancellationToken);
+				await SqlServerJsonIndexSchemaManager.ApplyAsync(
+					connection,
+					transaction: null,
+					_options.SchemaName,
+					_options.TableName,
+					_options.JsonIndexOptions,
+					SupportedEventIncludeColumns,
+					cancellationToken
+				);
 			}
 			catch (Exception ex) when (IsDuplicateTableCreateError(ex, _options.TableName))
 			{
@@ -431,6 +469,15 @@ sealed partial class SqlServerEventStoreClient
 			{
 				await using var context = CreateContext(connection, transaction);
 				await CreateStorageTablesWithEfAsync(context, cancellationToken);
+				await SqlServerJsonIndexSchemaManager.ApplyAsync(
+					connection,
+					transaction,
+					_options.SchemaName,
+					_options.TableName,
+					_options.JsonIndexOptions,
+					SupportedEventIncludeColumns,
+					cancellationToken
+				);
 			}
 			catch (Exception ex) when (IsDuplicateTableCreateError(ex, _options.TableName))
 			{

@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Logging;
 using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
@@ -26,17 +27,24 @@ builder.Services.AddScoped<IAggregateAuditService, AggregateAuditService>();
 
 // Register product image service — uses Azure Blob Storage when configured, no-op otherwise
 var blobConnectionString = builder.Configuration.GetConnectionString(Platform.AzureStorageBlob);
-if (!string.IsNullOrWhiteSpace(blobConnectionString))
+builder.Services.AddSingleton<IProductImageService>(serviceProvider =>
 {
-	builder.AddAzureBlobContainerClient(Platform.AzureStorageBlob);
+	if (string.IsNullOrWhiteSpace(blobConnectionString))
+		return new NullProductImageService();
 
-	builder.Services.AddSingleton(new BlobServiceClient(blobConnectionString));
-	builder.Services.AddSingleton<IProductImageService, ProductImageService>();
-}
-else
-{
-	builder.Services.AddSingleton<IProductImageService, NullProductImageService>();
-}
+	try
+	{
+		return new ProductImageService(new BlobServiceClient(blobConnectionString));
+	}
+	catch (FormatException ex)
+	{
+		serviceProvider
+			.GetRequiredService<ILoggerFactory>()
+			.CreateLogger("ProductImageService")
+			.LogWarning(ex, "Invalid Azure Blob connection string; product images are disabled.");
+		return new NullProductImageService();
+	}
+});
 
 builder.Services.AddRazorPages();
 builder.Services.AddSession(options =>

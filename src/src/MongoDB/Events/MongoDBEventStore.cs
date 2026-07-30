@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates.Events.Upcasting;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Events.Entities;
 using Purview.EventSourcing.MongoDB.StorageClient;
@@ -25,6 +26,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 	readonly IMongoDBEventStoreTelemetry _eventStoreTelemetry;
 	readonly ChangeFeed.IAggregateChangeFeedNotifier<T> _aggregateChangeNotifier;
 	readonly IAggregateRequirementsManager _aggregateRequirementsManager;
+	readonly IEventUpcasterRegistry? _eventUpcasterRegistry;
 
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
@@ -39,7 +41,8 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		IAggregateRequirementsManager aggregateRequirementsManager,
 		IMongoDBEventStoreStorageNameBuilder? storageNameBuilder = null,
 		IAggregateValidator<T>? validator = null,
-		IAggregateIdFactory? aggregateIdFactory = null
+		IAggregateIdFactory? aggregateIdFactory = null,
+		IEventUpcasterRegistry? eventUpcasterRegistry = null
 	)
 	{
 		_eventNameMapper = eventNameMapper;
@@ -50,6 +53,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		_eventStoreTelemetry = eventStoreTelemetry;
 		_aggregateChangeNotifier = aggregateChangeNotifier;
 		_aggregateRequirementsManager = aggregateRequirementsManager;
+		_eventUpcasterRegistry = eventUpcasterRegistry;
 
 		_aggregateTypeShortName = typeof(T).Name;
 		_aggregateTypeFullName = typeof(T).FullName ?? _aggregateTypeShortName;

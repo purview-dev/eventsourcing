@@ -4,7 +4,7 @@ using Purview.EventSourcing.InMemory.Events;
 using Purview.EventSourcing.InMemory.Snapshots;
 using Purview.EventSourcing.Internal;
 
-namespace Microsoft.Extensions.DependencyInjections;
+namespace Microsoft.Extensions.DependencyInjection;
 
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions

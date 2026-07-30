@@ -33,6 +33,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null) : ISql
 	readonly List<IEnlistedAggregate> _enlisted = [];
 	readonly List<Func<SqlConnection, SqlTransaction, CancellationToken, Task>> _sqlOperations = [];
 	readonly bool _useIdempotencyMarker = !string.IsNullOrWhiteSpace(correlationId ?? Activity.Current?.Id);
+	string? _transactionBoundaryKey;
 
 	bool _committed;
 	bool _disposed;
@@ -60,6 +61,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null) : ISql
 			);
 		}
 
+		EnsureTransactionBoundary(transactionalEventStore.TransactionBoundaryKey, eventStore.GetType().FullName);
 		_enlisted.Add(
 			new EnlistedAggregate<T>(aggregate, transactionalEventStore, operationContext, _useIdempotencyMarker)
 		);
@@ -87,6 +89,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null) : ISql
 			);
 		}
 
+		EnsureTransactionBoundary(transactionalEventStore.TransactionBoundaryKey, eventStore.GetType().FullName);
 		_enlisted.Add(
 			new EnlistedAggregate<T>(aggregate, transactionalEventStore, operationContext, _useIdempotencyMarker)
 		);
@@ -367,4 +370,27 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null) : ISql
 	static SqlTransaction GetSqlTransaction(DbTransaction transaction) =>
 		transaction as SqlTransaction
 		?? throw new InvalidOperationException("SQL Server transactions require a SqlTransaction.");
+
+	void EnsureTransactionBoundary(string boundaryKey, string? eventStoreType)
+	{
+		if (string.IsNullOrWhiteSpace(boundaryKey))
+		{
+			throw new InvalidOperationException(
+				$"The enlisted event store '{eventStoreType}' did not provide a SQL transaction boundary."
+			);
+		}
+
+		if (_transactionBoundaryKey is null)
+		{
+			_transactionBoundaryKey = boundaryKey;
+			return;
+		}
+
+		if (!StringComparer.Ordinal.Equals(_transactionBoundaryKey, boundaryKey))
+		{
+			throw new InvalidOperationException(
+				"All enlisted SQL Server event stores must share the same transaction boundary."
+			);
+		}
+	}
 }

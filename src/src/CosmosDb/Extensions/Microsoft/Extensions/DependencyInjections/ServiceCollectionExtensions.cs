@@ -5,14 +5,14 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Purview.EventSourcing.CosmosDb.Snapshot;
 using Purview.EventSourcing.CosmosDb.Snapshots;
 
-namespace Microsoft.Extensions.DependencyInjections;
+namespace Microsoft.Extensions.DependencyInjection;
 
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {
 	extension(IServiceCollection services)
 	{
-		public IServiceCollection AddCosmosDbQueryableEventStore(bool registerAsIEventStore = false)
+		public IServiceCollection AddCosmosDbSnapshotQueryableEventStore(bool registerAsIEventStore = false)
 		{
 			services.AddEventSourcing();
 

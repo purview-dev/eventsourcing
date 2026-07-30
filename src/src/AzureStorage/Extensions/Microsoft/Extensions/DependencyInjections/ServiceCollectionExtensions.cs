@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
 {
 	extension(IServiceCollection services)
 	{
-		public IServiceCollection AddAzureTableEventStore()
+		public IServiceCollection AddAzureStorageEventStore()
 		{
 			services.AddEventSourcing();
 

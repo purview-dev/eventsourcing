@@ -2,8 +2,11 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Aggregates.Persistence;
 using Purview.EventSourcing.Fixtures.SqlServer;
+using Purview.EventSourcing.SqlServer.Snapshot;
+using Purview.EventSourcing.SqlServer.Snapshots;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
@@ -136,6 +139,113 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlSe
 		await Assert.That(rowCount).IsEqualTo(0);
 	}
 
+	[Test]
+	public async Task CommitAsync_GivenMultipleCrossImplementationStoresAndRawSql_CommitsAllInSingleTransaction(
+		CancellationToken cancellationToken
+	)
+	{
+		var runId = Guid.NewGuid();
+		var primaryStore = fixture.CreateEventStore<PersistenceAggregate>(runId: runId);
+		var snapshotStore = CreateSnapshotStore(runId);
+		var firstAggregateId = $"{Guid.NewGuid():N}";
+		var secondAggregateId = $"{Guid.NewGuid():N}";
+		var tableName = $"TransactionAudit_{Guid.NewGuid():N}";
+
+		await EnsureAuditTableExistsAsync(fixture.ConnectionString, tableName, cancellationToken);
+
+		var firstAggregate = await primaryStore.CreateAsync(firstAggregateId, cancellationToken);
+		firstAggregate.AppendString("primary");
+
+		var secondAggregate = await snapshotStore.CreateAsync(secondAggregateId, cancellationToken);
+		secondAggregate.AppendString("snapshot");
+
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-cross"));
+		await using var transaction = factory.CreateSqlServerTransaction();
+		transaction.Enlist(firstAggregate, primaryStore);
+		transaction.Enlist(secondAggregate, snapshotStore);
+		transaction.Enlist(
+			async (connection, sqlTransaction, token) =>
+			{
+				var quotedTableName = QuoteTableName(tableName);
+#pragma warning disable CA2100
+				await using var command = new SqlCommand(
+					$"INSERT INTO {quotedTableName} ([CorrelationId], [Value]) VALUES (@correlationId, @value)",
+					connection,
+					sqlTransaction
+				);
+#pragma warning restore CA2100
+				command.Parameters.AddWithValue("@correlationId", "sql-cross");
+				command.Parameters.AddWithValue("@value", "cross");
+				await command.ExecuteNonQueryAsync(token);
+			}
+		);
+
+		var result = await transaction.CommitAsync(cancellationToken);
+		var savedFirst = await primaryStore.GetAsync(firstAggregateId, null, cancellationToken);
+		var savedSecond = await snapshotStore.GetAsync(secondAggregateId, null, cancellationToken);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
+
+		await Assert.That(result.Success).IsTrue();
+		await Assert.That(savedFirst).IsNotNull();
+		await Assert.That(savedFirst!.StringProperty).Contains("primary");
+		await Assert.That(savedSecond).IsNotNull();
+		await Assert.That(savedSecond!.StringProperty).Contains("snapshot");
+		await Assert.That(rowCount).IsEqualTo(1);
+	}
+
+	[Test]
+	public async Task CommitAsync_GivenMultipleCrossImplementationStoresAndFailingRawSql_RollsBackAllChanges(
+		CancellationToken cancellationToken
+	)
+	{
+		var runId = Guid.NewGuid();
+		var primaryStore = fixture.CreateEventStore<PersistenceAggregate>(runId: runId);
+		var snapshotStore = CreateSnapshotStore(runId);
+		var firstAggregateId = $"{Guid.NewGuid():N}";
+		var secondAggregateId = $"{Guid.NewGuid():N}";
+		var tableName = $"TransactionAudit_{Guid.NewGuid():N}";
+
+		await EnsureAuditTableExistsAsync(fixture.ConnectionString, tableName, cancellationToken);
+
+		var firstAggregate = await primaryStore.CreateAsync(firstAggregateId, cancellationToken);
+		firstAggregate.AppendString("primary-rollback");
+
+		var secondAggregate = await snapshotStore.CreateAsync(secondAggregateId, cancellationToken);
+		secondAggregate.AppendString("snapshot-rollback");
+
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-cross-rollback"));
+		await using var transaction = factory.CreateSqlServerTransaction();
+		transaction.Enlist(firstAggregate, primaryStore);
+		transaction.Enlist(secondAggregate, snapshotStore);
+		transaction.Enlist(
+			async (connection, sqlTransaction, token) =>
+			{
+				var quotedTableName = QuoteTableName(tableName);
+#pragma warning disable CA2100
+				await using var command = new SqlCommand(
+					$"INSERT INTO {quotedTableName} ([CorrelationId], [Value]) VALUES (@correlationId, @value)",
+					connection,
+					sqlTransaction
+				);
+#pragma warning restore CA2100
+				command.Parameters.AddWithValue("@correlationId", "sql-cross-rollback");
+				command.Parameters.AddWithValue("@value", "cross-rollback");
+				await command.ExecuteNonQueryAsync(token);
+				throw new InvalidOperationException("forced-cross-failure");
+			}
+		);
+
+		var result = await transaction.CommitAsync(cancellationToken);
+		var savedFirst = await primaryStore.GetAsync(firstAggregateId, null, cancellationToken);
+		var savedSecond = await snapshotStore.GetAsync(secondAggregateId, null, cancellationToken);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
+
+		await Assert.That(result.Success).IsFalse();
+		await Assert.That(savedFirst).IsNull();
+		await Assert.That(savedSecond).IsNull();
+		await Assert.That(rowCount).IsEqualTo(0);
+	}
+
 	static async Task EnsureAuditTableExistsAsync(
 		string connectionString,
 		string tableName,
@@ -223,4 +333,22 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlSe
 
 	[GeneratedRegex("^[A-Za-z0-9_]+$", RegexOptions.CultureInvariant)]
 	private static partial Regex AzureTableNameRegEx();
+
+	SqlServerSnapshotEventStore<PersistenceAggregate> CreateSnapshotStore(Guid runId)
+	{
+		var backingStore = fixture.CreateEventStore<PersistenceAggregate>(runId: runId);
+		var options = new SqlServerSnapshotEventStoreOptions
+		{
+			ConnectionString = fixture.ConnectionString,
+			TableName = $"EventStoreSnapshots_{runId:N}",
+			SchemaName = "dbo",
+			AutoCreateTable = true,
+		};
+
+		return new SqlServerSnapshotEventStore<PersistenceAggregate>(
+			backingStore,
+			Options.Create(options),
+			Purview.EventSourcing.TestHelpers.CreateSqlServerSnapshotEventStoreTelemetry()
+		);
+	}
 }

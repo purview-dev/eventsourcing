@@ -47,6 +47,25 @@ jobs:
       - name: Pack
         run: dotnet pack "${{ inputs.pack-target-path }}" --no-build --configuration "${{ inputs.configuration }}" -p:PackageVersion="${{ inputs.version }}" --output "${{ inputs.output-path }}"
 
+      - name: Verify ZodSharp package includes buildTransitive guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          packages=("${{ inputs.output-path }}"/Purview.EventSourcing.ZodSharp*.nupkg)
+          if (( ${#packages[@]} == 0 )); then
+            echo "No Purview.EventSourcing.ZodSharp package was produced; skipping guard verification."
+            exit 0
+          fi
+
+          for pkg in "${packages[@]}"; do
+            if ! unzip -Z1 "${pkg}" | grep -Fxq "buildTransitive/Purview.EventSourcing.ZodSharp.targets"; then
+              echo "::error::Package $(basename "${pkg}") is missing buildTransitive/Purview.EventSourcing.ZodSharp.targets."
+              exit 1
+            fi
+          done
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v7
         with:

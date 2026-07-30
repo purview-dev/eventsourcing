@@ -100,6 +100,11 @@ partial class TableEventStore<T>
 				Type.GetType(eventType, throwOnError: false)
 				?? throw new ApplicationException($"Unable to load event type: {eventType}");
 			var @event = DeserializeEvent(eventEntity.Payload, runtimeEventType);
+
+			// Apply upcasting chain when a registry is available.
+			if (@event != null && _eventUpcasterRegistry?.CanUpcast(@event) == true)
+				@event = _eventUpcasterRegistry.Upcast(@event);
+
 			if (@event is Events.LargeEventPointerEvent blobPointer)
 			{
 				var blobName = GenerateEventBlobName(eventEntity.PartitionKey, eventEntity.RowKey);

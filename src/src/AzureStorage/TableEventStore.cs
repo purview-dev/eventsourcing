@@ -4,6 +4,7 @@ using Azure.Data.Tables;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates.Events.Upcasting;
 using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.AzureStorage.Entities;
 using Purview.EventSourcing.Services;
@@ -29,6 +30,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 	readonly IAggregateRequirementsManager _aggregateRequirementsManager;
 	readonly ISnapshotStrategy<T> _snapshotStrategy;
 	readonly ISnapshotStrategySelector? _snapshotStrategySelector;
+	readonly IEventUpcasterRegistry? _eventUpcasterRegistry;
 
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
@@ -44,7 +46,8 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		ITableEventStoreStorageNameBuilder? nameBuilder = null,
 		IAggregateIdFactory? aggregateIdFactory = null,
 		ISnapshotStrategy<T>? snapshotStrategy = null,
-		ISnapshotStrategySelector? snapshotStrategySelector = null
+		ISnapshotStrategySelector? snapshotStrategySelector = null,
+		IEventUpcasterRegistry? eventUpcasterRegistry = null
 	)
 	{
 		_eventNameMapper = eventNameMapper;
@@ -57,6 +60,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		_aggregateRequirementsManager = aggregateRequirementsManager;
 		_snapshotStrategy = snapshotStrategy ?? new IntervalSnapshotStrategy<T>();
 		_snapshotStrategySelector = snapshotStrategySelector;
+		_eventUpcasterRegistry = eventUpcasterRegistry;
 
 		var name = typeof(T).Name;
 

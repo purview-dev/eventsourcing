@@ -11,7 +11,7 @@ dotnet add package Purview.EventSourcing.CosmosDb
 ## Register the provider
 
 ```csharp
-builder.Services.AddCosmosDbQueryableEventStore();
+builder.Services.AddCosmosDbSnapshotQueryableEventStore();
 ```
 
 ## What it provides

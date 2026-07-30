@@ -65,6 +65,7 @@ public sealed partial class SqlServerSnapshotEventStore<T>
 			TableName = table,
 			SchemaName = schema,
 			AutoCreateTable = options.AutoCreateTable,
+			JsonIndexOptions = options.JsonIndexOptions,
 		};
 	}
 
