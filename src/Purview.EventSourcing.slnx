@@ -19,6 +19,7 @@
 		<Project Path="src/Admin.Api/Admin.Api.csproj" />
 		<Project Path="src/Admin.SqlServer/Admin.SqlServer.csproj" />
 		<Project Path="src/Admin.MongoDB/Admin.MongoDB.csproj" />
+		<Project Path="src/Admin.Site/Admin.Site.csproj" />
 	</Folder>
 	<Folder Name="/src/implementations/">
 		<Project Path="src/AzureStorage/AzureStorage.csproj" />
