@@ -38,9 +38,7 @@ public sealed class AdminFeatureOptions
 	public bool ProjectPointInTime { get; set; } = true;
 	public bool ExportEvents { get; set; } = false;
 
-	public void Validate()
-	{
-	}
+	public void Validate() { }
 }
 
 public sealed class AdminPagingOptions
@@ -52,7 +50,8 @@ public sealed class AdminPagingOptions
 	{
 		if (DefaultPageSize < 1 || DefaultPageSize > MaxPageSize)
 			throw new InvalidOperationException(
-				"AdminPagingOptions.DefaultPageSize must be between 1 and MaxPageSize.");
+				"AdminPagingOptions.DefaultPageSize must be between 1 and MaxPageSize."
+			);
 
 		if (MaxPageSize < 1)
 			throw new InvalidOperationException("AdminPagingOptions.MaxPageSize must be >= 1.");

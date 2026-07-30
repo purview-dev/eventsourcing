@@ -27,11 +27,11 @@ public sealed class PermissionProviderTests
 	{
 		// Arrange
 		var provider = new DenyAllPermissionProvider();
-		var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
-		{
-			new Claim(ClaimTypes.NameIdentifier, "user123"),
-			new Claim(ClaimTypes.Role, "Admin")
-		}));
+		var user = new ClaimsPrincipal(
+			new ClaimsIdentity(
+				new[] { new Claim(ClaimTypes.NameIdentifier, "user123"), new Claim(ClaimTypes.Role, "Admin") }
+			)
+		);
 
 		// Act
 		var permissions = await provider.GetPermissionsAsync(user, CancellationToken.None);
@@ -78,12 +78,12 @@ public sealed class PermissionProviderTests
 	{
 		public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(
 			ClaimsPrincipal user,
-			CancellationToken cancellationToken)
+			CancellationToken cancellationToken
+		)
 		{
-			return Task.FromResult<IReadOnlyList<AdminPermission>>(new[]
-			{
-				new AdminPermission(AdminFeature.SearchAggregates, null, true)
-			});
+			return Task.FromResult<IReadOnlyList<AdminPermission>>(
+				new[] { new AdminPermission(AdminFeature.SearchAggregates, null, true) }
+			);
 		}
 	}
 }

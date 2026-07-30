@@ -5,4 +5,5 @@ public sealed record ProjectionProvenance(
 	int SkippedCount,
 	IReadOnlyList<long> AppliedVersions,
 	IReadOnlyList<long> SkippedVersions,
-	string Reason);
+	string Reason
+);

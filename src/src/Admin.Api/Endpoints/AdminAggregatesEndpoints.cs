@@ -13,7 +13,8 @@ public static class AdminAggregatesEndpoints
 {
 	public static void MapSearchAggregates(RouteGroupBuilder group)
 	{
-		group.MapPost("/aggregates/search", SearchAggregatesAsync)
+		group
+			.MapPost("/aggregates/search", SearchAggregatesAsync)
 			.WithName("SearchAggregates")
 			.WithSummary("Search for aggregates")
 			.WithDescription("Search aggregates by type, id, date range, or status flags with pagination support.")
@@ -23,7 +24,8 @@ public static class AdminAggregatesEndpoints
 
 	public static void MapEventRange(RouteGroupBuilder group)
 	{
-		group.MapGet("/aggregates/{aggregateType}/{aggregateId}/events", GetEventRangeAsync)
+		group
+			.MapGet("/aggregates/{aggregateType}/{aggregateId}/events", GetEventRangeAsync)
 			.WithName("GetAggregateEventRange")
 			.WithSummary("Get aggregate event range")
 			.WithDescription("Returns the aggregate event stream within version and timestamp bounds.")
@@ -33,7 +35,8 @@ public static class AdminAggregatesEndpoints
 
 	public static void MapProjectionAtVersion(RouteGroupBuilder group)
 	{
-		group.MapGet("/aggregates/{aggregateType}/{aggregateId}/projection", GetProjectionAtVersionAsync)
+		group
+			.MapGet("/aggregates/{aggregateType}/{aggregateId}/projection", GetProjectionAtVersionAsync)
 			.WithName("GetAggregateProjectionAtVersion")
 			.WithSummary("Get aggregate projection at version")
 			.WithDescription("Projects aggregate state at a specific version.")
@@ -43,7 +46,8 @@ public static class AdminAggregatesEndpoints
 
 	public static void MapProjectionAtTime(RouteGroupBuilder group)
 	{
-		group.MapGet("/aggregates/{aggregateType}/{aggregateId}/projection/time", GetProjectionAtTimeAsync)
+		group
+			.MapGet("/aggregates/{aggregateType}/{aggregateId}/projection/time", GetProjectionAtTimeAsync)
 			.WithName("GetAggregateProjectionAtTime")
 			.WithSummary("Get aggregate projection at time")
 			.WithDescription("Projects aggregate state at a specific UTC timestamp.")
@@ -55,7 +59,8 @@ public static class AdminAggregatesEndpoints
 		AggregateSearchRequest request,
 		IAdminAggregateQueryService queryService,
 		IOptions<AdminPortalOptions> options,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		// Clamp page size to max
 		var pageSize = Math.Min(request.PageSize, options.Value.Paging.MaxPageSize);
@@ -70,7 +75,8 @@ public static class AdminAggregatesEndpoints
 			request.IsRestored,
 			request.Page,
 			pageSize,
-			request.Sort);
+			request.Sort
+		);
 
 		var result = await queryService.SearchAsync(query, cancellationToken);
 		return TypedResults.Ok(result);
@@ -81,7 +87,8 @@ public static class AdminAggregatesEndpoints
 		string aggregateId,
 		[AsParameters] EventRangeRequest request,
 		IAdminEventQueryService queryService,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		var query = new EventRangeQuery(
 			request.VersionFrom,
@@ -90,7 +97,8 @@ public static class AdminAggregatesEndpoints
 			request.TimeToUtc,
 			request.Page,
 			request.PageSize,
-			request.Sort);
+			request.Sort
+		);
 
 		var result = await queryService.GetRangeAsync(aggregateType, aggregateId, query, cancellationToken);
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
@@ -101,7 +109,8 @@ public static class AdminAggregatesEndpoints
 		string aggregateId,
 		[FromQuery] long? version,
 		IAdminProjectionService projectionService,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		if (version is null or <= 0)
 			return TypedResults.NotFound();
@@ -110,7 +119,8 @@ public static class AdminAggregatesEndpoints
 			aggregateType,
 			aggregateId,
 			version.Value,
-			cancellationToken);
+			cancellationToken
+		);
 
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
 	}
@@ -120,7 +130,8 @@ public static class AdminAggregatesEndpoints
 		string aggregateId,
 		[FromQuery] DateTime? asOfUtc,
 		IAdminProjectionService projectionService,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		if (asOfUtc is null)
 			return TypedResults.NotFound();
@@ -129,7 +140,8 @@ public static class AdminAggregatesEndpoints
 			aggregateType,
 			aggregateId,
 			new DateTimeOffset(asOfUtc.Value, TimeSpan.Zero),
-			cancellationToken);
+			cancellationToken
+		);
 
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
 	}

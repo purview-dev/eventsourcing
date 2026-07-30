@@ -7,4 +7,5 @@ public sealed record AggregateSummaryResponse(
 	DateTimeOffset CreatedUtc,
 	DateTimeOffset LastUpdatedUtc,
 	bool IsDeleted,
-	bool IsRestored);
+	bool IsRestored
+);

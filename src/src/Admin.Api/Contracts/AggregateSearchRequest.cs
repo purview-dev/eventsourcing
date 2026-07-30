@@ -9,4 +9,5 @@ public sealed record AggregateSearchRequest(
 	bool? IsRestored,
 	int Page = 1,
 	int PageSize = 50,
-	string Sort = "LastUpdatedUtc desc");
+	string Sort = "LastUpdatedUtc desc"
+);

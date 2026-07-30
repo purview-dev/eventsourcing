@@ -11,7 +11,8 @@ public sealed class DenyAllPermissionProvider : IAdminPermissionProvider
 {
 	public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(
 		ClaimsPrincipal user,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		return Task.FromResult<IReadOnlyList<AdminPermission>>(Array.Empty<AdminPermission>());
 	}

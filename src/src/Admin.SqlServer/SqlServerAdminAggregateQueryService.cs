@@ -6,13 +6,13 @@ using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 
-public sealed class SqlServerAdminAggregateQueryService(
-	IOptions<SqlServerEventStoreOptions> options)
+public sealed class SqlServerAdminAggregateQueryService(IOptions<SqlServerEventStoreOptions> options)
 	: IAdminAggregateQueryService
 {
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		ArgumentNullException.ThrowIfNull(query);
 
@@ -37,7 +37,8 @@ public sealed class SqlServerAdminAggregateQueryService(
 	public async Task<AggregateSummaryResponse?> GetAsync(
 		string aggregateType,
 		string aggregateId,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
@@ -51,12 +52,13 @@ public sealed class SqlServerAdminAggregateQueryService(
 		EventStoreDbContext context,
 		SqlServerAdminTableDescriptor table,
 		AggregateSearchQuery query,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateTypeFilter = table.AggregateTypeFilter;
-		var rows = context.EventStoreEntities.AsNoTracking().Where(x =>
-			x.EntityType == 0 &&
-			(aggregateTypeFilter == null || x.AggregateType == aggregateTypeFilter));
+		var rows = context
+			.EventStoreEntities.AsNoTracking()
+			.Where(x => x.EntityType == 0 && (aggregateTypeFilter == null || x.AggregateType == aggregateTypeFilter));
 
 		if (!string.IsNullOrWhiteSpace(query.AggregateId))
 			rows = rows.Where(x => x.AggregateId == query.AggregateId);
@@ -73,15 +75,15 @@ public sealed class SqlServerAdminAggregateQueryService(
 		if (query.ToUtc is not null)
 			rows = rows.Where(x => x.Timestamp <= query.ToUtc.Value);
 
-		return await rows
-			.Select(x => new AggregateSummaryResponse(
+		return await rows.Select(x => new AggregateSummaryResponse(
 				x.AggregateType,
 				x.AggregateId,
 				x.Version,
 				x.Timestamp,
 				x.Timestamp,
 				x.IsDeleted,
-				!x.IsDeleted))
+				!x.IsDeleted
+			))
 			.ToListAsync(cancellationToken);
 	}
 
@@ -95,7 +97,9 @@ public sealed class SqlServerAdminAggregateQueryService(
 			"AggregateId desc" => rows.OrderByDescending(x => x.AggregateId),
 			"CurrentVersion asc" => rows.OrderBy(x => x.CurrentVersion),
 			"CurrentVersion desc" => rows.OrderByDescending(x => x.CurrentVersion),
-			"CreatedUtc asc" => descending ? rows.OrderByDescending(x => x.CreatedUtc) : rows.OrderBy(x => x.CreatedUtc),
+			"CreatedUtc asc" => descending
+				? rows.OrderByDescending(x => x.CreatedUtc)
+				: rows.OrderBy(x => x.CreatedUtc),
 			"CreatedUtc desc" => rows.OrderByDescending(x => x.CreatedUtc),
 			_ => descending
 				? rows.OrderByDescending(x => x.LastUpdatedUtc).ThenByDescending(x => x.AggregateId)

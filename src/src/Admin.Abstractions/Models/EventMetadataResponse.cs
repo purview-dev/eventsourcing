@@ -8,4 +8,5 @@ public sealed record EventMetadataResponse(
 	string? CorrelationId,
 	string? CausationId,
 	string? IdempotencyId,
-	string? UserId);
+	string? UserId
+);

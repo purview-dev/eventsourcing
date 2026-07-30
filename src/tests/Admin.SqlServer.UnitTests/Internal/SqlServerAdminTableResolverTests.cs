@@ -12,7 +12,7 @@ public sealed class SqlServerAdminTableResolverTests
 		{
 			ConnectionString = "Server=.;Database=Db;Trusted_Connection=True;",
 			SchemaName = "dbo",
-			TableName = "EventStoreEvents"
+			TableName = "EventStoreEvents",
 		};
 
 		var tables = SqlServerAdminTableResolver.ResolveTables(options, null);
@@ -37,12 +37,8 @@ public sealed class SqlServerAdminTableResolverTests
 			TableName = "EventStoreEvents",
 			AggregateTableOverrides =
 			{
-				["Order"] = new SqlServerAggregateTableOverride
-				{
-					SchemaName = "orders",
-					TableName = "OrderEvents"
-				}
-			}
+				["Order"] = new SqlServerAggregateTableOverride { SchemaName = "orders", TableName = "OrderEvents" },
+			},
 		};
 
 		var table = SqlServerAdminTableResolver.ResolveTable(options, "Order");

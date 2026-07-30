@@ -6,4 +6,5 @@ public sealed record EventEnvelopeResponse(
 	string AggregateType,
 	string AggregateId,
 	EventMetadataResponse Metadata,
-	JsonElement Payload);
+	JsonElement Payload
+);

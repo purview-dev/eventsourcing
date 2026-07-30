@@ -11,7 +11,8 @@ public class SqlServerAdminProjectionServiceTests
 		// Arrange
 		var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
 		var options = Microsoft.Extensions.Options.Options.Create(
-			new Purview.EventSourcing.SqlServer.Events.SqlServerEventStoreOptions { ConnectionString = "test" });
+			new Purview.EventSourcing.SqlServer.Events.SqlServerEventStoreOptions { ConnectionString = "test" }
+		);
 
 		services.AddSingleton(options);
 		services.AddTransient<Purview.EventSourcing.Admin.SqlServer.SqlServerAdminProjectionService>();
@@ -19,7 +20,8 @@ public class SqlServerAdminProjectionServiceTests
 		var provider = services.BuildServiceProvider();
 
 		// Act
-		var service = provider.GetRequiredService<Purview.EventSourcing.Admin.SqlServer.SqlServerAdminProjectionService>();
+		var service =
+			provider.GetRequiredService<Purview.EventSourcing.Admin.SqlServer.SqlServerAdminProjectionService>();
 
 		// Assert
 		await Assert.That(service).IsNotNull();

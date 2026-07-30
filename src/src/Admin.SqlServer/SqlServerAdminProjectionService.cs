@@ -7,16 +7,15 @@ using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 
-public sealed class SqlServerAdminProjectionService(
-	IOptions<SqlServerEventStoreOptions> options)
+public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStoreOptions> options)
 	: IAdminProjectionService
 {
-
 	public async Task<ProjectionResponse?> ProjectAtVersionAsync(
 		string aggregateType,
 		string aggregateId,
 		long targetVersion,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
@@ -31,11 +30,15 @@ public sealed class SqlServerAdminProjectionService(
 		var skippedVersions = new List<long>();
 		var projectedState = new Dictionary<string, object>();
 
-		var rows = context.EventStoreEntities.AsNoTracking().Where(x =>
-			x.AggregateType == aggregateType &&
-			x.AggregateId == aggregateId &&
-			x.EntityType == 1 &&
-			x.Version <= targetVersion).OrderBy(x => x.Version);
+		var rows = context
+			.EventStoreEntities.AsNoTracking()
+			.Where(x =>
+				x.AggregateType == aggregateType
+				&& x.AggregateId == aggregateId
+				&& x.EntityType == 1
+				&& x.Version <= targetVersion
+			)
+			.OrderBy(x => x.Version);
 
 		var rowList = await rows.ToListAsync(cancellationToken);
 
@@ -64,9 +67,10 @@ public sealed class SqlServerAdminProjectionService(
 		if (rowList.Count == 0)
 			return null;
 
-		var reason = targetVersion > rowList.Last().Version
-			? $"Events projected up to available version {rowList.Last().Version} (target was {targetVersion})"
-			: $"Events projected up to version {targetVersion}";
+		var reason =
+			targetVersion > rowList.Last().Version
+				? $"Events projected up to available version {rowList.Last().Version} (target was {targetVersion})"
+				: $"Events projected up to version {targetVersion}";
 
 		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
 
@@ -81,14 +85,17 @@ public sealed class SqlServerAdminProjectionService(
 				skippedVersions.Count,
 				appliedVersions.AsReadOnly(),
 				skippedVersions.AsReadOnly(),
-				reason));
+				reason
+			)
+		);
 	}
 
 	public async Task<ProjectionResponse?> ProjectAtTimeAsync(
 		string aggregateType,
 		string aggregateId,
 		DateTimeOffset targetUtc,
-		CancellationToken cancellationToken)
+		CancellationToken cancellationToken
+	)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
@@ -100,11 +107,15 @@ public sealed class SqlServerAdminProjectionService(
 		var skippedVersions = new List<long>();
 		var projectedState = new Dictionary<string, object>();
 
-		var rows = context.EventStoreEntities.AsNoTracking().Where(x =>
-			x.AggregateType == aggregateType &&
-			x.AggregateId == aggregateId &&
-			x.EntityType == 1 &&
-			x.Timestamp <= targetUtc).OrderBy(x => x.Version);
+		var rows = context
+			.EventStoreEntities.AsNoTracking()
+			.Where(x =>
+				x.AggregateType == aggregateType
+				&& x.AggregateId == aggregateId
+				&& x.EntityType == 1
+				&& x.Timestamp <= targetUtc
+			)
+			.OrderBy(x => x.Version);
 
 		var rowList = await rows.ToListAsync(cancellationToken);
 
@@ -116,7 +127,12 @@ public sealed class SqlServerAdminProjectionService(
 				{
 					using var doc = JsonDocument.Parse(row.Payload);
 					var eventPayload = doc.RootElement;
-					projectedState[$"event_{row.Version}"] = new { eventType = row.EventType, version = row.Version, timestamp = row.Timestamp };
+					projectedState[$"event_{row.Version}"] = new
+					{
+						eventType = row.EventType,
+						version = row.Version,
+						timestamp = row.Timestamp,
+					};
 					appliedVersions.Add(row.Version);
 				}
 				else
@@ -134,9 +150,10 @@ public sealed class SqlServerAdminProjectionService(
 			return null;
 
 		var latestTimestamp = rowList.Last().Timestamp;
-		var reason = latestTimestamp > targetUtc
-			? $"Events projected up to available timestamp {latestTimestamp:O} (target was {targetUtc:O})"
-			: $"Events projected up to timestamp {targetUtc:O}";
+		var reason =
+			latestTimestamp > targetUtc
+				? $"Events projected up to available timestamp {latestTimestamp:O} (target was {targetUtc:O})"
+				: $"Events projected up to timestamp {targetUtc:O}";
 
 		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
 
@@ -151,7 +168,9 @@ public sealed class SqlServerAdminProjectionService(
 				skippedVersions.Count,
 				appliedVersions.AsReadOnly(),
 				skippedVersions.AsReadOnly(),
-				reason));
+				reason
+			)
+		);
 	}
 
 	static EventStoreDbContext CreateContext(SqlServerEventStoreOptions options, SqlServerAdminTableDescriptor table)

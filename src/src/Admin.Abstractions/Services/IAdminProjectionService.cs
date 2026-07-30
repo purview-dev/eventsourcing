@@ -6,11 +6,13 @@ public interface IAdminProjectionService
 		string aggregateType,
 		string aggregateId,
 		long targetVersion,
-		CancellationToken cancellationToken);
+		CancellationToken cancellationToken
+	);
 
 	Task<ProjectionResponse?> ProjectAtTimeAsync(
 		string aggregateType,
 		string aggregateId,
 		DateTimeOffset targetUtc,
-		CancellationToken cancellationToken);
+		CancellationToken cancellationToken
+	);
 }

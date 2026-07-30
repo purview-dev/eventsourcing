@@ -7,4 +7,5 @@ public sealed record EventRangeQuery(
 	DateTimeOffset? TimeToUtc,
 	int Page = 1,
 	int PageSize = 50,
-	string Sort = "Version asc");
+	string Sort = "Version asc"
+);

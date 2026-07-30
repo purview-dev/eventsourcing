@@ -9,7 +9,8 @@ public static class AdminApiEndpointRouteBuilderExtensions
 {
 	public static void MapPurviewEventSourcingAdminApi(
 		this WebApplication app,
-		IOptions<AdminPortalOptions>? optionsAccessor = null)
+		IOptions<AdminPortalOptions>? optionsAccessor = null
+	)
 	{
 		optionsAccessor ??= app.Services.GetRequiredService<IOptions<AdminPortalOptions>>();
 		var options = optionsAccessor.Value;
@@ -17,10 +18,7 @@ public static class AdminApiEndpointRouteBuilderExtensions
 		if (!options.Enabled)
 			return;
 
-		var group = app.MapGroup(options.RoutePrefix)
-			.WithName("AdminPortal")
-			.WithOpenApi()
-			.RequireAuthorization();
+		var group = app.MapGroup(options.RoutePrefix).WithName("AdminPortal").WithOpenApi().RequireAuthorization();
 
 		// Map endpoint groups
 		if (options.Features.SearchAggregates)

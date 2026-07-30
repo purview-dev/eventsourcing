@@ -6,7 +6,8 @@ static class SqlServerAdminTableResolver
 {
 	public static IReadOnlyList<SqlServerAdminTableDescriptor> ResolveTables(
 		SqlServerEventStoreOptions options,
-		string? aggregateType)
+		string? aggregateType
+	)
 	{
 		ArgumentNullException.ThrowIfNull(options);
 
@@ -15,10 +16,7 @@ static class SqlServerAdminTableResolver
 			return [ResolveTable(options, aggregateType)];
 		}
 
-		List<SqlServerAdminTableDescriptor> tables =
-		[
-			new(null, options.SchemaName, options.TableName)
-		];
+		List<SqlServerAdminTableDescriptor> tables = [new(null, options.SchemaName, options.TableName)];
 
 		foreach (var overrideEntry in options.AggregateTableOverrides)
 		{
@@ -37,9 +35,7 @@ static class SqlServerAdminTableResolver
 		return tables;
 	}
 
-	public static SqlServerAdminTableDescriptor ResolveTable(
-		SqlServerEventStoreOptions options,
-		string aggregateType)
+	public static SqlServerAdminTableDescriptor ResolveTable(SqlServerEventStoreOptions options, string aggregateType)
 	{
 		ArgumentNullException.ThrowIfNull(options);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);

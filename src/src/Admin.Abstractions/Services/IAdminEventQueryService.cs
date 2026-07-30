@@ -6,5 +6,6 @@ public interface IAdminEventQueryService
 		string aggregateType,
 		string aggregateId,
 		EventRangeQuery query,
-		CancellationToken cancellationToken);
+		CancellationToken cancellationToken
+	);
 }

@@ -8,4 +8,5 @@ public sealed record ProjectionResponse(
 	long ProjectedVersion,
 	DateTimeOffset? ProjectedAtUtc,
 	JsonElement State,
-	ProjectionProvenance Provenance);
+	ProjectionProvenance Provenance
+);

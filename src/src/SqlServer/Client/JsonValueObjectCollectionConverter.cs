@@ -9,6 +9,5 @@ sealed class JsonValueObjectCollectionConverter<TCollection> : ValueConverter<TC
 		: base(
 			value => EventStoreSerializationHelpers.Serialize(value),
 			value => EventStoreSerializationHelpers.Deserialize<TCollection>(value)!
-		)
-	{ }
+		) { }
 }

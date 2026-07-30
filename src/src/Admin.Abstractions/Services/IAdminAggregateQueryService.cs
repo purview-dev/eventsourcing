@@ -4,10 +4,12 @@ public interface IAdminAggregateQueryService
 {
 	Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
-		CancellationToken cancellationToken);
+		CancellationToken cancellationToken
+	);
 
 	Task<AggregateSummaryResponse?> GetAsync(
 		string aggregateType,
 		string aggregateId,
-		CancellationToken cancellationToken);
+		CancellationToken cancellationToken
+	);
 }
