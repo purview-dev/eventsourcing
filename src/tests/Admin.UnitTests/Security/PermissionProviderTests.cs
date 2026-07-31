@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions;
 using Purview.EventSourcing.Admin.Abstractions.Models;
@@ -42,37 +43,50 @@ public sealed class PermissionProviderTests
 	}
 
 	[Test]
-	public void ServiceCollection_RegistersSecurity_WithDefaults()
+	public async Task ServiceCollection_RegistersSecurity_WithDefaults()
 	{
 		// Arrange
 		var services = new ServiceCollection();
 
 		// Act
 		services.AddPurviewEventSourcingAdminSecurity();
-
-		// Assert
 		var provider = services.BuildServiceProvider();
 		var permissionProvider = provider.GetRequiredService<IAdminPermissionProvider>();
-		// Verify instance type
-		if (permissionProvider is not DenyAllPermissionProvider)
-			throw new InvalidOperationException("Expected DenyAllPermissionProvider");
+
+		// Assert — verify instance type
+		await Assert.That(permissionProvider).IsTypeOf<DenyAllPermissionProvider>();
 	}
 
 	[Test]
-	public void ServiceCollection_RegistersSecurity_WithCustomProvider()
+	public async Task ServiceCollection_RegistersSecurity_WithCustomProvider()
 	{
 		// Arrange
-		var services = new ServiceCollection();
 		var customProvider = new TestCustomPermissionProvider();
+		var services = new ServiceCollection();
 
 		// Act
 		services.AddPurviewEventSourcingAdminSecurity(customProvider);
-
-		// Assert
 		var provider = services.BuildServiceProvider();
-		var permissionProvider = provider.GetRequiredService<IAdminPermissionProvider>();
-		if (!ReferenceEquals(permissionProvider, customProvider))
-			throw new InvalidOperationException("Expected the same instance");
+		var resolvedProvider = provider.GetRequiredService<IAdminPermissionProvider>();
+
+		// Assert — verify exact same instance (singleton registration)
+		await Assert.That(ReferenceEquals(resolvedProvider, customProvider)).IsTrue();
+	}
+
+	[Test]
+	public async Task ServiceCollection_RegistersAuthorizationHandlers()
+	{
+		// Arrange
+		var services = new ServiceCollection();
+		services.AddAuthorizationBuilder();
+
+		// Act
+		services.AddPurviewEventSourcingAdminSecurity();
+		var provider = services.BuildServiceProvider();
+
+		// Assert — verify handlers are registered
+		var handlers = provider.GetServices<IAuthorizationHandler>();
+		await Assert.That(handlers).Count().IsGreaterThanOrEqualTo(2);
 	}
 
 	sealed class TestCustomPermissionProvider : IAdminPermissionProvider

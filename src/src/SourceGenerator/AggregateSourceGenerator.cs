@@ -427,6 +427,19 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 				if (propertySymbol.IsStatic || propertySymbol.IsIndexer || propertySymbol.IsImplicitlyDeclared)
 					continue;
 
+				if (TryGetComplexScalarValueType(propertySymbol.Type, out var scalarValueTypeDisplayName))
+				{
+					diagnostics.Add(
+						Diagnostic.Create(
+							GeneratorDiagnostics.ScalarComplexValueMayNotTranslateInSqlSnapshots,
+							propertySymbol.Locations.FirstOrDefault(),
+							propertySymbol.Name,
+							classSymbol.Name,
+							scalarValueTypeDisplayName
+						)
+					);
+				}
+
 				propertySymbolsByName[propertySymbol.Name] = propertySymbol;
 
 				if (propertySymbol.SetMethod is null)
@@ -486,6 +499,7 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 		var methods = new List<AggregateEventMethodInfo>();
 		var invalidMethods = new List<InvalidAggregateEventMethodInfo>();
 		var methodsByEventType = new Dictionary<(string EventNamespace, string EventName), IMethodSymbol>();
+		var methodsBySchemaVersion = new Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)>();
 
 		foreach (var methodSymbol in attributedMethods)
 		{
@@ -558,8 +572,87 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 				continue;
 			}
 
+			if (methodsBySchemaVersion.TryGetValue(methodInfo.Version, out var existingSchemaVersionMethod))
+			{
+				if (methodInfo.IsSchemaVersionExplicit && existingSchemaVersionMethod.IsExplicit)
+				{
+					diagnostics.Add(
+						Diagnostic.Create(
+							GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate,
+							methodSymbol.Locations.FirstOrDefault(),
+							methodSymbol.Name,
+							classSymbol.Name,
+							methodInfo.Version,
+							existingSchemaVersionMethod.Symbol.Name
+						)
+					);
+					diagnostics.Add(
+						Diagnostic.Create(
+							GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate,
+							existingSchemaVersionMethod.Symbol.Locations.FirstOrDefault(),
+							existingSchemaVersionMethod.Symbol.Name,
+							classSymbol.Name,
+							methodInfo.Version,
+							methodSymbol.Name
+						)
+					);
+
+					if (
+						TryCreateInvalidMethodStub(
+							methodSymbol,
+							[GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate.Id],
+							out var invalidMethod,
+							ct
+						)
+					)
+						invalidMethods.Add(invalidMethod);
+
+					continue;
+				}
+
+				if (methodInfo.IsSchemaVersionExplicit && !existingSchemaVersionMethod.IsExplicit)
+					methodsBySchemaVersion[methodInfo.Version] = (methodSymbol, true);
+			}
+			else
+			{
+				methodsBySchemaVersion[methodInfo.Version] = (methodSymbol, methodInfo.IsSchemaVersionExplicit);
+			}
+
 			methodsByEventType[eventTypeKey] = methodSymbol;
 			methods.Add(methodInfo);
+		}
+
+		var explicitSchemaVersions = methods
+			.Where(static method => method.IsSchemaVersionExplicit)
+			.Select(static method => method.Version)
+			.Distinct()
+			.OrderBy(static version => version)
+			.ToArray();
+
+		if (explicitSchemaVersions.Length >= 2)
+		{
+			var missingSchemaVersions = new List<int>();
+			for (var index = 1; index < explicitSchemaVersions.Length; index++)
+			{
+				var previousVersion = explicitSchemaVersions[index - 1];
+				var currentVersion = explicitSchemaVersions[index];
+
+				for (var missingVersion = previousVersion + 1; missingVersion < currentVersion; missingVersion++)
+					missingSchemaVersions.Add(missingVersion);
+			}
+
+			if (missingSchemaVersions.Count > 0)
+			{
+				diagnostics.Add(
+					Diagnostic.Create(
+						GeneratorDiagnostics.EventSchemaVersionsShouldBeContiguous,
+						syntax.Identifier.GetLocation(),
+						classSymbol.Name,
+						string.Join(", ", explicitSchemaVersions),
+						string.Join(", ", missingSchemaVersions)
+					)
+				);
+			}
 		}
 
 		return new AggregateGenerationResult(
@@ -734,6 +827,7 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 			return false;
 
 		var version = 1;
+		var hasExplicitVersion = false;
 		var eventName = string.Empty;
 		var hasExplicitEventName = false;
 		string? eventNamespaceOverride = null;
@@ -745,6 +839,7 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 				if (namedArgument.Key == "Version" && namedArgument.Value.Value is int explicitVersion)
 				{
 					version = explicitVersion;
+					hasExplicitVersion = true;
 					continue;
 				}
 
@@ -764,6 +859,20 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 				if (namedArgument.Key == "Manual" && namedArgument.Value.Value is bool explicitManual)
 					manualApply = explicitManual;
 			}
+		}
+
+		if (version < 1)
+		{
+			diagnostics.Add(
+				Diagnostic.Create(
+					GeneratorDiagnostics.EventSchemaVersionMustBePositive,
+					methodLocation,
+					methodSymbol.Name,
+					classSymbol.Name,
+					version
+				)
+			);
+			hasErrors = true;
 		}
 
 		var parameters = new List<EventPropertyInfo>();
@@ -1045,6 +1154,7 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 			returnKind,
 			methodSymbol.DeclaredAccessibility,
 			version,
+			hasExplicitVersion,
 			manualApply,
 			collectionEvent
 		);
@@ -1767,6 +1877,57 @@ public sealed class AggregateSourceGenerator : IIncrementalGenerator, ILogSuppor
 		typeSymbol is INamedTypeSymbol namedType
 		&& namedType.IsGenericType
 		&& namedType.OriginalDefinition.ToDisplayString() is EventStoreListMetadataName or EventStoreSetMetadataName;
+
+	static bool TryGetComplexScalarValueType(ITypeSymbol typeSymbol, out string valueTypeDisplayName)
+	{
+		valueTypeDisplayName = string.Empty;
+
+		if (typeSymbol is not INamedTypeSymbol namedType)
+			return false;
+
+		if (!HasAttribute(namedType, ScalarAttributeMetadataName))
+			return false;
+
+		var valueProperty = namedType
+			.GetMembers("Value")
+			.OfType<IPropertySymbol>()
+			.FirstOrDefault(static property => property.GetMethod is not null && !property.IsStatic);
+
+		if (valueProperty is null)
+			return false;
+
+		if (IsSimpleQueryScalarType(valueProperty.Type))
+			return false;
+
+		valueTypeDisplayName = valueProperty.Type.ToDisplayString(
+			SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
+				SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
+					| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
+			)
+		);
+		return true;
+	}
+
+	static bool IsSimpleQueryScalarType(ITypeSymbol typeSymbol)
+	{
+		if (typeSymbol.TypeKind == TypeKind.Enum)
+			return true;
+
+		if (typeSymbol.SpecialType is not SpecialType.None)
+			return true;
+
+		if (typeSymbol is not INamedTypeSymbol namedType)
+			return false;
+
+		var fullyQualifiedName = namedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+		return fullyQualifiedName
+			is "global::System.Guid"
+				or "global::System.DateTime"
+				or "global::System.DateTimeOffset"
+				or "global::System.TimeSpan"
+				or "global::System.DateOnly"
+				or "global::System.TimeOnly";
+	}
 
 	void ILogSupport.SetLogOutput(Action<string, OutputType> action) => _logger = new GenerationLogger(action);
 }

@@ -14,6 +14,7 @@ dotnet add package Purview.EventSourcing
 - `IEventStore` and `IQueryableEventStore`
 - `IEventStoreTransactionFactory` and transaction result types
 - Source generation for aggregate events and command methods
+- Embedded AI agent skills for aggregate design, validation, and value-object modeling
 - Common extension points used by provider packages
 - Dependency injection helpers for core framework services
 
@@ -45,3 +46,15 @@ await store.SaveAsync(order, cancellationToken);
 - [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
 
 When using snapshot-backed providers, especially SQL Server, read the provider docs before assuming deep predicates through complex scalar value object `.Value` members will translate.
+
+## Agent skill integration
+
+When installed from NuGet, `Purview.EventSourcing` copies bundled agent skills into `.agents\skills\` in the consuming repository so supported coding agents can discover framework-specific guidance automatically.
+
+To opt out, set:
+
+```xml
+<PropertyGroup>
+  <EnableEmbeddedAgentSkills>false</EnableEmbeddedAgentSkills>
+</PropertyGroup>
+```

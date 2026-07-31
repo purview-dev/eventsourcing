@@ -1,6 +1,6 @@
 ---
 name: event-sourcing-value-objects
-description: Model scalar and complex value objects with source-generated normalization, validation, and query-translation awareness.
+description: "Use when modeling scalar, complex, or contextual value objects with source-generated normalization, validation, Hydrate/Create semantics, or query-translation awareness."
 category: architecture
 roles:
   - architecture
@@ -21,7 +21,7 @@ Use this skill when defining value objects in `Purview.EventSourcing` with sourc
 
 ## Goals
 
-- Model scalar and non-scalar value objects with strong invariants.
+- Model scalar, non-scalar, and contextual value objects with strong invariants.
 - Normalize incoming values consistently.
 - Validate strict creation paths while preserving replay/hydration semantics.
 - Support aggregate-aware validation through contextual value object creation.
@@ -37,6 +37,7 @@ Use this skill when defining value objects in `Purview.EventSourcing` with sourc
 - Use `Hydrate(...)` for replay/deserialization where strict checks should not be re-run.
 - Use `ValueObjectDeserializationMode.Strict` only when strict `Create(...)` behavior is required during deserialization.
 - Prefer explicit null/empty guards and domain-specific exceptions.
+- Prefer `GenerateValueObjectDefaultsAttribute` for assembly-wide defaults instead of repeating per-type configuration.
 
 ### Scalar queryability rules
 

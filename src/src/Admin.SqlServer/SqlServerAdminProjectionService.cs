@@ -48,8 +48,7 @@ public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStore
 			{
 				if (row.Payload != null && row.EventType != null)
 				{
-					using var doc = JsonDocument.Parse(row.Payload);
-					var eventPayload = doc.RootElement;
+					using var _ = JsonDocument.Parse(row.Payload);
 					projectedState[$"event_{row.Version}"] = new { eventType = row.EventType, version = row.Version };
 					appliedVersions.Add(row.Version);
 				}
@@ -58,7 +57,7 @@ public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStore
 					skippedVersions.Add(row.Version);
 				}
 			}
-			catch
+			catch (JsonException)
 			{
 				skippedVersions.Add(row.Version);
 			}
@@ -125,8 +124,7 @@ public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStore
 			{
 				if (row.Payload != null && row.EventType != null)
 				{
-					using var doc = JsonDocument.Parse(row.Payload);
-					var eventPayload = doc.RootElement;
+					using var _ = JsonDocument.Parse(row.Payload);
 					projectedState[$"event_{row.Version}"] = new
 					{
 						eventType = row.EventType,
@@ -140,7 +138,7 @@ public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStore
 					skippedVersions.Add(row.Version);
 				}
 			}
-			catch
+			catch (JsonException)
 			{
 				skippedVersions.Add(row.Version);
 			}

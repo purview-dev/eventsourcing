@@ -123,6 +123,42 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	public static readonly DiagnosticDescriptor ScalarComplexValueMayNotTranslateInSqlSnapshots = new(
+		id: "EVENTSTORE020",
+		title: "Complex scalar Value paths may not translate in SQL snapshot queries",
+		messageFormat: "Aggregate property '{0}' on '{1}' is a [Scalar] whose Value type '{2}' is complex. Deep SQL predicates through '.Value' are typically non-translatable; prefer a computed mirror property for query scenarios.",
+		category: Category,
+		defaultSeverity: DiagnosticSeverity.Warning,
+		isEnabledByDefault: true
+	);
+
+	public static readonly DiagnosticDescriptor EventSchemaVersionMustBePositive = new(
+		id: "EVENTSTORE021",
+		title: "Event schema version must be positive",
+		messageFormat: "Method '{0}' on aggregate '{1}' declares schema version '{2}'. Schema versions must be greater than or equal to 1.",
+		category: Category,
+		defaultSeverity: DiagnosticSeverity.Error,
+		isEnabledByDefault: true
+	);
+
+	public static readonly DiagnosticDescriptor DuplicateEventSchemaVersionOnAggregate = new(
+		id: "EVENTSTORE022",
+		title: "Duplicate event schema version on aggregate",
+		messageFormat: "Method '{0}' on aggregate '{1}' reuses schema version '{2}', which is already used by method '{3}'. Event schema versions on a single aggregate must be unique.",
+		category: Category,
+		defaultSeverity: DiagnosticSeverity.Error,
+		isEnabledByDefault: true
+	);
+
+	public static readonly DiagnosticDescriptor EventSchemaVersionsShouldBeContiguous = new(
+		id: "EVENTSTORE023",
+		title: "Explicit event schema versions should be contiguous",
+		messageFormat: "Aggregate '{0}' declares explicit event schema versions [{1}] with missing versions [{2}]. Explicit schema versions should be contiguous.",
+		category: Category,
+		defaultSeverity: DiagnosticSeverity.Warning,
+		isEnabledByDefault: true
+	);
+
 	public static readonly DiagnosticDescriptor AggregateMethodShouldBeVerbPhrase = new(
 		id: "EVENTSTORE012",
 		title: "Aggregate methods should be verb phrases",

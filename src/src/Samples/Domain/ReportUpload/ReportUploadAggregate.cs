@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.Samples.Domain.ReportUpload;
@@ -10,6 +10,11 @@ public sealed partial class ReportUploadAggregate
 
 	public string FileHash { get; private set; } = string.Empty;
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Purview.EventSourcing.SourceGenerator",
+		"EVENTSTORE020",
+		Justification = "Sample aggregate does not execute deep SQL predicates over BlobUri.Value."
+	)]
 	public BlobUri SourceJsonBlob { get; private set; } = BlobUri.Empty;
 
 	public EventStoreSet<ProjectBlobs> ExcelReportBlobs { get; private set; } = [];
@@ -20,6 +25,11 @@ public sealed partial class ReportUploadAggregate
 
 	public string? FailureReason { get; private set; }
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Purview.EventSourcing.SourceGenerator",
+		"EVENTSTORE020",
+		Justification = "Query translation uses ReportSummaryScalar mirror for SQL-safe filtering."
+	)]
 	public ReportSummary? ReportSummary { get; private set; }
 
 	public ParserReportSummary? ReportSummaryScalar { get; private set; }

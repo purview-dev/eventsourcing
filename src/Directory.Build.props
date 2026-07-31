@@ -53,4 +53,8 @@
 			PackagePath="/"
 		/>
 	</ItemGroup>
+
+	<PropertyGroup Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'">
+		<WarningsAsErrors>$(WarningsAsErrors);CA1031;CA1822</WarningsAsErrors>
+	</PropertyGroup>
 </Project>

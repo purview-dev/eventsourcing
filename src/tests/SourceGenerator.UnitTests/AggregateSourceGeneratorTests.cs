@@ -339,6 +339,84 @@ namespace Testing
 	}
 
 	[Test]
+	public async Task Generate_GivenScalarWrappingComplexValue_ReportsQueryTranslationWarning(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source =
+			@"
+namespace Testing
+{
+	public sealed class ReportSummary
+	{
+		public int FailedLines { get; set; }
+	}
+
+	[Purview.EventSourcing.Serialization.Scalar]
+	public readonly partial record struct ReportSummaryScalar
+	{
+		public ReportSummary Value { get; }
+		private ReportSummaryScalar(ReportSummary value) => Value = value;
+	}
+
+	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	public partial class ReportAggregate : Purview.EventSourcing.Aggregates.AggregateBase
+	{
+		public ReportSummaryScalar Summary { get; private set; }
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		public partial void SetSummary(ReportSummary value);
+	}
+}
+";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var diagnostics = GetGeneratorDiagnostics(result);
+
+		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE020");
+		await Assert
+			.That(
+				diagnostics
+					.First(static d => d.Id == "EVENTSTORE020")
+					.GetMessage(System.Globalization.CultureInfo.InvariantCulture)
+			)
+			.Contains("Summary");
+	}
+
+	[Test]
+	public async Task Generate_GivenScalarWrappingPrimitiveValue_DoesNotReportQueryTranslationWarning(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source =
+			@"
+namespace Testing
+{
+	[Purview.EventSourcing.Serialization.Scalar]
+	public readonly partial record struct ProjectId
+	{
+		public string Value { get; }
+		private ProjectId(string value) => Value = value;
+	}
+
+	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	public partial class ReportAggregate : Purview.EventSourcing.Aggregates.AggregateBase
+	{
+		public ProjectId ProjectId { get; private set; }
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		public partial void SetProjectId(string projectId);
+	}
+}
+";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var diagnostics = GetGeneratorDiagnostics(result);
+
+		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE020");
+	}
+
+	[Test]
 	public async Task Generate_GivenComputedParameterWithOnlyOnComputingHook_DoesNotReportHookDiagnostics(
 		CancellationToken cancellationToken
 	)
@@ -1465,6 +1543,122 @@ namespace Testing
 		await Assert.That(v2Index).IsGreaterThanOrEqualTo(0);
 		// They should appear in event-declaration order (OrderCreated before TotalUpdated)
 		await Assert.That(v1Index).IsLessThan(v2Index);
+	}
+
+	[Test]
+	public async Task Generate_GivenEventWithNonPositiveVersion_ReportsVersionDiagnostic(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source =
+			@"
+namespace Testing
+{
+	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
+	{
+		public string CustomerId { get; private set; }
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 0)]
+		public partial void CreateOrder(string customerId);
+	}
+}
+";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var diagnostics = GetGeneratorDiagnostics(result);
+
+		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE021");
+	}
+
+	[Test]
+	public async Task Generate_GivenMultipleEventsWithDuplicateVersions_ReportsDuplicateVersionDiagnostic(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source =
+			@"
+namespace Testing
+{
+	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
+	{
+		public string CustomerId { get; private set; }
+		public decimal Total { get; private set; }
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		public partial void CreateOrder(string customerId);
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		public partial void UpdateTotal(decimal total);
+	}
+}
+";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var diagnostics = GetGeneratorDiagnostics(result);
+
+		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE022");
+	}
+
+	[Test]
+	public async Task Generate_GivenExplicitVersionsWithGap_ReportsContiguousVersionDiagnostic(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source =
+			@"
+namespace Testing
+{
+	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
+	{
+		public string CustomerId { get; private set; }
+		public decimal Total { get; private set; }
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 1)]
+		public partial void CreateOrder(string customerId);
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 3)]
+		public partial void UpdateTotal(decimal total);
+	}
+}
+";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var diagnostics = GetGeneratorDiagnostics(result);
+
+		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE023");
+	}
+
+	[Test]
+	public async Task Generate_GivenContiguousExplicitVersions_DoesNotReportContiguousVersionDiagnostic(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source =
+			@"
+namespace Testing
+{
+	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
+	{
+		public string CustomerId { get; private set; }
+		public decimal Total { get; private set; }
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		public partial void CreateOrder(string customerId);
+
+		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 3)]
+		public partial void UpdateTotal(decimal total);
+	}
+}
+";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var diagnostics = GetGeneratorDiagnostics(result);
+
+		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE023");
 	}
 
 	[Test]

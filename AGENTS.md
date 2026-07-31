@@ -12,7 +12,8 @@ Use these instructions for any work in this solution.
 - Packable/source projects: `src/src/**`
 - Tests: `src/tests/**`
 - Wiki/docs: `docs/wiki/**`
-- Repo-local skills: `.agents/skills/**`
+- Framework skills source of truth: `src/skills/**`
+- Repo workflow skills: `.agents/skills/**`
 - Repo-local Copilot bootstrap instructions: `.github/copilot-instructions.md`
 
 ## Core behavior
@@ -49,7 +50,7 @@ Use these instructions for any work in this solution.
 ## Docs and instruction maintenance
 
 - Keep `docs/wiki/Home.md`, `docs/wiki/Provider-Feature-Matrix.md`, and provider-specific guides aligned when capabilities change.
-- Keep `.agents/skills/event-sourcing-*` guidance aligned with actual framework behavior.
+- Keep `src/skills/event-sourcing-*` guidance aligned with actual framework behavior.
 - If repo-local instruction/skill locations change, update both this file and `.github/copilot-instructions.md`.
 
 ## Useful local workflow facts

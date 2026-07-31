@@ -52,7 +52,6 @@ public class ProjectionModel(IAdminProjectionService projectionService) : PageMo
 			}
 			else
 			{
-				// Default to latest version
 				Projection = await _projectionService.ProjectAtVersionAsync(
 					AggregateType,
 					AggregateId,
@@ -63,7 +62,12 @@ public class ProjectionModel(IAdminProjectionService projectionService) : PageMo
 
 			return Page();
 		}
-		catch (Exception ex)
+		catch (InvalidOperationException ex)
+		{
+			ModelState.AddModelError(string.Empty, $"Failed to load projection: {ex.Message}");
+			return Page();
+		}
+		catch (ArgumentException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load projection: {ex.Message}");
 			return Page();

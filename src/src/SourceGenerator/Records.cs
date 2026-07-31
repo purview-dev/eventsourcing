@@ -47,6 +47,7 @@ sealed class AggregateEventMethodInfo(
 	EventMethodReturnKind returnKind,
 	Accessibility methodAccessibility,
 	int version = 1,
+	bool isSchemaVersionExplicit = false,
 	bool manualApply = false,
 	CollectionEventInfo? collectionEvent = null
 )
@@ -70,6 +71,11 @@ sealed class AggregateEventMethodInfo(
 	/// Defaults to 1.
 	/// </summary>
 	public int Version { get; } = version;
+
+	/// <summary>
+	/// Indicates whether <see cref="Version"/> was explicitly configured on the event attribute.
+	/// </summary>
+	public bool IsSchemaVersionExplicit { get; } = isSchemaVersionExplicit;
 
 	/// <summary>
 	/// Indicates whether Apply(...) implementation is user-supplied and should not be auto-generated.

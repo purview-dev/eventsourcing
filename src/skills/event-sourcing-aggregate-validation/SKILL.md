@@ -1,6 +1,6 @@
 ---
 name: event-sourcing-aggregate-validation
-description: Apply aggregate validation patterns for command, save, persistence-time guards, and computed snapshot mirror properties.
+description: "Use when defining event-sourced aggregate validation at command time, hook time, save time, or for computed snapshot/query mirror properties."
 category: architecture
 roles:
   - architecture
@@ -21,7 +21,7 @@ Use this skill when defining validation strategy for event-sourced aggregates in
 ## Validation layers to apply
 
 1. **Command/event-raising validation**
-   - Enforce transition and intent rules in generated hooks (`OnRaising...Event`, `On<Property>Changing`).
+   - Enforce transition and intent rules in generated hooks (`OnComputing...Event`, `OnRaising...Event`, `OnShouldApply...Event`, `On<Property>Changing`).
    - Reject invalid operations before events are recorded.
 
 2. **Aggregate model validation**
@@ -46,6 +46,7 @@ Use this skill when defining validation strategy for event-sourced aggregates in
 - Use `SaveResult.EnsureValid()` when invalid saves must throw immediately.
 - Preserve replay tolerance by avoiding command-time assumptions in hydration-only paths.
 - For computed snapshot/query mirrors, validate derivation rules, not user-supplied values.
+- If a save-time validator is added, prefer `IAggregateValidator<TAggregate>` over ad-hoc validation inside stores.
 
 ## Aggregate validation checklist
 
@@ -59,7 +60,7 @@ Use this skill when defining validation strategy for event-sourced aggregates in
 ## Output template to use
 
 1. Validation map by layer (command, aggregate model, save pipeline, computed mirrors).
-2. Hook methods and invariants per command.
+2. Hook methods and invariants per command (`OnComputing...Event`, `OnRaising...Event`, `OnShouldApply...Event`, `On<Property>Changing`/`Changed`).
 3. Attribute-based constraints and rationale.
 4. FluentValidation rules (if any) and when they execute.
 5. SaveResult handling policy (`IsValid`, `EnsureValid`, error propagation).

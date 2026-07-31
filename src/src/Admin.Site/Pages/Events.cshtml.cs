@@ -57,7 +57,12 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 			EventRange = await _eventQueryService.GetRangeAsync(AggregateType, AggregateId, query, cancellationToken);
 			return Page();
 		}
-		catch (Exception ex)
+		catch (InvalidOperationException ex)
+		{
+			ModelState.AddModelError(string.Empty, $"Failed to load events: {ex.Message}");
+			return Page();
+		}
+		catch (ArgumentException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load events: {ex.Message}");
 			return Page();

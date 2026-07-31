@@ -58,8 +58,9 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 					skippedVersions.Add(evt.Version);
 				}
 			}
-			catch
+			catch (JsonException)
 			{
+				// Skip malformed payloads so one bad event does not fail the entire projection.
 				skippedVersions.Add(evt.Version);
 			}
 		}
@@ -138,8 +139,9 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 					skippedVersions.Add(evt.Version);
 				}
 			}
-			catch
+			catch (JsonException)
 			{
+				// Skip malformed payloads so one bad event does not fail the entire projection.
 				skippedVersions.Add(evt.Version);
 			}
 		}

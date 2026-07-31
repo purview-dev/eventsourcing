@@ -23,6 +23,35 @@
 		/>
 	</ItemGroup>
 
+	<ItemGroup>
+		<None
+			Include="buildTransitive\Purview.EventSourcing.targets"
+			Pack="true"
+			PackagePath="buildTransitive\Purview.EventSourcing.targets"
+		/>
+		<None
+			Include="..\..\skills\**\*"
+			Exclude="..\..\skills\**\.gitignore;..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\%(RecursiveDir)%(Filename)%(Extension)"
+		/>
+		<None
+			Include="..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\event-sourcing-aggregate-design\.gitignore"
+		/>
+		<None
+			Include="..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\event-sourcing-aggregate-validation\.gitignore"
+		/>
+		<None
+			Include="..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\event-sourcing-value-objects\.gitignore"
+		/>
+	</ItemGroup>
+
 	<Target Name="IncludeEventStoreSourceGenerator" DependsOnTargets="Build">
 		<Error
 			Condition="!Exists('$(EventStoreSourceGeneratorAssembly)')"

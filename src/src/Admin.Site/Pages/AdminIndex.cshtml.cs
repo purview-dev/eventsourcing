@@ -42,7 +42,12 @@ public class AdminIndexModel(IAdminAggregateQueryService aggregateQueryService) 
 			SearchResults = await _aggregateQueryService.SearchAsync(query, cancellationToken);
 			return Page();
 		}
-		catch (Exception ex)
+		catch (InvalidOperationException ex)
+		{
+			ModelState.AddModelError(string.Empty, $"Search failed: {ex.Message}");
+			return Page();
+		}
+		catch (ArgumentException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Search failed: {ex.Message}");
 			return Page();

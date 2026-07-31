@@ -1,6 +1,6 @@
 ---
 name: event-sourcing-aggregate-design
-description: Define and model event-sourced aggregates, events, state transitions, and snapshot-queryable mirror properties.
+description: "Use when designing or refining event-sourced aggregates, commands, events, invariants, source-generator hooks, or snapshot-queryable mirror properties."
 category: architecture
 roles:
   - architecture
@@ -57,9 +57,11 @@ For deeper implementation details, pair with:
 - Use `[Computed]` for values derived inside the aggregate and not provided by callers.
 - Keep aggregate collections as `EventStoreList<T>` or `EventStoreSet<T>` for generated collection-event patterns.
 - Use partial hooks for invariants and side effects:
-  - `OnRaising<EventName>Event(ref ...)` for pre-emit validation/mutation.
+  - `OnComputing<EventName>Event(...)` for derived/computed parameter values.
+  - `OnRaising<EventName>Event(...)` for pre-emit validation/mutation.
+  - `OnShouldApply<EventName>Event(@event, ref bool shouldApply)` when an emitted event should be skipped.
   - `OnRaised<EventName>Event(@event)` after event creation.
-  - `OnApplied<EventName>Event(@event)` after state apply.
+  - `OnApplied<EventName>Event(@event)` after state apply and during replay.
   - `On<Property>Changing(ref value)` and `On<Property>Changed(previous, current)` for property transitions.
 - Use `Manual = true` only when providing a manual event-body implementation is required.
 - Do not hand-roll registration boilerplate already generated (event types, registration, apply plumbing).
@@ -147,4 +149,4 @@ When applying this skill, provide:
 3. Command list with validation rules.
 4. Event catalog with payload schema, version, and naming rationale.
 5. State transition table (current state + command -> event(s) + new state).
-6. Implementation notes (generated apply/replay flow, concurrency, versioning, snapshots, and query-facing mirrors).
+6. Implementation notes (generated apply/replay flow, `OnComputing`/`OnRaising`/`OnShouldApply`/`OnRaised`/`OnApplied`, concurrency, versioning, snapshots, and query-facing mirrors).
