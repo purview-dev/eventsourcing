@@ -65,6 +65,7 @@ public static class ServiceCollectionExtensions
 				.AddTransient(typeof(IQueryableEventStoreCore<>), typeof(MongoDBSnapshotEventStore<>))
 				.AddTransient(typeof(IMongoDBSnapshotEventStore<>), typeof(MongoDBSnapshotEventStore<>))
 				.AddMongoDBSnapshotEventStoreTelemetry();
+			services.AddMongoDBClientTelemetry();
 
 			services.TryAddTransient<IQueryableEventStore, QueryableEventStoreFacade>();
 

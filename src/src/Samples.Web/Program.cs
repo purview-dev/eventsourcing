@@ -1,6 +1,9 @@
+using Azure;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
+using Npgsql;
 using Purview.EventSourcing.Admin.Api;
 using Purview.EventSourcing.Admin.AzureStorage;
 using Purview.EventSourcing.Admin.MongoDB;
@@ -141,6 +144,7 @@ app.MapDefaultEndpoints().MapGet("/pingz", () => Results.Ok());
 await using (var scope = app.Services.CreateAsyncScope())
 {
 	var seeder = scope.ServiceProvider.GetRequiredService<ISeedDataService>();
+	var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("SeedData");
 	for (var attempt = 0; ; attempt++)
 	{
 		try
@@ -152,6 +156,42 @@ await using (var scope = app.Services.CreateAsyncScope())
 		{
 			// Another app instance may be seeding the demo store at the same time.
 			await Task.Delay(TimeSpan.FromMilliseconds(100 * (attempt + 1)));
+		}
+		catch (RequestFailedException ex)
+		{
+			logger.LogError(
+				ex,
+				"Sample data seeding failed for store variant '{StoreVariant}'.",
+				sampleStoreOptions.CurrentKey
+			);
+			break;
+		}
+		catch (MongoException ex)
+		{
+			logger.LogError(
+				ex,
+				"Sample data seeding failed for store variant '{StoreVariant}'.",
+				sampleStoreOptions.CurrentKey
+			);
+			break;
+		}
+		catch (NpgsqlException ex)
+		{
+			logger.LogError(
+				ex,
+				"Sample data seeding failed for store variant '{StoreVariant}'.",
+				sampleStoreOptions.CurrentKey
+			);
+			break;
+		}
+		catch (InvalidOperationException ex)
+		{
+			logger.LogError(
+				ex,
+				"Sample data seeding failed for store variant '{StoreVariant}'.",
+				sampleStoreOptions.CurrentKey
+			);
+			break;
 		}
 	}
 }

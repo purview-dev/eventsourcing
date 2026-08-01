@@ -10,63 +10,69 @@ partial class MongoDBClient
 	public async Task SubmitBatchAsync(BatchOperation operation, CancellationToken cancellationToken = default)
 	{
 		var collection = GetCollection<BsonDocument>().WithWriteConcern(WriteConcern.WMajority);
-		using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
+		try
+		{
+			using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
 
-		TransactionOptions transactionOptions = new(writeConcern: WriteConcern.WMajority);
-		await session.WithTransactionAsync(
-			async (s, ct) =>
-			{
-				try
+			TransactionOptions transactionOptions = new(writeConcern: WriteConcern.WMajority);
+			await session.WithTransactionAsync(
+				async (s, ct) =>
 				{
-					foreach (var op in operation.GetActions())
+					try
 					{
-						switch (op.ActionType)
+						foreach (var op in operation.GetActions())
 						{
-							case TransactionActionType.Insert:
-								await collection.InsertOneAsync(
-									session,
-									op.Document.ToBsonDocument(),
-									cancellationToken: cancellationToken
-								);
-								break;
-							case TransactionActionType.Update:
-								var d = op.Document.ToBsonDocument();
-								d.Remove("_id");
+							switch (op.ActionType)
+							{
+								case TransactionActionType.Insert:
+									await collection.InsertOneAsync(
+										session,
+										op.Document.ToBsonDocument(),
+										cancellationToken: cancellationToken
+									);
+									break;
+								case TransactionActionType.Update:
+									var d = op.Document.ToBsonDocument();
+									d.Remove("_id");
 
-								await collection.ReplaceOneAsync(
-									session,
-									m => m["_id"] == op.Document.Id,
-									d,
-									new ReplaceOptions { IsUpsert = false },
-									cancellationToken
-								);
+									await collection.ReplaceOneAsync(
+										session,
+										m => m["_id"] == op.Document.Id,
+										d,
+										new ReplaceOptions { IsUpsert = false },
+										cancellationToken
+									);
 
-								break;
-							case TransactionActionType.Delete:
-								await collection.DeleteOneAsync(
-									session,
-									m => m["_id"] == op.Document.Id,
-									cancellationToken: cancellationToken
-								);
-								break;
+									break;
+								case TransactionActionType.Delete:
+									await collection.DeleteOneAsync(
+										session,
+										m => m["_id"] == op.Document.Id,
+										cancellationToken: cancellationToken
+									);
+									break;
+							}
 						}
+
+						await s.CommitTransactionAsync(ct);
+					}
+					catch (MongoWriteException)
+					{
+						await s.AbortTransactionAsync(ct);
+						throw; // NOTE: You must rethrow the exception otherwise an infinite loop can occur.
 					}
 
-					await s.CommitTransactionAsync(ct);
-				}
-				catch (MongoWriteException)
-				{
-					await s.AbortTransactionAsync(ct);
-
-					// Do something in response to the exception
-					throw; // NOTE: You must rethrow the exception otherwise an infinite loop can occur.
-				}
-
-				return true;
-			},
-			transactionOptions,
-			cancellationToken
-		);
+					return true;
+				},
+				transactionOptions,
+				cancellationToken
+			);
+		}
+		catch (NotSupportedException ex)
+			when (ex.Message.Contains("do not support transactions", StringComparison.OrdinalIgnoreCase))
+		{
+			await SubmitBatchWithoutTransactionAsync(collection, operation.GetActions(), cancellationToken);
+		}
 	}
 
 	public async Task SubmitDeleteBatchAsync(
@@ -75,44 +81,90 @@ partial class MongoDBClient
 	)
 	{
 		var collection = GetCollection<BsonDocument>().WithWriteConcern(WriteConcern.WMajority);
-		using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
+		try
+		{
+			using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
 
-		TransactionOptions transactionOptions = new(writeConcern: WriteConcern.WMajority);
-		await session.WithTransactionAsync(
-			async (s, ct) =>
-			{
-				try
+			TransactionOptions transactionOptions = new(writeConcern: WriteConcern.WMajority);
+			await session.WithTransactionAsync(
+				async (s, ct) =>
 				{
-					foreach (var id in entityIds)
+					try
 					{
-						var deleteResult = await collection.DeleteOneAsync(
-							session,
-							BuildPredicate<BsonDocument>(id, null),
-							cancellationToken: cancellationToken
-						);
-						if (deleteResult.IsAcknowledged)
+						foreach (var id in entityIds)
 						{
-							if (deleteResult.DeletedCount == 0)
+							var deleteResult = await collection.DeleteOneAsync(
+								session,
+								BuildPredicate<BsonDocument>(id, null),
+								cancellationToken: cancellationToken
+							);
+							if (deleteResult.IsAcknowledged && deleteResult.DeletedCount == 0)
 								_telemetry.DeleteResultedInNoOp(id);
 						}
 					}
-				}
-				catch (MongoWriteException ex)
-				{
-					await s.AbortTransactionAsync(ct);
+					catch (MongoWriteException ex)
+					{
+						await s.AbortTransactionAsync(ct);
 
-					_telemetry.FailedToWriteBatch(ex);
-					// Do something in response to the exception
-					throw; // NOTE: You must rethrow the exception otherwise an infinite loop can occur.
-				}
+						_telemetry.FailedToWriteBatch(ex);
+						throw; // NOTE: You must rethrow the exception otherwise an infinite loop can occur.
+					}
 
-				await s.CommitTransactionAsync(ct);
+					await s.CommitTransactionAsync(ct);
 
-				return true;
-			},
-			transactionOptions,
-			cancellationToken
-		);
+					return true;
+				},
+				transactionOptions,
+				cancellationToken
+			);
+		}
+		catch (NotSupportedException ex)
+			when (ex.Message.Contains("do not support transactions", StringComparison.OrdinalIgnoreCase))
+		{
+			foreach (var id in entityIds)
+			{
+				var deleteResult = await collection.DeleteOneAsync(
+					BuildPredicate<BsonDocument>(id, null),
+					cancellationToken: cancellationToken
+				);
+
+				if (deleteResult.IsAcknowledged && deleteResult.DeletedCount == 0)
+					_telemetry.DeleteResultedInNoOp(id);
+			}
+		}
+	}
+
+	static async Task SubmitBatchWithoutTransactionAsync(
+		IMongoCollection<BsonDocument> collection,
+		IEnumerable<TableTransactionAction> actions,
+		CancellationToken cancellationToken
+	)
+	{
+		foreach (var op in actions)
+		{
+			switch (op.ActionType)
+			{
+				case TransactionActionType.Insert:
+					await collection.InsertOneAsync(op.Document.ToBsonDocument(), cancellationToken: cancellationToken);
+					break;
+				case TransactionActionType.Update:
+					var d = op.Document.ToBsonDocument();
+					d.Remove("_id");
+					await collection.ReplaceOneAsync(
+						m => m["_id"] == op.Document.Id,
+						d,
+						new ReplaceOptions { IsUpsert = false },
+						cancellationToken
+					);
+					break;
+				case TransactionActionType.Delete:
+					await collection.DeleteOneAsync(
+						m => m["_id"] == op.Document.Id,
+						cancellationToken: cancellationToken
+					);
+					break;
+			}
+		}
 	}
 
 	public async Task<T?> GetAsync<T>(FilterDefinition<T> predicate, CancellationToken cancellationToken = default)

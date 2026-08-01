@@ -39,7 +39,7 @@ var variants = new[]
 			EventStoreConnectionName: Platform.SqlDatabase,
 			QueryStoreConnectionName: Platform.SqlDatabase
 		),
-		Platform.SqlWebApp,
+		Platform.WebApp,
 		project => project.WithReference(hostKit.SqlServer.Database).WaitFor(hostKit.SqlServer.Database)
 	),
 	CreateVariant(
@@ -66,14 +66,14 @@ var variants = new[]
 			QueryStore: SampleQueryStoreKind.MongoDb,
 			AdminStore: SampleAdminStoreKind.MongoDb,
 			AdminApiAvailable: true,
-			EventStoreConnectionName: Platform.MongoDatabase,
-			QueryStoreConnectionName: Platform.MongoDatabase,
+			EventStoreConnectionName: Platform.MongoDb,
+			QueryStoreConnectionName: Platform.MongoDb,
 			EventStoreDatabaseName: Platform.MongoDatabase,
 			QueryStoreDatabaseName: Platform.MongoDatabase,
 			AdminDatabaseName: Platform.MongoDatabase
 		),
 		Platform.MongoDbWebApp,
-		project => project.WithReference(hostKit.MongoDb.Database).WaitFor(hostKit.MongoDb.Database)
+		project => project.WithReference(hostKit.MongoDb).WaitFor(hostKit.MongoDb.Database)
 	),
 	CreateVariant(
 		new(
@@ -121,13 +121,13 @@ var variants = new[]
 			AdminStore: SampleAdminStoreKind.AzureStorage,
 			AdminApiAvailable: true,
 			EventStoreConnectionName: Platform.AzureStorageBlob,
-			QueryStoreConnectionName: Platform.MongoSharedQueryDatabase,
+			QueryStoreConnectionName: Platform.MongoDb,
 			QueryStoreDatabaseName: Platform.MongoSharedQueryDatabase
 		),
 		Platform.AzureMongoDbWebApp,
 		project =>
 		{
-			project.WithReference(hostKit.MongoDb.SharedQueryDatabase).WaitFor(hostKit.MongoDb.SharedQueryDatabase);
+			project.WithReference(hostKit.MongoDb).WaitFor(hostKit.MongoDb.SharedQueryDatabase);
 		}
 	),
 };

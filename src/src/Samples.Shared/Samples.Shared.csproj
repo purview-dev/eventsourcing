@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
+		<AssemblyName>Samples.Shared</AssemblyName>
+		<PackageId>Purview.EventSourcing.Samples.Shared</PackageId>
 		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
 	</PropertyGroup>
 </Project>

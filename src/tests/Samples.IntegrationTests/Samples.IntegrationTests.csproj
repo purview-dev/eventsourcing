@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />
 		<!-- Direct reference required when not used via a NuGet package -->
