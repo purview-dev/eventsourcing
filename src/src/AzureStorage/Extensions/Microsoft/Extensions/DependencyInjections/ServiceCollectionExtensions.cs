@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Microsoft.Extensions.Configuration;
 using Purview.EventSourcing.Internal;
 
@@ -9,7 +9,10 @@ public static class ServiceCollectionExtensions
 {
 	extension(IServiceCollection services)
 	{
-		public IServiceCollection AddAzureStorageEventStore()
+		public IServiceCollection AddAzureStorageEventStore() =>
+			services.AddAzureStorageEventStore(connectionStringName: null);
+
+		public IServiceCollection AddAzureStorageEventStore(string? connectionStringName)
 		{
 			services.AddEventSourcing();
 
@@ -29,11 +32,11 @@ public static class ServiceCollectionExtensions
 
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
-							options.ConnectionString =
-								configuration.GetConnectionString("EventStore_AzureStorage")
-								?? configuration.GetConnectionString("AzureStorage")
-								// This will get picked up by the validation.
-								?? default!;
+							options.ConnectionString = configuration.GetRequiredConnectionString([
+								connectionStringName,
+								"EventStore_AzureStorage",
+								"AzureStorage",
+							]);
 						}
 					}
 				)

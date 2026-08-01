@@ -7,6 +7,7 @@ namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 sealed partial class SqlServerKit
 {
 	public IResourceBuilder<SqlServerDatabaseResource> Database { get; private set; } = default!;
+	public IResourceBuilder<SqlServerDatabaseResource> SharedQueryDatabase { get; private set; } = default!;
 
 	protected override IResourceBuilder<SqlServerServerResource> BuildResource(IDistributedApplicationBuilder builder)
 	{
@@ -14,6 +15,7 @@ sealed partial class SqlServerKit
 		var sql = builder.AddSqlServer(Name, sqlPassword).WithImageTag(ContainerHelper.SqlServerImageTag);
 
 		Database = sql.AddDatabase(Platform.SqlDatabase, Options.DatabaseName);
+		SharedQueryDatabase = sql.AddDatabase(Platform.SqlSharedQueryDatabase, Options.SharedQueryDatabaseName);
 
 		if (!HostKit.Options.IsTestRun)
 			sql.WithDataVolume("eventsourcing-sample-sql-data");
@@ -25,5 +27,8 @@ sealed partial class SqlServerKit
 	{
 		[Required(AllowEmptyStrings = false)]
 		public string DatabaseName { get; set; } = "EventSourcingSampleDb";
+
+		[Required(AllowEmptyStrings = false)]
+		public string SharedQueryDatabaseName { get; set; } = "EventSourcingSampleAzureSqlDb";
 	}
 }

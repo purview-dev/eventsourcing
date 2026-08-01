@@ -55,6 +55,7 @@
 		<PackageVersion Include="Testcontainers.CosmosDb" Version="4.13.0" />
 		<PackageVersion Include="Testcontainers.MongoDb" Version="4.13.0" />
 		<PackageVersion Include="Testcontainers.MsSql" Version="4.13.0" />
+		<PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
 		<PackageVersion Include="Verify.SourceGenerators" Version="2.2.0" />
 		<PackageVersion Include="TUnit" Version="$(TUnitVersion)" />
 		<PackageVersion Include="TUnit.Aspire" Version="$(TUnitVersion)" />
@@ -64,7 +65,11 @@
 		<PackageVersion Include="Azure.Data.Tables" Version="12.11.0" />
 		<PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.62.0" />
 		<PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
+		<PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.10" />
 		<PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
+		<PackageVersion Include="Npgsql" Version="10.0.3" />
+		<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
 		<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
 		<PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
 		<PackageVersion Include="MongoDB.Driver" Version="3.10.0" />
@@ -72,6 +77,9 @@
 		<PackageVersion Include="Aspire.Hosting" Version="13.4.6" />
 		<PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
 		<PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="13.4.6" />
+		<PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.4.6" />
+		<PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
+		<PackageVersion Include="Aspire.Npgsql" Version="13.4.6" />
 		<PackageVersion Include="Aspire.Hosting.Redis" Version="13.4.6" />
 		<PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.4.6" />
 		<PackageVersion Include="Aspire.StackExchange.Redis.DistributedCaching" Version="13.4.6" />

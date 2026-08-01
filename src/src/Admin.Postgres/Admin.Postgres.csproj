@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<Title>Purview Event Sourcing Admin Portal Postgres</Title>
+		<Description>Postgres query adapters for Purview EventSourcing Admin Portal.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;postgres;queries;</PackageTags>
+		<PackageId>Purview.EventSourcing.Admin.Postgres</PackageId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
+		<ProjectReference Include="..\Postgres\Postgres.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.Options" />
+	</ItemGroup>
+</Project>

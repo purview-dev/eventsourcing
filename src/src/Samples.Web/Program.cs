@@ -1,18 +1,36 @@
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
+using Purview.EventSourcing.Admin.Api;
+using Purview.EventSourcing.Admin.AzureStorage;
+using Purview.EventSourcing.Admin.MongoDB;
+using Purview.EventSourcing.Admin.Postgres;
+using Purview.EventSourcing.Admin.Security;
 using Purview.EventSourcing.Admin.Site;
 using Purview.EventSourcing.Admin.SqlServer;
+using Purview.EventSourcing.AzureStorage;
+using Purview.EventSourcing.MongoDB.Events;
+using Purview.EventSourcing.MongoDB.Snapshots;
+using Purview.EventSourcing.Postgres.Events;
+using Purview.EventSourcing.Postgres.Snapshots;
 using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
+using Purview.EventSourcing.SqlServer.Events;
 using Purview.EventSourcing.SqlServer.Events.Exceptions;
+using Purview.EventSourcing.SqlServer.Snapshots;
 
 // No authentication in this sample — allow all operations without a principal identifier
 EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 
 var builder = WebApplication.CreateBuilder(args);
+var sampleStoreOptions =
+	builder.Configuration.GetSection(SampleStoreOptions.SectionName).Get<SampleStoreOptions>() ?? new();
 
 builder.AddServiceDefaults();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+builder.Services.AddSingleton(sampleStoreOptions);
 
 // Use Redis when available (e.g. via Aspire AppHost); fall back to in-memory for standalone dev runs
 if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString(Platform.Redis)))
@@ -20,10 +38,10 @@ if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString(Platform
 else
 	builder.AddRedisDistributedCache(Platform.Redis);
 
-// Register SQL Server event store (event stream + snapshots for querying)
-builder.Services.AddSqlServerEventStore(Platform.SqlDatabase);
-builder.Services.AddSqlServerSnapshotQueryableEventStore(Platform.SqlDatabase);
-builder.Services.AddPurviewEventSourcingAdminSqlServer();
+ConfigureStoreOptions(builder.Services, sampleStoreOptions);
+RegisterEventStore(builder.Services, sampleStoreOptions);
+RegisterQueryStore(builder.Services, sampleStoreOptions);
+RegisterAdmin(builder.Services, sampleStoreOptions);
 
 builder.Services.AddDomainServices();
 builder.Services.AddScoped<IAggregateAuditService, AggregateAuditService>();
@@ -49,7 +67,11 @@ builder.Services.AddSingleton<IProductImageService>(serviceProvider =>
 	}
 });
 
-builder.Services.AddPurviewEventSourcingAdminSite(enableRazorRuntimeCompilation: builder.Environment.IsDevelopment());
+if (sampleStoreOptions.AdminApiAvailable)
+	builder.Services.AddPurviewEventSourcingAdminSite(
+		enableRazorRuntimeCompilation: builder.Environment.IsDevelopment()
+	);
+
 builder.Services.AddSession(options =>
 {
 	options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -64,8 +86,16 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseSession();
-app.MapPurviewEventSourcingAdminSite();
+
+if (sampleStoreOptions.AdminApiAvailable)
+{
+	app.MapPurviewEventSourcingAdminApi();
+	app.MapPurviewEventSourcingAdminSite();
+}
+
 app.MapGroup("/api/audit")
 	.MapGet(
 		"/aggregates/{aggregateType}/{aggregateId}/events",
@@ -127,3 +157,124 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 await app.RunAsync();
+
+static void ConfigureStoreOptions(IServiceCollection services, SampleStoreOptions sampleStoreOptions)
+{
+	switch (sampleStoreOptions.EventStore)
+	{
+		case SampleEventStoreKind.MongoDb:
+			services
+				.AddOptions<MongoDBEventStoreOptions>()
+				.Configure(options =>
+					options.Database = sampleStoreOptions.EventStoreDatabaseName ?? Platform.MongoDatabase
+				);
+			break;
+		case SampleEventStoreKind.AzureStorage:
+			services
+				.AddOptions<AzureStorageEventStoreOptions>()
+				.Configure(options =>
+				{
+					options.Table = $"EventStore{NormalizeAlphaNumeric(sampleStoreOptions.CurrentKey)}";
+					options.Container = $"eventstore-{NormalizeKebab(sampleStoreOptions.CurrentKey)}";
+				});
+			break;
+	}
+
+	if (sampleStoreOptions.QueryStore == SampleQueryStoreKind.MongoDb)
+	{
+		services
+			.AddOptions<MongoDBSnapshotEventStoreOptions>()
+			.Configure(options =>
+				options.Database = sampleStoreOptions.QueryStoreDatabaseName ?? Platform.MongoDatabase
+			);
+	}
+}
+
+static void RegisterEventStore(IServiceCollection services, SampleStoreOptions sampleStoreOptions)
+{
+	switch (sampleStoreOptions.EventStore)
+	{
+		case SampleEventStoreKind.SqlServer:
+			services.AddSqlServerEventStore(sampleStoreOptions.EventStoreConnectionName);
+			break;
+		case SampleEventStoreKind.Postgres:
+			services.AddPostgresEventStore(sampleStoreOptions.EventStoreConnectionName);
+			break;
+		case SampleEventStoreKind.MongoDb:
+			services.AddMongoDBEventStore(sampleStoreOptions.EventStoreConnectionName);
+			break;
+		case SampleEventStoreKind.AzureStorage:
+			services.AddAzureStorageEventStore(sampleStoreOptions.EventStoreConnectionName);
+			break;
+		default:
+			throw new InvalidOperationException($"Unsupported event store '{sampleStoreOptions.EventStore}'.");
+	}
+}
+
+static void RegisterQueryStore(IServiceCollection services, SampleStoreOptions sampleStoreOptions)
+{
+	switch (sampleStoreOptions.QueryStore)
+	{
+		case SampleQueryStoreKind.SqlServer:
+			services.AddSqlServerSnapshotQueryableEventStore(sampleStoreOptions.QueryStoreConnectionName);
+			break;
+		case SampleQueryStoreKind.Postgres:
+			services.AddPostgresSnapshotQueryableEventStore(sampleStoreOptions.QueryStoreConnectionName);
+			break;
+		case SampleQueryStoreKind.MongoDb:
+			services.AddMongoDBSnapshotQueryableEventStore(sampleStoreOptions.QueryStoreConnectionName);
+			break;
+		default:
+			throw new InvalidOperationException($"Unsupported query store '{sampleStoreOptions.QueryStore}'.");
+	}
+}
+
+static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sampleStoreOptions)
+{
+	if (!sampleStoreOptions.AdminApiAvailable)
+		return;
+
+	services
+		.AddAuthentication(SampleAdminAuthenticationHandler.SchemeName)
+		.AddScheme<AuthenticationSchemeOptions, SampleAdminAuthenticationHandler>(
+			SampleAdminAuthenticationHandler.SchemeName,
+			configureOptions: null
+		);
+	services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
+	services.AddPurviewEventSourcingAdminSecurity(new SampleAdminPermissionProvider());
+	services.AddPurviewEventSourcingAdminApi(options => options.RoutePrefix = sampleStoreOptions.AdminApiPath);
+
+	switch (sampleStoreOptions.AdminStore)
+	{
+		case SampleAdminStoreKind.SqlServer:
+			services.AddPurviewEventSourcingAdminSqlServer();
+			break;
+		case SampleAdminStoreKind.Postgres:
+			services.AddPurviewEventSourcingAdminPostgres();
+			break;
+		case SampleAdminStoreKind.MongoDb:
+			services.AddPurviewEventSourcingAdminMongoDB(
+				sampleStoreOptions.AdminDatabaseName
+					?? sampleStoreOptions.EventStoreDatabaseName
+					?? sampleStoreOptions.QueryStoreDatabaseName
+					?? Platform.MongoDatabase
+			);
+			break;
+		case SampleAdminStoreKind.AzureStorage:
+			services.AddPurviewEventSourcingAdminAzureStorage();
+			break;
+		default:
+			throw new InvalidOperationException($"Unsupported admin store '{sampleStoreOptions.AdminStore}'.");
+	}
+}
+
+static string NormalizeAlphaNumeric(string value) => new(value.Where(char.IsLetterOrDigit).ToArray());
+
+static string NormalizeKebab(string value)
+{
+	var normalized = new string(
+		value.ToLowerInvariant().Where(character => char.IsLetterOrDigit(character) || character == '-').ToArray()
+	);
+
+	return string.IsNullOrWhiteSpace(normalized) ? "sample" : normalized;
+}

@@ -7,11 +7,13 @@ namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 [ResourceDefinition<AzureStorageResource>(Platform.AzureStorage)]
 sealed partial class AzureStorageKit
 {
+	public IResourceBuilder<AzureStorageResource> Storage { get; private set; } = default!;
 	public IResourceBuilder<AzureBlobStorageContainerResource> SnapshotBlob { get; set; } = default!;
 
 	protected override IResourceBuilder<AzureStorageResource> BuildResource(IDistributedApplicationBuilder builder)
 	{
-		var storage = builder.AddAzureStorage(Name);
+		Storage = builder.AddAzureStorage(Name);
+		var storage = Storage;
 		if (!builder.ExecutionContext.IsPublishMode)
 		{
 			storage.RunAsEmulator(e =>

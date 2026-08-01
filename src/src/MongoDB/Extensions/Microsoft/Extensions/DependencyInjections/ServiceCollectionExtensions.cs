@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +14,9 @@ public static class ServiceCollectionExtensions
 {
 	extension([NotNull] IServiceCollection services)
 	{
-		public IServiceCollection AddMongoDBEventStore()
+		public IServiceCollection AddMongoDBEventStore() => services.AddMongoDBEventStore(connectionStringName: null);
+
+		public IServiceCollection AddMongoDBEventStore(string? connectionStringName)
 		{
 			services.AddEventSourcing();
 
@@ -36,11 +38,11 @@ public static class ServiceCollectionExtensions
 
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
-							options.ConnectionString =
-								configuration.GetConnectionString("EventStore_MongoDB")
-								?? configuration.GetConnectionString("MongoDB")
-								// This will get picked up by the validation.
-								?? default!;
+							options.ConnectionString = configuration.GetRequiredConnectionString([
+								connectionStringName,
+								"EventStore_MongoDB",
+								"MongoDB",
+							]);
 						}
 					}
 				)
@@ -49,7 +51,13 @@ public static class ServiceCollectionExtensions
 			return services;
 		}
 
-		public IServiceCollection AddMongoDBSnapshotQueryableEventStore(bool registerAsIEventStore = false)
+		public IServiceCollection AddMongoDBSnapshotQueryableEventStore(bool registerAsIEventStore = false) =>
+			services.AddMongoDBSnapshotQueryableEventStore(connectionStringName: null, registerAsIEventStore);
+
+		public IServiceCollection AddMongoDBSnapshotQueryableEventStore(
+			string? connectionStringName,
+			bool registerAsIEventStore = false
+		)
 		{
 			services.AddEventSourcing();
 
@@ -67,19 +75,19 @@ public static class ServiceCollectionExtensions
 			}
 
 			services
-				.AddOptions<MongoDBEventStoreOptions>()
+				.AddOptions<MongoDBSnapshotEventStoreOptions>()
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration.GetSection(MongoDBEventStoreOptions.MongoDBEventStore).Bind(options);
+						configuration.GetSection(MongoDBSnapshotEventStoreOptions.MongoDBEventStore).Bind(options);
 
-						options.ConnectionString ??=
-							configuration.GetConnectionString("EventStore_MongoDBSnapshot")
-							?? configuration.GetConnectionString("MongoDBSnapshot")
-							?? configuration.GetConnectionString("EventStore_MongoDB")
-							?? configuration.GetConnectionString("MongoDB")
-							// This will get picked up by the validation.
-							?? default!;
+						options.ConnectionString ??= configuration.GetRequiredConnectionString([
+							connectionStringName,
+							"EventStore_MongoDBSnapshot",
+							"MongoDBSnapshot",
+							"EventStore_MongoDB",
+							"MongoDB",
+						]);
 					}
 				)
 				.ValidateOnStart();

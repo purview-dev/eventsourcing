@@ -5,6 +5,7 @@ using Testcontainers.Azurite;
 using Testcontainers.CosmosDb;
 using Testcontainers.MongoDb;
 using Testcontainers.MsSql;
+using Testcontainers.PostgreSql;
 
 namespace Purview.EventSourcing;
 
@@ -88,6 +89,15 @@ public static partial class ContainerHelper
 	public static MsSqlContainer CreateMsSql(Action<MsSqlBuilder>? config = null)
 	{
 		var builder = new MsSqlBuilder($"mcr.microsoft.com/mssql/server:{SqlServerImageTag}");
+
+		config?.Invoke(builder);
+
+		return builder.Build();
+	}
+
+	public static PostgreSqlContainer CreatePostgreSql(Action<PostgreSqlBuilder>? config = null)
+	{
+		var builder = new PostgreSqlBuilder($"postgres:{PostgresImageTag}");
 
 		config?.Invoke(builder);
 

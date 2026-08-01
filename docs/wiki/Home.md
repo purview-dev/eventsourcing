@@ -23,10 +23,11 @@ This wiki is the project documentation hub for framework features, provider capa
   - Paper-first worksheets for aggregate boundaries, commands, events, relationships, and event streams.
   - Guidance for relational data, value objects, validation layers, and schema evolution.
 - **Storage providers**
-  - SQL Server / Azure SQL: event streams + queryable snapshots + SQL transaction coordination.
+  - SQL Server / Azure SQL: append-only event streams, internal replay snapshots, and optional SQL query snapshots with transaction coordination.
+  - PostgreSQL: append-only event streams, internal replay snapshots, and optional PostgreSQL JSONB query snapshots.
   - Azure Storage: table-backed event streams with blob support for snapshots/large payloads.
-  - MongoDB: event streams + queryable snapshots.
-  - Cosmos DB: queryable snapshot store.
+  - MongoDB: event streams plus an optional MongoDB query snapshot store.
+  - Cosmos DB: optional query snapshot store.
   - In-memory provider: non-persistent event/snapshot store for local/test scenarios.
   - Validation adapters: FluentValidation and ZodSharp adapters for `IAggregateValidator<T>`.
   - SQL snapshot translation distinguishes between provider-converted scalar value objects and directly mapped complex snapshot graphs; see the provider matrix and SQL guide for details.

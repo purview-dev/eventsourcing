@@ -5,6 +5,7 @@
 		<PackageReference Include="Testcontainers.CosmosDb" />
 		<PackageReference Include="Testcontainers.MongoDb" />
 		<PackageReference Include="Testcontainers.MsSql" />
+		<PackageReference Include="Testcontainers.PostgreSql" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -12,6 +13,7 @@
 		<ProjectReference Include="..\..\src\CosmosDb\CosmosDb.csproj" />
 		<ProjectReference Include="..\..\src\ImplementationShared\ImplementationShared.csproj" />
 		<ProjectReference Include="..\..\src\MongoDB\MongoDB.csproj" />
+		<ProjectReference Include="..\..\src\Postgres\Postgres.csproj" />
 		<ProjectReference Include="..\..\src\SqlServer\SqlServer.csproj" />
 		<!-- Direct reference required when not used via a NuGet package -->
 		<ProjectReference

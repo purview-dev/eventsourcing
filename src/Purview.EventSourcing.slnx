@@ -8,6 +8,8 @@
 		<File Path="Directory.Build.targets" />
 	</Folder>
 	<Folder Name="/src/">
+		<Project Path="src/Admin.AzureStorage/Admin.AzureStorage.csproj" />
+		<Project Path="src/Admin.Postgres/Admin.Postgres.csproj" />
 		<Project Path="src/EventSourcing/EventSourcing.csproj" />
 		<Project Path="src/FluentValidationImpl/FluentValidationImpl.csproj" />
 		<Project Path="src/SourceGenerator/SourceGenerator.csproj" />
@@ -27,6 +29,7 @@
 		<Project Path="src/ImplementationShared/ImplementationShared.csproj" />
 		<Project Path="src/InMemory/InMemory.csproj" />
 		<Project Path="src/MongoDB/MongoDB.csproj" />
+		<Project Path="src/Postgres/Postgres.csproj" />
 		<Project Path="src/SqlServer/SqlServer.csproj" />
 	</Folder>
 	<Folder Name="/src/samples/">
@@ -57,6 +60,7 @@
 		<Project Path="tests/AzureStorage.IntegrationTests/AzureStorage.IntegrationTests.csproj" />
 		<Project Path="tests/CosmosDb.IntegrationTests/CosmosDb.IntegrationTests.csproj" />
 		<Project Path="tests/MongoDB.IntegrationTests/MongoDB.IntegrationTests.csproj" />
+		<Project Path="tests/Postgres.IntegrationTests/Postgres.IntegrationTests.csproj" />
 		<Project Path="tests/SqlServer.IntegrationTests/SqlServer.IntegrationTests.csproj" />
 	</Folder>
 	<Folder Name="/tests/samples/">
