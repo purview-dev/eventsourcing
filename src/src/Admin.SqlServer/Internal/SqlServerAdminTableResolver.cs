@@ -1,6 +1,6 @@
 using Purview.EventSourcing.SqlServer.Events;
 
-namespace Purview.EventSourcing.Admin.SqlServer;
+namespace Purview.EventSourcing.Admin.SqlServer.Internal;
 
 static class SqlServerAdminTableResolver
 {

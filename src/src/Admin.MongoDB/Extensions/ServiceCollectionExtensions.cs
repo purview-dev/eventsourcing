@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using MongoDB.Driver;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Services;
 
 namespace Purview.EventSourcing.Admin.MongoDB;
 

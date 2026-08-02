@@ -1,7 +1,9 @@
 using System.Text.Json;
-using Azure.Data.Tables;
 using Microsoft.Extensions.Options;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Queries;
+using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.AzureStorage.Internal;
 using Purview.EventSourcing.AzureStorage;
 using Purview.EventSourcing.AzureStorage.Entities;
 
@@ -65,7 +67,7 @@ public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEven
 
 		var directionDesc = query.Sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
 		var ordered = directionDesc
-			? rows.OrderByDescending(x => x.Version).ToList()
+			? [.. rows.OrderByDescending(x => x.Version)]
 			: rows.OrderBy(x => x.Version).ToList();
 
 		var totalCount = ordered.Count;

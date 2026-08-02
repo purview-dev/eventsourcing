@@ -1,4 +1,4 @@
-namespace Purview.EventSourcing.Admin.Abstractions;
+namespace Purview.EventSourcing.Admin.Abstractions.Models;
 
 public sealed record AggregateSummaryResponse(
 	string AggregateType,

@@ -85,8 +85,8 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		return new(new HttpClientHandler() { AllowAutoRedirect = false }) { BaseAddress = httpClient.BaseAddress };
 	}
 
-	public Task<string?> GetResourceConnectionStringAsync(string resourceName) =>
-		GetConnectionStringAsync(resourceName);
+	public Task<string?> GetResourceConnectionStringAsync(string resourceName, CancellationToken cancellationToken) =>
+		GetConnectionStringAsync(resourceName, cancellationToken);
 
 	//async Task WaitForWebAppAsync(CancellationToken cancellationToken)
 	//{

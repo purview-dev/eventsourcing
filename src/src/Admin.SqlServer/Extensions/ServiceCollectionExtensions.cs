@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.SqlServer.Events;
 
 namespace Purview.EventSourcing.Admin.SqlServer;

@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Queries;
+using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.SqlServer.Internal;
 using Purview.EventSourcing.SqlServer.Events;
 using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 

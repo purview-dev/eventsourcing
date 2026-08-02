@@ -10,7 +10,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
-		<ProjectReference Include="..\Admin.Api\Admin.Api.csproj" />
+		<ProjectReference Include="..\Admin.API\Admin.API.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

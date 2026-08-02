@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using Purview.EventSourcing.Admin.Abstractions;
 using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Services;
 
-namespace Purview.EventSourcing.Admin.Security;
+namespace Purview.EventSourcing.Admin.Security.Providers;
 
 /// <summary>
 /// Default deny-by-default permission provider.
@@ -15,6 +15,6 @@ public sealed class DenyAllPermissionProvider : IAdminPermissionProvider
 		CancellationToken cancellationToken
 	)
 	{
-		return Task.FromResult<IReadOnlyList<AdminPermission>>(Array.Empty<AdminPermission>());
+		return Task.FromResult<IReadOnlyList<AdminPermission>>([]);
 	}
 }

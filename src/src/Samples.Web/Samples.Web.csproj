@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Admin.Api\Admin.Api.csproj" />
+		<ProjectReference Include="..\Admin.API\Admin.API.csproj" />
 		<ProjectReference Include="..\Admin.AzureStorage\Admin.AzureStorage.csproj" />
 		<ProjectReference Include="..\Admin.MongoDB\Admin.MongoDB.csproj" />
 		<ProjectReference Include="..\Admin.Postgres\Admin.Postgres.csproj" />

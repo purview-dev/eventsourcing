@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Purview.EventSourcing.Admin.Abstractions;
+namespace Purview.EventSourcing.Admin.Abstractions.Models;
 
 public sealed record ProjectionResponse(
 	string AggregateType,

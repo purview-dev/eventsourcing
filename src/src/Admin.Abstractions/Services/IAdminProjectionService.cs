@@ -1,4 +1,6 @@
-namespace Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
+
+namespace Purview.EventSourcing.Admin.Abstractions.Services;
 
 public interface IAdminProjectionService
 {

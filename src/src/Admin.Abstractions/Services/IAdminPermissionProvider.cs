@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 
-namespace Purview.EventSourcing.Admin.Abstractions;
+namespace Purview.EventSourcing.Admin.Abstractions.Services;
 
 /// <summary>
 /// Pluggable permission provider for admin portal.

@@ -1,7 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using Azure;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 using Npgsql;
 using Purview.EventSourcing.Admin.Api;
@@ -14,13 +14,9 @@ using Purview.EventSourcing.Admin.SqlServer;
 using Purview.EventSourcing.AzureStorage;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Snapshots;
-using Purview.EventSourcing.Postgres.Events;
-using Purview.EventSourcing.Postgres.Snapshots;
 using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
-using Purview.EventSourcing.SqlServer.Events;
-using Purview.EventSourcing.SqlServer.Snapshots;
 using AzureCommitException = Purview.EventSourcing.AzureStorage.Exceptions.CommitException;
 using AzureConcurrencyException = Purview.EventSourcing.AzureStorage.Exceptions.ConcurrencyException;
 using SqlServerCommitException = Purview.EventSourcing.SqlServer.Events.Exceptions.CommitException;
@@ -373,13 +369,14 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 	}
 }
 
-static string NormalizeAlphaNumeric(string value) => new(value.Where(char.IsLetterOrDigit).ToArray());
+static string NormalizeAlphaNumeric(string value) => new([.. value.Where(char.IsLetterOrDigit)]);
 
+[SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase")]
 static string NormalizeKebab(string value)
 {
-	var normalized = new string(
-		value.ToLowerInvariant().Where(character => char.IsLetterOrDigit(character) || character == '-').ToArray()
-	);
+	var normalized = new string([
+		.. value.ToLowerInvariant().Where(character => char.IsLetterOrDigit(character) || character == '-'),
+	]);
 
 	return string.IsNullOrWhiteSpace(normalized) ? "sample" : normalized;
 }

@@ -2,9 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Purview.EventSourcing.Aggregates.Persistence;
 using Purview.EventSourcing.Fixtures.Postgres;
-using Purview.EventSourcing.Postgres;
 
-namespace Purview.EventSourcing.Postgres.IntegrationTests;
+namespace Purview.EventSourcing.Postgres;
 
 [ClassDataSource<PostgresSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreFixture fixture)
@@ -99,12 +98,10 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 				);
 		}
 
-		await using (var verifyContext = new ExecuteUpdateDbContext(options, tableName))
-		{
-			var row = await verifyContext.Rows.SingleAsync(cancellationToken);
-			await Assert.That(row.State.Version).IsEqualTo(2);
-			await Assert.That(row.State.Status).IsEqualTo("pending");
-		}
+		await using var verifyContext = new ExecuteUpdateDbContext(options, tableName);
+		var row = await verifyContext.Rows.SingleAsync(cancellationToken);
+		await Assert.That(row.State.Version).IsEqualTo(2);
+		await Assert.That(row.State.Status).IsEqualTo("pending");
 	}
 
 	[Test]
@@ -115,14 +112,12 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 		var store = fixture.CreateSnapshotStore<PersistenceAggregate>(
 			runId: runId,
 			configureOptions: options =>
-			{
 				options.JsonIndexOptions = new PostgresJsonIndexOptions
 				{
 					Enabled = true,
 					UseJsonbPathOps = true,
 					PathIndexes = [new() { Path = "ComplexTestType.StringProperty" }],
-				};
-			}
+				}
 		);
 		var aggregate = new PersistenceAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
 		aggregate.SetComplexProperty(new() { StringProperty = "indexed" });

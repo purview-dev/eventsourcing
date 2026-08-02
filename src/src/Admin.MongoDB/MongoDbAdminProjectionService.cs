@@ -1,6 +1,7 @@
 using System.Text.Json;
 using MongoDB.Driver;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.MongoDB.Events.Entities;
 
 namespace Purview.EventSourcing.Admin.MongoDB;

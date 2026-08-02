@@ -4,7 +4,7 @@ using Azure.Data.Tables.Models;
 using Purview.EventSourcing.AzureStorage;
 using Purview.EventSourcing.AzureStorage.Entities;
 
-namespace Purview.EventSourcing.Admin.AzureStorage;
+namespace Purview.EventSourcing.Admin.AzureStorage.Internal;
 
 static class AzureStorageAdminTableHelpers
 {

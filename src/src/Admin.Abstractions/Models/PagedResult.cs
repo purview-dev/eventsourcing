@@ -1,4 +1,4 @@
-namespace Purview.EventSourcing.Admin.Abstractions;
+namespace Purview.EventSourcing.Admin.Abstractions.Models;
 
 public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int PageSize, long TotalCount)
 {

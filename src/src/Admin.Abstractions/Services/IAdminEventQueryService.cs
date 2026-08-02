@@ -1,4 +1,7 @@
-namespace Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Queries;
+
+namespace Purview.EventSourcing.Admin.Abstractions.Services;
 
 public interface IAdminEventQueryService
 {

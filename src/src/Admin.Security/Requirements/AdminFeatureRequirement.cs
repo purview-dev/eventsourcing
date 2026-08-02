@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
 
-namespace Purview.EventSourcing.Admin.Security;
+namespace Purview.EventSourcing.Admin.Security.Requirements;
 
 public sealed class AdminFeatureRequirement(AdminFeature feature) : IAuthorizationRequirement
 {

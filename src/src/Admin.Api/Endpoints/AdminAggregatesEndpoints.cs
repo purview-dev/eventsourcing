@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
-using Purview.EventSourcing.Admin.Abstractions;
+using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Queries;
+using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Api.Contracts;
 using Purview.EventSourcing.Admin.Security;
 
 namespace Purview.EventSourcing.Admin.Api.Endpoints;

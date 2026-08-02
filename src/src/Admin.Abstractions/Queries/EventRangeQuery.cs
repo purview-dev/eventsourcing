@@ -1,4 +1,4 @@
-namespace Purview.EventSourcing.Admin.Abstractions;
+namespace Purview.EventSourcing.Admin.Abstractions.Queries;
 
 public sealed record EventRangeQuery(
 	long? VersionFrom,

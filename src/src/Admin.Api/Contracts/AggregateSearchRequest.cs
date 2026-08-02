@@ -1,4 +1,4 @@
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.Api.Contracts;
 
 public sealed record AggregateSearchRequest(
 	string? AggregateType,

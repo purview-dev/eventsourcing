@@ -1,7 +1,7 @@
 using Purview.EventSourcing.SqlServer.Events;
 using TUnit.Core;
 
-namespace Purview.EventSourcing.Admin.SqlServer.UnitTests.Internal;
+namespace Purview.EventSourcing.Admin.SqlServer.Internal;
 
 public sealed class SqlServerAdminTableResolverTests
 {

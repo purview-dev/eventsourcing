@@ -1,6 +1,6 @@
 using Purview.EventSourcing.Postgres.Events;
 
-namespace Purview.EventSourcing.Admin.Postgres;
+namespace Purview.EventSourcing.Admin.Postgres.Internal;
 
 static class PostgresAdminTableResolver
 {

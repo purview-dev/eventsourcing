@@ -1,12 +1,11 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using Purview.EventSourcing.Admin.Abstractions;
 using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Security;
-using TUnit.Core;
+using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Security.Providers;
 
-namespace Purview.EventSourcing.Admin.UnitTests.Security;
+namespace Purview.EventSourcing.Admin.Security;
 
 public sealed class PermissionProviderTests
 {
@@ -30,9 +29,7 @@ public sealed class PermissionProviderTests
 		// Arrange
 		var provider = new DenyAllPermissionProvider();
 		var user = new ClaimsPrincipal(
-			new ClaimsIdentity(
-				new[] { new Claim(ClaimTypes.NameIdentifier, "user123"), new Claim(ClaimTypes.Role, "Admin") }
-			)
+			new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "user123"), new Claim(ClaimTypes.Role, "Admin")])
 		);
 
 		// Act
@@ -96,9 +93,9 @@ public sealed class PermissionProviderTests
 			CancellationToken cancellationToken
 		)
 		{
-			return Task.FromResult<IReadOnlyList<AdminPermission>>(
-				new[] { new AdminPermission(AdminFeature.SearchAggregates, null, true) }
-			);
+			return Task.FromResult<IReadOnlyList<AdminPermission>>([
+				new AdminPermission(AdminFeature.SearchAggregates, null, true),
+			]);
 		}
 	}
 }

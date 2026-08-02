@@ -6,7 +6,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Admin.Abstractions\Admin.Abstractions.csproj" />
 		<ProjectReference Include="..\..\src\Admin.Security\Admin.Security.csproj" />
-		<ProjectReference Include="..\..\src\Admin.Api\Admin.Api.csproj" />
+		<ProjectReference Include="..\..\src\Admin.API\Admin.API.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
