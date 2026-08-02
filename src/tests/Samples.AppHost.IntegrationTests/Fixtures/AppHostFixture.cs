@@ -10,6 +10,15 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 {
 	readonly string _databaseName = $"EventStoreSample_" + $"{Guid.NewGuid():N}"[..8];
 	readonly string _snapshotBlobName = $"es-snapshot-" + $"{Guid.NewGuid():N}"[..8];
+	static readonly string[] WebResourceNames =
+	[
+		Platform.WebApp,
+		Platform.PostgresWebApp,
+		Platform.MongoDbWebApp,
+		Platform.AzureSqlWebApp,
+		Platform.AzurePostgresWebApp,
+		Platform.AzureMongoDbWebApp,
+	];
 
 	readonly Lazy<AppServiceHelper> _appService;
 
@@ -62,7 +71,8 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		await base.InitializeAsync();
 
 		_databaseConnectionString = await GetConnectionStringAsync(Platform.SqlDatabase);
-		//	await WaitForWebAppAsync(CancellationToken.None);
+		foreach (var resourceName in WebResourceNames)
+			await WaitForWebAppAsync(resourceName, CancellationToken.None);
 	}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
@@ -88,40 +98,34 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	public Task<string?> GetResourceConnectionStringAsync(string resourceName, CancellationToken cancellationToken) =>
 		GetConnectionStringAsync(resourceName, cancellationToken);
 
-	//async Task WaitForWebAppAsync(CancellationToken cancellationToken)
-	//{
-	//	using var client = CreateWebClient();
-	//	client.Timeout = TimeSpan.FromSeconds(10);
+	async Task WaitForWebAppAsync(string resourceName, CancellationToken cancellationToken)
+	{
+		using var client = CreateWebClient(resourceName, followRedirects: true);
+		client.Timeout = TimeSpan.FromSeconds(10);
 
-	//	var timeoutAt = DateTimeOffset.UtcNow.AddMinutes(3);
-	//	while (DateTimeOffset.UtcNow < timeoutAt)
-	//	{
-	//		try
-	//		{
-	//			using var response = await client.GetAsync("/pingz", cancellationToken);
+		var timeoutAt = DateTimeOffset.UtcNow.AddMinutes(3);
+		while (DateTimeOffset.UtcNow < timeoutAt)
+		{
+			try
+			{
+				using var response = await client.GetAsync("/pingz", cancellationToken);
+				if (response.IsSuccessStatusCode)
+					return;
+			}
+			catch (HttpRequestException) when (DateTimeOffset.UtcNow < timeoutAt)
+			{
+				// Resource may still be starting.
+			}
+			catch (TaskCanceledException) when (DateTimeOffset.UtcNow < timeoutAt)
+			{
+				// Resource may still be starting.
+			}
 
-	//			if (TestContext.Current != null)
-	//				await TestContext.Current.OutputWriter.WriteLineAsync("Pingz Response: " + response.StatusCode);
+			await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+		}
 
-	//			Console.WriteLine("Pingz Response: " + response.StatusCode);
-
-	//			if (response.IsSuccessStatusCode)
-	//				return;
-	//		}
-	//		catch (Exception ex) when (DateTimeOffset.UtcNow < timeoutAt)
-	//		{
-	//			// Resource may still be starting.
-	//			if (TestContext.Current != null)
-	//				await TestContext.Current.OutputWriter.WriteLineAsync("Waiting for Web Failure: " + ex.Message);
-
-	//			Console.WriteLine("Waiting for Web Failure: " + ex.Message);
-	//		}
-
-	//		await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
-	//	}
-
-	//	throw new InvalidOperationException("The web app resource did not become ready in time.");
-	//}
+		throw new InvalidOperationException($"The web app resource '{resourceName}' did not become ready in time.");
+	}
 
 	//string BuildDatabaseConnectionString(string connectionString)
 	//{

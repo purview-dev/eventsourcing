@@ -4,6 +4,7 @@ using Purview.EventSourcing.Samples.Fixtures;
 
 namespace Purview.EventSourcing.Samples.Web.Pages;
 
+[NotInParallel("SamplesAppHost")]
 [ClassDataSource<AppHostFixture>(Shared = SharedType.PerTestSession)]
 public sealed class AuditPageTests(AppHostFixture fixture)
 {

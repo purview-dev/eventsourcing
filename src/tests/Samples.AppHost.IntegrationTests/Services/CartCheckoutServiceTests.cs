@@ -6,6 +6,7 @@ using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.Samples.Services;
 
+[NotInParallel("SamplesAppHost")]
 [ClassDataSource<AppHostFixture>(Shared = SharedType.PerTestSession)]
 public sealed class CartCheckoutServiceTests(AppHostFixture fixture)
 {

@@ -49,7 +49,7 @@ builder.Services.AddDomainServices();
 builder.Services.AddScoped<IAggregateAuditService, AggregateAuditService>();
 
 // Register product image service — uses Azure Blob Storage when configured, no-op otherwise
-var blobConnectionString = NormalizeAzureStorageConnectionString(
+var blobConnectionString = AzureStorageConnectionStringComposer.Normalize(
 	builder.Configuration.GetConnectionString(Platform.AzureStorageBlob)
 );
 builder.Services.AddSingleton<IProductImageService>(serviceProvider =>
@@ -272,7 +272,7 @@ static void ConfigureStoreOptions(
 					options.Container = $"eventstore-{NormalizeKebab(sampleStoreOptions.CurrentKey)}";
 				});
 			services.PostConfigure<AzureStorageEventStoreOptions>(options =>
-				options.ConnectionString = BuildAzureEventStoreConnectionString(
+				options.ConnectionString = AzureStorageConnectionStringComposer.BuildEventStoreConnectionString(
 					configuration.GetConnectionString(sampleStoreOptions.EventStoreConnectionName),
 					configuration.GetConnectionString(Platform.AzureStorageBlob),
 					options.ConnectionString
@@ -380,141 +380,3 @@ static string NormalizeKebab(string value)
 
 	return string.IsNullOrWhiteSpace(normalized) ? "sample" : normalized;
 }
-
-static string NormalizeConnectionString(string? value)
-{
-	if (string.IsNullOrWhiteSpace(value))
-		return string.Empty;
-
-	var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToArray();
-
-	return parts.Length == 0 ? string.Empty : string.Join(';', parts);
-}
-
-static string NormalizeAzureStorageConnectionString(string? value)
-{
-	var normalized = NormalizeConnectionString(value);
-	if (string.IsNullOrWhiteSpace(normalized))
-		return normalized;
-
-	if (normalized.Contains("UseDevelopmentStorage=true", StringComparison.OrdinalIgnoreCase))
-		return "UseDevelopmentStorage=true";
-
-	var parts = normalized
-		.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-		.Select(part => part.Split('=', 2))
-		.Where(part => part.Length == 2)
-		.Select(part => new KeyValuePair<string, string>(part[0], part[1]))
-		.ToList();
-
-	var map = parts.ToDictionary(part => part.Key, part => part.Value, StringComparer.OrdinalIgnoreCase);
-
-	if (
-		!map.TryGetValue("BlobEndpoint", out var blobEndpointRaw)
-		|| !map.TryGetValue("AccountName", out var accountName)
-		|| !Uri.TryCreate(blobEndpointRaw, UriKind.Absolute, out var blobEndpoint)
-	)
-	{
-		return normalized;
-	}
-
-	var basePath = $"/{accountName}";
-	var trimmedPath = blobEndpoint.AbsolutePath.StartsWith(basePath + "/", StringComparison.OrdinalIgnoreCase)
-		? basePath
-		: blobEndpoint.AbsolutePath;
-	var blobBuilder = new UriBuilder(blobEndpoint) { Path = trimmedPath };
-	map["BlobEndpoint"] = blobBuilder.Uri.ToString().TrimEnd('/');
-
-	foreach (var key in map.Keys.ToArray())
-	{
-		var index = parts.FindIndex(part => string.Equals(part.Key, key, StringComparison.OrdinalIgnoreCase));
-		if (index >= 0)
-			parts[index] = new KeyValuePair<string, string>(key, map[key]);
-		else
-			parts.Add(new KeyValuePair<string, string>(key, map[key]));
-	}
-
-	return string.Join(';', parts.Select(part => $"{part.Key}={part.Value}"));
-}
-
-static string BuildAzureEventStoreConnectionString(
-	string? eventStoreConnectionString,
-	string? blobConnectionString,
-	string? fallbackConnectionString
-)
-{
-	var eventStore = ParseConnectionStringParts(NormalizeAzureStorageConnectionString(eventStoreConnectionString));
-	var blob = ParseConnectionStringParts(NormalizeAzureStorageConnectionString(blobConnectionString));
-	var fallback = ParseConnectionStringParts(NormalizeAzureStorageConnectionString(fallbackConnectionString));
-
-	if (
-		ContainsUseDevelopmentStorage(eventStore)
-		|| ContainsUseDevelopmentStorage(blob)
-		|| ContainsUseDevelopmentStorage(fallback)
-	)
-	{
-		return "UseDevelopmentStorage=true";
-	}
-
-	var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-	void Merge(IDictionary<string, string> source)
-	{
-		foreach (var (key, value) in source)
-		{
-			if (!string.IsNullOrWhiteSpace(value))
-				merged[key] = value;
-		}
-	}
-
-	Merge(fallback);
-	Merge(blob);
-	Merge(eventStore);
-
-	if (
-		!merged.ContainsKey("BlobEndpoint")
-		&& merged.TryGetValue("TableEndpoint", out var tableEndpointRaw)
-		&& Uri.TryCreate(tableEndpointRaw, UriKind.Absolute, out var tableEndpoint)
-	)
-	{
-		var blobBuilder = new UriBuilder(tableEndpoint);
-		if (blobBuilder.Port == 10002)
-			blobBuilder.Port = 10000;
-		merged["BlobEndpoint"] = blobBuilder.Uri.ToString().TrimEnd('/');
-	}
-
-	if (
-		!merged.ContainsKey("TableEndpoint")
-		&& merged.TryGetValue("BlobEndpoint", out var blobEndpointRaw)
-		&& Uri.TryCreate(blobEndpointRaw, UriKind.Absolute, out var blobEndpoint)
-	)
-	{
-		var tableBuilder = new UriBuilder(blobEndpoint);
-		if (tableBuilder.Port == 10000)
-			tableBuilder.Port = 10002;
-		merged["TableEndpoint"] = tableBuilder.Uri.ToString().TrimEnd('/');
-	}
-
-	return string.Join(';', merged.Select(part => $"{part.Key}={part.Value}"));
-}
-
-static Dictionary<string, string> ParseConnectionStringParts(string? connectionString)
-{
-	if (string.IsNullOrWhiteSpace(connectionString))
-		return [];
-
-	var pairs = connectionString
-		.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-		.Select(part => part.Split('=', 2))
-		.Where(part => part.Length == 2);
-
-	var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-	foreach (var pair in pairs)
-		values[pair[0]] = pair[1];
-
-	return values;
-}
-
-static bool ContainsUseDevelopmentStorage(IReadOnlyDictionary<string, string> values) =>
-	values.TryGetValue("UseDevelopmentStorage", out var value)
-	&& string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
