@@ -16,7 +16,7 @@ sealed partial class MongoDbKit
 		Database = mongo.AddDatabase(Options.DatabaseName);
 		SharedQueryDatabase = mongo.AddDatabase(Options.SharedQueryDatabaseName);
 
-		if (!HostKit.Options.IsTestRun)
+		if (HostKit.Options.UseDataVolumes)
 			mongo.WithDataVolume("eventsourcing-sample-mongo-data");
 
 		return mongo;

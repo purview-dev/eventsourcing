@@ -19,6 +19,7 @@ public static class Platform
 	public const string Redis = "redis";
 
 	public const string AzureStorage = "storage";
+	public const string AzureStorageTable = "eventstore-tables";
 	public const string AzureStorageBlob = "eventstore-snapshots";
 
 	public const string WebApp = "sample-web-app";

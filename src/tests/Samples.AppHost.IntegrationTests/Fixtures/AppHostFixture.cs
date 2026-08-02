@@ -70,9 +70,12 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		"Reliability",
 		"CA5399:Do not use HttpClientHandler.AllowAutoRedirect"
 	)]
-	public HttpClient CreateWebClient(bool followRedirects = false)
+	public HttpClient CreateWebClient(bool followRedirects = false) =>
+		CreateWebClient(Platform.WebApp, followRedirects);
+
+	public HttpClient CreateWebClient(string resourceName, bool followRedirects = false)
 	{
-		var httpClient = CreateHttpClient(Platform.WebApp, "http");
+		var httpClient = CreateHttpClient(resourceName, "http");
 		if (followRedirects)
 			return httpClient;
 
@@ -81,6 +84,9 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		// so we create a new client with the same base address and a handler that has auto redirect disabled.
 		return new(new HttpClientHandler() { AllowAutoRedirect = false }) { BaseAddress = httpClient.BaseAddress };
 	}
+
+	public Task<string?> GetResourceConnectionStringAsync(string resourceName) =>
+		GetConnectionStringAsync(resourceName);
 
 	//async Task WaitForWebAppAsync(CancellationToken cancellationToken)
 	//{

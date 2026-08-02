@@ -12,7 +12,9 @@ public sealed class MongoDBSnapshotEventStoreOptions
 	public string? ApplicationName { get; set; }
 
 	[Required]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string Database { get; set; } = default!;
 
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? Collection { get; set; }
 }

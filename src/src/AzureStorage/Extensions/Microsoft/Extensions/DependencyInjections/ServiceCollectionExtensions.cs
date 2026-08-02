@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Configuration;
 using Purview.EventSourcing.Internal;
 
@@ -39,6 +40,16 @@ public static class ServiceCollectionExtensions
 							]);
 						}
 					}
+				)
+				.Validate(
+					static options =>
+						Validator.TryValidateObject(
+							options,
+							new ValidationContext(options),
+							validationResults: null,
+							validateAllProperties: true
+						),
+					$"{nameof(AzureStorageEventStoreOptions)} is invalid."
 				)
 				.ValidateOnStart();
 

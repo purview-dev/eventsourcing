@@ -8,6 +8,7 @@ namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 sealed partial class AzureStorageKit
 {
 	public IResourceBuilder<AzureStorageResource> Storage { get; private set; } = default!;
+	public IResourceBuilder<AzureTableStorageResource> TableStorage { get; private set; } = default!;
 	public IResourceBuilder<AzureBlobStorageContainerResource> SnapshotBlob { get; set; } = default!;
 
 	protected override IResourceBuilder<AzureStorageResource> BuildResource(IDistributedApplicationBuilder builder)
@@ -18,13 +19,14 @@ sealed partial class AzureStorageKit
 		{
 			storage.RunAsEmulator(e =>
 			{
-				if (!HostKit.Options.IsTestRun)
+				if (HostKit.Options.UseDataVolumes)
 					e.WithDataVolume();
 
 				e.WithImageTag(ContainerHelper.AzuriteImageTag);
 			});
 		}
 
+		TableStorage = storage.AddTables(Platform.AzureStorageTable);
 		SnapshotBlob = storage.AddBlobContainer(Platform.AzureStorageBlob, Options.BlobName);
 
 		return storage;

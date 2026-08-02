@@ -17,12 +17,14 @@ public sealed class SqlServerSnapshotAggregateTableOverride
 	/// Overrides the schema name for this aggregate type.
 	/// When null, the global <see cref="SqlServerSnapshotEventStoreOptions.SchemaName"/> is used.
 	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? SchemaName { get; set; }
 
 	/// <summary>
 	/// Overrides the table name for this aggregate type.
 	/// When null, the global <see cref="SqlServerSnapshotEventStoreOptions.TableName"/> is used.
 	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? TableName { get; set; }
 }
 
@@ -33,8 +35,12 @@ public sealed class SqlServerSnapshotEventStoreOptions
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreSnapshots";
 
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "dbo";
 
 	/// <summary>

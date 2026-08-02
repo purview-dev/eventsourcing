@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Purview.EventSourcing.Samples;
 
@@ -51,10 +52,13 @@ public sealed class SampleStoreOptions
 
 	public string QueryStoreConnectionName { get; set; } = Platform.SqlDatabase;
 
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? EventStoreDatabaseName { get; set; }
 
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? QueryStoreDatabaseName { get; set; }
 
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? AdminDatabaseName { get; set; }
 
 	public string AdminSitePath { get; set; } = "/admin";

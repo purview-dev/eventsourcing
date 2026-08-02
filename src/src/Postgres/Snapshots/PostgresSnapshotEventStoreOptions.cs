@@ -17,12 +17,14 @@ public sealed class PostgresSnapshotAggregateTableOverride
 	/// Overrides the schema name for this aggregate type.
 	/// When null, the global <see cref="PostgresSnapshotEventStoreOptions.SchemaName"/> is used.
 	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? SchemaName { get; set; }
 
 	/// <summary>
 	/// Overrides the table name for this aggregate type.
 	/// When null, the global <see cref="PostgresSnapshotEventStoreOptions.TableName"/> is used.
 	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? TableName { get; set; }
 }
 
@@ -33,8 +35,12 @@ public sealed class PostgresSnapshotEventStoreOptions
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreSnapshots";
 
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "public";
 
 	/// <summary>

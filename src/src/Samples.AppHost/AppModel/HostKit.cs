@@ -10,5 +10,7 @@ sealed partial class SampleAppHostKit
 		public bool IsTestRun { get; set; }
 
 		public bool IsLocal { get; set; }
+
+		public bool UseDataVolumes { get; set; }
 	}
 }

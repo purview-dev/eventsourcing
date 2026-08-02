@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,16 @@ public static class ServiceCollectionExtensions
 						}
 					}
 				)
+				.Validate(
+					static options =>
+						Validator.TryValidateObject(
+							options,
+							new ValidationContext(options),
+							validationResults: null,
+							validateAllProperties: true
+						),
+					$"{nameof(MongoDBEventStoreOptions)} is invalid."
+				)
 				.ValidateOnStart();
 
 			return services;
@@ -90,6 +101,16 @@ public static class ServiceCollectionExtensions
 							"MongoDB",
 						]);
 					}
+				)
+				.Validate(
+					static options =>
+						Validator.TryValidateObject(
+							options,
+							new ValidationContext(options),
+							validationResults: null,
+							validateAllProperties: true
+						),
+					$"{nameof(MongoDBSnapshotEventStoreOptions)} is invalid."
 				)
 				.ValidateOnStart();
 

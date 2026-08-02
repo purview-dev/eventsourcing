@@ -17,7 +17,7 @@ sealed partial class SqlServerKit
 		Database = sql.AddDatabase(Platform.SqlDatabase, Options.DatabaseName);
 		SharedQueryDatabase = sql.AddDatabase(Platform.SqlSharedQueryDatabase, Options.SharedQueryDatabaseName);
 
-		if (!HostKit.Options.IsTestRun)
+		if (HostKit.Options.UseDataVolumes)
 			sql.WithDataVolume("eventsourcing-sample-sql-data");
 
 		return sql;
@@ -26,9 +26,11 @@ sealed partial class SqlServerKit
 	partial class SqlServerKitOptions
 	{
 		[Required(AllowEmptyStrings = false)]
+		[RegularExpression(@"^[\w\-.]+$")]
 		public string DatabaseName { get; set; } = "EventSourcingSampleDb";
 
 		[Required(AllowEmptyStrings = false)]
+		[RegularExpression(@"^[\w\-.]+$")]
 		public string SharedQueryDatabaseName { get; set; } = "EventSourcingSampleAzureSqlDb";
 	}
 }

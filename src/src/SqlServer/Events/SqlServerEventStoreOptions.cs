@@ -18,12 +18,14 @@ public sealed class SqlServerAggregateTableOverride
 	/// Overrides the schema name for this aggregate type.
 	/// When null, the global <see cref="SqlServerEventStoreOptions.SchemaName"/> is used.
 	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? SchemaName { get; set; }
 
 	/// <summary>
 	/// Overrides the table name for this aggregate type.
 	/// When null, the global <see cref="SqlServerEventStoreOptions.TableName"/> is used.
 	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? TableName { get; set; }
 }
 
@@ -37,8 +39,12 @@ public sealed class SqlServerEventStoreOptions
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreEvents";
 
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "dbo";
 
 	/// <summary>

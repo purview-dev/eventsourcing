@@ -20,7 +20,7 @@ sealed partial class PostgresKit
 			Options.SharedQueryDatabaseName
 		);
 
-		if (!HostKit.Options.IsTestRun)
+		if (HostKit.Options.UseDataVolumes)
 			postgres.WithDataVolume("eventsourcing-sample-postgres-data");
 
 		return postgres;

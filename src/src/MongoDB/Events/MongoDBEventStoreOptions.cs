@@ -16,13 +16,13 @@ public sealed class MongoDBEventStoreOptions
 	public string? ApplicationName { get; set; }
 
 	[Required]
-	// TODO: Regex
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string Database { get; set; } = default!;
 
-	// TODO: Regex
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? EventCollection { get; set; }
 
-	// TODO: Regex
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string? SnapshotCollection { get; set; }
 
 	public string? ReplicaName { get; set; }

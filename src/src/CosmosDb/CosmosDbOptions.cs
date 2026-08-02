@@ -20,9 +20,11 @@ public class CosmosDbOptions
 	public string ConnectionString { get; set; } = default!;
 
 	[Required]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string Database { get; set; } = default!;
 
 	[Required]
+	[RegularExpression(@"^[\w\-.]+$")]
 	public string Container { get; set; } = default!;
 
 	[Range(1, 120000)]
