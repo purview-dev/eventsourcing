@@ -83,6 +83,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	public HttpClient CreateWebClient(bool followRedirects = false) =>
 		CreateWebClient(Platform.WebApp, followRedirects);
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
 	public HttpClient CreateWebClient(string resourceName, bool followRedirects = false)
 	{
 		var httpClient = CreateHttpClient(resourceName, "http");
@@ -92,7 +93,10 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		// We want auto redirect disabled for tests to be able to assert on 302 responses,
 		// but HttpClient doesn't allow changing that setting after the client is created,
 		// so we create a new client with the same base address and a handler that has auto redirect disabled.
-		return new(new HttpClientHandler() { AllowAutoRedirect = false }) { BaseAddress = httpClient.BaseAddress };
+		return new(new HttpClientHandler() { AllowAutoRedirect = false, CheckCertificateRevocationList = true })
+		{
+			BaseAddress = httpClient.BaseAddress,
+		};
 	}
 
 	public Task<string?> GetResourceConnectionStringAsync(string resourceName, CancellationToken cancellationToken) =>

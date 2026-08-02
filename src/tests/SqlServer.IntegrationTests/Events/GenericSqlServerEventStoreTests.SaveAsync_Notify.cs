@@ -1,5 +1,4 @@
 ﻿using Purview.EventSourcing.Aggregates.Events;
-using Purview.EventSourcing.ChangeFeed;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 

@@ -1,6 +1,5 @@
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
-using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Fixtures;
 
 namespace Purview.EventSourcing.Samples.Web.Infrastructure;

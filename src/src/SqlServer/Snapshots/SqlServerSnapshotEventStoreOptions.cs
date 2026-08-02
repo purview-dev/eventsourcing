@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Purview.EventSourcing.SqlServer;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 

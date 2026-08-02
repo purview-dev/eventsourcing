@@ -41,6 +41,7 @@ static class PostgresAdminTableResolver
 		if (!options.AggregateTableOverrides.TryGetValue(aggregateType, out var overrideEntry) || overrideEntry is null)
 			return new PostgresAdminTableDescriptor(aggregateType, options.SchemaName, options.TableName);
 
+		// If an override exists for the aggregate type, use the override values (if provided) or fall back to the default options
 		return new PostgresAdminTableDescriptor(
 			aggregateType,
 			overrideEntry.SchemaName ?? options.SchemaName,

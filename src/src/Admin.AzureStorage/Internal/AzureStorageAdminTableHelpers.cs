@@ -1,8 +1,6 @@
 using Azure;
 using Azure.Data.Tables;
-using Azure.Data.Tables.Models;
 using Purview.EventSourcing.AzureStorage;
-using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage.Internal;
 
@@ -106,10 +104,8 @@ static class AzureStorageAdminTableHelpers
 	{
 		version = default;
 		var prefix = $"{eventPrefix}_";
-		if (!rowKey.StartsWith(prefix, StringComparison.Ordinal))
-			return false;
-
-		return int.TryParse(rowKey[prefix.Length..], out version);
+		return rowKey.StartsWith(prefix, StringComparison.Ordinal)
+			&& int.TryParse(rowKey[prefix.Length..], out version);
 	}
 
 	public static bool MatchesAggregateType(string persistedAggregateType, string requestedAggregateType) =>
@@ -119,11 +115,8 @@ static class AzureStorageAdminTableHelpers
 			StringComparison.OrdinalIgnoreCase
 		);
 
-	public static string BuildAggregateSearchFilter(string? aggregateId = null)
-	{
-		if (string.IsNullOrWhiteSpace(aggregateId))
-			return $"RowKey eq '{StreamVersionRowKey}'";
-
-		return $"(RowKey eq '{StreamVersionRowKey}') and (PartitionKey eq '{aggregateId}')";
-	}
+	public static string BuildAggregateSearchFilter(string? aggregateId = null) =>
+		string.IsNullOrWhiteSpace(aggregateId)
+			? $"RowKey eq '{StreamVersionRowKey}'"
+			: $"(RowKey eq '{StreamVersionRowKey}') and (PartitionKey eq '{aggregateId}')";
 }

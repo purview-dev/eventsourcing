@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Caching.Distributed;
-using Purview.EventSourcing.ChangeFeed;
-
 namespace Purview.EventSourcing.MongoDB.Events;
 
 partial class GenericMongoDBEventStoreTests<TAggregate>

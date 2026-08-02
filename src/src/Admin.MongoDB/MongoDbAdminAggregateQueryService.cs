@@ -95,19 +95,16 @@ public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, 
 
 		var item = await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
 
-		if (item == null)
-		{
-			return null;
-		}
-
-		return new AggregateSummaryResponse(
-			aggregateType,
-			item.AggregateId,
-			item.Version,
-			item.Timestamp ?? DateTimeOffset.UtcNow,
-			item.Timestamp ?? DateTimeOffset.UtcNow,
-			item.IsDeleted,
-			!item.IsDeleted
-		);
+		return item == null
+			? null
+			: new AggregateSummaryResponse(
+				aggregateType,
+				item.AggregateId,
+				item.Version,
+				item.Timestamp ?? DateTimeOffset.UtcNow,
+				item.Timestamp ?? DateTimeOffset.UtcNow,
+				item.IsDeleted,
+				!item.IsDeleted
+			);
 	}
 }

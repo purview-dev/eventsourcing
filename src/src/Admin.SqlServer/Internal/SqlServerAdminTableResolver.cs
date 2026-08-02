@@ -45,6 +45,7 @@ static class SqlServerAdminTableResolver
 			return new SqlServerAdminTableDescriptor(aggregateType, options.SchemaName, options.TableName);
 		}
 
+		// If an override exists for the aggregate type, use the override values (if provided) or fall back to the default options
 		return new SqlServerAdminTableDescriptor(
 			aggregateType,
 			overrideEntry.SchemaName ?? options.SchemaName,

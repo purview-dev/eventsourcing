@@ -107,7 +107,7 @@ public static class AzureStorageConnectionStringComposer
 	public static Dictionary<string, string> ParseConnectionStringParts(string? connectionString)
 	{
 		if (string.IsNullOrWhiteSpace(connectionString))
-			return new(StringComparer.OrdinalIgnoreCase);
+			return [with(StringComparer.OrdinalIgnoreCase)];
 
 		var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		foreach (
@@ -135,11 +135,11 @@ public static class AzureStorageConnectionStringComposer
 		return parts.Length == 0 ? string.Empty : string.Join(';', parts);
 	}
 
-	static bool ContainsUseDevelopmentStorage(IReadOnlyDictionary<string, string> values) =>
+	static bool ContainsUseDevelopmentStorage(Dictionary<string, string> values) =>
 		values.TryGetValue("UseDevelopmentStorage", out var value)
 		&& string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
 
-	static void Merge(IReadOnlyDictionary<string, string> source, IDictionary<string, string> target)
+	static void Merge(Dictionary<string, string> source, Dictionary<string, string> target)
 	{
 		foreach (var (key, value) in source)
 		{

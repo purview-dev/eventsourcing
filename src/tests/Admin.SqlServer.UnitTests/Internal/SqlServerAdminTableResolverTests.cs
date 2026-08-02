@@ -1,5 +1,4 @@
 using Purview.EventSourcing.SqlServer.Events;
-using TUnit.Core;
 
 namespace Purview.EventSourcing.Admin.SqlServer.Internal;
 

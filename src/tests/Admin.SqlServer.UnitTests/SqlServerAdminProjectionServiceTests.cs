@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions.Services;
-using TUnit.Core;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 

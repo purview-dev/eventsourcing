@@ -90,17 +90,14 @@ sealed class JsonScalarValueConverter<TScalarObject, TScalar> : ValueConverter<T
 		if (create is not null)
 			return value => (TScalarObject)create.Invoke(null, [value])!;
 
-		var ctor = scalarType.GetConstructor(
-			BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-			[scalarPropertyType]
-		);
-
-		if (ctor is null)
-		{
-			throw new InvalidOperationException(
+		var ctor =
+			scalarType.GetConstructor(
+				BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+				[scalarPropertyType]
+			)
+			?? throw new InvalidOperationException(
 				$"{scalarType.Name} must expose static {preferredFactoryName}({scalarPropertyType.Name}), static {secondaryFactoryName}({scalarPropertyType.Name}), or ctor({scalarPropertyType.Name})."
 			);
-		}
 
 		return value => (TScalarObject)ctor.Invoke([value]);
 	}

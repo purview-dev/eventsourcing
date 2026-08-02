@@ -24,6 +24,13 @@
 		<NoWarn>$(NoWarn);CA1031;CA2234</NoWarn>
 	</PropertyGroup>
 
+	<ItemGroup Label="TUnit integration test retries" Condition="'$(TestingType)' == 'Integration'">
+		<AssemblyAttribute Include="TUnit.Core.Retry">
+			<_Parameter1>3</_Parameter1>
+			<_Parameter1_TypeName>System.Int32</_Parameter1_TypeName>
+		</AssemblyAttribute>
+	</ItemGroup>
+
 	<PropertyGroup Label="NuGet package metadata">
 		<Authors>Kieron Lanning</Authors>
 		<Company>Purview-Dev</Company>

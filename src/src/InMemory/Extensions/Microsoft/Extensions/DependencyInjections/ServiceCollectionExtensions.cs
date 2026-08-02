@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.InMemory.Events;
 using Purview.EventSourcing.InMemory.Snapshots;
 using Purview.EventSourcing.Internal;

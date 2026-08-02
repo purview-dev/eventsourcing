@@ -715,10 +715,14 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 				", ",
 				propertyTypeNames.Zip(propertyNames, static (type, name) => $"{type} {ToCamelCase(name)}")
 			);
+			var validateReadOnly =
+				typeSymbol.TypeKind == TypeKind.Struct
+				&& IsComplexHookReadOnly(typeSymbol, "OnValidate", propertyNames.Length);
+			var readOnlyPrefix = validateReadOnly ? "readonly " : string.Empty;
 			sb.AppendLine(
 				$"{indent}\t[global::System.Diagnostics.CodeAnalysis.SuppressMessage(\"Performance\", \"CA1822:Mark members as static\")]"
 			);
-			sb.AppendLine($"{indent}\tpartial void OnValidate({validateParams});");
+			sb.AppendLine($"{indent}\t{readOnlyPrefix}partial void OnValidate({validateParams});");
 			sb.AppendLine();
 		}
 
@@ -1292,14 +1296,7 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 		bool includeRef = false
 	)
 	{
-		var declarations = typeSymbol
-			.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax())
-			.OfType<TypeDeclarationSyntax>()
-			.SelectMany(declaration => declaration.Members.OfType<MethodDeclarationSyntax>())
-			.Where(method =>
-				method.Identifier.Text == methodName && method.ParameterList.Parameters.Count == parameterCount
-			)
-			.ToArray();
+		var declarations = GetComplexHookDeclarations(typeSymbol, methodName, parameterCount);
 
 		var hasDefinition = declarations.Any(method =>
 			(
@@ -1323,6 +1320,33 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 			)
 		);
 		return hasRefImplementation || declarations.Length == 0;
+	}
+
+	static bool IsComplexHookReadOnly(INamedTypeSymbol typeSymbol, string methodName, int parameterCount)
+	{
+		return GetComplexHookDeclarations(typeSymbol, methodName, parameterCount)
+			.Any(method =>
+				(method.Body is not null || method.ExpressionBody is not null)
+				&& method.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.ReadOnlyKeyword))
+			);
+	}
+
+	static MethodDeclarationSyntax[] GetComplexHookDeclarations(
+		INamedTypeSymbol typeSymbol,
+		string methodName,
+		int parameterCount
+	)
+	{
+		return
+		[
+			.. typeSymbol
+				.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax())
+				.OfType<TypeDeclarationSyntax>()
+				.SelectMany(declaration => declaration.Members.OfType<MethodDeclarationSyntax>())
+				.Where(method =>
+					method.Identifier.Text == methodName && method.ParameterList.Parameters.Count == parameterCount
+				),
+		];
 	}
 
 	static GeneratedTypeModel? BuildTypeModel(INamedTypeSymbol typeSymbol)

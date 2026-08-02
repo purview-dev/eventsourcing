@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Purview.EventSourcing.Postgres;
 
 namespace Purview.EventSourcing.Postgres.Events;
 

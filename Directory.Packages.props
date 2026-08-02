@@ -4,7 +4,7 @@
 		<!-- Keep compiler-facing Roslyn packages aligned with the minimum SDK pinned in global.json so analyser ProjectReferences load on build machines. -->
 		<RoslynCompilerVersion>[5.0.0]</RoslynCompilerVersion>
 		<RoslynAnalyzersVersion>5.6.0</RoslynAnalyzersVersion>
-		<TUnitVersion>1.62.0</TUnitVersion>
+		<TUnitVersion>1.63.0</TUnitVersion>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="13.4.6" />
@@ -27,7 +27,7 @@
 			Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
 			Version="1.20.1"
 		/>
-		<PackageVersion Include="Purview.Aspire.ResourceKit" Version="1.0.0-prerelease.8" />
+		<PackageVersion Include="Purview.Aspire.ResourceKit" Version="1.0.0-prerelease.10" />
 		<PackageVersion Include="Purview.Telemetry.SourceGenerator" Version="4.2.0" />
 		<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
 		<PackageVersion

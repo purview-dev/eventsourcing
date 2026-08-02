@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Fixtures;
 
 namespace Purview.EventSourcing.Samples.Web.Infrastructure;
@@ -150,14 +149,11 @@ public sealed class AspireCliStartupValidationTests(AppHostFixture fixture)
 
 		var result = new AspireCliCommandResult(process.ExitCode, await standardOutputTask, await standardErrorTask);
 
-		if (result.ExitCode != 0)
-		{
-			throw new InvalidOperationException(
+		return result.ExitCode == 0
+			? result
+			: throw new InvalidOperationException(
 				$"Aspire CLI command failed: aspire {arguments}{Environment.NewLine}STDOUT:{Environment.NewLine}{result.StandardOutput}{Environment.NewLine}STDERR:{Environment.NewLine}{result.StandardError}"
 			);
-		}
-
-		return result;
 	}
 
 	readonly record struct AspireCliCommandResult(int ExitCode, string StandardOutput, string StandardError);

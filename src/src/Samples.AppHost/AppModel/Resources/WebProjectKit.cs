@@ -1,8 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Aspire.Hosting.ApplicationModel;
 using Microsoft.Extensions.Configuration;
-using Purview.EventSourcing.Samples;
-using Purview.EventSourcing.Samples.AppHost.AppModel;
 
 namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 

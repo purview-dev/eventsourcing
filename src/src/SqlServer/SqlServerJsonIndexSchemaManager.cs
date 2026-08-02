@@ -240,6 +240,7 @@ static partial class SqlServerJsonIndexSchemaManager
 		if (errors.Count > 0)
 			throw new ArgumentException(string.Join(Environment.NewLine, errors), optionsName);
 
+		// Sort descriptors by index name for deterministic order
 		return descriptors.AsReadOnly();
 	}
 

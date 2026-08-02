@@ -33,33 +33,27 @@ public class ProjectionModel(IAdminProjectionService projectionService) : PageMo
 
 		try
 		{
-			if (Version.HasValue && Version.Value > 0)
-			{
-				Projection = await _projectionService.ProjectAtVersionAsync(
-					AggregateType,
-					AggregateId,
-					Version.Value,
-					cancellationToken
-				);
-			}
-			else if (AsOfUtc.HasValue)
-			{
-				Projection = await _projectionService.ProjectAtTimeAsync(
-					AggregateType,
-					AggregateId,
-					new DateTimeOffset(AsOfUtc.Value, TimeSpan.Zero),
-					cancellationToken
-				);
-			}
-			else
-			{
-				Projection = await _projectionService.ProjectAtVersionAsync(
+			Projection =
+				Version.HasValue && Version.Value > 0
+					? await _projectionService.ProjectAtVersionAsync(
+						AggregateType,
+						AggregateId,
+						Version.Value,
+						cancellationToken
+					)
+				: AsOfUtc.HasValue
+					? await _projectionService.ProjectAtTimeAsync(
+						AggregateType,
+						AggregateId,
+						new DateTimeOffset(AsOfUtc.Value, TimeSpan.Zero),
+						cancellationToken
+					)
+				: await _projectionService.ProjectAtVersionAsync(
 					AggregateType,
 					AggregateId,
 					long.MaxValue,
 					cancellationToken
 				);
-			}
 
 			return Page();
 		}

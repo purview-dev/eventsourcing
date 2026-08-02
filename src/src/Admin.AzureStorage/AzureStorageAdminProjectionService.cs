@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Azure.Data.Tables;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Services;

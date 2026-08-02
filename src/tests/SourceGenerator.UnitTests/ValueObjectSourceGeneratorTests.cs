@@ -1203,4 +1203,62 @@ public sealed class ValueObjectSourceGeneratorTests : SourceGeneratorTestBase<Va
 		await Assert.That(inactiveDisplayNameIsNull).IsTrue();
 		await Assert.That(activeBlankDisplayNameThrows).IsTrue();
 	}
+
+	[Test]
+	public async Task ComplexValueObjectGeneration_RespectsReadOnlyOnValidateForStruct(
+		CancellationToken cancellationToken
+	)
+	{
+		const string source = """
+			namespace Testing
+			{
+				[Purview.EventSourcing.Serialization.ValueObject]
+				public partial record struct UserDetails(System.Guid Id, string? DisplayName, bool IsActive = true)
+				{
+					readonly partial void OnValidate(System.Guid id, string? displayName, bool isActive)
+					{
+						if (id == System.Guid.Empty)
+							throw new System.ArgumentException("Id must be a valid GUID.", nameof(id));
+
+						if (isActive && string.IsNullOrWhiteSpace(displayName))
+							throw new System.ArgumentException(
+								"DisplayName cannot be null or empty when a user is active.",
+								nameof(displayName)
+							);
+					}
+				}
+
+				public static class UserDetailsReadOnlyHarness
+				{
+					public static bool ActiveBlankDisplayNameThrows()
+					{
+						try
+						{
+							_ = UserDetails.Create(System.Guid.Parse("11111111-1111-1111-1111-111111111111"), "  ", true);
+							return false;
+						}
+						catch (System.ArgumentException)
+						{
+							return true;
+						}
+					}
+				}
+			}
+			""";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var generatedSource = GetGeneratedSource(result);
+
+		await Assert
+			.That(generatedSource)
+			.Contains("readonly partial void OnValidate(global::System.Guid id, string? displayName, bool isActive)");
+
+		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var harnessType = assembly.GetType("Testing.UserDetailsReadOnlyHarness")!;
+
+		var activeBlankDisplayNameThrows = (bool)
+			harnessType.GetMethod("ActiveBlankDisplayNameThrows")!.Invoke(null, null)!;
+
+		await Assert.That(activeBlankDisplayNameThrows).IsTrue();
+	}
 }

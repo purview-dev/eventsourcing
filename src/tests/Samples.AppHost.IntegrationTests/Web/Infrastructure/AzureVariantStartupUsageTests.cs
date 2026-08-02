@@ -1,4 +1,3 @@
-using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Fixtures;
 
 namespace Purview.EventSourcing.Samples.Web.Infrastructure;

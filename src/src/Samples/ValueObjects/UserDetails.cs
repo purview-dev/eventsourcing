@@ -16,7 +16,7 @@ public partial record struct UserDetails(Guid Id, string? DisplayName, bool IsAc
 		}
 	}
 
-	partial void OnValidate(Guid id, string? displayName, bool isActive)
+	readonly partial void OnValidate(Guid id, string? displayName, bool isActive)
 	{
 		if (id == Guid.Empty)
 			throw new ArgumentException("Id must be a valid GUID.", nameof(id));

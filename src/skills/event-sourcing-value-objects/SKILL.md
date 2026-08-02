@@ -71,6 +71,7 @@ public readonly partial record struct EmailAddress
 - Normalize all component inputs together in `OnNormalize(ref ...)` before validation.
 - Validate business invariants in `OnValidate(...)`.
 - Keep non-scalar objects immutable and self-validating.
+- For `struct` value objects, declare `OnValidate` as `readonly` when it does not mutate state; the generator mirrors the modifier on the generated declaration.
 
 ### Non-scalar template
 

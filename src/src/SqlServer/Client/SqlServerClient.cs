@@ -790,6 +790,7 @@ sealed partial class SqlServerClient
 		)
 			return true;
 
+		// Test if the type implements IDictionary<TKey, TValue> or IReadOnlyDictionary<TKey, TValue> somewhere...
 		return type.GetInterfaces()
 			.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
 	}
@@ -805,6 +806,7 @@ sealed partial class SqlServerClient
 		if (type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
 			return true;
 
+		// Test if the type implements IEnumerable<T> somewhere...
 		return type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 	}
 
