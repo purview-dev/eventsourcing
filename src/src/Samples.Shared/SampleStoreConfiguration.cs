@@ -46,7 +46,7 @@ public sealed class SampleStoreOptions
 
 	public SampleAdminStoreKind AdminStore { get; set; } = SampleAdminStoreKind.SqlServer;
 
-	public bool AdminApiAvailable { get; set; } = true;
+	public bool AdminAPIAvailable { get; set; } = true;
 
 	public string EventStoreConnectionName { get; set; } = Platform.SqlDatabase;
 
@@ -63,7 +63,7 @@ public sealed class SampleStoreOptions
 
 	public string AdminSitePath { get; set; } = "/admin";
 
-	public string AdminApiPath { get; set; } = "/admin/api";
+	public string AdminAPIPath { get; set; } = "/admin/api";
 
 	public Collection<SampleStoreVariantLink> Variants { get; } = [];
 }
