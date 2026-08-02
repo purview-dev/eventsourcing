@@ -112,19 +112,16 @@ public static class IEventStoreCoreHistoryExtensions
 		if (string.IsNullOrWhiteSpace(continuationToken))
 			return 0;
 
-		if (
-			!int.TryParse(continuationToken, NumberStyles.None, CultureInfo.InvariantCulture, out var offset)
-			|| offset < 0
-		)
-		{
-			throw new ArgumentOutOfRangeException(
+		// Only process if we have a continuation token to retrieve.
+		return
+			int.TryParse(continuationToken, NumberStyles.None, CultureInfo.InvariantCulture, out var offset)
+			&& offset >= 0
+			? offset
+			: throw new ArgumentOutOfRangeException(
 				nameof(continuationToken),
 				continuationToken,
 				"Continuation token must be a non-negative integer offset."
 			);
-		}
-
-		return offset;
 	}
 
 	static void ValidateRequest(AggregateEventHistoryRequest request)

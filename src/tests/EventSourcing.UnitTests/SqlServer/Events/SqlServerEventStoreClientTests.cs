@@ -6,8 +6,6 @@ namespace Purview.EventSourcing.SqlServer.Events;
 /// </summary>
 public sealed class SqlServerEventStoreClientTests
 {
-	#region Identifier Validation Tests
-
 	[Test]
 	public async Task Constructor_GivenDefaultOptions_CreatesClientWithoutThrowing()
 	{
@@ -142,10 +140,6 @@ public sealed class SqlServerEventStoreClientTests
 			.Throws<ArgumentException>();
 	}
 
-	#endregion
-
-	#region Per-Aggregate Table Override Tests
-
 	[Test]
 	public async Task SqlServerEventStoreOptions_GivenNoOverride_AggregateTableOverridesIsEmpty()
 	{
@@ -211,5 +205,133 @@ public sealed class SqlServerEventStoreClientTests
 		await Assert.That(ovr.TableName).IsEqualTo("Events");
 	}
 
-	#endregion
+	[Test]
+	public async Task SqlServerEventStoreOptions_GivenDefaults_JsonIndexOptionsIsInitialized()
+	{
+		var options = new SqlServerEventStoreOptions
+		{
+			ConnectionString = "Server=.;Database=Test;Trusted_Connection=True;",
+		};
+
+		await Assert.That(options.JsonIndexOptions).IsNotNull();
+		await Assert.That(options.JsonIndexOptions.Indexes).IsEmpty();
+	}
+
+	[Test]
+	public async Task Constructor_GivenUnsupportedJsonIndexIncludeColumn_ThrowsArgumentException()
+	{
+		await Assert
+			.That(() =>
+			{
+				var _ = new SqlServerEventStoreClient(
+					new SqlServerEventStoreOptions
+					{
+						ConnectionString = "Server=.;Database=Test;Trusted_Connection=True;",
+						SchemaName = "dbo",
+						TableName = "EventStore",
+						AutoCreateTable = false,
+						JsonIndexOptions = new SqlServerJsonIndexOptions
+						{
+							Enabled = true,
+							Indexes =
+							[
+								new SqlServerJsonIndexDefinition
+								{
+									JsonPath = "$.Value",
+									IncludeColumns = ["NotAColumn"],
+								},
+							],
+						},
+					}
+				);
+			})
+			.Throws<ArgumentException>();
+	}
+
+	[Test]
+	public async Task Constructor_GivenJsonIndexWithInvalidPath_ThrowsArgumentException()
+	{
+		await Assert
+			.That(() =>
+			{
+				var _ = new SqlServerEventStoreClient(
+					new SqlServerEventStoreOptions
+					{
+						ConnectionString = "Server=.;Database=Test;Trusted_Connection=True;",
+						SchemaName = "dbo",
+						TableName = "EventStore",
+						AutoCreateTable = false,
+						JsonIndexOptions = new SqlServerJsonIndexOptions
+						{
+							Enabled = true,
+							Indexes = [new SqlServerJsonIndexDefinition { JsonPath = "StringProperty" }],
+						},
+					}
+				);
+			})
+			.Throws<ArgumentException>();
+	}
+
+	[Test]
+	public async Task Constructor_GivenJsonIndexWithDuplicateIndexNames_ThrowsArgumentException()
+	{
+		await Assert
+			.That(() =>
+			{
+				var _ = new SqlServerEventStoreClient(
+					new SqlServerEventStoreOptions
+					{
+						ConnectionString = "Server=.;Database=Test;Trusted_Connection=True;",
+						SchemaName = "dbo",
+						TableName = "EventStore",
+						AutoCreateTable = false,
+						JsonIndexOptions = new SqlServerJsonIndexOptions
+						{
+							Enabled = true,
+							Indexes =
+							[
+								new SqlServerJsonIndexDefinition { JsonPath = "$.Value", IndexName = "IX_Duplicate" },
+								new SqlServerJsonIndexDefinition
+								{
+									JsonPath = "$.OtherValue",
+									IndexName = "IX_Duplicate",
+								},
+							],
+						},
+					}
+				);
+			})
+			.Throws<ArgumentException>();
+	}
+
+	[Test]
+	public async Task Constructor_GivenJsonIndexWithUnsafeFilter_ThrowsArgumentException()
+	{
+		await Assert
+			.That(() =>
+			{
+				var _ = new SqlServerEventStoreClient(
+					new SqlServerEventStoreOptions
+					{
+						ConnectionString = "Server=.;Database=Test;Trusted_Connection=True;",
+						SchemaName = "dbo",
+						TableName = "EventStore",
+						AutoCreateTable = false,
+						JsonIndexOptions = new SqlServerJsonIndexOptions
+						{
+							Enabled = true,
+							Indexes =
+							[
+								new SqlServerJsonIndexDefinition
+								{
+									JsonPath = "$.Value",
+									Filter = "[EntityType] = 1; DROP TABLE dbo.EventStore",
+								},
+							],
+						},
+					}
+				);
+			})
+			.Throws<ArgumentException>();
+	}
 }

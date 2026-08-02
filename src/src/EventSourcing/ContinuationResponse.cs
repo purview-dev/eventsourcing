@@ -84,6 +84,7 @@ public class ContinuationResponse<T>
 		{
 			ContinuationToken = ContinuationToken,
 			RequestedCount = RequestedCount,
+			TotalCount = TotalCount,
 			Results = [.. Results.Select(convert).Where(m => m != null).Cast<TTo>()],
 		};
 	}

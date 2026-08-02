@@ -1,0 +1,28 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+	<ItemGroup>
+		<Compile
+			Include="..\..\tests\SharedTestingFramework\ContainerHelper.Resources.cs"
+			Link="Extensions\Purview\EventSourcing\ContainerHelper.Resources.cs"
+		/>
+	</ItemGroup>
+	<PropertyGroup>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Aspire.Hosting" />
+		<PackageReference Include="Aspire.Hosting.Azure.Storage" />
+		<PackageReference Include="Aspire.Hosting.MongoDB" />
+		<PackageReference Include="Aspire.Hosting.PostgreSQL" />
+		<PackageReference Include="Aspire.Hosting.Redis" />
+		<PackageReference Include="Aspire.Hosting.SqlServer" />
+		<PackageReference Include="AspireC4.Hosting" />
+		<PackageReference Include="Purview.Aspire.ResourceKit" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference
+			Include="..\Samples.Shared\Samples.Shared.csproj"
+			IsAspireProjectResource="false"
+		/>
+		<ProjectReference Include="..\Samples.Web\Samples.Web.csproj" />
+	</ItemGroup>
+</Project>

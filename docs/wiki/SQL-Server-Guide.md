@@ -2,10 +2,13 @@
 
 Purview Event Sourcing ships separate SQL Server-backed event and snapshot implementations in a single NuGet package:
 
-| Package | Class | Purpose |
-|---------|-------|---------|
-| `Purview.EventSourcing.SqlServer` | `SqlServerEventStore<T>` | Pure event-sourced store — events are the source of truth |
-| `Purview.EventSourcing.SqlServer` | `SqlServerSnapshotEventStore<T>` | Queryable snapshot store — optimized for query/list/count over snapshots |
+- `Purview.EventSourcing.SqlServer` + `SqlServerEventStore<T>`: pure event-sourced store where events remain the source of truth.
+- `Purview.EventSourcing.SqlServer` + `SqlServerSnapshotEventStore<T>`: queryable snapshot store optimized for query/list/count over snapshots.
+
+These two concepts are related but **not interchangeable**:
+
+- the SQL Server **event store** keeps internal stream snapshots in its event table to speed aggregate rehydration and event-based operations,
+- the **queryable snapshot store** is an optional LINQ/query-optimized store that can be omitted entirely or implemented by a different provider.
 
 Both stores create their tables automatically on first use (configurable) and use a **single shared table** for all aggregate types.
 
@@ -21,9 +24,10 @@ Both stores create their tables automatically on first use (configurable) and us
 6. [Per-Aggregate Schema and Table Routing](#per-aggregate-schema-and-table-routing)
 7. [Event Schema Versioning](#event-schema-versioning)
 8. [SQL Transaction Coordination](#sql-transaction-coordination)
-9. [Snapshot Payload Shape](#snapshot-payload-shape)
-10. [Behavior Notes and Caveats](#behavior-notes-and-caveats)
-11. [Connection String Examples](#connection-string-examples)
+9. [JSON Index Configuration](#json-index-configuration)
+10. [Snapshot Payload Shape](#snapshot-payload-shape)
+11. [Behavior Notes and Caveats](#behavior-notes-and-caveats)
+12. [Connection String Examples](#connection-string-examples)
 
 ---
 
@@ -111,7 +115,7 @@ builder.Services.AddSqlServerSnapshotQueryableEventStore();
 ### Events Store (`SqlServerEventStoreOptions`)
 
 | Property | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `ConnectionString` | `string` | *(required)* | ADO.NET connection string |
 | `SchemaName` | `string` | `"dbo"` | Default schema for the events table |
 | `TableName` | `string` | `"EventStore"` | Default table name for events |
@@ -125,17 +129,19 @@ builder.Services.AddSqlServerSnapshotQueryableEventStore();
 | `DefaultCacheSlidingDuration` | `TimeSpan` | `60 min` | Sliding cache expiry |
 | `RequiresValidPrincipalIdentifier` | `bool` | `true` | Require a `ClaimsPrincipal` identifier on save |
 | `AggregateTableOverrides` | `Dictionary<string, SqlServerAggregateTableOverride>` | `{}` | Per-aggregate schema/table overrides |
+| `JsonIndexOptions` | `SqlServerJsonIndexOptions` | disabled / empty | Runtime-managed JSON computed columns and indexes for `Payload` |
 
 ### Snapshot Store (`SqlServerSnapshotEventStoreOptions`)
 
 | Property | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `ConnectionString` | `string` | *(required)* | ADO.NET connection string |
 | `SchemaName` | `string` | `"dbo"` | Default schema for the snapshots table |
 | `TableName` | `string` | `"Snapshots"` | Default table name |
 | `AutoCreateTable` | `bool` | `true` | Create table on first use |
 | `UseDataCompression` | `bool` | `true` | Apply `PAGE` compression |
 | `AggregateTableOverrides` | `Dictionary<string, SqlServerSnapshotAggregateTableOverride>` | `{}` | Per-aggregate schema/table overrides |
+| `JsonIndexOptions` | `SqlServerJsonIndexOptions` | disabled / empty | Runtime-managed JSON computed columns and indexes for `Payload` |
 
 ---
 
@@ -156,7 +162,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON [dbo].[Snapshots]  TO [app_login];
 
 ### Auto-Create Permissions (`AutoCreateTable = true`)
 
-When `AutoCreateTable` is enabled (the default), the application also needs DDL rights at startup to create the table and its indices:
+When `AutoCreateTable` is enabled (the default), the application also needs DDL rights at startup to create the table, computed columns, and indices:
 
 ```sql
 -- Required to create tables and indices in the schema:
@@ -201,9 +207,16 @@ GRANT ALTER ON SCHEMA::[dbo] TO [my-app-service];
 
 Both stores use a **single shared table** by default. All aggregate types are stored in the same table and distinguished by the `AggregateType` column.
 
+For clarity:
+
+- `SqlServerEventStore<T>` stores stream metadata, events, idempotency markers, and **internal replay snapshots** in its event table.
+- `SqlServerSnapshotEventStore<T>` stores **queryable snapshots** in a separate snapshot table for LINQ-based reads.
+
+The internal replay snapshots in the event table are part of the event-store implementation and should not be treated as redundant copies of the optional queryable snapshot store.
+
 ### Events table schema
 
-```
+```text
 [Id]            NVARCHAR(450)     PK
 [EntityType]    INT               0=StreamVersion, 1=Event, 2=IdempotencyMarker, 3=Snapshot
 [AggregateId]   NVARCHAR(450)     The aggregate's id
@@ -219,7 +232,7 @@ Both stores use a **single shared table** by default. All aggregate types are st
 Three covering indices are created automatically:
 
 | Index | Columns | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `IX_EventStore_AggregateId_EntityType` | `(AggregateId, EntityType)` INCLUDE all | Stream lookups |
 | `IX_EventStore_EventRange` | `(AggregateId, EntityType, Version)` WHERE EntityType=1 | Event replay |
 | `IX_EventStore_AggregateType_EntityType` | `(AggregateType, EntityType, IsDeleted)` INCLUDE AggregateId | Aggregate ID enumeration |
@@ -279,6 +292,7 @@ builder.Services.Configure<SqlServerEventStoreOptions>(options =>
 ### How it works
 
 When `SqlServerEventStore<T>` is constructed it looks up `T`'s `AggregateType` name in `AggregateTableOverrides`. If a match is found:
+
 - `SchemaName` override (if set) replaces the global `SchemaName`
 - `TableName` override (if set) replaces the global `TableName`
 - All other options (compression, timeouts, caching…) are inherited from the global options
@@ -392,17 +406,145 @@ public sealed class CheckoutService(
 ### Notes and limits
 
 - SQL-native atomic commit is available when enlisted stores share the same SQL transaction boundary.
+- Enlisting stores with different SQL transaction boundaries is rejected up front.
 - If you need cross-database/distributed coordination, implement a custom transaction coordinator strategy.
 - The SQL-specific coordinator requires at least one enlisted aggregate (the aggregate store establishes the connection/transaction boundary).
 - `IEventStoreTransactionFactory` remains available and unchanged for provider-agnostic transaction orchestration.
 
 ### Integration coverage
 
-`src/tests/EventSourcing.SqlServer.IntegrationTests/Events/SqlServerEventStoreTransactionIntegrationTests.cs` verifies:
+`src/tests/SqlServer.IntegrationTests/Events/SqlServerEventStoreTransactionIntegrationTests.cs` verifies:
 
 - aggregate + raw SQL operation commit in one transaction,
 - aggregate + EF operation commit in one transaction,
-- rollback of both aggregate and enlisted SQL when an enlisted operation throws.
+- rollback of both aggregate and enlisted SQL when an enlisted operation throws,
+- cross-implementation enlistment (event store + SQL snapshot event store) with additional SQL operations in one transaction.
+
+---
+
+## JSON Index Configuration
+
+SQL Server stores event and snapshot payloads in a JSON column named `Payload`. You can optionally configure additional runtime-managed indexes over scalar JSON paths.
+
+The provider creates these indexes only when:
+
+- `AutoCreateTable = true`, and
+- `JsonIndexOptions.Enabled = true`.
+
+The current implementation materializes each configured path as a computed column and then creates an index over that column.
+
+### Supported configuration shape
+
+```csharp
+public sealed class SqlServerJsonIndexOptions
+{
+    public bool Enabled { get; set; }
+    public SqlServerJsonIndexDefinition[] Indexes { get; set; } = [];
+}
+
+public sealed class SqlServerJsonIndexDefinition
+{
+    public string JsonPath { get; set; } = default!;
+    public string? IndexName { get; set; }
+    public string? ComputedColumnName { get; set; }
+    public string SqlType { get; set; } = "nvarchar(450)";
+    public bool Unique { get; set; }
+    public SqlServerJsonComputedColumnMode ComputedColumnMode { get; set; } = SqlServerJsonComputedColumnMode.Persisted;
+    public string[] IncludeColumns { get; set; } = [];
+    public string? Filter { get; set; }
+}
+```
+
+### Snapshot store example
+
+```csharp
+builder.Services.AddSqlServerSnapshotQueryableEventStore();
+
+builder.Services.Configure<SqlServerSnapshotEventStoreOptions>(options =>
+{
+    options.ConnectionString = "Server=.;Database=MyApp;Trusted_Connection=True;";
+    options.JsonIndexOptions.Enabled = true;
+    options.JsonIndexOptions.Indexes =
+    [
+        new SqlServerJsonIndexDefinition
+        {
+            JsonPath = "$.StringProperty",
+            SqlType = "nvarchar(450)",
+            IncludeColumns = ["Id"],
+        },
+        new SqlServerJsonIndexDefinition
+        {
+            JsonPath = "$.IncrementInt32",
+            SqlType = "int",
+        },
+    ];
+});
+```
+
+### Event store example
+
+```csharp
+builder.Services.AddSqlServerEventStore();
+
+builder.Services.Configure<SqlServerEventStoreOptions>(options =>
+{
+    options.ConnectionString = "Server=.;Database=MyApp;Trusted_Connection=True;";
+    options.JsonIndexOptions.Enabled = true;
+    options.JsonIndexOptions.Indexes =
+    [
+        new SqlServerJsonIndexDefinition
+        {
+            JsonPath = "$.Value",
+            SqlType = "nvarchar(450)",
+            IncludeColumns = ["AggregateId", "Version"],
+            Filter = "[EntityType] = 1",
+        },
+    ];
+});
+```
+
+### appsettings.json example
+
+```json
+{
+  "EventStore:SqlServerSnapshot": {
+    "ConnectionString": "Server=.;Database=MyApp;Trusted_Connection=True;",
+    "SchemaName": "dbo",
+    "TableName": "EventStoreSnapshots",
+    "JsonIndexOptions": {
+      "Enabled": true,
+      "Indexes": [
+        {
+          "JsonPath": "$.StringProperty",
+          "SqlType": "nvarchar(450)",
+          "IncludeColumns": ["Id"]
+        }
+      ]
+    }
+  }
+}
+```
+
+### Rules and limitations
+
+- `JsonPath` must start with `$`.
+- `SqlType` must be a supported scalar SQL type expression such as `nvarchar(450)` or `int`.
+- Filter expressions are intentionally restricted; unsafe SQL text is rejected during startup.
+- Include columns are validated against the store schema.
+- Indexes are **created**, but not dropped or reconciled, by the runtime.
+- When `AutoCreateTable = false`, configured JSON indexes are not created automatically.
+
+### Query-shape guidance
+
+Indexes help only when the predicate path is SQL-translatable.
+
+- Good candidates:
+  - `a => a.StringProperty == value`
+  - `a => a.ReportSummaryScalar!.ParserDetails.FailedLines > 0`
+- Poor candidates:
+  - `a => a.ReportSummary!.Value.ParserDetails.FailedLines > 0` when `ReportSummary` is a `[Scalar]` wrapping a complex inner type
+
+If deep filtering matters, prefer directly mapped complex mirror properties on the aggregate snapshot model and test the exact predicate path.
 
 ---
 
@@ -417,13 +559,22 @@ Supported members include:
 - complex objects composed of supported members,
 - `EventStoreList<T>` / `EventStoreSet<T>` collections of supported primitive/complex members.
 
+Important distinction for SQL translation:
+
+- A `[Scalar]` value object with a **primitive** inner value behaves like a scalar in queries.
+- A `[Scalar]` value object with a **complex** inner value is persisted correctly, but deep predicates through `.Value` are not guaranteed to translate in SQL snapshot queries.
+- If you need deep SQL predicates for a complex concept, expose the underlying complex type directly on the aggregate/query snapshot model (for example, a `ParserReportSummary` mirror property) and test the exact nested predicate you expect to support.
+- Directly mapped complex snapshot members can support deep predicates such as `ParserDetails.FailedLines > 0`, subject to the provider's supported payload-shape rules.
+
 Unsupported members fail during model creation, including:
 
 - arrays,
 - collection types other than `EventStoreList<T>` / `EventStoreSet<T>` (for example `List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`, `HashSet<T>`, `ImmutableArray<T>`),
-- unsupported object types such as dictionaries.
+- unsupported object types that are not explicitly mapped for JSON conversion.
 
 Read-only and `[JsonIgnore]` members are excluded from snapshot payload mapping.
+
+Some nested collection/dictionary members inside directly mapped complex graphs may be supported through provider JSON conversion rather than direct relational collection mapping. Treat those shapes as provider-specific and verify them with integration tests.
 
 ### Examples
 
@@ -459,8 +610,8 @@ For generator/framework behavior (aggregate inheritance paths, hooks, event nami
 - Integration coverage includes replay compatibility scenarios for:
   - **Unknown events** (event type name no longer resolvable): replay skips affected records and continues.
   - **Schema-change style evolution** (event type still deserializes but is no longer applied/registered): replay logs `CannotApplyEvent` and continues.
-  - See: `src/tests/EventSourcing.SqlServer.IntegrationTests/Events/SqlServerEventStoreTests.cs`
-    and `src/tests/EventSourcing.SqlServer.IntegrationTests/Events/GenericSqlServerEventStoreTests.GetAsync.cs`.
+  - See: `src/tests/SqlServer.IntegrationTests/Events/SqlServerEventStoreTests.cs`
+    and `src/tests/SqlServer.IntegrationTests/Events/GenericSqlServerEventStoreTests.GetAsync.cs`.
 - Principal enforcement is enabled by default (`RequiresValidPrincipalIdentifier = true`), so save operations require the configured claim identifier to be present on the current principal.
 
 ---
@@ -469,19 +620,19 @@ For generator/framework behavior (aggregate inheritance paths, hooks, event nami
 
 ### Local development (Windows auth)
 
-```
+```text
 Server=(localdb)\MSSQLLocalDB;Database=MyApp;Trusted_Connection=True;
 ```
 
 ### SQL Server with SQL auth
 
-```
+```text
 Server=my-server.database.windows.net;Database=MyApp;User Id=app_login;Password=…;
 ```
 
 ### Azure SQL with Managed Identity
 
-```
+```text
 Server=my-server.database.windows.net;Database=MyApp;Authentication=Active Directory Default;
 ```
 

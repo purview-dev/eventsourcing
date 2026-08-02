@@ -112,7 +112,7 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new()
 	{
 		var aggregate = await eventStore.GetOrCreateAsync(aggregateId, context, cancellationToken);
-		if (aggregate != null)
+		if (aggregate?.IsNew() == true)
 			creator(aggregate);
 
 		return aggregate;
@@ -153,7 +153,7 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new()
 	{
 		var aggregate = await eventStore.GetOrCreateAsync(aggregateId, null, cancellationToken);
-		if (aggregate != null)
+		if (aggregate?.IsNew() == true)
 			creator(aggregate);
 
 		return aggregate;
@@ -198,7 +198,7 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new()
 	{
 		var aggregate = await eventStore.GetOrCreateAsync(aggregateId?.ToString(), context, cancellationToken);
-		if (aggregate != null)
+		if (aggregate?.IsNew() == true)
 			creator(aggregate);
 
 		return aggregate;
@@ -240,7 +240,7 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new()
 	{
 		var aggregate = await eventStore.GetOrCreateAsync(id?.ToString(), null, cancellationToken);
-		if (aggregate != null)
+		if (aggregate?.IsNew() == true)
 			creator(aggregate);
 
 		return aggregate;
@@ -462,7 +462,7 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new()
 	{
 		return string.IsNullOrWhiteSpace(aggregateId)
-			? Task.FromResult(ExistsState.DoesNotExists)
+			? Task.FromResult(ExistsState.DoesNotExist)
 			: eventStore.ExistsAsync(aggregateId, cancellationToken);
 	}
 

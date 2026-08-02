@@ -6,7 +6,7 @@ public sealed class EventStoreTransactionFactoryTests
 	public async Task Create_GivenNullCorrelationId_UsesAmbientProviderValue()
 	{
 		// Arrange
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-correlation");
 		var factory = new EventStoreTransactionFactory(correlationIdProvider);
 
@@ -21,7 +21,7 @@ public sealed class EventStoreTransactionFactoryTests
 	public async Task Create_GivenExplicitCorrelationId_PrefersExplicitValueOverAmbientProvider()
 	{
 		// Arrange
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-correlation");
 		var factory = new EventStoreTransactionFactory(correlationIdProvider);
 
@@ -30,6 +30,6 @@ public sealed class EventStoreTransactionFactoryTests
 
 		// Assert
 		await Assert.That(transaction.CorrelationId).IsEqualTo("explicit-correlation");
-		correlationIdProvider.DidNotReceive().GetCorrelationId();
+		correlationIdProvider.GetCorrelationId().WasNeverCalled();
 	}
 }

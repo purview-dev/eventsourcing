@@ -4,7 +4,7 @@ Follow `AGENTS.md`.
 
 Prefer repository-local guidance from:
 
-- `.github/skills/`
-- `.agents/skills/`
+- `src/skills/`
+- `.agents/skills/` (workflow/tooling skills)
 - `.agents/agents/`
 - `.agents/instructions/`

@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-	</ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\..\src\EventSourcing.Samples.Web\EventSourcing.Samples.Web.csproj" />
-	</ItemGroup>
-</Project>

@@ -74,10 +74,12 @@ public sealed class EventHistoryExtensionsTests
 	public async Task GetEventHistoryAsync_GivenStoreWithoutHistorySupport_ThrowsNotSupportedException()
 	{
 		// Arrange
-		var store = Substitute.For<IEventStoreCore<TestAggregate>>();
+		var store = IEventStoreCore<TestAggregate>.Mock();
 
 		// Act
-		var exception = (await Assert.That(() => store.GetEventHistoryAsync("agg-1")).Throws<NotSupportedException>())!;
+		var exception = (
+			await Assert.That(() => store.GetEventHistoryAsync("agg-1")!).Throws<NotSupportedException>()
+		)!;
 
 		// Assert
 		await Assert.That(exception.Message).Contains("does not support event history enumeration");
@@ -92,8 +94,9 @@ public sealed class EventHistoryExtensionsTests
 
 		// Act / Assert
 		var exception = (
-			await Assert.That(() => store.GetEventHistoryAsync("agg-1", request)).Throws<ArgumentOutOfRangeException>()
+			await Assert.That(() => store.GetEventHistoryAsync("agg-1", request)!).Throws<ArgumentOutOfRangeException>()
 		)!;
+
 		await Assert.That(exception.ParamName).IsEqualTo("request");
 	}
 
@@ -121,7 +124,7 @@ public sealed class EventHistoryExtensionsTests
 		: IEventStoreCore<TestAggregate>,
 			IAggregateEventHistoryStoreCore<TestAggregate>
 	{
-		readonly IReadOnlyList<(IEvent @event, string eventType)> _events = events.ToList();
+		readonly IReadOnlyList<(IEvent @event, string eventType)> _events = [.. events];
 
 		public async IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync(
 			string aggregateId,

@@ -1,58 +1,68 @@
 <Solution>
 	<Folder Name="/Solution Items/">
 		<File Path="../global.json" />
+		<File Path="../nuget.config" />
 		<File Path="../Directory.Packages.props" />
+		<File Path="../package.json" />
 		<File Path="Directory.Build.props" />
 		<File Path="Directory.Build.targets" />
 	</Folder>
 	<Folder Name="/src/">
-		<Project Path="src\EventSourcing.SourceGenerator\EventSourcing.SourceGenerator.csproj" />
-		<Project Path="src\EventSourcing\EventSourcing.csproj" />
+		<Project Path="src/Admin.AzureStorage/Admin.AzureStorage.csproj" />
+		<Project Path="src/Admin.Postgres/Admin.Postgres.csproj" />
+		<Project Path="src/EventSourcing/EventSourcing.csproj" />
+		<Project Path="src/FluentValidationImpl/FluentValidationImpl.csproj" />
+		<Project Path="src/SourceGenerator/SourceGenerator.csproj" />
+		<Project Path="src/ZodSharpImpl/ZodSharpImpl.csproj" />
+	</Folder>
+	<Folder Name="/src/admin/">
+		<Project Path="src/Admin.Abstractions/Admin.Abstractions.csproj" />
+		<Project Path="src/Admin.Security/Admin.Security.csproj" />
+		<Project Path="src/Admin.API/Admin.API.csproj" />
+		<Project Path="src/Admin.SqlServer/Admin.SqlServer.csproj" />
+		<Project Path="src/Admin.MongoDB/Admin.MongoDB.csproj" />
+		<Project Path="src/Admin.Site/Admin.Site.csproj" />
 	</Folder>
 	<Folder Name="/src/implementations/">
-		<Project
-			Path="src/EventSourcing.CosmosDb/EventSourcing.CosmosDb.csproj"
-			Id="49d7274a-a63e-4975-9841-96ffd78071c2"
-		/>
-		<Project
-			Path="src/EventSourcing.MongoDB/EventSourcing.MongoDB.csproj"
-			Id="8a60d312-155e-44e4-8d0a-014bb0ab7c50"
-		/>
-		<Project
-			Path="src/EventSourcing.SqlServer/EventSourcing.SqlServer.csproj"
-			Id="e771c706-e382-4d6d-8564-15f5172513db"
-		/>
-		<Project Path="src\EventSourcing.AzureStorage\EventSourcing.AzureStorage.csproj" />
+		<Project Path="src/AzureStorage/AzureStorage.csproj" />
+		<Project Path="src/CosmosDb/CosmosDb.csproj" />
+		<Project Path="src/ImplementationShared/ImplementationShared.csproj" />
+		<Project Path="src/InMemory/InMemory.csproj" />
+		<Project Path="src/MongoDB/MongoDB.csproj" />
+		<Project Path="src/Postgres/Postgres.csproj" />
+		<Project Path="src/SqlServer/SqlServer.csproj" />
 	</Folder>
 	<Folder Name="/src/samples/">
-		<Project Path="src\EventSourcing.Samples.AppHost\EventSourcing.Samples.AppHost.csproj" />
-		<Project Path="src\EventSourcing.Samples.QuickStart\EventSourcing.Samples.QuickStart.csproj" />
-		<Project Path="src\EventSourcing.Samples.ServiceDefaults\EventSourcing.Samples.ServiceDefaults.csproj" />
-		<Project Path="src\EventSourcing.Samples.Web\EventSourcing.Samples.Web.csproj" />
-		<Project Path="src\EventSourcing.Samples\EventSourcing.Samples.csproj" />
+		<Project Path="src/Samples.AppHost/Samples.AppHost.csproj" />
+		<Project Path="src/Samples.QuickStart/Samples.QuickStart.csproj" />
+		<Project Path="src/Samples.ServiceDefaults/Samples.ServiceDefaults.csproj" />
+		<Project Path="src/Samples.Shared/Samples.Shared.csproj" />
+		<Project Path="src/Samples.Web/Samples.Web.csproj" />
+		<Project Path="src/Samples/Samples.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
-		<Project Path="tests\EventSourcing.SourceGenerator.PerformanceTests\EventSourcing.SourceGenerator.PerformanceTests.csproj" />
-		<Project Path="tests\EventSourcing.SourceGenerator.UnitTests\EventSourcing.SourceGenerator.UnitTests.csproj" />
-		<Project Path="tests\EventSourcing.SqlServer.PerformanceTests\EventSourcing.SqlServer.PerformanceTests.csproj" />
-		<Project Path="tests\EventSourcing.UnitTests\EventSourcing.UnitTests.csproj" />
-		<Project Path="tests\SharedTestingFramework\SharedTestingFramework.csproj" />
+		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
+		<Project Path="tests/FluentValidationImpl.UnitTests/FluentValidationImpl.UnitTests.csproj" />
+		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
+		<Project Path="tests/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj" />
+		<Project Path="tests/SourceGenerator.UnitTests/SourceGenerator.UnitTests.csproj" />
+		<Project Path="tests/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj" />
+		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
+	</Folder>
+	<Folder Name="/tests/admin/">
+		<Project Path="tests/Admin.SqlServer.UnitTests/Admin.SqlServer.UnitTests.csproj" />
+		<Project Path="tests/Admin.UnitTests/Admin.UnitTests.csproj" />
 	</Folder>
 	<Folder Name="/tests/implementations/">
-		<Project Path="tests/EventSourcing.AzureStorage.IntegrationTests/EventSourcing.AzureStorage.IntegrationTests.csproj" />
-		<Project
-			Path="tests/EventSourcing.CosmosDb.IntegrationTests/EventSourcing.CosmosDb.IntegrationTests.csproj"
-			Id="99d1f503-f5c6-488b-ba4f-65d04678effd"
-		/>
-		<Project Path="tests/EventSourcing.MongoDB.IntegrationTests/EventSourcing.MongoDB.IntegrationTests.csproj" />
-		<Project
-			Path="tests/EventSourcing.SqlServer.IntegrationTests/EventSourcing.SqlServer.IntegrationTests.csproj"
-			Id="36e93dd0-ae05-4692-a398-12a4376ea052"
-		/>
+		<Project Path="tests/AzureStorage.IntegrationTests/AzureStorage.IntegrationTests.csproj" />
+		<Project Path="tests/CosmosDb.IntegrationTests/CosmosDb.IntegrationTests.csproj" />
+		<Project Path="tests/MongoDB.IntegrationTests/MongoDB.IntegrationTests.csproj" />
+		<Project Path="tests/Postgres.IntegrationTests/Postgres.IntegrationTests.csproj" />
+		<Project Path="tests/SqlServer.IntegrationTests/SqlServer.IntegrationTests.csproj" />
 	</Folder>
 	<Folder Name="/tests/samples/">
-		<Project Path="tests/EventSourcing.Samples.AppHost.IntegrationTests/EventSourcing.Samples.AppHost.IntegrationTests.csproj" />
-		<Project Path="tests\EventSourcing.Samples.IntegrationTests\EventSourcing.Samples.IntegrationTests.csproj" />
-		<Project Path="tests\EventSourcing.Samples.UnitTests\EventSourcing.Samples.UnitTests.csproj" />
+		<Project Path="tests/Samples.AppHost.IntegrationTests/Samples.AppHost.IntegrationTests.csproj" />
+		<Project Path="tests/Samples.IntegrationTests/Samples.IntegrationTests.csproj" />
+		<Project Path="tests/Samples.UnitTests/Samples.UnitTests.csproj" />
 	</Folder>
 </Solution>

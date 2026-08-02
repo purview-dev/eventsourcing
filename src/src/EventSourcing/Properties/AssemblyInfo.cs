@@ -1,11 +1,18 @@
 ﻿using System.Runtime.CompilerServices;
+using Purview.Telemetry;
 
-[assembly: InternalsVisibleTo("EventSourcing.AzureStorage.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.CosmosDb.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.MongoDB.IntegrationTests")]
-[assembly: InternalsVisibleTo("EventSourcing.SqlServer.IntegrationTests")]
+[assembly: InternalsVisibleTo("SharedTestingFramework")]
+[assembly: InternalsVisibleTo("AzureStorage.IntegrationTests")]
+[assembly: InternalsVisibleTo("CosmosDb.IntegrationTests")]
+[assembly: InternalsVisibleTo("MongoDB.IntegrationTests")]
+[assembly: InternalsVisibleTo("SqlServer.IntegrationTests")]
 
-[assembly: InternalsVisibleTo("EventSourcing.AzureStorage")]
-[assembly: InternalsVisibleTo("EventSourcing.CosmosDb")]
-[assembly: InternalsVisibleTo("EventSourcing.MongoDB")]
-[assembly: InternalsVisibleTo("EventSourcing.SqlServer")]
+[assembly: InternalsVisibleTo("ImplementationShared")]
+[assembly: InternalsVisibleTo("InMemory")]
+[assembly: InternalsVisibleTo("AzureStorage")]
+[assembly: InternalsVisibleTo("CosmosDb")]
+[assembly: InternalsVisibleTo("MongoDB")]
+[assembly: InternalsVisibleTo("SqlServer")]
+
+[assembly: ActivitySourceGeneration("Purview.EventSourcing")]
+[assembly: MeterGeneration("Purview.EventSourcing")]

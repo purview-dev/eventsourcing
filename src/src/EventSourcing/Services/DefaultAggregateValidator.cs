@@ -1,5 +1,5 @@
-﻿using FluentValidation;
-using Purview.EventSourcing.Aggregates;
+﻿using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.Services;
 
@@ -7,9 +7,7 @@ namespace Purview.EventSourcing.Services;
 /// A default validator for <see cref="IAggregate"/>'s based on
 /// standard data annotations.
 /// </summary>
-public sealed class DefaultAggregateValidator<TAggregate>
-	: AbstractValidator<TAggregate>,
-		IAggregateValidator<TAggregate>
+public sealed class DefaultAggregateValidator<TAggregate> : IAggregateValidator<TAggregate>
 	where TAggregate : IAggregate
 {
 	/// <summary>
@@ -18,28 +16,31 @@ public sealed class DefaultAggregateValidator<TAggregate>
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types")]
 	public static IAggregateValidator<TAggregate> Instance { get; } = new DefaultAggregateValidator<TAggregate>();
 
-	DefaultAggregateValidator()
+	public ValidationResult Validate(TAggregate aggregate)
 	{
-		RuleFor(m => m)
-			.Custom(
-				(aggregate, context) =>
-				{
-					System.ComponentModel.DataAnnotations.ValidationContext daContext = new(aggregate);
-					List<System.ComponentModel.DataAnnotations.ValidationResult> failures = [];
+		ArgumentNullException.ThrowIfNull(aggregate);
 
-					if (
-						!System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
-							aggregate,
-							daContext,
-							failures,
-							true
-						)
-					)
-					{
-						foreach (var failure in failures)
-							context.AddFailure(failure.MemberNames.FirstOrDefault(), failure.ErrorMessage);
-					}
-				}
-			);
+		var failures = ValidateWithAnnotations(aggregate);
+		return new ValidationResult(failures);
+	}
+
+	public Task<ValidationResult> ValidateAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(aggregate);
+
+		var failures = ValidateWithAnnotations(aggregate);
+		return Task.FromResult(new ValidationResult(failures));
+	}
+
+	static IEnumerable<ValidationFailure> ValidateWithAnnotations(TAggregate aggregate)
+	{
+		System.ComponentModel.DataAnnotations.ValidationContext daContext = new(aggregate);
+		List<System.ComponentModel.DataAnnotations.ValidationResult> failures = [];
+
+		if (!System.ComponentModel.DataAnnotations.Validator.TryValidateObject(aggregate, daContext, failures, true))
+		{
+			foreach (var failure in failures)
+				yield return new ValidationFailure(failure.MemberNames.FirstOrDefault(), failure.ErrorMessage);
+		}
 	}
 }

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<Title>Purview Event Sourcing Admin Portal Azure Storage</Title>
+		<Description>Azure Storage query adapters for Purview EventSourcing Admin Portal.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;azurestorage;queries;</PackageTags>
+		<PackageId>Purview.EventSourcing.Admin.AzureStorage</PackageId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
+		<ProjectReference Include="..\AzureStorage\AzureStorage.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Data.Tables" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.Options" />
+	</ItemGroup>
+</Project>

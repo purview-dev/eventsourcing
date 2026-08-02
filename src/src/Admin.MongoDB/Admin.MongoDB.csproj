@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<Title>Purview Event Sourcing Admin Portal MongoDB Adapter</Title>
+		<Description>MongoDB storage adapter for Purview EventSourcing Admin Portal. Enables aggregate search, event inspection, and point-in-time projection queries on MongoDB event stores.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;mongodb;</PackageTags>
+		<PackageId>Purview.EventSourcing.Admin.MongoDB</PackageId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
+		<ProjectReference Include="..\MongoDB\MongoDB.csproj" />
+		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MongoDB.Driver" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+	</ItemGroup>
+</Project>

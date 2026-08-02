@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Caching.Distributed;
-using NSubstitute.ReturnsExtensions;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.MongoDB;
@@ -17,11 +16,15 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 
 	IAggregateEventNameMapper _eventNameMapper = default!;
 
-	public MongoDBEventStoreFixture() => _mongoDBContainer = ContainerHelper.CreateMongoDB();
+	public MongoDBEventStoreFixture()
+	{
+		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
+		_mongoDBContainer = ContainerHelper.CreateMongoDB();
+	}
 
-	public IDistributedCache Cache { get; private set; } = default!;
+	public IDistributedCacheMock Cache { get; private set; } = default!;
 
-	public IMongoDBEventStoreTelemetry Telemetry { get; private set; } = default!;
+	public IMongoDBEventStoreTelemetryMock Telemetry { get; private set; } = default!;
 
 	internal MongoDBClient EventClient { get; private set; } = default!;
 
@@ -29,26 +32,20 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 
 	public MongoDBEventStore<TAggregate> CreateEventStore<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
-		bool removeFromCacheOnDelete = false,
-		int snapshotRecalculationInterval = 1
+		bool removeFromCacheOnDelete = false
 	)
 		where TAggregate : class, IAggregate, new() =>
-		CreateEventStoreContext(
-			aggregateChangeNotifier,
-			removeFromCacheOnDelete,
-			snapshotRecalculationInterval
-		).EventStore;
+		CreateEventStoreContext(aggregateChangeNotifier, removeFromCacheOnDelete).EventStore;
 
 	internal (
 		MongoDBEventStore<TAggregate> EventStore,
-		IMongoDBEventStoreTelemetry Telemetry,
-		IDistributedCache Cache,
+		IMongoDBEventStoreTelemetryMock Telemetry,
+		IDistributedCacheMock Cache,
 		MongoDBClient EventClient,
 		MongoDBClient SnapshotClient
 	) CreateEventStoreContext<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
-		bool removeFromCacheOnDelete = false,
-		int snapshotRecalculationInterval = 1
+		bool removeFromCacheOnDelete = false
 	)
 		where TAggregate : class, IAggregate, new()
 	{
@@ -57,14 +54,14 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 		var cache = CreateDistributedCache();
 		Cache = cache;
 
-		var telemetry = Substitute.For<IMongoDBEventStoreTelemetry>();
+		var telemetry = IMongoDBEventStoreTelemetry.Mock();
 		Telemetry = telemetry;
 
 		_eventNameMapper = new AggregateEventNameMapper();
 
 		var connectionString = _mongoDBContainer.GetConnectionString();
 
-		var aggregateRequirementsManager = Substitute.For<IAggregateRequirementsManager>();
+		var aggregateRequirementsManager = IAggregateRequirementsManager.Mock();
 		MongoDBEventStoreOptions mongoDBOptions = new()
 		{
 			ApplicationName = nameof(MongoDBEventStoreFixture),
@@ -77,13 +74,12 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 			RemoveDeletedFromCache = removeFromCacheOnDelete,
 		};
 
-		var mongoDBClientTelemetry = Substitute.For<IMongoDBClientTelemetry>();
+		var mongoDBClientTelemetry = IMongoDBClientTelemetry.Mock();
 		MongoDBEventStore<TAggregate> eventStore = new(
 			eventNameMapper: _eventNameMapper,
 			mongoDbOptions: Microsoft.Extensions.Options.Options.Create(mongoDBOptions),
 			distributedCache: cache,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			eventStoreTelemetry: telemetry,
 			mongoDBClientTelemetry: mongoDBClientTelemetry,
 			aggregateRequirementsManager: aggregateRequirementsManager
@@ -108,10 +104,10 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 		return (eventStore, telemetry, cache, eventClient, snapshotClient);
 	}
 
-	public static IDistributedCache CreateDistributedCache()
+	public static IDistributedCacheMock CreateDistributedCache()
 	{
-		var cache = Substitute.For<IDistributedCache>();
-		cache.GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ReturnsNullForAnyArgs();
+		var cache = IDistributedCache.Mock();
+		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);
 
 		return cache;
 	}

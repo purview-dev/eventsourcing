@@ -1,5 +1,56 @@
 # Changelog
 
+## 2.0.0-prerelease.28
+
+### Patch Changes
+
+- fix: added telemetry activity source and meter names
+
+## 2.0.0-prerelease.27
+
+### Patch Changes
+
+- ff8bad5: fixed GetOrCreateAsync always calling creator func/ action
+- fixed another GetOrCreateAsync issue calling creator action/ func on non-new aggregates
+
+## 2.0.0-prerelease.25
+
+### Patch Changes
+
+- fixed SQL snapshot support for directly mapped complex mirror properties, including deep query translation over `ParserReportSummary` members
+- clarified SQL snapshot/query documentation for provider-converted scalar value objects vs directly mapped complex mirrors
+- aligned repo-local agent instructions and skills under `.agents/skills`
+
+## 2.0.0-prerelease.21
+
+### Patch Changes
+
+- fixed GetOrCreate that called created func regardless of state
+
+## 2.0.0-prerelease.20
+
+### Patch Changes
+
+- fixed the valueobject EF ctor generation not covering all valueobject types
+
+## 2.0.0-prerelease.19
+
+### Patch Changes
+
+- added IEquatible for value object structs
+
+## 2.0.0-prerelease.18
+
+### Patch Changes
+
+- added EF support for complex value objects
+
+## 2.0.0-prerelease.17
+
+### Patch Changes
+
+- added an inmemory event and snapshot store for testing
+
 ## 2.0.0-prerelease.16
 
 ### Patch Changes

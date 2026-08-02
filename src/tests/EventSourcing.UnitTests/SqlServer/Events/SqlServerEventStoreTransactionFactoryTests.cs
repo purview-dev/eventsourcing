@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Purview.EventSourcing.SqlServer.Events;
+using Microsoft.Extensions.Options;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
@@ -9,7 +9,7 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 	[Test]
 	public async Task CreateSqlServerTransaction_GivenNullCorrelationId_UsesAmbientProviderValue()
 	{
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 
@@ -21,20 +21,20 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 	[Test]
 	public async Task CreateSqlServerTransaction_GivenExplicitCorrelationId_PrefersExplicitValueOverAmbientProvider()
 	{
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 
 		await using var transaction = factory.CreateSqlServerTransaction("explicit-sql-correlation");
 
 		await Assert.That(transaction.CorrelationId).IsEqualTo("explicit-sql-correlation");
-		correlationIdProvider.DidNotReceive().GetCorrelationId();
+		correlationIdProvider.GetCorrelationId().WasNeverCalled();
 	}
 
 	[Test]
 	public async Task Create_GivenNullCorrelationId_ReturnsSqlServerTransaction()
 	{
-		var correlationIdProvider = Substitute.For<IEventStoreCorrelationIdProvider>();
+		var correlationIdProvider = IEventStoreCorrelationIdProvider.Mock();
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 
@@ -80,5 +80,37 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 
 		await Assert.That(sqlFactory).IsTypeOf<SqlServerEventStoreTransactionFactory>();
 		await Assert.That(defaultFactory).IsTypeOf<EventStoreTransactionFactory>();
+	}
+
+	[Test]
+	public async Task AddSqlServerEventStore_GivenInvalidJsonIndexConfiguration_ResolvingOptionsThrowsValidationException()
+	{
+		var services = new ServiceCollection();
+		services.AddSingleton<IConfiguration>(
+			new ConfigurationBuilder()
+				.AddInMemoryCollection(
+					new Dictionary<string, string?>
+					{
+						["ConnectionStrings:eventstore-sqlserver"] =
+							"Server=.;Database=TestDb;Trusted_Connection=True;TrustServerCertificate=True;",
+					}
+				)
+				.Build()
+		);
+		services.AddSqlServerEventStore();
+		services.Configure<SqlServerEventStoreOptions>(options =>
+		{
+			options.JsonIndexOptions.Enabled = true;
+			options.JsonIndexOptions.Indexes = [new SqlServerJsonIndexDefinition { JsonPath = "invalid-path" }];
+		});
+
+		using var serviceProvider = services.BuildServiceProvider();
+
+		var exception = await Assert
+			.That(() => serviceProvider.GetRequiredService<IOptions<SqlServerEventStoreOptions>>().Value)
+			.Throws<OptionsValidationException>();
+
+		await Assert.That(exception).IsNotNull();
+		await Assert.That(exception!.Message).Contains("JsonPath");
 	}
 }

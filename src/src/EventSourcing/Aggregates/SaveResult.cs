@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using FluentValidation;
-using FluentValidation.Results;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.Aggregates;
 

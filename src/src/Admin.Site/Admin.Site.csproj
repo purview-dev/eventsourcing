@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<Title>Purview Event Sourcing Admin Portal Razor UI</Title>
+		<Description>Ready-to-use Razor Pages admin dashboard for Purview EventSourcing Admin Portal. Provides web UI for aggregate search, event inspection, and point-in-time projection queries.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;ui;razor;</PackageTags>
+		<PackageId>Purview.EventSourcing.Admin.Site</PackageId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
+		<ProjectReference Include="..\Admin.API\Admin.API.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+	</ItemGroup>
+</Project>

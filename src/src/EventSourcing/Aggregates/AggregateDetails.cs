@@ -103,6 +103,7 @@ public sealed class AggregateDetails : ICloneable
 		{
 			_id = _id,
 			Created = Created,
+			Updated = Updated,
 			SnapshotVersion = SnapshotVersion,
 			SavedVersion = SavedVersion,
 			CurrentVersion = CurrentVersion,

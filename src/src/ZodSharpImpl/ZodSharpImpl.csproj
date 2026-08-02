@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<Title>Purview Event Sourcing ZodSharp Integration</Title>
+		<Description>ZodSharp adapter for Purview EventSourcing — bridges FluentValidation IValidator&lt;T&gt; with IAggregateValidator&lt;T&gt;.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;validation;zod;zodsharp;</PackageTags>
+		<RootNamespace>Purview.EventSourcing.ZodSharp</RootNamespace>
+		<PackageId>Purview.EventSourcing.ZodSharp</PackageId>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="ZodSharp" />
+	</ItemGroup>
+	<ItemGroup>
+		<None
+			Include="buildTransitive\Purview.EventSourcing.ZodSharp.targets"
+			Pack="true"
+			PackagePath="buildTransitive\Purview.EventSourcing.ZodSharp.targets"
+		/>
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+	</ItemGroup>
+</Project>

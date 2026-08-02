@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<DisableSourceLink>true</DisableSourceLink>
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<!-- Exclude Purview.Telemetry.SourceGenerator since this is a netstandard2.0 analyzer project -->
+		<ExcludePurviewTelemetry>true</ExcludePurviewTelemetry>
+		<NoWarn>$(NoWarn);CS8632;RS1035;RS1036;RS2008</NoWarn>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<IsPackable>false</IsPackable>
+		<EmbedUntrackedSources>false</EmbedUntrackedSources>
+		<AssemblyName>Purview.EventSourcing.SourceGeneration</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup Label="Compiler Visible SDK Properties">
+		<None Include="Sdk/**/*" Pack="true" PackagePath="Sdk/" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Templates\Sources\**\*.cs" />
+		<EmbeddedResource Include="Templates\Sources\**\*.cs" />
+	</ItemGroup>
+</Project>

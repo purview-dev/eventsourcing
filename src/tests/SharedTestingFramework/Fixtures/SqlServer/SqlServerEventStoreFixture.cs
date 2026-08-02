@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Caching.Distributed;
-using NSubstitute.ReturnsExtensions;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.Services;
@@ -9,19 +8,20 @@ using TUnit.Core.Interfaces;
 
 namespace Purview.EventSourcing.Fixtures.SqlServer;
 
-public sealed class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
+public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 {
-	readonly MsSqlContainer _msSqlContainer;
+	readonly MsSqlContainer _msSqlContainer = ContainerHelper.CreateMsSql();
+
 	IAggregateEventNameMapper _eventNameMapper = default!;
 
 	public SqlServerEventStoreFixture()
 	{
-		_msSqlContainer = ContainerHelper.CreateMsSql();
+		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 	}
 
-	public IDistributedCache Cache { get; private set; } = default!;
+	public IDistributedCacheMock Cache { get; private set; } = default!;
 
-	public ISqlServerEventStoreTelemetry Telemetry { get; private set; } = default!;
+	public ISqlServerEventStoreTelemetryMock Telemetry { get; private set; } = default!;
 
 	internal SqlServerEventStoreClient Client { get; private set; } = default!;
 
@@ -30,46 +30,45 @@ public sealed class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDispos
 	public SqlServerEventStore<TAggregate> CreateEventStore<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
 		bool removeFromCacheOnDelete = false,
-		int snapshotRecalculationInterval = 1
+		Guid? runId = null,
+		Action<SqlServerEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new() =>
-		CreateEventStoreContext(
-			aggregateChangeNotifier,
-			removeFromCacheOnDelete,
-			snapshotRecalculationInterval
-		).EventStore;
+		CreateEventStoreContext(aggregateChangeNotifier, removeFromCacheOnDelete, runId, configureOptions).EventStore;
 
 	internal (
 		SqlServerEventStore<TAggregate> EventStore,
 		SqlServerEventStoreClient Client,
-		IDistributedCache Cache,
-		ISqlServerEventStoreTelemetry Telemetry
+		IDistributedCacheMock Cache,
+		ISqlServerEventStoreTelemetryMock Telemetry
 	) CreateEventStoreContext<TAggregate>(
 		IAggregateChangeFeedNotifier<TAggregate>? aggregateChangeNotifier = null,
 		bool removeFromCacheOnDelete = false,
-		int snapshotRecalculationInterval = 1
+		Guid? runId = null,
+		Action<SqlServerEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new()
 	{
-		var runId = Guid.NewGuid();
+		runId ??= Guid.NewGuid();
 		var cache = CreateDistributedCache();
 		Cache = cache;
-		var telemetry = Substitute.For<ISqlServerEventStoreTelemetry>();
+		var telemetry = ISqlServerEventStoreTelemetry.Mock();
 		Telemetry = telemetry;
 		_eventNameMapper = new AggregateEventNameMapper();
 
 		var connectionString = _msSqlContainer.GetConnectionString();
-		var aggregateRequirementsManager = Substitute.For<IAggregateRequirementsManager>();
+		var aggregateRequirementsManager = IAggregateRequirementsManager.Mock();
 
 		SqlServerEventStoreOptions options = new()
 		{
 			ConnectionString = connectionString,
-			TableName = $"EventStore_{runId:N}",
+			TableName = $"EventStoreEvents_{runId:N}",
 			SchemaName = "dbo",
 			AutoCreateTable = true,
 			TimeoutInSeconds = 60,
 			RemoveDeletedFromCache = removeFromCacheOnDelete,
 		};
+		configureOptions?.Invoke(options);
 
 		var client = new SqlServerEventStoreClient(options);
 		Client = client;
@@ -79,18 +78,17 @@ public sealed class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDispos
 			sqlServerOptions: Microsoft.Extensions.Options.Options.Create(options),
 			distributedCache: cache,
 			eventStoreTelemetry: telemetry,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			aggregateRequirementsManager: aggregateRequirementsManager
 		);
 
 		return (eventStore, client, cache, telemetry);
 	}
 
-	public static IDistributedCache CreateDistributedCache()
+	public static IDistributedCacheMock CreateDistributedCache()
 	{
-		var cache = Substitute.For<IDistributedCache>();
-		cache.GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ReturnsNullForAnyArgs();
+		var cache = IDistributedCache.Mock();
+		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);
 		return cache;
 	}
 
@@ -102,5 +100,6 @@ public sealed class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDispos
 	public async ValueTask DisposeAsync()
 	{
 		await _msSqlContainer.DisposeAsync();
+		GC.SuppressFinalize(this);
 	}
 }

@@ -1,0 +1,286 @@
+@page "/admin/events"
+@model Purview.EventSourcing.Admin.Site.Pages.EventsModel
+
+@{
+	ViewData["Title"] = "Events";
+}
+
+<div class="admin-container">
+	<h1>Event Stream</h1>
+	<p>
+		<strong>Aggregate:</strong>
+		<span class="badge">@Model.AggregateType</span>
+		<code>@Model.AggregateId</code>
+	</p>
+
+	<form method="get" class="filter-form">
+		<input type="hidden" name="aggregateType" value="@Model.AggregateType" />
+		<input type="hidden" name="aggregateId" value="@Model.AggregateId" />
+
+		<div class="form-row">
+			<div class="form-group">
+				<label for="versionFrom">Version From</label>
+				<input type="number" id="versionFrom" name="versionFrom" value="@Model.VersionFrom" placeholder="Min version" class="form-control" />
+			</div>
+
+			<div class="form-group">
+				<label for="versionTo">Version To</label>
+				<input type="number" id="versionTo" name="versionTo" value="@Model.VersionTo" placeholder="Max version" class="form-control" />
+			</div>
+
+			<div class="form-group">
+				<label for="timeFromUtc">Time From (UTC)</label>
+				<input type="datetime-local" id="timeFromUtc" name="timeFromUtc" value="@Model.TimeFromUtc?.ToString("yyyy-MM-ddTHH:mm")" class="form-control" />
+			</div>
+
+			<div class="form-group">
+				<label for="timeToUtc">Time To (UTC)</label>
+				<input type="datetime-local" id="timeToUtc" name="timeToUtc" value="@Model.TimeToUtc?.ToString("yyyy-MM-ddTHH:mm")" class="form-control" />
+			</div>
+		</div>
+
+		<button type="submit" class="btn btn-primary">Filter</button>
+		<a href="/admin/events?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)" class="btn btn-secondary">Reset</a>
+		<a href="/" class="btn btn-secondary">Back to Aggregates</a>
+	</form>
+
+	@if (!ModelState.IsValid)
+	{
+		<div class="alert alert-danger">
+			@foreach (var modelState in ModelState.Values)
+			{
+				@foreach (var error in modelState.Errors)
+				{
+					<p>@error.ErrorMessage</p>
+				}
+			}
+		</div>
+	}
+
+	@if (Model.EventRange != null)
+	{
+		<div class="event-results">
+			<p>Total Events: @Model.EventRange.TotalCount | Page @Model.EventRange.Page of @Math.Ceiling((double)Model.EventRange.TotalCount / Model.EventRange.PageSize)</p>
+
+			@if (Model.EventRange.Items.Count > 0)
+			{
+				<div class="events-list">
+					@foreach (var eventEnvelope in Model.EventRange.Items)
+					{
+						<div class="event-card">
+							<div class="event-header">
+								<span class="badge badge-primary">v@eventEnvelope.Metadata.Version</span>
+								<span class="event-type">@eventEnvelope.Metadata.EventType</span>
+								<span class="event-time">@eventEnvelope.Metadata.TimestampUtc.ToString("u")</span>
+							</div>
+
+							<div class="event-metadata">
+								<p><strong>Correlation ID:</strong> <code>@eventEnvelope.Metadata.CorrelationId</code></p>
+								@if (!string.IsNullOrEmpty(eventEnvelope.Metadata.CausationId))
+								{
+									<p><strong>Causation ID:</strong> <code>@eventEnvelope.Metadata.CausationId</code></p>
+								}
+								@if (!string.IsNullOrEmpty(eventEnvelope.Metadata.IdempotencyId))
+								{
+									<p><strong>Idempotency ID:</strong> <code>@eventEnvelope.Metadata.IdempotencyId</code></p>
+								}
+								@if (!string.IsNullOrEmpty(eventEnvelope.Metadata.UserId))
+								{
+									<p><strong>User ID:</strong> @eventEnvelope.Metadata.UserId</p>
+								}
+							</div>
+
+							<details class="event-payload">
+								<summary>Payload</summary>
+								<pre><code>@eventEnvelope.Payload.ToString()</code></pre>
+							</details>
+						</div>
+					}
+				</div>
+
+				<div class="pagination">
+					@if (Model.PageNo > 1)
+					{
+						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.PageNo - 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Previous</a>
+					}
+
+					@if (Model.EventRange.Page * Model.EventRange.PageSize < Model.EventRange.TotalCount)
+					{
+						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.PageNo + 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Next</a>
+					}
+				</div>
+			}
+			else
+			{
+				<p>No events found for the specified filters.</p>
+			}
+		</div>
+	}
+</div>
+
+<style>
+	.admin-container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 20px;
+	}
+
+	.badge {
+		display: inline-block;
+		padding: 4px 8px;
+		background-color: #007bff;
+		color: white;
+		border-radius: 3px;
+		font-size: 12px;
+		margin-right: 10px;
+	}
+
+	.badge-primary {
+		background-color: #007bff;
+	}
+
+	.filter-form {
+		background-color: #f5f5f5;
+		padding: 15px;
+		border-radius: 4px;
+		margin-bottom: 20px;
+	}
+
+	.form-row {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 15px;
+		margin-bottom: 15px;
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.form-group label {
+		font-weight: bold;
+		margin-bottom: 5px;
+		font-size: 14px;
+	}
+
+	.form-control {
+		padding: 8px;
+		border: 1px solid #ddd;
+		border-radius: 3px;
+		font-size: 14px;
+	}
+
+	.btn {
+		padding: 8px 12px;
+		border: none;
+		border-radius: 3px;
+		cursor: pointer;
+		font-size: 14px;
+		text-decoration: none;
+		display: inline-block;
+		margin-right: 5px;
+	}
+
+	.btn-primary {
+		background-color: #007bff;
+		color: white;
+	}
+
+	.btn-secondary {
+		background-color: #6c757d;
+		color: white;
+	}
+
+	.btn-sm {
+		padding: 4px 8px;
+		font-size: 12px;
+	}
+
+	.event-card {
+		background-color: #f9f9f9;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		padding: 15px;
+		margin-bottom: 15px;
+	}
+
+	.event-header {
+		display: flex;
+		gap: 10px;
+		align-items: center;
+		margin-bottom: 10px;
+		padding-bottom: 10px;
+		border-bottom: 1px solid #eee;
+	}
+
+	.event-type {
+		font-weight: bold;
+		color: #333;
+	}
+
+	.event-time {
+		color: #666;
+		font-size: 12px;
+	}
+
+	.event-metadata {
+		margin-bottom: 10px;
+	}
+
+	.event-metadata p {
+		margin: 5px 0;
+		font-size: 13px;
+	}
+
+	.event-payload {
+		cursor: pointer;
+		margin-top: 10px;
+	}
+
+	.event-payload summary {
+		font-weight: bold;
+		padding: 8px;
+		background-color: #e9ecef;
+		border-radius: 3px;
+		user-select: none;
+	}
+
+	.event-payload pre {
+		background-color: #fff;
+		border: 1px solid #ddd;
+		border-radius: 3px;
+		padding: 10px;
+		margin-top: 8px;
+		overflow-x: auto;
+		font-size: 12px;
+	}
+
+	.event-payload code {
+		font-family: monospace;
+	}
+
+	.pagination {
+		margin-top: 20px;
+	}
+
+	.alert {
+		padding: 12px;
+		margin-bottom: 20px;
+		border-radius: 4px;
+	}
+
+	.alert-danger {
+		background-color: #f8d7da;
+		color: #721c24;
+		border: 1px solid #f5c6cb;
+	}
+
+	code {
+		background-color: #f4f4f4;
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-family: monospace;
+		font-size: 12px;
+	}
+</style>

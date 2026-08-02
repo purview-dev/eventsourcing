@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="TUnit.Aspire" />
+		<PackageReference Include="Aspire.Hosting.Testing" />
+		<PackageReference Include="Purview.Aspire.ResourceKit" />
+		<PackageReference Include="ZodSharp" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
+		<ProjectReference Include="..\..\src\Samples.Shared\Samples.Shared.csproj" />
+		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />
+	</ItemGroup>
+</Project>

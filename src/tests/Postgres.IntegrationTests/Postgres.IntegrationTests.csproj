@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<ProjectReference Include="..\SharedTestingFramework\SharedTestingFramework.csproj" />
+	</ItemGroup>
+</Project>

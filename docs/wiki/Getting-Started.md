@@ -15,6 +15,27 @@ dotnet add package Purview.EventSourcing.MongoDB
 dotnet add package Purview.EventSourcing.CosmosDb
 ```
 
+Optional packages:
+
+```bash
+# In-memory provider (local/test scenarios)
+dotnet add package Purview.EventSourcing.InMemory
+
+# Validation adapters
+dotnet add package Purview.EventSourcing.FluentValidation
+dotnet add package Purview.EventSourcing.ZodSharp
+```
+
+## Dependency guardrail for ZodSharp
+
+If your project references the `ZodSharpImpl` project directly and uses `ZodSharp` types, you must add:
+
+```xml
+<PackageReference Include="ZodSharp" />
+```
+
+`Purview.EventSourcing.ZodSharp` ships a build-time check (`ValidateZodSharpDirectReference`) in package `buildTransitive` assets so consumer projects fail fast with remediation guidance when this direct package reference is missing.
+
 ## Define an aggregate (source generator)
 
 ```csharp
@@ -46,14 +67,14 @@ Other provider registrations:
 
 ```csharp
 // Azure Storage (event store with blob support)
-builder.Services.AddAzureTableEventStore();
+builder.Services.AddAzureStorageEventStore();
 
 // MongoDB (events + queryable snapshots)
 builder.Services.AddMongoDBEventStore();
 builder.Services.AddMongoDBSnapshotQueryableEventStore();
 
 // Cosmos DB (queryable snapshots)
-builder.Services.AddCosmosDbQueryableEventStore();
+builder.Services.AddCosmosDbSnapshotQueryableEventStore();
 
 // Core-only fallback for projects without persistent query snapshots
 builder.Services.AddNullQueryableEventStore();
@@ -98,6 +119,9 @@ foreach (var item in history.Results)
 ## Next pages
 
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)
+- [Dependency Guardrails](Dependency-Guardrails.md)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
 - [Release Flow](Release-Flow.md)
+
+If you plan to query snapshot JSON deeply in SQL providers, read the SQL Server guide and provider matrix before relying on nested predicates through scalar value object `.Value` members.

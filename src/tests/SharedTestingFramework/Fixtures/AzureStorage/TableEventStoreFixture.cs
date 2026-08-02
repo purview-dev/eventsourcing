@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Caching.Distributed;
-using NSubstitute.ReturnsExtensions;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.AzureStorage;
@@ -18,9 +17,14 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 	IAggregateEventNameMapper _eventNameMapper = default!;
 	IDisposable? _eventStoreAsDisposable;
 
-	public IDistributedCache Cache { get; private set; } = default!;
+	public TableEventStoreFixture()
+	{
+		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
+	}
 
-	public ITableEventStoreTelemetry Telemetry { get; private set; } = default!;
+	public IDistributedCacheMock Cache { get; private set; } = default!;
+
+	public ITableEventStoreTelemetryMock Telemetry { get; private set; } = default!;
 
 	internal AzureTableClient TableClient { get; private set; } = default!;
 
@@ -40,8 +44,8 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 
 	internal (
 		TableEventStore<TAggregate> EventStore,
-		ITableEventStoreTelemetry Telemetry,
-		IDistributedCache Cache,
+		ITableEventStoreTelemetryMock Telemetry,
+		IDistributedCacheMock Cache,
 		AzureTableClient TableClient,
 		AzureBlobClient BlobClient
 	) CreateEventStoreContext<TAggregate>(
@@ -59,12 +63,12 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		var cache = CreateDistributedCache();
 		Cache = cache;
 
-		var telemetry = Substitute.For<ITableEventStoreTelemetry>();
+		var telemetry = ITableEventStoreTelemetry.Mock();
 		Telemetry = telemetry;
 
 		_eventNameMapper = new AggregateEventNameMapper();
 
-		var aggregateRequirementsManager = Substitute.For<IAggregateRequirementsManager>();
+		var aggregateRequirementsManager = IAggregateRequirementsManager.Mock();
 		AzureStorageEventStoreOptions azureStorageOptions = new()
 		{
 			ConnectionString = _azuriteContainer.GetConnectionString(),
@@ -78,8 +82,7 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			eventNameMapper: _eventNameMapper,
 			azureStorageOptions: Microsoft.Extensions.Options.Options.Create(azureStorageOptions),
 			distributedCache: cache,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? Substitute.For<IAggregateChangeFeedNotifier<TAggregate>>(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			eventStoreTelemetry: telemetry,
 			aggregateRequirementsManager: aggregateRequirementsManager,
 			snapshotStrategy: new IntervalSnapshotStrategy<TAggregate>(snapshotRecalculationInterval)
@@ -96,10 +99,10 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		return (eventStore, telemetry, cache, tableClient, blobClient);
 	}
 
-	public static IDistributedCache CreateDistributedCache()
+	public static IDistributedCacheMock CreateDistributedCache()
 	{
-		var cache = Substitute.For<IDistributedCache>();
-		cache.GetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ReturnsNullForAnyArgs();
+		var cache = IDistributedCache.Mock();
+		cache.GetAsync(Any<string>(), Any<CancellationToken>()).Returns((byte[]?)null);
 
 		return cache;
 	}

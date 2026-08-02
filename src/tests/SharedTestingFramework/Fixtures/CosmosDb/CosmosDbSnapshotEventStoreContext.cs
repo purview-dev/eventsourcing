@@ -18,7 +18,7 @@ public sealed class CosmosDbSnapshotEventStoreContext(
 	string azuriteConnectionString
 ) : IAsyncDisposable
 {
-	ITableEventStoreTelemetry _telemetry = default!;
+	ITableEventStoreTelemetryMock _telemetry = default!;
 	IAggregateEventNameMapper _eventNameMapper = default!;
 
 	public Guid RunId { get; } = Guid.NewGuid();
@@ -38,6 +38,8 @@ public sealed class CosmosDbSnapshotEventStoreContext(
 	)]
 	public void CreateCosmosDbEventStore(int correlationIdsToGenerate = 1, string? container = null)
 	{
+		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
+
 		var tableEventStore = CreateTableEventStore(correlationIdsToGenerate);
 
 		CosmosDbEventStoreOptions config = new()
@@ -66,7 +68,7 @@ public sealed class CosmosDbSnapshotEventStoreContext(
 		CosmosDbSnapshotEventStore<PersistenceAggregate> eventStore = new(
 			tableEventStore,
 			Microsoft.Extensions.Options.Options.Create(config),
-			Substitute.For<ICosmosDbSnapshotEventStoreTelemetry>(),
+			ICosmosDbSnapshotEventStoreTelemetry.Mock(),
 			cosmosClient
 		);
 
@@ -81,7 +83,7 @@ public sealed class CosmosDbSnapshotEventStoreContext(
 			.ToArray();
 
 		_eventNameMapper = new AggregateEventNameMapper();
-		_telemetry = Substitute.For<ITableEventStoreTelemetry>();
+		_telemetry = ITableEventStoreTelemetry.Mock();
 
 		AzureStorageEventStoreOptions azureStorageOptions = new()
 		{
@@ -95,10 +97,10 @@ public sealed class CosmosDbSnapshotEventStoreContext(
 		TableEventStore<PersistenceAggregate> eventStore = new(
 			eventNameMapper: _eventNameMapper,
 			azureStorageOptions: Microsoft.Extensions.Options.Options.Create(azureStorageOptions),
-			distributedCache: Substitute.For<IDistributedCache>(),
-			aggregateChangeNotifier: Substitute.For<IAggregateChangeFeedNotifier<PersistenceAggregate>>(),
+			distributedCache: IDistributedCache.Mock(),
+			aggregateChangeNotifier: IAggregateChangeFeedNotifier<PersistenceAggregate>.Mock(),
 			eventStoreTelemetry: _telemetry,
-			aggregateRequirementsManager: Substitute.For<IAggregateRequirementsManager>()
+			aggregateRequirementsManager: IAggregateRequirementsManager.Mock()
 		);
 
 		TableClient = new(azureStorageOptions, eventStore.TableName);

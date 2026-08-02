@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<RazorCompileOnBuild>true</RazorCompileOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aspire.Azure.Storage.Blobs" />
+		<PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />
+		<PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Admin.API\Admin.API.csproj" />
+		<ProjectReference Include="..\Admin.AzureStorage\Admin.AzureStorage.csproj" />
+		<ProjectReference Include="..\Admin.MongoDB\Admin.MongoDB.csproj" />
+		<ProjectReference Include="..\Admin.Postgres\Admin.Postgres.csproj" />
+		<ProjectReference Include="..\Admin.Security\Admin.Security.csproj" />
+		<ProjectReference Include="..\Samples.Shared\Samples.Shared.csproj" />
+		<ProjectReference Include="..\Samples\Samples.csproj" />
+		<ProjectReference Include="..\Samples.ServiceDefaults\Samples.ServiceDefaults.csproj" />
+		<ProjectReference Include="..\Admin.Site\Admin.Site.csproj" />
+		<ProjectReference Include="..\Admin.SqlServer\Admin.SqlServer.csproj" />
+		<ProjectReference Include="..\AzureStorage\AzureStorage.csproj" />
+		<ProjectReference Include="..\MongoDB\MongoDB.csproj" />
+		<ProjectReference Include="..\Postgres\Postgres.csproj" />
+		<ProjectReference Include="..\SqlServer\SqlServer.csproj" />
+	</ItemGroup>
+</Project>

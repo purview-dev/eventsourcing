@@ -1,0 +1,78 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Portal Home";
+    Layout = "_Layout";
+}
+
+<div class="min-h-full flex flex-col items-center justify-center py-12">
+    <div class="text-center mb-10">
+        <p class="text-5xl mb-4">🗃</p>
+        <h1 class="text-3xl font-bold text-gray-900">Event Sourcing Sample</h1>
+        <p class="mt-2 text-gray-500 text-sm">Choose your experience to get started</p>
+    </div>
+
+    <div class="w-full max-w-5xl mb-8 space-y-6">
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5">
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">Current store option</p>
+                    <h2 class="text-xl font-semibold text-amber-950">@Model.StoreOptions.CurrentDisplayName</h2>
+                    <p class="mt-1 text-sm text-amber-900">@Model.StoreOptions.CurrentDescription</p>
+                </div>
+                @if (Model.StoreOptions.AdminApiAvailable)
+                {
+                    <div class="flex gap-3">
+                        <a href="@Model.StoreOptions.AdminSitePath" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">Admin Site</a>
+                        <a href="@Model.StoreOptions.AdminApiPath" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Admin API</a>
+                    </div>
+                }
+            </div>
+            <p class="mt-4 text-sm text-amber-900">@Model.StoreOptions.DataIsolationWarning</p>
+        </div>
+
+        @if (Model.StoreOptions.Variants.Count > 0)
+        {
+            <div>
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Switch storage option</h2>
+                    <p class="text-xs text-gray-500">Each option runs as its own sample instance.</p>
+                </div>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach (var variant in Model.StoreOptions.Variants)
+                    {
+                        var isCurrent = string.Equals(variant.Key, Model.StoreOptions.CurrentKey, StringComparison.OrdinalIgnoreCase);
+                        <a href="@variant.Url" class="group rounded-2xl border @(isCurrent ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white") p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                            <div class="flex items-center justify-between gap-3">
+                                <h3 class="text-base font-semibold text-gray-900">@variant.DisplayName</h3>
+                                @if (isCurrent)
+                                {
+                                    <span class="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">Current</span>
+                                }
+                            </div>
+                            <p class="mt-3 text-sm text-gray-600">@variant.Description</p>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+        <!-- Customer Portal -->
+        <a href="/Customer" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md hover:border-blue-200 transition-all flex flex-col items-center text-center">
+            <div class="text-5xl mb-4">🛒</div>
+            <h2 class="text-xl font-semibold text-gray-900 group-hover:text-blue-700 mb-2">Customer Experience</h2>
+            <p class="text-sm text-gray-500">Browse the product catalog, place orders, and manage your profile.</p>
+            <span class="mt-6 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg group-hover:bg-blue-700 transition-colors">Enter →</span>
+        </a>
+
+        <!-- Back Office Portal -->
+        <a href="/BackOffice" class="group bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md hover:border-slate-300 transition-all flex flex-col items-center text-center">
+            <div class="text-5xl mb-4">🏢</div>
+            <h2 class="text-xl font-semibold text-gray-900 group-hover:text-slate-800 mb-2">Back Office</h2>
+            <p class="text-sm text-gray-500">Manage customers, the product catalog, stock levels, and inventory locations.</p>
+            <span class="mt-6 px-4 py-2 bg-slate-700 text-white text-sm rounded-lg group-hover:bg-slate-600 transition-colors">Enter →</span>
+        </a>
+    </div>
+</div>

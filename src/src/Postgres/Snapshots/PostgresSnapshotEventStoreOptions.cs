@@ -1,0 +1,92 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Purview.EventSourcing.Postgres.Snapshots;
+
+/// <summary>
+/// Defines a schema and/or table name override for a specific aggregate type in the snapshot store.
+/// </summary>
+/// <remarks>
+/// The key in <see cref="PostgresSnapshotEventStoreOptions.AggregateTableOverrides"/> should match
+/// the aggregate's <c>AggregateType</c> value (i.e., the class name with any trailing
+/// "Aggregate" suffix removed, e.g. <c>"Order"</c> for <c>OrderAggregate</c>).
+/// </remarks>
+public sealed class PostgresSnapshotAggregateTableOverride
+{
+	/// <summary>
+	/// Overrides the schema name for this aggregate type.
+	/// When null, the global <see cref="PostgresSnapshotEventStoreOptions.SchemaName"/> is used.
+	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
+	public string? SchemaName { get; set; }
+
+	/// <summary>
+	/// Overrides the table name for this aggregate type.
+	/// When null, the global <see cref="PostgresSnapshotEventStoreOptions.TableName"/> is used.
+	/// </summary>
+	[RegularExpression(@"^[\w\-.]+$")]
+	public string? TableName { get; set; }
+}
+
+public sealed class PostgresSnapshotEventStoreOptions
+{
+	public const string PostgresEventStore = "EventStore:PostgresSnapshot";
+
+	[Required]
+	public string ConnectionString { get; set; } = default!;
+
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
+	public string TableName { get; set; } = "EventStoreSnapshots";
+
+	[Required(AllowEmptyStrings = false)]
+	[RegularExpression(@"^[\w\-.]+$")]
+	public string SchemaName { get; set; } = "public";
+
+	/// <summary>
+	/// When true, the table will be created if it doesn't exist.
+	/// </summary>
+	public bool AutoCreateTable { get; set; } = true;
+
+	/// <summary>
+	/// <para>When true, PAGE data compression is applied to the table and indices during auto-creation.</para>
+	/// <para>This significantly reduces I/O for NVARCHAR(MAX) payload columns and improves read/write throughput.</para>
+	/// <para>Available on PostgreSQL Enterprise Edition and all Azure SQL tiers.</para>
+	/// </summary>
+	/// <remarks>Only applies when <see cref="AutoCreateTable"/> is true and the table is being created for the first time.</remarks>
+	public bool UseDataCompression { get; set; }
+
+	/// <summary>
+	/// Per-aggregate-type schema and/or table name overrides.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// The key is the aggregate's <c>AggregateType</c> short name — typically the class name
+	/// with any trailing <c>"Aggregate"</c> suffix removed (e.g. <c>"Order"</c> for
+	/// <c>OrderAggregate</c>).
+	/// </para>
+	/// <para>
+	/// Keys are matched case-insensitively. Null override values fall back to the
+	/// global <see cref="SchemaName"/> / <see cref="TableName"/>.
+	/// </para>
+	/// <example>
+	/// <code>
+	/// // appsettings.json
+	/// "EventStore:PostgresSnapshot": {
+	///   "ConnectionString": "...",
+	///   "AggregateTableOverrides": {
+	///     "Order": { "SchemaName": "orders", "TableName": "Snapshots" },
+	///     "Inventory": { "SchemaName": "inventory" }
+	///   }
+	/// }
+	/// </code>
+	/// </example>
+	/// </remarks>
+	public Dictionary<string, PostgresSnapshotAggregateTableOverride> AggregateTableOverrides { get; init; } =
+	[with(StringComparer.OrdinalIgnoreCase)];
+
+	/// <summary>
+	/// Configures runtime-managed PostgreSQL indexes over the snapshot payload JSON column.
+	/// </summary>
+	[Required]
+	public PostgresJsonIndexOptions JsonIndexOptions { get; set; } = new();
+}

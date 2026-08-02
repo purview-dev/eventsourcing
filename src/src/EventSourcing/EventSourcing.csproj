@@ -3,47 +3,72 @@
 		<IsPackable>true</IsPackable>
 		<Title>Purview Event Sourcing</Title>
 		<Description>Core abstractions, aggregate types, facades, transactions, and dependency injection extensions for building event-sourced .NET applications.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;eventstore;event-store;aggregate;domain-driven-design;</PackageTags>
 		<PackageId>Purview.EventSourcing</PackageId>
-		<PackageTags>$(PackageTags);purview;kjldev;dotnet;event-sourcing;eventstore;event-store;aggregate;domain-driven-design;</PackageTags>
+		<!-- Enable our own agent skills to be packed with the NuGet package -->
+		<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
+		<ProjectAgentFolder>src/ProjectAgent</ProjectAgentFolder>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<EventStoreSourceGeneratorProject>$(MSBuildThisFileDirectory)..\SourceGenerator\SourceGenerator.csproj</EventStoreSourceGeneratorProject>
+		<EventStoreSourceGeneratorTargetFramework>netstandard2.0</EventStoreSourceGeneratorTargetFramework>
+		<EventStoreSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\SourceGenerator\bin\$(Configuration)\$(EventStoreSourceGeneratorTargetFramework)\Purview.EventSourcing.SourceGeneration.dll</EventStoreSourceGeneratorAssembly>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeEventStoreSourceGenerator</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference
-			Include="..\EventSourcing.SourceGenerator\EventSourcing.SourceGenerator.csproj"
-			OutputItemType="Analyzer"
-			ReferenceOutputAssembly="false"
+			Include="$(EventStoreSourceGeneratorProject)"
 			PrivateAssets="all"
+			ReferenceOutputAssembly="false"
+			OutputItemType="Analyzer"
 		/>
 	</ItemGroup>
 
-	<!-- Ship the generator DLL and build props file inside the NuGet package. -->
-	<Target Name="IncludeAnalyzerInPackage" BeforeTargets="_GetPackageFiles">
-		<MSBuild
-			Projects="..\EventSourcing.SourceGenerator\EventSourcing.SourceGenerator.csproj"
-			Targets="GetTargetPath"
-			Properties="Configuration=$(Configuration)"
-			RebaseOutputs="true"
-		>
-			<Output TaskParameter="TargetOutputs" ItemName="_AnalyzerDll" />
-		</MSBuild>
+	<ItemGroup>
+		<None
+			Include="buildTransitive\Purview.EventSourcing.targets"
+			Pack="true"
+			PackagePath="buildTransitive\Purview.EventSourcing.targets"
+		/>
+		<None
+			Include="..\..\skills\**\*"
+			Exclude="..\..\skills\**\.gitignore;..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\%(RecursiveDir)%(Filename)%(Extension)"
+		/>
+		<None
+			Include="..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\event-sourcing-aggregate-design\.gitignore"
+		/>
+		<None
+			Include="..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\event-sourcing-aggregate-validation\.gitignore"
+		/>
+		<None
+			Include="..\..\skills\embedded-agent-skill.gitignore"
+			Pack="true"
+			PackagePath="skills\event-sourcing-value-objects\.gitignore"
+		/>
+	</ItemGroup>
+
+	<Target Name="IncludeEventStoreSourceGenerator" DependsOnTargets="Build">
+		<Error
+			Condition="!Exists('$(EventStoreSourceGeneratorAssembly)')"
+			Text="The Event Souring source generator was not found at '$(EventStoreSourceGeneratorAssembly)'."
+		/>
+
 		<ItemGroup>
-			<None
-				Include="@(_AnalyzerDll)"
-				Pack="true"
-				PackagePath="analyzers/dotnet/cs"
-				Visible="false"
-			/>
-			<None
-				Include="$(MSBuildThisFileDirectory)build\Purview.EventSourcing.props"
-				Pack="true"
-				PackagePath="build"
-				Visible="false"
-			/>
+			<TfmSpecificPackageFile Include="$(EventStoreSourceGeneratorAssembly)">
+				<PackagePath>analyzers/dotnet/cs/</PackagePath>
+			</TfmSpecificPackageFile>
 		</ItemGroup>
 	</Target>
 
 	<ItemGroup>
-		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
 	</ItemGroup>

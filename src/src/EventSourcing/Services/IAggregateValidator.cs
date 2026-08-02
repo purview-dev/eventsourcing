@@ -1,5 +1,5 @@
-using FluentValidation.Results;
 using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.Services;
 
