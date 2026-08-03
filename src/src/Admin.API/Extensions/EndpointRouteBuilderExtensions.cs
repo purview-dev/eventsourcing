@@ -8,7 +8,7 @@ namespace Purview.EventSourcing.Admin.Api;
 
 public static class AdminApiEndpointRouteBuilderExtensions
 {
-	public static void MapPurviewEventSourcingAdminApi(
+	public static void MapPurviewEventSourcingAdminAPI(
 		[NotNull] this WebApplication app,
 		IOptions<AdminPortalOptions>? optionsAccessor = null
 	)

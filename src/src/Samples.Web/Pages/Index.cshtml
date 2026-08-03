@@ -20,11 +20,11 @@
                     <h2 class="text-xl font-semibold text-amber-950">@Model.StoreOptions.CurrentDisplayName</h2>
                     <p class="mt-1 text-sm text-amber-900">@Model.StoreOptions.CurrentDescription</p>
                 </div>
-                @if (Model.StoreOptions.AdminApiAvailable)
+                @if (Model.StoreOptions.AdminAPIAvailable)
                 {
                     <div class="flex gap-3">
                         <a href="@Model.StoreOptions.AdminSitePath" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">Admin Site</a>
-                        <a href="@Model.StoreOptions.AdminApiPath" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Admin API</a>
+                        <a href="@Model.StoreOptions.AdminAPIPath" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Admin API</a>
                     </div>
                 }
             </div>

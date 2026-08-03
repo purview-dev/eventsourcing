@@ -79,10 +79,12 @@ builder.Services.AddSingleton<IProductImageService>(serviceProvider =>
 	}
 });
 
-if (sampleStoreOptions.AdminApiAvailable)
+if (sampleStoreOptions.AdminAPIAvailable)
+{
 	builder.Services.AddPurviewEventSourcingAdminSite(
 		enableRazorRuntimeCompilation: builder.Environment.IsDevelopment()
 	);
+}
 
 builder.Services.AddSession(options =>
 {
@@ -102,9 +104,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 
-if (sampleStoreOptions.AdminApiAvailable)
+if (sampleStoreOptions.AdminAPIAvailable)
 {
-	app.MapPurviewEventSourcingAdminApi();
+	app.MapPurviewEventSourcingAdminAPI();
 	app.MapPurviewEventSourcingAdminSite();
 }
 
@@ -147,6 +149,7 @@ app.MapGroup("/api/audit")
 			return Results.Ok(response);
 		}
 	);
+
 app.MapDefaultEndpoints().MapGet("/pingz", () => Results.Ok());
 
 // Seed demo data on startup (no-op if data already exists).
@@ -332,7 +335,7 @@ static void RegisterQueryStore(IServiceCollection services, SampleStoreOptions s
 
 static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sampleStoreOptions)
 {
-	if (!sampleStoreOptions.AdminApiAvailable)
+	if (!sampleStoreOptions.AdminAPIAvailable)
 		return;
 
 	services
@@ -343,7 +346,7 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 		);
 	services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
 	services.AddPurviewEventSourcingAdminSecurity(new SampleAdminPermissionProvider());
-	services.AddPurviewEventSourcingAdminApi(options => options.RoutePrefix = sampleStoreOptions.AdminApiPath);
+	services.AddPurviewEventSourcingAdminApi(options => options.RoutePrefix = sampleStoreOptions.AdminAPIPath);
 
 	switch (sampleStoreOptions.AdminStore)
 	{
