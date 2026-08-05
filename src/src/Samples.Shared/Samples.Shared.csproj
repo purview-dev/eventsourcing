@@ -3,5 +3,10 @@
 		<AssemblyName>Samples.Shared</AssemblyName>
 		<PackageId>Purview.EventSourcing.Samples.Shared</PackageId>
 		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ZodSharpImpl\ZodSharpImpl.csproj" />
+	</ItemGroup>
 </Project>

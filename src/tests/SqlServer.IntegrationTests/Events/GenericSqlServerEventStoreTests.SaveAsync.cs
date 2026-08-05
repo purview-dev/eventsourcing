@@ -17,9 +17,9 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await Assert.That(result.Saved).IsFalse();
 		await Assert.That(result.IsValid).IsFalse();
 		await Assert.That(((bool)result)).IsFalse();
-		await Assert.That(result.ValidationResult.Errors).HasSingleItem();
+		await Assert.That(result.ValidationResult.Failures).HasSingleItem();
 		await Assert
-			.That(result.ValidationResult.Errors.Single().PropertyName)
+			.That(result.ValidationResult.Failures.Single().PropertyName)
 			.IsEqualTo(nameof(IAggregateTest.IncrementInt32));
 	}
 

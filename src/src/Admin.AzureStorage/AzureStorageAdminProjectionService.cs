@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Services;
@@ -149,19 +150,34 @@ public sealed class AzureStorageAdminProjectionService(IOptions<AzureStorageEven
 				versionTo: null
 			);
 
-			await foreach (
-				var row in table.QueryAsync<EventEntity>(filter, maxPerPage: 100, cancellationToken: cancellationToken)
-			)
+			try
 			{
-				if (
-					!AzureStorageAdminTableHelpers.TryParseEventVersion(row.RowKey, config.EventPrefix, out var version)
+				await foreach (
+					var row in table.QueryAsync<EventEntity>(
+						filter,
+						maxPerPage: 100,
+						cancellationToken: cancellationToken
+					)
 				)
-					continue;
+				{
+					if (
+						!AzureStorageAdminTableHelpers.TryParseEventVersion(
+							row.RowKey,
+							config.EventPrefix,
+							out var version
+						)
+					)
+						continue;
 
-				if (!eventPredicate(version, row.Timestamp))
-					continue;
+					if (!eventPredicate(version, row.Timestamp))
+						continue;
 
-				rows.Add((version, row));
+					rows.Add((version, row));
+				}
+			}
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			{
+				continue;
 			}
 		}
 

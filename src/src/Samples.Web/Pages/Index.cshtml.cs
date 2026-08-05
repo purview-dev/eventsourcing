@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Purview.EventSourcing.Samples.Options;
 
 namespace Purview.EventSourcing.Samples.Web.Pages;
 

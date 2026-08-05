@@ -4,6 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Snapshots;
@@ -59,6 +61,16 @@ public static class ServiceCollectionExtensions
 				)
 				.ValidateOnStart();
 
+			services.TryAddSingleton<IMongoClient>(sp =>
+			{
+				var options = sp.GetRequiredService<IOptions<MongoDBEventStoreOptions>>().Value;
+				var settings = MongoClientSettings.FromConnectionString(options.ConnectionString);
+				if (!string.IsNullOrWhiteSpace(options.ApplicationName))
+					settings.ApplicationName = options.ApplicationName;
+
+				return new MongoClient(settings);
+			});
+
 			return services;
 		}
 
@@ -113,6 +125,16 @@ public static class ServiceCollectionExtensions
 					$"{nameof(MongoDBSnapshotEventStoreOptions)} is invalid."
 				)
 				.ValidateOnStart();
+
+			services.TryAddSingleton<IMongoClient>(sp =>
+			{
+				var options = sp.GetRequiredService<IOptions<MongoDBSnapshotEventStoreOptions>>().Value;
+				var settings = MongoClientSettings.FromConnectionString(options.ConnectionString);
+				if (!string.IsNullOrWhiteSpace(options.ApplicationName))
+					settings.ApplicationName = options.ApplicationName;
+
+				return new MongoClient(settings);
+			});
 
 			return services;
 		}

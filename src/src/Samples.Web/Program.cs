@@ -15,6 +15,7 @@ using Purview.EventSourcing.AzureStorage;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Snapshots;
 using Purview.EventSourcing.Samples;
+using Purview.EventSourcing.Samples.Options;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
 using AzureCommitException = Purview.EventSourcing.AzureStorage.Exceptions.CommitException;
@@ -33,6 +34,12 @@ builder.AddServiceDefaults();
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton(sampleStoreOptions);
+builder
+	.Services.AddOptions<SampleStoreOptions>()
+	.BindConfiguration(SampleStoreOptions.SectionName)
+	//.Validate(options => Purview.EventSourcing.Samples.Options.SampleStoreOptionsSchemaValidator)
+	.ValidateDataAnnotations()
+	.ValidateOnStart();
 
 // Use Redis when available (e.g. via Aspire AppHost); fall back to in-memory for standalone dev runs
 if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString(Platform.Redis)))

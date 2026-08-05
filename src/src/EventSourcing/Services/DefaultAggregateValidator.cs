@@ -40,7 +40,13 @@ public sealed class DefaultAggregateValidator<TAggregate> : IAggregateValidator<
 		if (!System.ComponentModel.DataAnnotations.Validator.TryValidateObject(aggregate, daContext, failures, true))
 		{
 			foreach (var failure in failures)
-				yield return new ValidationFailure(failure.MemberNames.FirstOrDefault(), failure.ErrorMessage);
+			{
+				foreach (var memberName in failure.MemberNames)
+					yield return new ValidationFailure(
+						memberName,
+						failure.ErrorMessage ?? "Validation failed (no error provided)"
+					);
+			}
 		}
 	}
 }

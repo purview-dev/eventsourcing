@@ -69,7 +69,7 @@
 					{
 						<div class="event-card">
 							<div class="event-header">
-								<span class="badge badge-primary">v@eventEnvelope.Metadata.Version</span>
+								<span class="badge badge-primary">v@(eventEnvelope.Metadata.Version)</span>
 								<span class="event-type">@eventEnvelope.Metadata.EventType</span>
 								<span class="event-time">@eventEnvelope.Metadata.TimestampUtc.ToString("u")</span>
 							</div>
@@ -92,7 +92,7 @@
 
 							<details class="event-payload">
 								<summary>Payload</summary>
-								<pre><code>@eventEnvelope.Payload.ToString()</code></pre>
+								<pre><code>@JsonFormatter.PrettyPrint(eventEnvelope.Payload)</code></pre>
 							</details>
 						</div>
 					}
@@ -101,12 +101,12 @@
 				<div class="pagination">
 					@if (Model.PageNo > 1)
 					{
-						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.PageNo - 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Previous</a>
+						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&pageNo=@(Model.PageNo - 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Previous</a>
 					}
 
 					@if (Model.EventRange.Page * Model.EventRange.PageSize < Model.EventRange.TotalCount)
 					{
-						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&page=@(Model.PageNo + 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Next</a>
+						<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)&pageNo=@(Model.PageNo + 1)&versionFrom=@Model.VersionFrom&versionTo=@Model.VersionTo" class="btn btn-sm">Next</a>
 					}
 				</div>
 			}

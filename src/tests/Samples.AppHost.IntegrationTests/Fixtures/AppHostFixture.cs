@@ -34,7 +34,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	protected override string[] Args =>
 		[
 			.. base.Args,
-			.. OptionsHelper.For<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
+			.. OptionsHelper.ForSet<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
 				c => c.IsTestRun = true,
 				c => c.IsLocal = false,
 				c => c.SqlServer.DatabaseName = _databaseName,

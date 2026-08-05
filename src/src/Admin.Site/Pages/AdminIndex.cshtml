@@ -21,7 +21,7 @@
 
 		<div class="form-group">
 			<label for="page">Page</label>
-			<input type="number" id="page" name="page" value="@Model.PageNo" min="1" class="form-control" />
+			<input type="number" id="page" name="pageNo" value="@Model.PageNo" min="1" class="form-control" />
 		</div>
 
 		<div class="form-group">
@@ -81,12 +81,12 @@
 
 				@if (Model.PageNo > 1)
 				{
-					<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType ?? "")&aggregateId=@Uri.EscapeDataString(Model.AggregateId ?? "")&page=@(Model.PageNo - 1)&pageSize=@Model.PageSize" class="btn btn-sm">Previous</a>
+					<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType ?? "")&aggregateId=@Uri.EscapeDataString(Model.AggregateId ?? "")&pageNo=@(Model.PageNo - 1)&pageSize=@Model.PageSize" class="btn btn-sm">Previous</a>
 				}
 
 				@if (Model.SearchResults.Page * Model.SearchResults.PageSize < Model.SearchResults.TotalCount)
 				{
-					<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType ?? "")&aggregateId=@Uri.EscapeDataString(Model.AggregateId ?? "")&page=@(Model.PageNo + 1)&pageSize=@Model.PageSize" class="btn btn-sm">Next</a>
+					<a href="?aggregateType=@Uri.EscapeDataString(Model.AggregateType ?? "")&aggregateId=@Uri.EscapeDataString(Model.AggregateId ?? "")&pageNo=@(Model.PageNo + 1)&pageSize=@Model.PageSize" class="btn btn-sm">Next</a>
 				}
 			}
 			else
@@ -96,6 +96,8 @@
 		</div>
 	}
 </div>
+
+<style>
 	.admin-container {
 		max-width: 1200px;
 		margin: 0 auto;

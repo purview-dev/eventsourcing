@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
@@ -44,21 +45,36 @@ public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEven
 				query.VersionTo is null ? null : (int)query.VersionTo.Value
 			);
 
-			await foreach (
-				var row in table.QueryAsync<EventEntity>(filter, maxPerPage: 100, cancellationToken: cancellationToken)
-			)
+			try
 			{
-				if (
-					!AzureStorageAdminTableHelpers.TryParseEventVersion(row.RowKey, config.EventPrefix, out var version)
+				await foreach (
+					var row in table.QueryAsync<EventEntity>(
+						filter,
+						maxPerPage: 100,
+						cancellationToken: cancellationToken
+					)
 				)
-					continue;
+				{
+					if (
+						!AzureStorageAdminTableHelpers.TryParseEventVersion(
+							row.RowKey,
+							config.EventPrefix,
+							out var version
+						)
+					)
+						continue;
 
-				if (query.TimeFromUtc is not null && row.Timestamp < query.TimeFromUtc)
-					continue;
-				if (query.TimeToUtc is not null && row.Timestamp > query.TimeToUtc)
-					continue;
+					if (query.TimeFromUtc is not null && row.Timestamp < query.TimeFromUtc)
+						continue;
+					if (query.TimeToUtc is not null && row.Timestamp > query.TimeToUtc)
+						continue;
 
-				rows.Add((aggregateType, version, row));
+					rows.Add((aggregateType, version, row));
+				}
+			}
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			{
+				continue;
 			}
 		}
 

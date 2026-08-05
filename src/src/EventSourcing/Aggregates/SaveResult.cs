@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.Aggregates;
@@ -22,6 +23,15 @@ public sealed record class SaveResult<TAggregate>
 	/// <seealso cref="ToBoolean"/>
 	public static implicit operator bool([NotNull] SaveResult<TAggregate> aggregateSaveResult) =>
 		aggregateSaveResult.Saved && aggregateSaveResult.IsValid;
+
+	/// <summary>
+	/// Converts a <see cref="SaveResult{TAggregate}"/> to a <see cref="ImmutableArray{ValidationFailure}"/>.
+	/// </summary>
+	/// <param name="aggregateSaveResult">The save result to convert.</param>
+	/// <seealso cref="ToBoolean"/>
+	public static implicit operator ImmutableArray<ValidationFailure>(
+		[NotNull] SaveResult<TAggregate> aggregateSaveResult
+	) => aggregateSaveResult.ValidationResult.Failures;
 
 	/// <summary>
 	/// Converts a <see cref="SaveResult{TAggregate}"/> to an <typeparamref name="TAggregate"/>.
@@ -60,6 +70,11 @@ public sealed record class SaveResult<TAggregate>
 	public ValidationResult ValidationResult { get; }
 
 	/// <summary>
+	/// The number of validation failures.
+	/// </summary>
+	public int FailureCount => ValidationResult.Failures.Length;
+
+	/// <summary>
 	/// Indicates if the <see cref="ValidationResult"/>
 	/// denotes failures or success.
 	/// </summary>
@@ -77,11 +92,12 @@ public sealed record class SaveResult<TAggregate>
 	/// Indicates the result from a <see cref="IEventStore{T}.SaveAsync(T, EventStoreOperationContext?, CancellationToken)"/>
 	/// operation was skipped.
 	/// </summary>
-	/// <remarks><para>
-	/// This result is not featured in the ability to convert to a <see cref="bool"/> via <see cref="ToBoolean"/>
-	/// or the implicit case.
-	/// </para>
+	/// <remarks>
 	/// <para>This maybe true when checking idempotency markers, or having not events to save.</para>
+	/// <para>
+	/// <b>Note:</b> This result is not featured in the ability to convert to
+	/// a <see cref="bool"/> via <see cref="ToBoolean"/> or the implicit case.
+	/// </para>
 	/// </remarks>
 	public bool Skipped { get; }
 
@@ -105,11 +121,17 @@ public sealed record class SaveResult<TAggregate>
 	}
 
 	/// <summary>
+	/// Converts this <see cref="SaveResult{TAggregate}"/> to a <see cref="ImmutableArray{ValidationFailure}"/>.
+	/// </summary>
+	/// <returns>Returns the <see cref="ValidationResult.Failures"/> instance.</returns>
+	public ImmutableArray<ValidationFailure> ToValidationFailures() => this;
+
+	/// <summary>
 	/// If <see cref="IsValid"/> is false, a <see cref="ValidationException"/> is thrown.
 	/// </summary>
 	public void EnsureValid()
 	{
 		if (!IsValid)
-			throw new ValidationException(ValidationResult.Errors);
+			throw new ValidationException(ValidationResult.Failures);
 	}
 }

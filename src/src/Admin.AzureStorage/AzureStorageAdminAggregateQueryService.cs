@@ -1,3 +1,4 @@
+using Azure;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
@@ -34,49 +35,56 @@ public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorage
 		{
 			var table = AzureStorageAdminTableHelpers.CreateTableClient(tableService, tableName);
 			var filter = AzureStorageAdminTableHelpers.BuildAggregateSearchFilter(query.AggregateId);
-			await foreach (
-				var row in table.QueryAsync<StreamVersionEntity>(
-					filter,
-					maxPerPage: 100,
-					cancellationToken: cancellationToken
-				)
-			)
+			try
 			{
-				var aggregateType = row.AggregateType;
-				if (!string.IsNullOrWhiteSpace(query.AggregateType))
-				{
-					if (!AzureStorageAdminTableHelpers.MatchesAggregateType(aggregateType, query.AggregateType))
-						continue;
-				}
-
-				if (
-					!string.IsNullOrWhiteSpace(query.AggregateId)
-					&& !string.Equals(row.PartitionKey, query.AggregateId, StringComparison.Ordinal)
-				)
-					continue;
-
-				var rowTime = row.Timestamp ?? DateTimeOffset.MinValue;
-
-				if (query.FromUtc is not null && rowTime < query.FromUtc.Value)
-					continue;
-				if (query.ToUtc is not null && rowTime > query.ToUtc.Value)
-					continue;
-				if (query.IsDeleted is not null && row.IsDeleted != query.IsDeleted.Value)
-					continue;
-				if (query.IsRestored == true && row.IsDeleted)
-					continue;
-
-				candidates.Add(
-					new AggregateSummaryResponse(
-						aggregateType,
-						row.PartitionKey,
-						row.Version,
-						rowTime,
-						rowTime,
-						row.IsDeleted,
-						!row.IsDeleted
+				await foreach (
+					var row in table.QueryAsync<StreamVersionEntity>(
+						filter,
+						maxPerPage: 100,
+						cancellationToken: cancellationToken
 					)
-				);
+				)
+				{
+					var aggregateType = row.AggregateType;
+					if (!string.IsNullOrWhiteSpace(query.AggregateType))
+					{
+						if (!AzureStorageAdminTableHelpers.MatchesAggregateType(aggregateType, query.AggregateType))
+							continue;
+					}
+
+					if (
+						!string.IsNullOrWhiteSpace(query.AggregateId)
+						&& !string.Equals(row.PartitionKey, query.AggregateId, StringComparison.Ordinal)
+					)
+						continue;
+
+					var rowTime = row.Timestamp ?? DateTimeOffset.MinValue;
+
+					if (query.FromUtc is not null && rowTime < query.FromUtc.Value)
+						continue;
+					if (query.ToUtc is not null && rowTime > query.ToUtc.Value)
+						continue;
+					if (query.IsDeleted is not null && row.IsDeleted != query.IsDeleted.Value)
+						continue;
+					if (query.IsRestored == true && row.IsDeleted)
+						continue;
+
+					candidates.Add(
+						new AggregateSummaryResponse(
+							aggregateType,
+							row.PartitionKey,
+							row.Version,
+							rowTime,
+							rowTime,
+							row.IsDeleted,
+							!row.IsDeleted
+						)
+					);
+				}
+			}
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			{
+				continue;
 			}
 		}
 

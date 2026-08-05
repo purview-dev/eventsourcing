@@ -29,7 +29,7 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 	[BindProperty(SupportsGet = true)]
 	public DateTime? TimeToUtc { get; set; }
 
-	[BindProperty(SupportsGet = true, Name = "page")]
+	[BindProperty(SupportsGet = true, Name = "pageNo")]
 	public int PageNo { get; set; } = 1;
 
 	[BindProperty(SupportsGet = true)]
