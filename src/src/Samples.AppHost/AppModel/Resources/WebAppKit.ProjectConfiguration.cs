@@ -5,14 +5,8 @@ namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 
 partial class WebAppKit
 {
-	public sealed class ProjectConfiguration
+	public sealed class VariantConfiguration
 	{
-		[Required(AllowEmptyStrings = false)]
-		public string Key { get; set; } = string.Empty;
-
-		[Required(AllowEmptyStrings = false)]
-		public string ResourceName { get; set; } = string.Empty;
-
 		[Required(AllowEmptyStrings = false)]
 		public string DisplayName { get; set; } = string.Empty;
 
@@ -25,7 +19,7 @@ partial class WebAppKit
 
 		public SampleAdminStoreKind AdminStore { get; set; }
 
-		public bool AdminApiAvailable { get; set; } = true;
+		public bool AdminAPIAvailable { get; set; } = true;
 
 		[Required(AllowEmptyStrings = false)]
 		public string EventStoreConnectionName { get; set; } = string.Empty;
@@ -42,6 +36,4 @@ partial class WebAppKit
 		[RegularExpression(@"^[\w\-.]+$")]
 		public string? AdminDatabaseName { get; set; }
 	}
-
-	public sealed record ProjectVariant(ProjectConfiguration Configuration, IResourceBuilder<ProjectResource> Resource);
 }

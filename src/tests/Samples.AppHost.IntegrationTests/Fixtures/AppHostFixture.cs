@@ -34,12 +34,14 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	protected override string[] Args =>
 		[
 			.. base.Args,
-			.. OptionsHelper.ForSet<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
-				c => c.IsTestRun = true,
-				c => c.IsLocal = false,
-				c => c.SqlServer.DatabaseName = _databaseName,
-				c => c.AzureStorage.BlobName = _snapshotBlobName
-			),
+			.. OptionsHelper
+				.ForSet<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
+					c => c.IsTestRun = true,
+					c => c.IsLocal = false,
+					c => c.SqlServer.DatabaseName = _databaseName,
+					c => c.AzureStorage.BlobName = _snapshotBlobName
+				)
+				.Build(),
 		];
 
 	public override async ValueTask DisposeAsync()

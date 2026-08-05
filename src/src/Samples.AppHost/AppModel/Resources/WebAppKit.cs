@@ -1,29 +1,55 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations;
 using Purview.Aspire.ResourceKit;
 
 namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 
-[ResourceDefinition<ProjectResource>(Platform.WebApp)]
+[ResourceDefinition<ResourceGroup>(Platform.WebApp)]
 sealed partial class WebAppKit
 {
-	protected override IResourceBuilder<ProjectResource> BuildResource(IDistributedApplicationBuilder builder)
-	{
-		var webApp = builder.AddProject<Projects.Samples_Web>(Name);
+	ImmutableDictionary<string, IResourceBuilder<ProjectResource>> _webAppVariants = [];
 
-		return webApp;
+	protected override IResourceBuilder<ResourceGroup> BuildResource(IDistributedApplicationBuilder builder)
+	{
+		var resourceGroup = builder.AddResource(new ResourceGroup(Name)).WithIconName("AppFolderFilled");
+
+		var variants = ImmutableDictionary.CreateBuilder<string, IResourceBuilder<ProjectResource>>();
+		foreach (var variant in Options.Variants)
+		{
+			var webApp = builder.AddProject<Projects.Samples_Web>(variant.Key).WithExternalHttpEndpoints();
+
+			webApp.WithParentRelationship(resourceGroup);
+
+			variants.Add(variant.Key, webApp);
+		}
+
+		_webAppVariants = variants.ToImmutable();
+
+		return resourceGroup;
+	}
+
+	protected override void ConfigureResource()
+	{
+		foreach (var variant in Options.Variants)
+		{
+			var webApp = _webAppVariants[variant.Key];
+			ConfigureVariant(webApp, Options.Variants[variant.Key]);
+		}
+
+		base.ConfigureResource();
 	}
 
 	//[ZodSchema]
 	sealed partial class WebAppKitOptions
 	{
 		[Required]
-		public Dictionary<string, ProjectConfiguration> Variants { get; set; } = [];
+		public Dictionary<string, VariantConfiguration> Variants { get; set; } = [];
 
 		[Required(AllowEmptyStrings = false)]
 		public string AdminSitePath { get; set; } = string.Empty;
 
 		[Required(AllowEmptyStrings = false)]
-		public string AdminApiPath { get; set; } = string.Empty;
+		public string AdminAPIPath { get; set; } = string.Empty;
 
 		[Required(AllowEmptyStrings = false)]
 		public string DataIsolationWarning { get; set; } = string.Empty;
