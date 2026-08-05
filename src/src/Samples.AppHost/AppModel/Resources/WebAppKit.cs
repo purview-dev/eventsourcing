@@ -16,7 +16,15 @@ sealed partial class WebAppKit
 		var variants = ImmutableDictionary.CreateBuilder<string, IResourceBuilder<ProjectResource>>();
 		foreach (var variant in Options.Variants)
 		{
-			var webApp = builder.AddProject<Projects.Samples_Web>(variant.Key).WithExternalHttpEndpoints();
+			var webApp = builder
+				.AddProject<Projects.Samples_Web>(
+					variant.Key,
+					c =>
+					{
+						//
+					}
+				)
+				.WithExternalHttpEndpoints();
 
 			webApp.WithParentRelationship(resourceGroup);
 
