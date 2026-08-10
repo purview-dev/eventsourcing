@@ -52,11 +52,11 @@ public sealed class PostgresAdminEventQueryService(IOptions<PostgresEventStoreOp
 		rows = directionDesc ? rows.OrderByDescending(x => x.Version) : rows.OrderBy(x => x.Version);
 
 		var totalCount = await rows.LongCountAsync(cancellationToken);
-		if (totalCount == 0)
-			return null;
-
 		var page = Math.Max(1, query.Page);
 		var pageSize = Math.Max(1, query.PageSize);
+		if (totalCount == 0)
+			return new PagedResult<EventEnvelopeResponse>([], page, pageSize, 0);
+
 		var pageRows = await rows.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
 
 		var items = pageRows

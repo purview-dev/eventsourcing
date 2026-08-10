@@ -7,7 +7,7 @@ on:
         description: Path to the solution or project to pack (can produce one or many packages)
         required: false
         type: string
-        default: src/Purview.EventSourcing.slnx
+        default: src/EventSourcing.slnx
 
 # Keep this file name stable for NuGet Trusted Publishing policy mapping:
 # owner/repository/.github/workflows/release.yml
@@ -171,7 +171,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/reusable-dotnet-validate.yml
     with:
-      solution-path: src/Purview.EventSourcing.slnx
+      solution-path: src/EventSourcing.slnx
       configuration: Release
       install-node-deps: false
       test-treenode-filter: "/*UnitTest*/*/*/*"

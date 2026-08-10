@@ -46,7 +46,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				public OrderStatus Status { get; private set; } = OrderStatus.Hydrate(OrderStatusCode.Draft);
 				public int LineItems { get; private set; }
 
-				[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = "OrderConfirmed")]
+				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "OrderConfirmed")]
 				public partial void ConfirmOrder(OrderStatusCode status);
 
 				public void AddLineItem() => LineItems++;
@@ -110,7 +110,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				public OrderStatus Status { get; private set; } = OrderStatus.Hydrate(OrderStatusCode.Draft);
 				public int LineItems { get; private set; }
 
-				[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = "OrderConfirmed")]
+				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "OrderConfirmed")]
 				public partial void ConfirmOrder(OrderStatusCode status);
 
 				public void AddLineItem() => LineItems++;
@@ -193,10 +193,10 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				public string? PreviousEmailValue { get; private set; }
 				public string? CurrentEmailValue { get; private set; }
 
-				[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = "CustomerRegistered")]
+				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "CustomerRegistered")]
 				public partial CustomerAggregate RegisterCustomer(string email);
 
-				[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = "CustomerEmailChanged")]
+				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "CustomerEmailChanged")]
 				public partial CustomerAggregate ChangeEmail(string email);
 
 				partial void OnEmailChanging(ref EmailAddress email)

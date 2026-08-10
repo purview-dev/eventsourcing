@@ -216,6 +216,41 @@ public sealed class ValueObjectSourceGeneratorTests : SourceGeneratorTestBase<Va
 	}
 
 	[Test]
+	public async Task ScalarRecordStruct_GeneratesToStringOverride(CancellationToken cancellationToken)
+	{
+		const string source = """
+			namespace Testing
+			{
+				[Purview.EventSourcing.Serialization.Scalar]
+				public readonly partial record struct EmailAddress
+				{
+					public string Value { get; }
+
+					public string Domain => Value.Split('@')[1];
+
+					private EmailAddress(string value) => Value = value;
+				}
+
+				public static class EmailToStringHarness
+				{
+					public static string ToStringValue() => EmailAddress.Create("dan.moore@example.com").ToString();
+				}
+			}
+			""";
+
+		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var generatedSource = GetGeneratedSource(result);
+
+		await Assert.That(generatedSource).Contains("public override string ToString()");
+
+		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var harnessType = assembly.GetType("Testing.EmailToStringHarness")!;
+		var toStringValue = (string)harnessType.GetMethod("ToStringValue")!.Invoke(null, null)!;
+
+		await Assert.That(toStringValue).IsEqualTo("dan.moore@example.com");
+	}
+
+	[Test]
 	public async Task ScalarGeneration_CanDisableEmpty(CancellationToken cancellationToken)
 	{
 		const string source = """

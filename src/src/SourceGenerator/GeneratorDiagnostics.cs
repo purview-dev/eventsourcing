@@ -53,7 +53,7 @@ static class GeneratorDiagnostics
 
 	public static readonly DiagnosticDescriptor EventMethodRequiresAggregateAttribute = new(
 		id: "EVENTSTORE006",
-		title: "GenerateAggregateEvent requires GenerateAggregate",
+		title: "GenerateEvent requires GenerateAggregate",
 		messageFormat: "Method '{0}' must be declared on a [GenerateAggregate] aggregate type",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
@@ -63,7 +63,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor EventMethodMustBePartial = new(
 		id: "EVENTSTORE007",
 		title: "Generated event method must be partial",
-		messageFormat: "Method '{0}' must be declared partial to use [GenerateAggregateEvent]",
+		messageFormat: "Method '{0}' must be declared partial to use [GenerateEvent]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -72,7 +72,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor UnsupportedEventMethodSignature = new(
 		id: "EVENTSTORE008",
 		title: "Unsupported generated event method signature",
-		messageFormat: "Method '{0}' has an unsupported [GenerateAggregateEvent] signature: {1}",
+		messageFormat: "Method '{0}' has an unsupported [GenerateEvent] signature: {1}",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -81,7 +81,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor DuplicateGeneratedEventName = new(
 		id: "EVENTSTORE009",
 		title: "Generated event names must be unique",
-		messageFormat: "Method '{0}' on aggregate '{1}' conflicts with another [GenerateAggregateEvent] method because both would generate the event type '{2}'",
+		messageFormat: "Method '{0}' on aggregate '{1}' conflicts with another [GenerateEvent] method because both would generate the event type '{2}'",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -289,6 +289,15 @@ static class GeneratorDiagnostics
 		id: "EVENTSTORE108",
 		title: "Conflicting value object attributes",
 		messageFormat: "Type '{0}' cannot be annotated with both [Scalar] and [ValueObject]",
+		category: Category,
+		defaultSeverity: DiagnosticSeverity.Error,
+		isEnabledByDefault: true
+	);
+
+	public static readonly DiagnosticDescriptor AggregateBaseReferenceMissing = new(
+		id: "EVENTSTORE109",
+		title: "Unable to find reference to AggregateBase",
+		messageFormat: "Add a reference to the NuGet package containing Purview.EventSourcing",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true

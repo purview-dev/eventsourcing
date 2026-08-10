@@ -41,7 +41,7 @@
 
 		<button type="submit" class="btn btn-primary">Filter</button>
 		<a href="/admin/events?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)" class="btn btn-secondary">Reset</a>
-		<a href="/" class="btn btn-secondary">Back to Aggregates</a>
+		<a href="/admin" class="btn btn-secondary">Back to Aggregates</a>
 	</form>
 
 	@if (!ModelState.IsValid)

@@ -55,7 +55,7 @@ static class SourceGeneratorPerformanceScenarios
 				}
 
 				[System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-				public sealed class GenerateAggregateEventAttribute : System.Attribute
+				public sealed class GenerateEventAttribute : System.Attribute
 				{
 					public int Version { get; set; } = 1;
 					public string? EventName { get; set; }
@@ -166,10 +166,10 @@ static class SourceGeneratorPerformanceScenarios
 					public string CustomerId { get; private set; } = string.Empty;
 					public decimal Total { get; private set; }
 
-					[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+					[Purview.EventSourcing.Aggregates.GenerateEvent]
 					public partial void CreateOrder(string customerId, decimal total);
 
-					[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+					[Purview.EventSourcing.Aggregates.GenerateEvent]
 					public partial void UpdateTotal(decimal total);
 				}
 			}
@@ -199,7 +199,7 @@ static class SourceGeneratorPerformanceScenarios
 					public OrderStatus Status { get; private set; } = OrderStatus.Hydrate(OrderStatusCode.Draft);
 					public int LineItems { get; private set; }
 
-					[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = "OrderConfirmed")]
+					[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "OrderConfirmed")]
 					public partial void ConfirmOrder(OrderStatusCode status);
 				}
 			}

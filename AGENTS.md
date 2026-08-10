@@ -8,7 +8,7 @@ Use these instructions for any work in this solution.
 
 ## Source of truth and layout
 
-- Solution file: `src/Purview.EventSourcing.slnx`
+- Solution file: `src/EventSourcing.slnx`
 - Packable/source projects: `src/src/**`
 - Tests: `src/tests/**`
 - Wiki/docs: `docs/wiki/**`
@@ -55,6 +55,6 @@ Use these instructions for any work in this solution.
 
 ## Useful local workflow facts
 
-- Restore/build/test commonly target `src/Purview.EventSourcing.slnx`.
+- Restore/build/test commonly target `src/EventSourcing.slnx`.
 - `Justfile` contains wrapper recipes for restore, build, test, pack, and lint.
 - `package.json` version is the release/package version source of truth.

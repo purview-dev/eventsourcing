@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "EventSourcing.slnx",
+    "projects": [
+      "src\\EventSourcing\\EventSourcing.csproj",
+      "src\\SourceGenerator\\SourceGenerator.csproj",
+      "tests\\EventSourcing.UnitTests\\EventSourcing.UnitTests.csproj",
+      "tests\\SharedTestingFramework\\SharedTestingFramework.csproj",
+      "tests\\SourceGenerator.PerformanceTests\\SourceGenerator.PerformanceTests.csproj",
+      "tests\\SourceGenerator.UnitTests\\SourceGenerator.UnitTests.csproj",
+    ]
+  }
+}

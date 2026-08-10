@@ -32,6 +32,19 @@ public sealed class AdminSitePageTests(AppHostFixture fixture)
 	}
 
 	[Test]
+	public async Task AdminEventsPage_WithNoEvents_ShowsNoEventsFound(CancellationToken cancellationToken)
+	{
+		var response = await _client.GetAsync(
+			"/admin/events?aggregateType=CustomerAggregate&aggregateId=non-existent-aggregate-id",
+			cancellationToken
+		);
+		var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+		await Assert.That(response.IsSuccessStatusCode).IsTrue();
+		await Assert.That(html).Contains("No events found for the specified filters.");
+	}
+
+	[Test]
 	public async Task AdminProjectionPage_WithParameters_Returns200(CancellationToken cancellationToken)
 	{
 		var response = await _client.GetAsync(

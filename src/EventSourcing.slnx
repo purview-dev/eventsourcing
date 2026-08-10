@@ -2,6 +2,7 @@
 	<Folder Name="/Solution Items/">
 		<File Path="../global.json" />
 		<File Path="../nuget.config" />
+		<File Path="../.editorconfig" />
 		<File Path="../Directory.Packages.props" />
 		<File Path="../package.json" />
 		<File Path="Directory.Build.props" />

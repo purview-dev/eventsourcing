@@ -22,7 +22,7 @@ Reviewed repository structure, core implementation and workflow files, including
 
 Validation run executed:
 
-- `dotnet test src/Purview.EventSourcing.slnx --configuration Release -- --treenode-filter "/*UnitTest*/*/*/*" --report-trx --ignore-exit-code 8`
+- `dotnet test src/EventSourcing.slnx --configuration Release -- --treenode-filter "/*UnitTest*/*/*/*" --report-trx --ignore-exit-code 8`
 - Result: **459 passed, 0 failed, 0 skipped**
 
 ## Executive summary

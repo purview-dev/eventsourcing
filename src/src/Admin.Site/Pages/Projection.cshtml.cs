@@ -11,10 +11,10 @@ public class ProjectionModel(IAdminProjectionService projectionService) : PageMo
 		projectionService ?? throw new ArgumentNullException(nameof(projectionService));
 
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateType { get; set; }
+	public string AggregateType { get; set; } = default!;
 
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateId { get; set; }
+	public string AggregateId { get; set; } = default!;
 
 	[BindProperty(SupportsGet = true)]
 	public long? Version { get; set; }

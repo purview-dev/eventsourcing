@@ -4,7 +4,7 @@ set quiet
 root_folder := "./src"
 test_root := root_folder + "/tests"
 
-solution_file := root_folder + "/Purview.EventSourcing.slnx"
+solution_file := root_folder + "/EventSourcing.slnx"
 
 sg_perf_tests := test_root + "/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj"
 sql_perf_tests := test_root + "/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj"

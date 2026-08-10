@@ -1,7 +1,9 @@
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Purview.EventSourcing.SourceGenerator.Helpers;
+
+using Purview.SourceGeneratorFramework.Testing.Abstractions;
+
+using System.Reflection;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
@@ -13,10 +15,10 @@ public abstract class SourceGeneratorTestBase<TGenerator>(bool throwOnLogError =
 		"EmbeddedAttribute.cs",
 		"AggregatePropertyAttribute.g.cs",
 		"GenerateAggregateAttribute.g.cs",
-		"GenerateAggregateCollectionEventAttribute.g.cs",
+		"GenerateCollectionEventAttribute.g.cs",
 		"GenerateAggregateDefaultsAttribute.g.cs",
 		"GenerateAggregateDefaultBaseAttribute.g.cs",
-		"GenerateAggregateEventAttribute.g.cs",
+		"GenerateEventAttribute.g.cs",
 		"MetadataAttribute.g.cs",
 		"ComputedAttribute.g.cs",
 	];

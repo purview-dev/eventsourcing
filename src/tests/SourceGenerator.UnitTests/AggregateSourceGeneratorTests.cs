@@ -52,10 +52,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId, decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -107,7 +107,7 @@ namespace Testing
 	{
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Increment();
 	}
 }
@@ -161,7 +161,7 @@ namespace Testing
 		public decimal Price { get; private set; }
 		public int Quantity { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetProduct(string name, decimal price, int quantity);
 	}
 }
@@ -197,7 +197,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -244,7 +244,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -282,7 +282,7 @@ namespace Testing
 	{
 		public string Name { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetName(string name);
 
 		public bool ShouldClear(ProjectId? projectId) => projectId == null;
@@ -324,7 +324,7 @@ namespace Testing
 	{
 		public string Name { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetName(string name);
 
 		public bool ShouldClear(ProjectId? projectId) => projectId is null;
@@ -364,7 +364,7 @@ namespace Testing
 	{
 		public ReportSummaryScalar Summary { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetSummary(ReportSummary value);
 	}
 }
@@ -404,7 +404,7 @@ namespace Testing
 	{
 		public ProjectId ProjectId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetProjectId(string projectId);
 	}
 }
@@ -439,7 +439,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -486,7 +486,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -528,7 +528,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -583,7 +583,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -625,7 +625,7 @@ namespace Testing
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""MarkAsCompleted"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""MarkAsCompleted"")]
 		public partial ReportUploadAggregate MarkAsComplete(
 			string blob,
 			object summary,
@@ -655,7 +655,7 @@ namespace Testing
 	{
 		public string Value { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -694,7 +694,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -724,7 +724,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -757,7 +757,7 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId, decimal total);
 	}
 }
@@ -788,7 +788,7 @@ namespace Testing
 		public string Name { get; private set; }
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetOrder(string name, int count);
 	}
 }
@@ -821,10 +821,10 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateOrder(string customerId);
 	}
 }
@@ -855,7 +855,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -886,7 +886,7 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId, decimal total);
 	}
 }
@@ -920,7 +920,7 @@ namespace Testing
 	{
 		public string Name { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Rename(string name);
 	}
 }
@@ -950,7 +950,7 @@ namespace Testing
 		public string Name { get; private set; } = default!;
 		public int Quantity { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Update(string name, int quantity);
 	}
 }
@@ -981,7 +981,7 @@ namespace Testing
 	{
 		public string Name { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial ProfileAggregate Rename(string name);
 	}
 }
@@ -1011,7 +1011,7 @@ namespace Testing
 	{
 		public string Name { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial bool Rename(string name);
 	}
 }
@@ -1043,7 +1043,7 @@ namespace Testing
 	{
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Increment();
 	}
 }
@@ -1093,7 +1093,7 @@ namespace Testing
 	{
 		public Name Name { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void ChangeName(string name);
 	}
 }
@@ -1128,7 +1128,7 @@ namespace Testing
 	{
 		public bool IsActive { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		private partial ToggleAggregate ChangeIsActive(bool isActive);
 	}
 }
@@ -1189,10 +1189,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId, decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -1219,7 +1219,7 @@ namespace Testing
 	[Purview.EventSourcing.Aggregates.GenerateAggregate]
 	public partial class NotAnAggregate
 	{
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void DoSomething(string value);
 	}
 }
@@ -1256,11 +1256,11 @@ namespace Testing
 	{
 		public string Name { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetName(string name);
 
 		// This method is NOT partial, so it should be ignored even though it has the attribute
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public void NonPartialMethod(string value) { }
 	}
 }
@@ -1296,7 +1296,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -1336,7 +1336,7 @@ namespace Testing
 	{
 		public string Value { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -1377,7 +1377,7 @@ namespace Testing
 		await Assert.That(allAttributeSource).Contains("class AggregatePropertyAttribute");
 		await Assert.That(allAttributeSource).Contains("class GenerateAggregateAttribute");
 		await Assert.That(allAttributeSource).Contains("class GenerateAggregateDefaultsAttribute");
-		await Assert.That(allAttributeSource).Contains("class GenerateAggregateEventAttribute");
+		await Assert.That(allAttributeSource).Contains("class GenerateEventAttribute");
 		await Assert.That(allAttributeSource).Contains("class MetadataAttribute");
 	}
 
@@ -1395,10 +1395,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId, decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -1433,7 +1433,7 @@ namespace Testing
 	[Purview.EventSourcing.Aggregates.GenerateAggregate]
 	public partial class SimpleAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void DoWork();
 	}
 }
@@ -1463,7 +1463,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1492,7 +1492,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 3)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 3)]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1522,10 +1522,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -1559,7 +1559,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 0)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 0)]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1586,10 +1586,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -1616,10 +1616,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 1)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 1)]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 3)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 3)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -1646,10 +1646,10 @@ namespace Testing
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(Version = 3)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 3)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
@@ -1680,7 +1680,7 @@ namespace Testing
 
 		// Assert — the generated attribute file exposes a Version property
 		var attributeTree = result.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("GenerateAggregateEventAttribute.g.cs", StringComparison.Ordinal)
+			t.FilePath.EndsWith("GenerateEventAttribute.g.cs", StringComparison.Ordinal)
 		);
 		var attributeSource = (await attributeTree.GetTextAsync(cancellationToken)).ToString();
 
@@ -1716,7 +1716,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1745,7 +1745,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1778,7 +1778,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1810,7 +1810,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1839,7 +1839,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""OrderCreated"", EventNamespace = ""Testing.Domain.Ordering"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""OrderCreated"", EventNamespace = ""Testing.Domain.Ordering"")]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -1868,7 +1868,7 @@ namespace Testing
 	[Purview.EventSourcing.Aggregates.GenerateAggregate]
 	public partial class NotARealAggregate : AggregateBase
 	{
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Rename(string name);
 	}
 }
@@ -1895,7 +1895,7 @@ namespace Testing
 		{
 			public string Value { get; private set; } = default!;
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+			[Purview.EventSourcing.Aggregates.GenerateEvent]
 			public partial void SetValue(string value);
 		}
 	}
@@ -1921,7 +1921,7 @@ namespace Testing
 	{
 		public TValue Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(TValue value);
 	}
 }
@@ -1948,7 +1948,7 @@ namespace Testing
 
 		protected override void RegisterEvents() { }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -1981,7 +1981,7 @@ namespace Testing
 	{{
 		public string Value {{ get; {setterAccess}; }} = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}}
 }}
@@ -2013,7 +2013,7 @@ namespace Testing
 {
 	public partial class UtilityType
 	{
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void DoWork(string value);
 	}
 }
@@ -2040,7 +2040,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial string SetValue(string value);
 	}
 }
@@ -2077,7 +2077,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public static partial string SetValue(string value);
 	}
 }
@@ -2093,7 +2093,7 @@ namespace Testing
 		await Assert
 			.That(generatedSource)
 			.Contains(
-				"The generated aggregate event method 'public static partial string SetValue(string value)' is unavailable because [GenerateAggregateEvent] validation failed. Review the suppressed generator diagnostics for this method (EVENTSTORE008)."
+				"The generated aggregate event method 'public static partial string SetValue(string value)' is unavailable because [GenerateEvent] validation failed. Review the suppressed generator diagnostics for this method (EVENTSTORE008)."
 			);
 		await Assert
 			.That(
@@ -2120,10 +2120,10 @@ namespace Testing
 		public string Value { get; private set; } = default!;
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Update(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Update(int count);
 	}
 }
@@ -2160,7 +2160,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Rename(string customerId);
 	}
 }
@@ -2187,7 +2187,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Rename([Purview.EventSourcing.Aggregates.Metadata] string initialPropertyToTest);
 	}
 }
@@ -2228,7 +2228,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Rename(
 			[Purview.EventSourcing.Aggregates.Metadata(false)] string correlationId,
 			[Purview.EventSourcing.Aggregates.Metadata] string correlationToStoreImplicitId,
@@ -2286,7 +2286,7 @@ namespace Testing
 	{
 		public int QuantityOnHand { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void ReceiveStock([Purview.EventSourcing.Aggregates.AggregateProperty(nameof(QuantityOnHand))] int initialQuantity);
 	}
 }
@@ -2322,7 +2322,7 @@ namespace Testing
 	{
 		public int QuantityOnHand { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void ReceiveStock([Purview.EventSourcing.Aggregates.AggregateProperty(""MissingProperty"")] int initialQuantity);
 	}
 }
@@ -2347,7 +2347,7 @@ namespace Testing
 	{
 		public string Value { get; init; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -2374,7 +2374,7 @@ namespace First
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -2386,7 +2386,7 @@ namespace Second
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetValue(string value);
 	}
 }
@@ -2433,19 +2433,19 @@ namespace Testing
 		public string Status { get; private set; }
 		public string ShippingAddress { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateTotal(decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetShippingAddress(string shippingAddress);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void ConfirmOrder();
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CancelOrder();
 
 		private partial void Apply(global::Testing.OrderEvents.OrderConfirmedEvent @event)
@@ -2510,7 +2510,7 @@ namespace Testing
 		public int Quantity { get; private set; }
 		public bool IsAvailable { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateProduct(string name, decimal price, int quantity, bool isAvailable);
 	}
 }
@@ -2558,7 +2558,7 @@ namespace Testing
 	{
 		public string AccountName { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateAccount(string accountName);
 	}
 }
@@ -2599,7 +2599,7 @@ namespace Testing
 	{
 		public string InvoiceNumber { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateInvoice(string invoiceNumber);
 	}
 }
@@ -2631,7 +2631,7 @@ namespace Company.Domain.Orders
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -2665,16 +2665,16 @@ namespace Testing
 		public int Count { get; private set; }
 		public string Label { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Increment();
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Decrement();
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetLabel(string label);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void Reset();
 
 		private partial void Apply(global::Testing.CounterEvents.IncrementedEvent @event) => Count++;
@@ -2722,7 +2722,7 @@ namespace Testing
 	{
 		public string? Bio { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void UpdateBio(string? bio);
 	}
 }
@@ -2751,7 +2751,7 @@ namespace Testing
 	[Purview.EventSourcing.Aggregates.GenerateAggregate]
 	public partial class PublicAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void DoAction();
 	}
 }
@@ -2780,7 +2780,7 @@ namespace Testing
 	{
 		public string Content { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetContent(string content);
 	}
 }
@@ -2810,7 +2810,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetCustomerId(string customerId);
 	}
 }
@@ -2861,7 +2861,7 @@ namespace Testing
 		public string? LastRaisedValue { get; private set; }
 		public string? CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial bool SetCustomerId(string customerId);
 
 		partial void OnRaisingCustomerIdSetEvent(ref string customerId)
@@ -2906,7 +2906,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void SetCustomerId(string customerId);
 
 		partial void OnCustomerIdChanging(ref string customerId) => global::System.ArgumentNullException.ThrowIfNull(customerId);
@@ -2969,7 +2969,7 @@ namespace Testing
 		public string CustomerId { get; private set; } = string.Empty;
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId, decimal total);
 	}
 }
@@ -3009,7 +3009,7 @@ namespace Testing
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+		[Purview.EventSourcing.Aggregates.GenerateEvent]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -3048,16 +3048,16 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CustomerRegistered"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CustomerRegistered"")]
 		public partial void NewCustomer(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CustomerCreated"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CustomerCreated"")]
 		public partial void CustomerRegistered(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""ValueChanged"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ValueChanged"")]
 		public partial void NameChanged(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""ValueSet"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ValueSet"")]
 		public partial void Handle(string value);
 	}
 }
@@ -3089,16 +3089,16 @@ namespace Testing
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""RegisterCustomer"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""RegisterCustomer"")]
 		public partial void NewCustomer(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""CreateCustomer"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CreateCustomer"")]
 		public partial void CreateCustomer(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""ApproveQuestion"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ApproveQuestion"")]
 		public partial void ApproveQuestion(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""WithdrawConsent"")]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""WithdrawConsent"")]
 		public partial void WithdrawConsent(string value);
 	}
 }
@@ -3168,7 +3168,7 @@ namespace Testing
 	{
 			public string? Note { get; private set; }
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+			[Purview.EventSourcing.Aggregates.GenerateEvent]
 			public partial void SetNote(string note);
 	}
 }
@@ -3208,7 +3208,7 @@ namespace Testing
 	{
 			public string? Note { get; private set; }
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+			[Purview.EventSourcing.Aggregates.GenerateEvent]
 			public partial void SetNote(string? note);
 	}
 }
@@ -3247,7 +3247,7 @@ namespace Testing
 		{{
 			public {collectionType} Tags {{ get; private set; }}
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+			[Purview.EventSourcing.Aggregates.GenerateEvent]
 			public partial void SetTags({collectionType} tags);
 		}}
 }}
@@ -3287,7 +3287,7 @@ namespace Testing
 		{{
 			public {collectionType} Tags {{ get; private set; }} = new();
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+			[Purview.EventSourcing.Aggregates.GenerateEvent]
 			public partial void SetTags({collectionType} tags);
 		}}
 }}
@@ -3374,7 +3374,7 @@ namespace Testing
 	{
 		public string Value { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = ""ValueCommandAppliedEvent"", Manual = true)]
+		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ValueCommandAppliedEvent"", Manual = true)]
 		public partial void ApplyValueCommand(string input);
 	}
 }

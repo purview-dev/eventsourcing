@@ -8,12 +8,12 @@ namespace Purview.EventSourcing.Aggregates;
 /// Sets default source-generation options for all <see cref="GenerateAggregateAttribute"/> aggregates in an assembly.
 /// Aggregate-level options override these defaults.
 /// </summary>
-{{CodeGen}}
+//{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
 sealed class GenerateAggregateDefaultsAttribute : global::System.Attribute
 {
 	/// <summary>
-	/// Appends a suffix to generated event type names when no explicit <see cref="GenerateAggregateEventAttribute.EventName"/> is provided.
+	/// Appends a suffix to generated event type names when no explicit <see cref="GenerateEventAttribute.EventName"/> is provided.
 	/// Defaults to <c>Event</c>.
 	/// </summary>
 	public string? EventSuffix { get; set; } = "Event";

@@ -10,6 +10,6 @@ namespace Purview.EventSourcing.Aggregates;
 /// and is finalized by the generated <c>OnComputing{EventName}</c> hook
 /// before the event is recorded.
 /// </summary>
-{{CodeGen}}
+//{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
 sealed class ComputedAttribute : global::System.Attribute;

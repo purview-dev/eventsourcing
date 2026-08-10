@@ -59,7 +59,7 @@ public sealed class MongoDbAdminEventQueryService(IMongoClient mongoClient, stri
 		var total = await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
 		if (total == 0)
 		{
-			return null;
+			return new PagedResult<EventEnvelopeResponse>([], query.Page, pageSize, 0);
 		}
 
 		var events = await collection

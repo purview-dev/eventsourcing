@@ -175,8 +175,8 @@ The sample solution demonstrates how the framework is intended to be consumed:
 
 ```text
 dotnet tool restore
-dotnet restore src/Purview.EventSourcing.slnx
-dotnet build src/Purview.EventSourcing.slnx --configuration Release
+dotnet restore src/EventSourcing.slnx
+dotnet build src/EventSourcing.slnx --configuration Release
 dotnet csharpier check src
 dotnet test --project src/tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj --configuration Release
 ```

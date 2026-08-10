@@ -78,8 +78,10 @@ public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEven
 			}
 		}
 
+		var page = Math.Max(1, query.Page);
+		var pageSize = Math.Max(1, query.PageSize);
 		if (rows.Count == 0)
-			return null;
+			return new PagedResult<EventEnvelopeResponse>([], page, pageSize, 0);
 
 		var directionDesc = query.Sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
 		var ordered = directionDesc
@@ -87,8 +89,6 @@ public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEven
 			: rows.OrderBy(x => x.Version).ToList();
 
 		var totalCount = ordered.Count;
-		var page = Math.Max(1, query.Page);
-		var pageSize = Math.Max(1, query.PageSize);
 		var pageRows = ordered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
 		var items = pageRows

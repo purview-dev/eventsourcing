@@ -7,7 +7,7 @@ namespace Purview.EventSourcing.Aggregates;
 /// <summary>
 /// Marks a parameter as metadata for the aggregate, indicating whether it should be stored.
 /// </summary>
-{{CodeGen}}
+//{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
 sealed class MetadataAttribute : global::System.Attribute
 {

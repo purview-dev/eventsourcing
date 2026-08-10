@@ -12,10 +12,10 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 		eventQueryService ?? throw new ArgumentNullException(nameof(eventQueryService));
 
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateType { get; set; }
+	public string AggregateType { get; set; } = default!;
 
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateId { get; set; }
+	public string AggregateId { get; set; } = default!;
 
 	[BindProperty(SupportsGet = true)]
 	public long? VersionFrom { get; set; }

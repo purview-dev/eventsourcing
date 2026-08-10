@@ -5,8 +5,8 @@ namespace Purview.EventSourcing.SourceGenerator.Helpers;
 
 static class CodeGenHelpers
 {
-	public const string CodeGenReplacementToken = "{{CodeGen}}";
-	public const string NonClassCodeGenReplacementToken = "{{NonClassCodeGen}}";
+	public const string CodeGenReplacementToken = "//{{CodeGen}}";
+	public const string NonClassCodeGenReplacementToken = "//{{NonClassCodeGen}}";
 
 	const string EmbedAttributesHashDefineName = "PURVIEW_EVENTSOURCING_ATTRIBUTES";
 

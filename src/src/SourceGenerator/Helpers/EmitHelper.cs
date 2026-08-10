@@ -864,7 +864,7 @@ static class EmitHelper
 		var diagnosticIds =
 			method.DiagnosticIds.Length > 0 ? string.Join(", ", method.DiagnosticIds) : "unknown diagnostic IDs";
 		var message = EscapeStringLiteral(
-			$"The generated aggregate event method '{method.Signature}' is unavailable because [GenerateAggregateEvent] validation failed. Review the suppressed generator diagnostics for this method ({diagnosticIds})."
+			$"The generated aggregate event method '{method.Signature}' is unavailable because [GenerateEvent] validation failed. Review the suppressed generator diagnostics for this method ({diagnosticIds})."
 		);
 
 		sb.AppendLine($"{indent}\t{method.Signature}");

@@ -7,7 +7,7 @@ namespace Purview.EventSourcing.Aggregates;
 /// <summary>
 /// Marks a parameter as a specific property on the aggregate for source generation.
 /// </summary>
-{{CodeGen}}
+//{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
 sealed class AggregatePropertyAttribute : global::System.Attribute
 {

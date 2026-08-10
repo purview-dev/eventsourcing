@@ -1,13 +1,14 @@
-using System.Collections.Immutable;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using System.Collections.Immutable;
+using System.Text;
+
 namespace Purview.EventSourcing.SourceGenerator;
 
 [Generator]
-public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
+public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 {
 	const string ScalarAttributeName = "Purview.EventSourcing.Serialization.ScalarAttribute";
 	const string ValueObjectAttributeName = "Purview.EventSourcing.Serialization.ValueObjectAttribute";
@@ -1180,7 +1181,7 @@ public sealed class ValueObjectSourceGenerator : IIncrementalGenerator
 		typeSymbol
 			.GetMembers(name)
 			.OfType<IMethodSymbol>()
-			.Any(method => !method.IsStatic && method.Parameters.Length == 0);
+			.Any(method => !method.IsStatic && !method.IsImplicitlyDeclared && method.Parameters.Length == 0);
 
 	static bool ParametersMatch(ImmutableArray<IParameterSymbol> parameters, IReadOnlyList<ITypeSymbol> expected)
 	{

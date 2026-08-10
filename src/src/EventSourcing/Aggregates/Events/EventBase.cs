@@ -16,7 +16,7 @@ public abstract class EventBase : IEvent
 	/// <remarks>
 	/// Defaults to 1. Override in a derived class to declare a higher version.
 	/// The source generator will emit the correct override when
-	/// <c>[GenerateAggregateEvent(Version = N)]</c> is used.
+	/// <c>[GenerateEvent(Version = N)]</c> is used.
 	/// </remarks>
 	public virtual int SchemaVersion => 1;
 
