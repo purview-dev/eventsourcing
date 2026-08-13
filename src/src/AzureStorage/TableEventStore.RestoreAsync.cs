@@ -20,14 +20,23 @@ partial class TableEventStore<T>
 
 		var restoreAggregateEvent = new Restored
 		{
-			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
+			Details =
+			{
+				AggregateVersion = aggregate.Details.CurrentVersion + 1,
+				When = DateTimeOffset.UtcNow,
+			},
 		};
 		aggregate.ApplyEvent(restoreAggregateEvent);
 
 		if (aggregate.IsNew())
 			return false;
 
-		var result = await SaveCoreAsync(aggregate, operationContext, cancellationToken, restoreAggregateEvent);
+		var result = await SaveCoreAsync(
+			aggregate,
+			operationContext,
+			cancellationToken,
+			restoreAggregateEvent
+		);
 		return result.Saved;
 	}
 }

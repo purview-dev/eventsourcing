@@ -6,11 +6,13 @@ using Purview.EventSourcing.Aggregates;
 
 namespace Purview.EventSourcing.Services;
 
-sealed class AggregateRequiredServiceManager(IServiceProvider serviceProvider) : IAggregateRequirementsManager
+sealed class AggregateRequiredServiceManager(IServiceProvider serviceProvider)
+	: IAggregateRequirementsManager
 {
 	// This is static, but still allows the AggregateRequiredServiceManager to be registered as scoped
 	// for the sake of the IServiceProvider.
-	static readonly ConcurrentDictionary<Type, AggregateRequiredServiceManagerContext> Builders = new();
+	static readonly ConcurrentDictionary<Type, AggregateRequiredServiceManagerContext> Builders =
+		new();
 
 	public void Fulfil(IAggregate aggregate)
 	{
@@ -45,7 +47,9 @@ sealed class AggregateRequiredServiceManager(IServiceProvider serviceProvider) :
 		{
 			var requiredServices = aggregateType
 				.GetInterfaces()
-				.Where(m => m.IsGenericType && m.GetGenericTypeDefinition() == typeof(IRequirement<>));
+				.Where(m =>
+					m.IsGenericType && m.GetGenericTypeDefinition() == typeof(IRequirement<>)
+				);
 			foreach (var requiredService in requiredServices)
 			{
 				var serviceType = requiredService.GetGenericArguments()[0];

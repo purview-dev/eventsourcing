@@ -4,7 +4,8 @@ namespace Purview.EventSourcing.Samples.Domain;
 
 partial class CustomerAggregate
 {
-	partial void OnShouldApplyDeactivatedEvent(DeactivatedEvent @event, ref bool shouldApply) => shouldApply = IsActive;
+	partial void OnShouldApplyDeactivatedEvent(DeactivatedEvent @event, ref bool shouldApply) =>
+		shouldApply = IsActive;
 
 	private partial void Apply(DeactivatedEvent @event) => IsActive = false;
 

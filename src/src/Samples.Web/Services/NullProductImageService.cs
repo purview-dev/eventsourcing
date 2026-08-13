@@ -2,8 +2,10 @@ namespace Purview.EventSourcing.Samples.Web.Services;
 
 sealed class NullProductImageService : IProductImageService
 {
-	public Task<string?> GetImageUrlAsync(string productId, CancellationToken cancellationToken = default) =>
-		Task.FromResult<string?>(null);
+	public Task<string?> GetImageUrlAsync(
+		string productId,
+		CancellationToken cancellationToken = default
+	) => Task.FromResult<string?>(null);
 
 	public Task UploadImageAsync(
 		string productId,
@@ -12,5 +14,6 @@ sealed class NullProductImageService : IProductImageService
 		CancellationToken cancellationToken = default
 	) => Task.CompletedTask;
 
-	public Task DeleteImageAsync(string productId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+	public Task DeleteImageAsync(string productId, CancellationToken cancellationToken = default) =>
+		Task.CompletedTask;
 }

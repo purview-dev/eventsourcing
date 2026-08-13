@@ -28,7 +28,8 @@ EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 
 var builder = WebApplication.CreateBuilder(args);
 var sampleStoreOptions =
-	builder.Configuration.GetSection(SampleStoreOptions.SectionName).Get<SampleStoreOptions>() ?? new();
+	builder.Configuration.GetSection(SampleStoreOptions.SectionName).Get<SampleStoreOptions>()
+	?? new();
 
 builder.AddServiceDefaults();
 builder.Services.AddAuthentication();
@@ -151,7 +152,12 @@ app.MapGroup("/api/audit")
 				MaxRecords = maxRecords ?? ContinuationRequest.DefaultMaxRecords,
 				ContinuationToken = continuationToken,
 			};
-			var response = await auditService.GetHistoryAsync(aggregateType, aggregateId, request, cancellationToken);
+			var response = await auditService.GetHistoryAsync(
+				aggregateType,
+				aggregateId,
+				request,
+				cancellationToken
+			);
 
 			return Results.Ok(response);
 		}
@@ -163,7 +169,9 @@ app.MapDefaultEndpoints().MapGet("/pingz", () => Results.Ok());
 await using (var scope = app.Services.CreateAsyncScope())
 {
 	var seeder = scope.ServiceProvider.GetRequiredService<ISeedDataService>();
-	var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("SeedData");
+	var logger = scope
+		.ServiceProvider.GetRequiredService<ILoggerFactory>()
+		.CreateLogger("SeedData");
 	for (var attempt = 0; ; attempt++)
 	{
 		try
@@ -270,7 +278,8 @@ static void ConfigureStoreOptions(
 			services
 				.AddOptions<MongoDBEventStoreOptions>()
 				.Configure(options =>
-					options.Database = sampleStoreOptions.EventStoreDatabaseName ?? Platform.MongoDatabase
+					options.Database =
+						sampleStoreOptions.EventStoreDatabaseName ?? Platform.MongoDatabase
 				);
 			break;
 		case SampleEventStoreKind.AzureStorage:
@@ -278,15 +287,20 @@ static void ConfigureStoreOptions(
 				.AddOptions<AzureStorageEventStoreOptions>()
 				.Configure(options =>
 				{
-					options.Table = $"EventStore{NormalizeAlphaNumeric(sampleStoreOptions.CurrentKey)}";
-					options.Container = $"eventstore-{NormalizeKebab(sampleStoreOptions.CurrentKey)}";
+					options.Table =
+						$"EventStore{NormalizeAlphaNumeric(sampleStoreOptions.CurrentKey)}";
+					options.Container =
+						$"eventstore-{NormalizeKebab(sampleStoreOptions.CurrentKey)}";
 				});
 			services.PostConfigure<AzureStorageEventStoreOptions>(options =>
-				options.ConnectionString = AzureStorageConnectionStringComposer.BuildEventStoreConnectionString(
-					configuration.GetConnectionString(sampleStoreOptions.EventStoreConnectionName),
-					configuration.GetConnectionString(Platform.AzureStorageBlob),
-					options.ConnectionString
-				)
+				options.ConnectionString =
+					AzureStorageConnectionStringComposer.BuildEventStoreConnectionString(
+						configuration.GetConnectionString(
+							sampleStoreOptions.EventStoreConnectionName
+						),
+						configuration.GetConnectionString(Platform.AzureStorageBlob),
+						options.ConnectionString
+					)
 			);
 			break;
 	}
@@ -296,7 +310,8 @@ static void ConfigureStoreOptions(
 		services
 			.AddOptions<MongoDBSnapshotEventStoreOptions>()
 			.Configure(options =>
-				options.Database = sampleStoreOptions.QueryStoreDatabaseName ?? Platform.MongoDatabase
+				options.Database =
+					sampleStoreOptions.QueryStoreDatabaseName ?? Platform.MongoDatabase
 			);
 	}
 }
@@ -318,7 +333,9 @@ static void RegisterEventStore(IServiceCollection services, SampleStoreOptions s
 			services.AddAzureStorageEventStore(sampleStoreOptions.EventStoreConnectionName);
 			break;
 		default:
-			throw new InvalidOperationException($"Unsupported event store '{sampleStoreOptions.EventStore}'.");
+			throw new InvalidOperationException(
+				$"Unsupported event store '{sampleStoreOptions.EventStore}'."
+			);
 	}
 }
 
@@ -327,16 +344,24 @@ static void RegisterQueryStore(IServiceCollection services, SampleStoreOptions s
 	switch (sampleStoreOptions.QueryStore)
 	{
 		case SampleQueryStoreKind.SqlServer:
-			services.AddSqlServerSnapshotQueryableEventStore(sampleStoreOptions.QueryStoreConnectionName);
+			services.AddSqlServerSnapshotQueryableEventStore(
+				sampleStoreOptions.QueryStoreConnectionName
+			);
 			break;
 		case SampleQueryStoreKind.Postgres:
-			services.AddPostgresSnapshotQueryableEventStore(sampleStoreOptions.QueryStoreConnectionName);
+			services.AddPostgresSnapshotQueryableEventStore(
+				sampleStoreOptions.QueryStoreConnectionName
+			);
 			break;
 		case SampleQueryStoreKind.MongoDb:
-			services.AddMongoDBSnapshotQueryableEventStore(sampleStoreOptions.QueryStoreConnectionName);
+			services.AddMongoDBSnapshotQueryableEventStore(
+				sampleStoreOptions.QueryStoreConnectionName
+			);
 			break;
 		default:
-			throw new InvalidOperationException($"Unsupported query store '{sampleStoreOptions.QueryStore}'.");
+			throw new InvalidOperationException(
+				$"Unsupported query store '{sampleStoreOptions.QueryStore}'."
+			);
 	}
 }
 
@@ -353,7 +378,9 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 		);
 	services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
 	services.AddPurviewEventSourcingAdminSecurity(new SampleAdminPermissionProvider());
-	services.AddPurviewEventSourcingAdminApi(options => options.RoutePrefix = sampleStoreOptions.AdminAPIPath);
+	services.AddPurviewEventSourcingAdminApi(options =>
+		options.RoutePrefix = sampleStoreOptions.AdminAPIPath
+	);
 
 	switch (sampleStoreOptions.AdminStore)
 	{
@@ -375,7 +402,9 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 			services.AddPurviewEventSourcingAdminAzureStorage();
 			break;
 		default:
-			throw new InvalidOperationException($"Unsupported admin store '{sampleStoreOptions.AdminStore}'.");
+			throw new InvalidOperationException(
+				$"Unsupported admin store '{sampleStoreOptions.AdminStore}'."
+			);
 	}
 }
 
@@ -385,7 +414,9 @@ static string NormalizeAlphaNumeric(string value) => new([.. value.Where(char.Is
 static string NormalizeKebab(string value)
 {
 	var normalized = new string([
-		.. value.ToLowerInvariant().Where(character => char.IsLetterOrDigit(character) || character == '-'),
+		.. value
+			.ToLowerInvariant()
+			.Where(character => char.IsLetterOrDigit(character) || character == '-'),
 	]);
 
 	return string.IsNullOrWhiteSpace(normalized) ? "sample" : normalized;

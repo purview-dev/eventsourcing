@@ -7,11 +7,11 @@ namespace Purview.EventSourcing.Aggregates;
 /// <summary>
 /// Marks a partial class extending <c>AggregateBase</c> for source generation.
 /// The generator will create the <c>RegisterEvents()</c> override and
-/// event classes based on methods decorated with <see cref="GenerateEventAttribute"/>.
+/// event classes based on methods decorated with <see cref="EventAttribute"/>.
 /// </summary>
 //{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-sealed class GenerateAggregateAttribute : global::System.Attribute
+sealed class AggregateAttribute : global::System.Attribute
 {
 	/// <summary>
 	/// Overrides the generated event namespace for all event methods on this aggregate.
@@ -22,9 +22,9 @@ sealed class GenerateAggregateAttribute : global::System.Attribute
 
 	/// <summary>
 	/// Appends a suffix to generated event type names when no explicit
-	/// <see cref="GenerateEventAttribute.EventName"/> is provided.
-	/// Overrides <see cref="GenerateAggregateDefaultsAttribute.EventSuffix"/> for this aggregate.
-	/// Defaults to <c>Event</c>.
+	/// <see cref="EventAttribute.EventName"/> is provided.
+	/// Overrides <see cref="AggregateDefaultsAttribute.EventSuffix"/> for this aggregate.
+	/// If not set, the generator falls back to the assembly default or <c>Event</c>.
 	/// </summary>
-	public string? EventSuffix { get; set; } = "Event";
+	public string? EventSuffix { get; set; }
 }

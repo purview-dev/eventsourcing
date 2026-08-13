@@ -27,11 +27,20 @@ partial class MongoDBEventStore<T>
 
 		Deleted deleteAggregateEvent = new()
 		{
-			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
+			Details =
+			{
+				AggregateVersion = aggregate.Details.CurrentVersion + 1,
+				When = DateTimeOffset.UtcNow,
+			},
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
-		var result = await SaveCoreAsync(aggregate, operationContext, cancellationToken, deleteAggregateEvent);
+		var result = await SaveCoreAsync(
+			aggregate,
+			operationContext,
+			cancellationToken,
+			deleteAggregateEvent
+		);
 
 		return result.Saved;
 	}
@@ -63,7 +72,9 @@ partial class MongoDBEventStore<T>
 			if (operationContext.UseIdempotencyMarker)
 			{
 				var results = _eventClient.GetQueryEnumerableAsync<IdempotencyMarkerEntity>(
-					m => m.AggregateId == aggregateId && m.EntityType == EntityTypes.IdempotencyMarkerType,
+					m =>
+						m.AggregateId == aggregateId
+						&& m.EntityType == EntityTypes.IdempotencyMarkerType,
 					cancellationToken: cancellationToken
 				);
 				await foreach (var entity in results)
@@ -71,7 +82,10 @@ partial class MongoDBEventStore<T>
 			}
 
 			await _eventClient.SubmitDeleteBatchAsync(entitiesToDelete, cancellationToken);
-			await _snapshotClient.DeleteAsync<SnapshotEntity>(m => m.Id == aggregateId, cancellationToken);
+			await _snapshotClient.DeleteAsync<SnapshotEntity>(
+				m => m.Id == aggregateId,
+				cancellationToken
+			);
 
 			_eventStoreTelemetry.PermanentDeleteComplete(aggregateId);
 

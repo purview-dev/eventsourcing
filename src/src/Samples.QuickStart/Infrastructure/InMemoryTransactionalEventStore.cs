@@ -18,11 +18,16 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
-	static readonly ConcurrentDictionary<string, string> Persisted = new(StringComparer.OrdinalIgnoreCase);
+	static readonly ConcurrentDictionary<string, string> Persisted = new(
+		StringComparer.OrdinalIgnoreCase
+	);
 
 	public string TransactionBoundaryKey => "quickstart-inmemory";
 
-	public Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
+	public Task<T> CreateAsync(
+		string? aggregateId = null,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var aggregate = new T();
 #pragma warning disable CA1308 // Normalize strings to uppercase
@@ -54,7 +59,10 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		string aggregateId,
 		EventStoreOperationContext? operationContext,
 		CancellationToken cancellationToken = default
-	) => Task.FromResult(Persisted.TryGetValue(aggregateId, out var json) ? Deserialize(json) : default);
+	) =>
+		Task.FromResult(
+			Persisted.TryGetValue(aggregateId, out var json) ? Deserialize(json) : default
+		);
 
 	public async Task<T?> GetAtAsync(
 		string aggregateId,
@@ -84,23 +92,33 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		return Task.FromResult(CreateSavedResult(aggregate));
 	}
 
-	public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
-		Task.FromResult(false);
+	public Task<bool> IsDeletedAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	) => Task.FromResult(false);
 
-	public Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
-		Task.FromResult<T?>(default);
+	public Task<T?> GetDeletedAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	) => Task.FromResult<T?>(default);
 
 	public Task<bool> DeleteAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
 		CancellationToken cancellationToken = default
-	) => throw new NotSupportedException("The quick start store only demonstrates create, load, query, and save.");
+	) =>
+		throw new NotSupportedException(
+			"The quick start store only demonstrates create, load, query, and save."
+		);
 
 	public Task<bool> RestoreAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
 		CancellationToken cancellationToken = default
-	) => throw new NotSupportedException("The quick start store only demonstrates create, load, query, and save.");
+	) =>
+		throw new NotSupportedException(
+			"The quick start store only demonstrates create, load, query, and save."
+		);
 
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
@@ -113,11 +131,16 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		await Task.CompletedTask;
 	}
 
-	public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default)
+	public Task<ExistsState> ExistsAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	)
 	{
 		return !Persisted.TryGetValue(aggregateId, out var json)
 			? Task.FromResult(ExistsState.DoesNotExist)
-			: Task.FromResult(new ExistsState(ExistsStatus.Exists, Deserialize(json).Details.CurrentVersion));
+			: Task.FromResult(
+				new ExistsState(ExistsStatus.Exists, Deserialize(json).Details.CurrentVersion)
+			);
 	}
 
 	public T FulfilRequirements(T aggregate) => aggregate;
@@ -127,7 +150,10 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		int versionFrom,
 		int? versionTo,
 		CancellationToken cancellationToken
-	) => throw new NotSupportedException("The quick start store only demonstrates create, load, query, and save.");
+	) =>
+		throw new NotSupportedException(
+			"The quick start store only demonstrates create, load, query, and save."
+		);
 
 	public async IAsyncEnumerable<T> GetQueryEnumerableAsync(
 		Expression<Func<T, bool>> whereClause,
@@ -136,7 +162,12 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		[EnumeratorCancellation] CancellationToken cancellationToken = default
 	)
 	{
-		foreach (var aggregate in ApplyOrdering(ReadCommitted().AsQueryable().Where(whereClause), orderByClause))
+		foreach (
+			var aggregate in ApplyOrdering(
+				ReadCommitted().AsQueryable().Where(whereClause),
+				orderByClause
+			)
+		)
 			yield return aggregate;
 
 		await Task.CompletedTask;
@@ -173,13 +204,21 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		CancellationToken cancellationToken = default
 	) =>
 		Task.FromResult(
-			CreateContinuationResponse(ApplyOrdering(ReadCommitted().AsQueryable(), orderByClause), request)
+			CreateContinuationResponse(
+				ApplyOrdering(ReadCommitted().AsQueryable(), orderByClause),
+				request
+			)
 		);
 
-	public Task<long> CountAsync(Expression<Func<T, bool>>? whereClause, CancellationToken cancellationToken = default)
+	public Task<long> CountAsync(
+		Expression<Func<T, bool>>? whereClause,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var query = ReadCommitted().AsQueryable();
-		return Task.FromResult(whereClause is null ? query.LongCount() : query.LongCount(whereClause));
+		return Task.FromResult(
+			whereClause is null ? query.LongCount() : query.LongCount(whereClause)
+		);
 	}
 
 	public Task<T?> SingleOrDefaultAsync(
@@ -193,7 +232,8 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		CancellationToken cancellationToken = default
 	) =>
 		Task.FromResult(
-			ApplyOrdering(ReadCommitted().AsQueryable().Where(whereClause), orderByClause).FirstOrDefault()
+			ApplyOrdering(ReadCommitted().AsQueryable().Where(whereClause), orderByClause)
+				.FirstOrDefault()
 		);
 
 	public DbConnection CreateTransactionConnection() => new FakeDbConnection();
@@ -212,7 +252,9 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 	)
 	{
 		if (!aggregate.HasUnsavedEvents())
-			return Task.FromResult(new TransactionalSaveOperation<T>(CreateSkippedResult(aggregate)));
+			return Task.FromResult(
+				new TransactionalSaveOperation<T>(CreateSkippedResult(aggregate))
+			);
 
 		ThrowIfConfiguredToFail(aggregate);
 
@@ -230,10 +272,15 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 		);
 	}
 
-	static IQueryable<T> ApplyOrdering(IQueryable<T> query, Func<IQueryable<T>, IQueryable<T>>? orderByClause) =>
-		orderByClause?.Invoke(query) ?? query.OrderBy(aggregate => aggregate.Details.Id);
+	static IQueryable<T> ApplyOrdering(
+		IQueryable<T> query,
+		Func<IQueryable<T>, IQueryable<T>>? orderByClause
+	) => orderByClause?.Invoke(query) ?? query.OrderBy(aggregate => aggregate.Details.Id);
 
-	static ContinuationResponse<T> CreateContinuationResponse(IQueryable<T> query, ContinuationRequest request)
+	static ContinuationResponse<T> CreateContinuationResponse(
+		IQueryable<T> query,
+		ContinuationRequest request
+	)
 	{
 		var skip = string.IsNullOrWhiteSpace(request.ContinuationToken)
 			? 0
@@ -258,7 +305,9 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 	{
 		var aggregate =
 			JsonSerializer.Deserialize<T>(json)
-			?? throw new InvalidOperationException($"Unable to deserialize aggregate {typeof(T).Name}.");
+			?? throw new InvalidOperationException(
+				$"Unable to deserialize aggregate {typeof(T).Name}."
+			);
 		aggregate.ClearUnsavedEvents();
 		aggregate.Details.SavedVersion = aggregate.Details.CurrentVersion;
 		return aggregate;
@@ -280,7 +329,9 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 	{
 		if (failurePlan.ShouldFail(typeof(T), aggregate.Id()))
 		{
-			throw new InvalidOperationException($"Simulated failure while saving {typeof(T).Name} '{aggregate.Id()}'.");
+			throw new InvalidOperationException(
+				$"Simulated failure while saving {typeof(T).Name} '{aggregate.Id()}'."
+			);
 		}
 	}
 
@@ -327,8 +378,10 @@ sealed class InMemoryTransactionalEventStore<T>(InMemoryFailurePlan failurePlan)
 
 		public override void Rollback() { }
 
-		public override Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public override Task CommitAsync(CancellationToken cancellationToken = default) =>
+			Task.CompletedTask;
 
-		public override Task RollbackAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+		public override Task RollbackAsync(CancellationToken cancellationToken = default) =>
+			Task.CompletedTask;
 	}
 }

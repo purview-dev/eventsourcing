@@ -88,7 +88,10 @@ public sealed class AggregateDetails : ICloneable
 		set
 		{
 			if (field && !value)
-				throw new LockedException(Id, "This aggregate is locked, changing the locked state is not permitted.");
+				throw new LockedException(
+					Id,
+					"This aggregate is locked, changing the locked state is not permitted."
+				);
 
 			field = value;
 		}
@@ -116,5 +119,14 @@ public sealed class AggregateDetails : ICloneable
 	/// Generates a hash-code based on the properties of the <see cref="AggregateDetails"/>.
 	/// </summary>
 	public override int GetHashCode() =>
-		HashCode.Combine(Id, Created, SnapshotVersion, SavedVersion, CurrentVersion, IsDeleted, Etag, Locked);
+		HashCode.Combine(
+			Id,
+			Created,
+			SnapshotVersion,
+			SavedVersion,
+			CurrentVersion,
+			IsDeleted,
+			Etag,
+			Locked
+		);
 }

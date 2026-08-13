@@ -15,7 +15,11 @@ partial class TableEventStore<T>
 
 		operationContext ??= EventStoreOperationContext.DefaultContext();
 
-		_eventStoreTelemetry.GetAggregateAtSpecificVersionStart(aggregateId, version, _aggregateTypeFullName);
+		_eventStoreTelemetry.GetAggregateAtSpecificVersionStart(
+			aggregateId,
+			version,
+			_aggregateTypeFullName
+		);
 		var getStopwatch = Stopwatch.StartNew();
 		try
 		{
@@ -37,7 +41,12 @@ partial class TableEventStore<T>
 		}
 		catch (Exception ex)
 		{
-			_eventStoreTelemetry.GetAggregateAtSpecificVersionFailed(aggregateId, _aggregateTypeFullName, version, ex);
+			_eventStoreTelemetry.GetAggregateAtSpecificVersionFailed(
+				aggregateId,
+				_aggregateTypeFullName,
+				version,
+				ex
+			);
 			throw;
 		}
 		finally

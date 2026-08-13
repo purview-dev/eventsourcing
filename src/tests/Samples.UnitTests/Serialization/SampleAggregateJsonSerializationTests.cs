@@ -49,8 +49,12 @@ public sealed class SampleAggregateJsonSerializationTests
 
 		var json = EventStoreSerializationHelpers.Serialize(aggregate);
 		using var jsonDocument = JsonDocument.Parse(json);
-		await Assert.That(jsonDocument.RootElement.GetProperty("Name").ValueKind).IsEqualTo(JsonValueKind.String);
-		await Assert.That(jsonDocument.RootElement.GetProperty("Email").ValueKind).IsEqualTo(JsonValueKind.String);
+		await Assert
+			.That(jsonDocument.RootElement.GetProperty("Name").ValueKind)
+			.IsEqualTo(JsonValueKind.String);
+		await Assert
+			.That(jsonDocument.RootElement.GetProperty("Email").ValueKind)
+			.IsEqualTo(JsonValueKind.String);
 
 		var roundTripped = EventStoreSerializationHelpers.Deserialize<CustomerAggregate>(json);
 

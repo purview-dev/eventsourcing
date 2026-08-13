@@ -7,7 +7,9 @@ using Purview.EventSourcing.Postgres.Snapshots;
 
 namespace Purview.EventSourcing.Postgres.Snapshot;
 
-public sealed partial class PostgresSnapshotEventStore<T> : IPostgresSnapshotEventStore<T>, ITransactionalEventStore<T>
+public sealed partial class PostgresSnapshotEventStore<T>
+	: IPostgresSnapshotEventStore<T>,
+		ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
 	readonly IEventStoreCore<T> _eventStore;
@@ -21,7 +23,10 @@ public sealed partial class PostgresSnapshotEventStore<T> : IPostgresSnapshotEve
 	readonly Type _aggregateType = typeof(T);
 	readonly string _aggregateName;
 
-	static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, string> AggregateTypeNames = new();
+	static readonly System.Collections.Concurrent.ConcurrentDictionary<
+		Type,
+		string
+	> AggregateTypeNames = new();
 
 	public PostgresSnapshotEventStore(
 		// Explicitly request a non-queryable event store.
@@ -47,12 +52,18 @@ public sealed partial class PostgresSnapshotEventStore<T> : IPostgresSnapshotEve
 	/// <summary>
 	/// Merges global options with any per-aggregate-type table override.
 	/// </summary>
-	static PostgresClientOptions ResolveClientOptions(PostgresSnapshotEventStoreOptions options, string aggregateName)
+	static PostgresClientOptions ResolveClientOptions(
+		PostgresSnapshotEventStoreOptions options,
+		string aggregateName
+	)
 	{
 		var schema = options.SchemaName;
 		var table = options.TableName;
 
-		if (options.AggregateTableOverrides.TryGetValue(aggregateName, out var ovr) && ovr is not null)
+		if (
+			options.AggregateTableOverrides.TryGetValue(aggregateName, out var ovr)
+			&& ovr is not null
+		)
 		{
 			schema = ovr.SchemaName ?? schema;
 			table = ovr.TableName ?? table;
@@ -104,5 +115,6 @@ public sealed partial class PostgresSnapshotEventStore<T> : IPostgresSnapshotEve
 		}
 	}
 
-	string GetAggregateTypeName() => AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
+	string GetAggregateTypeName() =>
+		AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
 }

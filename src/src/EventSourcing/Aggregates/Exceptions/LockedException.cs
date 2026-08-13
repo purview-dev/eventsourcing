@@ -5,7 +5,10 @@
 /// cannot be modified or saved.
 /// </summary>
 /// <seealso cref="AggregateDetails.Locked"/>
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+	"Design",
+	"CA1032:Implement standard exception constructors"
+)]
 public sealed class LockedException : Exception
 {
 	public LockedException(string aggregateId, string? message = null)

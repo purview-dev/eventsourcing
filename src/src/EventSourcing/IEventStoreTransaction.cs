@@ -54,7 +54,11 @@ public interface IEventStoreTransaction : IAsyncDisposable
 	/// <exception cref="InvalidOperationException">
 	/// Thrown if <see cref="CommitAsync"/> has already been called.
 	/// </exception>
-	void Enlist<T>(T aggregate, IEventStore eventStore, EventStoreOperationContext? operationContext = null)
+	void Enlist<T>(
+		T aggregate,
+		IEventStore eventStore,
+		EventStoreOperationContext? operationContext = null
+	)
 		where T : class, IAggregate, new();
 
 	/// <summary>
@@ -67,7 +71,11 @@ public interface IEventStoreTransaction : IAsyncDisposable
 	/// Optional <see cref="EventStoreOperationContext"/>. When <see langword="null"/>,
 	/// the default context is used with this transaction's <see cref="CorrelationId"/>.
 	/// </param>
-	void Enlist<T>(T aggregate, IEventStoreCore<T> eventStore, EventStoreOperationContext? operationContext = null)
+	void Enlist<T>(
+		T aggregate,
+		IEventStoreCore<T> eventStore,
+		EventStoreOperationContext? operationContext = null
+	)
 		where T : class, IAggregate, new();
 
 	/// <summary>

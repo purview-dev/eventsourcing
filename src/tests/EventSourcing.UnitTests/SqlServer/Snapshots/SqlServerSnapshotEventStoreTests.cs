@@ -61,13 +61,19 @@ public sealed class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task GetOrCreateAsync_GivenAggregateId_DelegatesToEventStore(CancellationToken cancellationToken)
+	public async Task GetOrCreateAsync_GivenAggregateId_DelegatesToEventStore(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
 		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.GetOrCreateAsync(Any<string?>(), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetOrCreateAsync(
+				Any<string?>(),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
@@ -83,13 +89,20 @@ public sealed class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task GetAtAsync_GivenAggregateIdAndVersion_DelegatesToEventStore(CancellationToken cancellationToken)
+	public async Task GetAtAsync_GivenAggregateIdAndVersion_DelegatesToEventStore(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
 		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.GetAtAsync(Any<string>(), Any<int>(), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAtAsync(
+				Any<string>(),
+				Any<int>(),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
@@ -100,7 +113,12 @@ public sealed class SqlServerSnapshotEventStoreTests
 		// Assert
 		await Assert.That(result).IsEqualTo(expectedAggregate);
 		eventStore
-			.GetAtAsync(Is("test-id"), Is(5), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAtAsync(
+				Is("test-id"),
+				Is(5),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.WasCalled(Times.Once);
 	}
 
@@ -127,7 +145,9 @@ public sealed class SqlServerSnapshotEventStoreTests
 		// Arrange
 		var expectedAggregate = TestHelpers.Aggregate<TestAggregate>();
 		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
-		eventStore.GetDeletedAsync(Any<string>(), Any<CancellationToken>()).Returns(expectedAggregate);
+		eventStore
+			.GetDeletedAsync(Any<string>(), Any<CancellationToken>())
+			.Returns(expectedAggregate);
 
 		var store = CreateStore(eventStore);
 
@@ -176,17 +196,34 @@ public sealed class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenNeverSnapshotStrategy_DoesNotWriteSnapshot(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenNeverSnapshotStrategy_DoesNotWriteSnapshot(
+		CancellationToken cancellationToken
+	)
 	{
-		var aggregate = TestHelpers.Aggregate<TestAggregate>(creator: a => a.RecordEvent(), clearEvents: false);
+		var aggregate = TestHelpers.Aggregate<TestAggregate>(
+			creator: a => a.RecordEvent(),
+			clearEvents: false
+		);
 		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
 			.Returns(
 				static (a, _, _) =>
-					new SaveResult<TestAggregate>(a, new ValidationResult(), saved: true, skipped: false)
+					new SaveResult<TestAggregate>(
+						a,
+						new ValidationResult(),
+						saved: true,
+						skipped: false
+					)
 			);
-		var store = CreateStore(eventStore, snapshotStrategy: new NeverSnapshotStrategy<TestAggregate>());
+		var store = CreateStore(
+			eventStore,
+			snapshotStrategy: new NeverSnapshotStrategy<TestAggregate>()
+		);
 
 		var result = await store.SaveAsync(aggregate, null, cancellationToken);
 
@@ -201,22 +238,41 @@ public sealed class SqlServerSnapshotEventStoreTests
 		CancellationToken cancellationToken
 	)
 	{
-		var aggregate = TestHelpers.Aggregate<TestAggregate>(creator: a => a.RecordEvent(), clearEvents: false);
+		var aggregate = TestHelpers.Aggregate<TestAggregate>(
+			creator: a => a.RecordEvent(),
+			clearEvents: false
+		);
 		var eventStore = INonQueryableEventStore<TestAggregate>.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
 			.Returns(
 				static (a, _, _) =>
-					new SaveResult<TestAggregate>(a, new ValidationResult(), saved: true, skipped: false)
+					new SaveResult<TestAggregate>(
+						a,
+						new ValidationResult(),
+						saved: true,
+						skipped: false
+					)
 			);
 
-		var store = CreateStore(eventStore, snapshotStrategy: new AlwaysSnapshotStrategy<TestAggregate>());
-		var context = new EventStoreOperationContext().SetSnapshotStrategy(new NeverSnapshotStrategy<TestAggregate>());
+		var store = CreateStore(
+			eventStore,
+			snapshotStrategy: new AlwaysSnapshotStrategy<TestAggregate>()
+		);
+		var context = new EventStoreOperationContext().SetSnapshotStrategy(
+			new NeverSnapshotStrategy<TestAggregate>()
+		);
 
 		var result = await store.SaveAsync(aggregate, context, cancellationToken);
 
 		await Assert.That(result.Saved).IsTrue();
-		eventStore.SaveAsync(Is(aggregate), context, Any<CancellationToken>()).WasCalled(Times.Once);
+		eventStore
+			.SaveAsync(Is(aggregate), context, Any<CancellationToken>())
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
@@ -269,7 +325,11 @@ public sealed class SqlServerSnapshotEventStoreTests
 			Enabled = true,
 			Indexes =
 			[
-				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Version"] },
+				new SqlServerJsonIndexDefinition
+				{
+					JsonPath = "$.StringProperty",
+					IncludeColumns = ["Version"],
+				},
 			],
 		};
 
@@ -285,8 +345,16 @@ public sealed class SqlServerSnapshotEventStoreTests
 			Enabled = true,
 			Indexes =
 			[
-				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Id"] },
-				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Id"] },
+				new SqlServerJsonIndexDefinition
+				{
+					JsonPath = "$.StringProperty",
+					IncludeColumns = ["Id"],
+				},
+				new SqlServerJsonIndexDefinition
+				{
+					JsonPath = "$.StringProperty",
+					IncludeColumns = ["Id"],
+				},
 			],
 		};
 
@@ -331,13 +399,20 @@ public sealed class SqlServerSnapshotEventStoreTests
 		var wrappedOptions = Options.Create(options ?? CreateDefaultOptions());
 		var telemetry = TestHelpers.CreateSqlServerSnapshotEventStoreTelemetry();
 
-		return new(eventStore, wrappedOptions, telemetry, snapshotStrategy, snapshotStrategySelector);
+		return new(
+			eventStore,
+			wrappedOptions,
+			telemetry,
+			snapshotStrategy,
+			snapshotStrategySelector
+		);
 	}
 
 	static SqlServerSnapshotEventStoreOptions CreateDefaultOptions() =>
 		new()
 		{
-			ConnectionString = "Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;",
+			ConnectionString =
+				"Server=(localdb)\\mssqllocaldb;Database=TestDb;Trusted_Connection=True;",
 			TableName = "TestSnapshots",
 			SchemaName = "dbo",
 			AutoCreateTable = false,

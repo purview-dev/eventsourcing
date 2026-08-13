@@ -52,7 +52,9 @@ public class AggregateDetailsTests
 		// Assert — original unchanged
 		await Assert.That(original.SavedVersion).IsEqualTo(3);
 		await Assert.That(original.CurrentVersion).IsEqualTo(5);
-		await Assert.That(original.Updated).IsEqualTo(new DateTimeOffset(2026, 1, 2, 12, 0, 0, TimeSpan.Zero));
+		await Assert
+			.That(original.Updated)
+			.IsEqualTo(new DateTimeOffset(2026, 1, 2, 12, 0, 0, TimeSpan.Zero));
 	}
 
 	[Test]

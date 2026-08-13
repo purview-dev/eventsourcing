@@ -11,10 +11,14 @@ public sealed class AuditPageTests(AppHostFixture fixture)
 	readonly HttpClient _client = fixture.CreateWebClient();
 
 	[Test]
-	public async Task GetAuditPage_GivenDateRangeOnly_ShowsRecentEvents(CancellationToken cancellationToken)
+	public async Task GetAuditPage_GivenDateRangeOnly_ShowsRecentEvents(
+		CancellationToken cancellationToken
+	)
 	{
 		await CreateOrderAsync(cancellationToken);
-		var fromUtc = DateTimeOffset.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+		var fromUtc = DateTimeOffset
+			.UtcNow.AddDays(-1)
+			.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
 
 		var response = await _client.GetAsync(
 			$"/BackOffice/Audit/Index?aggregateType=order&fromUtc={fromUtc}",
@@ -28,7 +32,9 @@ public sealed class AuditPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task GetAuditPage_GivenAggregateId_ShowsAggregateHistoryEvents(CancellationToken cancellationToken)
+	public async Task GetAuditPage_GivenAggregateId_ShowsAggregateHistoryEvents(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateId = await CreateOrderAsync(cancellationToken);
 		var response = await _client.GetAsync(
@@ -43,7 +49,9 @@ public sealed class AuditPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task GetAuditPage_GivenNoFilters_ShowsRecentEvents(CancellationToken cancellationToken)
+	public async Task GetAuditPage_GivenNoFilters_ShowsRecentEvents(
+		CancellationToken cancellationToken
+	)
 	{
 		await CreateOrderAsync(cancellationToken);
 		var response = await _client.GetAsync("/BackOffice/Audit/Index", cancellationToken);
@@ -57,8 +65,13 @@ public sealed class AuditPageTests(AppHostFixture fixture)
 	async Task<string> CreateOrderAsync(CancellationToken cancellationToken)
 	{
 		var store = fixture.QueryableEventStore();
-		var customer = await store.CreateAsync<CustomerAggregate>(cancellationToken: cancellationToken);
-		customer.RegisterCustomer($"audit-{Guid.NewGuid():N}", $"audit-{Guid.NewGuid():N}@example.com");
+		var customer = await store.CreateAsync<CustomerAggregate>(
+			cancellationToken: cancellationToken
+		);
+		customer.RegisterCustomer(
+			$"audit-{Guid.NewGuid():N}",
+			$"audit-{Guid.NewGuid():N}@example.com"
+		);
 		var customerResult = await store.SaveAsync(customer, cancellationToken);
 
 		var order = await store.CreateAsync<OrderAggregate>(cancellationToken: cancellationToken);

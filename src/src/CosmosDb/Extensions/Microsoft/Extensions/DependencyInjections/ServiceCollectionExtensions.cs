@@ -12,18 +12,29 @@ public static class ServiceCollectionExtensions
 {
 	extension(IServiceCollection services)
 	{
-		public IServiceCollection AddCosmosDbSnapshotQueryableEventStore(bool registerAsIEventStore = false)
+		public IServiceCollection AddCosmosDbSnapshotQueryableEventStore(
+			bool registerAsIEventStore = false
+		)
 		{
 			services.AddEventSourcing();
 
 			services
-				.AddTransient(typeof(IQueryableEventStoreCore<>), typeof(CosmosDbSnapshotEventStore<>))
-				.AddTransient(typeof(ICosmosDbSnapshotEventStore<>), typeof(CosmosDbSnapshotEventStore<>));
+				.AddTransient(
+					typeof(IQueryableEventStoreCore<>),
+					typeof(CosmosDbSnapshotEventStore<>)
+				)
+				.AddTransient(
+					typeof(ICosmosDbSnapshotEventStore<>),
+					typeof(CosmosDbSnapshotEventStore<>)
+				);
 			services.TryAddTransient<IQueryableEventStore, QueryableEventStoreFacade>();
 
 			if (registerAsIEventStore)
 			{
-				services.AddTransient(typeof(IEventStoreCore<>), typeof(CosmosDbSnapshotEventStore<>));
+				services.AddTransient(
+					typeof(IEventStoreCore<>),
+					typeof(CosmosDbSnapshotEventStore<>)
+				);
 				services.TryAddTransient<IEventStore, EventStoreFacade>();
 			}
 
@@ -32,7 +43,9 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration.GetSection(CosmosDbEventStoreOptions.CosmosDbEventStore).Bind(options);
+						configuration
+							.GetSection(CosmosDbEventStoreOptions.CosmosDbEventStore)
+							.Bind(options);
 
 						options.ConnectionString ??=
 							configuration.GetConnectionString("EventStore_CosmosDb")

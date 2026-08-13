@@ -37,7 +37,9 @@ public sealed class ReportUploadAggregateTests
 			.Single(@event => @event.GetType().GetProperty("Status") is not null);
 		var statusProperty = completedEvent.GetType().GetProperty("Status");
 		await Assert.That(statusProperty).IsNotNull();
-		await Assert.That(statusProperty!.GetValue(completedEvent)).IsEqualTo(ReportProcessingStatus.Completed);
+		await Assert
+			.That(statusProperty!.GetValue(completedEvent))
+			.IsEqualTo(ReportProcessingStatus.Completed);
 	}
 
 	[Test]
@@ -61,7 +63,10 @@ public sealed class ReportUploadAggregateTests
 		BlobUri.Create(new Uri($"/example/nesting/{Guid.NewGuid()}/blob.json", UriKind.Relative));
 
 	static UserCapture CreateUploadedUser() =>
-		UserCapture.Create(UserDetails.Create(Guid.NewGuid(), "Uploader", true), DateTimeOffset.UtcNow);
+		UserCapture.Create(
+			UserDetails.Create(Guid.NewGuid(), "Uploader", true),
+			DateTimeOffset.UtcNow
+		);
 
 	static ReportSummary CreateReportSummary()
 	{
@@ -77,7 +82,10 @@ public sealed class ReportUploadAggregateTests
 					}
 				),
 				ParserDetails = new(10, 5, 5, TimeSpan.FromMinutes(1)),
-				Projects = Faker.Make(2, i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")),
+				Projects = Faker.Make(
+					2,
+					i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")
+				),
 				VulnerabilityDetails = new VulnerabilityDetails(100, 10, 10, 20, 30, 40),
 			}
 		);

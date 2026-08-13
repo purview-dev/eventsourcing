@@ -18,7 +18,10 @@ partial class CustomerAggregateTests
 		await Assert
 			.That(Act)
 			.Throws<ArgumentException>()
-			.WithMessage("Employees of Event-Sourcing-Sample PLC cannot be customers", StringComparison.Ordinal);
+			.WithMessage(
+				"Employees of Event-Sourcing-Sample PLC cannot be customers",
+				StringComparison.Ordinal
+			);
 
 		// Checking we have no unsaved changes.
 		await Assert.That(customer.HasUnsavedEvents()).IsFalse();

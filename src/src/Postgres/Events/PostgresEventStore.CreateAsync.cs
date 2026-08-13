@@ -4,7 +4,10 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 partial class PostgresEventStore<T>
 {
-	public async Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
+	public async Task<T> CreateAsync(
+		string? aggregateId = null,
+		CancellationToken cancellationToken = default
+	)
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))
 		{

@@ -9,8 +9,10 @@ namespace Purview.EventSourcing.Admin.MongoDB;
 public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, string databaseName)
 	: IAdminAggregateQueryService
 {
-	readonly IMongoClient _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
-	readonly string _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
+	readonly IMongoClient _mongoClient =
+		mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
+	readonly string _databaseName =
+		databaseName ?? throw new ArgumentNullException(nameof(databaseName));
 
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
@@ -32,16 +34,25 @@ public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, 
 		var collectionName = $"es-{query.AggregateType}-events";
 		var collection = database.GetCollection<StreamVersionEntity>(collectionName);
 
-		var filter = Builders<StreamVersionEntity>.Filter.Eq(x => x.EntityType, EntityTypes.StreamVersionType);
+		var filter = Builders<StreamVersionEntity>.Filter.Eq(
+			x => x.EntityType,
+			EntityTypes.StreamVersionType
+		);
 
 		if (!string.IsNullOrWhiteSpace(query.AggregateId))
 		{
-			filter &= Builders<StreamVersionEntity>.Filter.Eq(x => x.AggregateId, query.AggregateId);
+			filter &= Builders<StreamVersionEntity>.Filter.Eq(
+				x => x.AggregateId,
+				query.AggregateId
+			);
 		}
 
 		if (query.FromUtc.HasValue)
 		{
-			filter &= Builders<StreamVersionEntity>.Filter.Gte(x => x.Timestamp, query.FromUtc.Value);
+			filter &= Builders<StreamVersionEntity>.Filter.Gte(
+				x => x.Timestamp,
+				query.FromUtc.Value
+			);
 		}
 
 		if (query.ToUtc.HasValue)
@@ -52,7 +63,10 @@ public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, 
 		var pageSize = Math.Max(1, Math.Min(query.PageSize, 500));
 		var skip = (query.Page - 1) * pageSize;
 
-		var total = await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
+		var total = await collection.CountDocumentsAsync(
+			filter,
+			cancellationToken: cancellationToken
+		);
 		var items = await collection
 			.Find(filter)
 			.Skip(skip)
@@ -90,7 +104,10 @@ public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, 
 
 		var filter = Builders<StreamVersionEntity>.Filter.And(
 			Builders<StreamVersionEntity>.Filter.Eq(x => x.AggregateId, aggregateId),
-			Builders<StreamVersionEntity>.Filter.Eq(x => x.EntityType, EntityTypes.StreamVersionType)
+			Builders<StreamVersionEntity>.Filter.Eq(
+				x => x.EntityType,
+				EntityTypes.StreamVersionType
+			)
 		);
 
 		var item = await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);

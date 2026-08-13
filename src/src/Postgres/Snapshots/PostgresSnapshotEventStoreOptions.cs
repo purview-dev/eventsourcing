@@ -81,8 +81,10 @@ public sealed class PostgresSnapshotEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<string, PostgresSnapshotAggregateTableOverride> AggregateTableOverrides { get; init; } =
-	[with(StringComparer.OrdinalIgnoreCase)];
+	public Dictionary<
+		string,
+		PostgresSnapshotAggregateTableOverride
+	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 
 	/// <summary>
 	/// Configures runtime-managed PostgreSQL indexes over the snapshot payload JSON column.

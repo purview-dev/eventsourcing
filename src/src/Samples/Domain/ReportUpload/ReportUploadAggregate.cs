@@ -3,7 +3,7 @@ using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.Samples.Domain.ReportUpload;
 
-[GenerateAggregate]
+[Aggregate]
 public sealed partial class ReportUploadAggregate
 {
 	public string OriginalFilename { get; private set; } = string.Empty;
@@ -34,13 +34,14 @@ public sealed partial class ReportUploadAggregate
 
 	public ParserReportSummary? ReportSummaryScalar { get; private set; }
 
-	public ReportUploadAggregate MarkAsProcessing() => SetReportProcessingStatus(ReportProcessingStatus.Processing);
+	public ReportUploadAggregate MarkAsProcessing() =>
+		SetReportProcessingStatus(ReportProcessingStatus.Processing);
 
 	public ReportUploadAggregate AddExcelReport(GuidObjectId projectId, BlobUri excelReportBlob) =>
 		AddExcelReport(new ProjectBlobs(projectId, excelReportBlob));
 
 	// Event generation methods
-	[GenerateAggregateEvent(EventName = "MarkAsCompleted")]
+	[Event(EventName = "MarkAsCompleted")]
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
 		"Purview.EventSourcing.SourceGenerator",
 		"EVENTSTORE016:Event parameter nullability differs from aggregate property",
@@ -52,10 +53,10 @@ public sealed partial class ReportUploadAggregate
 		[Computed] ReportProcessingStatus status = default
 	);
 
-	[GenerateAggregateCollectionEvent(nameof(ExcelReportBlobs))]
+	[CollectionEvent(nameof(ExcelReportBlobs))]
 	private partial ReportUploadAggregate AddExcelReport(ProjectBlobs projectBlobs);
 
-	[GenerateAggregateEvent(EventName = "MarkAsFailed")]
+	[Event(EventName = "MarkAsFailed")]
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
 		"Purview.EventSourcing.SourceGenerator",
 		"EVENTSTORE014:Event name overrides should be past tense"
@@ -72,7 +73,7 @@ public sealed partial class ReportUploadAggregate
 		[Computed] ReportProcessingStatus status = default
 	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial ReportUploadAggregate Create(
 		string originalFilename,
 		string fileHash,
@@ -80,6 +81,6 @@ public sealed partial class ReportUploadAggregate
 		UserCapture uploaded
 	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	private partial ReportUploadAggregate SetReportProcessingStatus(ReportProcessingStatus status);
 }

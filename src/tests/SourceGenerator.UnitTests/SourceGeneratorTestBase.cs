@@ -1,9 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-
-using Purview.SourceGeneratorFramework.Testing.Abstractions;
-
-using System.Reflection;
+using Purview.SourceGeneratorFramework.Logging;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
@@ -13,12 +12,11 @@ public abstract class SourceGeneratorTestBase<TGenerator>(bool throwOnLogError =
 	public static readonly string[] GeneratedAttributes =
 	[
 		"EmbeddedAttribute.cs",
-		"AggregatePropertyAttribute.g.cs",
-		"GenerateAggregateAttribute.g.cs",
-		"GenerateCollectionEventAttribute.g.cs",
-		"GenerateAggregateDefaultsAttribute.g.cs",
-		"GenerateAggregateDefaultBaseAttribute.g.cs",
-		"GenerateEventAttribute.g.cs",
+		"PropertyAttribute.g.cs",
+		"AggregateAttribute.g.cs",
+		"CollectionEventAttribute.g.cs",
+		"AggregateDefaultsAttribute.g.cs",
+		"EventAttribute.g.cs",
 		"MetadataAttribute.g.cs",
 		"ComputedAttribute.g.cs",
 	];
@@ -29,7 +27,12 @@ public abstract class SourceGeneratorTestBase<TGenerator>(bool throwOnLogError =
 	public const int HintNameHashHexLength = 16;
 	public const string GeneratedSourceFileSuffix = ".g.cs";
 
-	protected async Task<(GeneratorDriverRunResult Result, Compilation OutputCompilation)> GenerateAsync(
+	[SuppressMessage(
+		"Design",
+		"CA1506:AvoidExcessiveClassCoupling",
+		Justification = "Test helper creates compilation and generator driver"
+	)]
+	protected (GeneratorDriverRunResult Result, Compilation OutputCompilation) Generate(
 		string source,
 		bool includeNamespaces,
 		CancellationToken cancellationToken
@@ -58,8 +61,12 @@ using Purview.EventSourcing.ValueObjects;
 			MetadataReference.CreateFromFile(typeof(Aggregates.IAggregate).Assembly.Location),
 			MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
 			MetadataReference.CreateFromFile(typeof(Attribute).Assembly.Location),
-			MetadataReference.CreateFromFile(System.Reflection.Assembly.Load("System.Runtime").Location),
-			MetadataReference.CreateFromFile(typeof(System.Text.Json.JsonSerializer).Assembly.Location),
+			MetadataReference.CreateFromFile(
+				System.Reflection.Assembly.Load("System.Runtime").Location
+			),
+			MetadataReference.CreateFromFile(
+				typeof(System.Text.Json.JsonSerializer).Assembly.Location
+			),
 		};
 
 		// Add netstandard reference
@@ -121,21 +128,26 @@ using Purview.EventSourcing.ValueObjects;
 		return (result, outputCompilation);
 	}
 
-	protected async Task<(GeneratorDriverRunResult Result, Compilation OutputCompilation)> GenerateAsync(
+	protected (GeneratorDriverRunResult Result, Compilation OutputCompilation) Generate(
 		string source,
 		CancellationToken cancellationToken
-	) => await GenerateAsync(source, includeNamespaces: true, cancellationToken);
+	) => Generate(source, includeNamespaces: true, cancellationToken);
 
-	protected async Task<Assembly> CompileToAssemblyAsync(string source, CancellationToken cancellationToken)
+	protected async Task<Assembly> CompileToAssemblyAsync(
+		string source,
+		CancellationToken cancellationToken
+	)
 	{
-		var (_, compilation) = await GenerateAsync(source, cancellationToken);
+		var (_, compilation) = Generate(source, cancellationToken);
 		await using MemoryStream assemblyStream = new();
 		var emitResult = compilation.Emit(assemblyStream, cancellationToken: cancellationToken);
 		if (!emitResult.Success)
 		{
 			var diagnostics = string.Join(
 				Environment.NewLine,
-				emitResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Select(d => d.ToString())
+				emitResult
+					.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)
+					.Select(d => d.ToString())
 			);
 
 			throw new InvalidOperationException(diagnostics);

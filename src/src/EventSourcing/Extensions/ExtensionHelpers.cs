@@ -71,5 +71,6 @@ static class ExtensionHelpers
 	/// </summary>
 	/// <param name="item">The item to check.</param>
 	/// <returns>The string value, or null.</returns>
-	public static string? OrNull(this string? item) => string.IsNullOrWhiteSpace(item) ? null : item;
+	public static string? OrNull(this string? item) =>
+		string.IsNullOrWhiteSpace(item) ? null : item;
 }

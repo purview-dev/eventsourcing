@@ -60,7 +60,8 @@ public sealed class AppServiceHelper : IServiceProvider, IAsyncDisposable
 		GC.SuppressFinalize(this);
 	}
 
-	public object? GetService(Type serviceType) => _serviceScope.Value.ServiceProvider.GetService(serviceType);
+	public object? GetService(Type serviceType) =>
+		_serviceScope.Value.ServiceProvider.GetService(serviceType);
 
 	public IServiceProvider CloneServices(Action<IServiceCollection>? configure)
 	{

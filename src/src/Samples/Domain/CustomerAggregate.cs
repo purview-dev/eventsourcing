@@ -9,7 +9,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// Simple aggregate demonstrating basic customer management.
 /// Shows: single-property events, string manipulation, validation.
 /// </summary>
-[GenerateAggregate]
+[Aggregate]
 [ZodSchema]
 public sealed partial class CustomerAggregate : AggregateBase
 {
@@ -27,7 +27,11 @@ public sealed partial class CustomerAggregate : AggregateBase
 	/// for each field that has actually changed. Pass <see langword="null"/> for any field
 	/// that should remain unchanged. To clear the phone number, use <see cref="ChangePhoneNumber"/> directly.
 	/// </summary>
-	public CustomerAggregate UpdateDetails(string? name = null, string? email = null, string? phoneNumber = null)
+	public CustomerAggregate UpdateDetails(
+		string? name = null,
+		string? email = null,
+		string? phoneNumber = null
+	)
 	{
 		if (name is not null)
 			ChangeName(name);
@@ -43,21 +47,25 @@ public sealed partial class CustomerAggregate : AggregateBase
 
 	// Generated methods.
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate Deactivate();
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate Reactivate();
 
-	[GenerateAggregateEvent]
-	public partial CustomerAggregate RegisterCustomer(string name, string email, bool isActive = true);
+	[Event]
+	public partial CustomerAggregate RegisterCustomer(
+		string name,
+		string email,
+		bool isActive = true
+	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate ChangeName(string name);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate ChangeEmail(string email);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate ChangePhoneNumber(string? phoneNumber);
 }

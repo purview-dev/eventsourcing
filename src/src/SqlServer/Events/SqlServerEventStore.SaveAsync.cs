@@ -22,7 +22,13 @@ partial class SqlServerEventStore<T>
 		CancellationToken cancellationToken = default
 	)
 	{
-		var operation = await SaveCoreAsync(aggregate, operationContext, null, null, cancellationToken);
+		var operation = await SaveCoreAsync(
+			aggregate,
+			operationContext,
+			null,
+			null,
+			cancellationToken
+		);
 		await operation.AfterCommitAsync(cancellationToken);
 		return operation.Result;
 	}
@@ -66,7 +72,8 @@ partial class SqlServerEventStore<T>
 
 		FulfilRequirements(aggregate);
 
-		var idempotencyId = operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
+		var idempotencyId =
+			operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
 		static SaveResult<T> ReturnSaveResult(
@@ -78,7 +85,9 @@ partial class SqlServerEventStore<T>
 
 		if (!validationResult.IsValid)
 		{
-			return new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, false, false, validationResult));
+			return new TransactionalSaveOperation<T>(
+				ReturnSaveResult(aggregate, false, false, validationResult)
+			);
 		}
 
 		if (aggregate.Details.Locked)
@@ -91,7 +100,11 @@ partial class SqlServerEventStore<T>
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
 			throw new MissingAggregateIdException(idempotencyId);
 
-		_eventStoreTelemetry.SaveCalled(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+		_eventStoreTelemetry.SaveCalled(
+			aggregate.Id(),
+			_aggregateTypeFullName,
+			aggregate.AggregateType
+		);
 		var activity = _eventStoreTelemetry.SaveAggregate(aggregate.Id(), _aggregateTypeFullName);
 
 		if (!aggregate.HasUnsavedEvents() && (additionalEvents?.Length ?? 0) == 0)
@@ -107,7 +120,10 @@ partial class SqlServerEventStore<T>
 		}
 
 		var isNew = aggregate.IsNew();
-		var changeEvents = aggregate.GetUnsavedEvents().Concat((additionalEvents ?? []).AsEnumerable()).ToArray();
+		var changeEvents = aggregate
+			.GetUnsavedEvents()
+			.Concat((additionalEvents ?? []).AsEnumerable())
+			.ToArray();
 
 		if (changeEvents.Length > _eventStoreOptions.Value.MaxEventCountOnSave)
 		{
@@ -126,13 +142,20 @@ partial class SqlServerEventStore<T>
 			{
 				var existing = connection is null
 					? await _client.GetByIdAsync(idempotencyMarkerId, cancellationToken)
-					: await _client.GetByIdAsync(idempotencyMarkerId, connection, transaction, cancellationToken);
+					: await _client.GetByIdAsync(
+						idempotencyMarkerId,
+						connection,
+						transaction,
+						cancellationToken
+					);
 
 				if (existing != null)
 				{
 					_eventStoreTelemetry.EventsAlreadyApplied(aggregate.Id(), idempotencyId);
 					activity?.Dispose();
-					return new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, true, true));
+					return new TransactionalSaveOperation<T>(
+						ReturnSaveResult(aggregate, true, true)
+					);
 				}
 			}
 #pragma warning disable CA1031
@@ -187,8 +210,13 @@ partial class SqlServerEventStore<T>
 				Timestamp = now,
 			};
 
-			var userId = ClaimsPrincipal.Current?.FindFirst(operationContext.ClaimIdentifier)?.Value;
-			if (operationContext.RequiresValidPrincipalIdentifier && string.IsNullOrWhiteSpace(userId))
+			var userId = ClaimsPrincipal
+				.Current?.FindFirst(operationContext.ClaimIdentifier)
+				?.Value;
+			if (
+				operationContext.RequiresValidPrincipalIdentifier
+				&& string.IsNullOrWhiteSpace(userId)
+			)
 				throw new NullReferenceException(
 					$"Missing ClaimsPrincipal identifier '{operationContext.ClaimIdentifier}'. Unable to save aggregate."
 				);
@@ -280,14 +308,25 @@ partial class SqlServerEventStore<T>
 						_eventStoreTelemetry.AggregateSaved(aggregate.AggregateType);
 						_eventStoreTelemetry.SaveCompleted(activity, changeEvents.Length);
 
-						await UpdateCacheAsync(aggregate, operationContext.CacheOptions, afterCommitCancellationToken);
+						await UpdateCacheAsync(
+							aggregate,
+							operationContext.CacheOptions,
+							afterCommitCancellationToken
+						);
 
 						if (
 							aggregate.Details.IsDeleted
-							&& operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete)
+							&& operationContext.NotificationMode.HasFlag(
+								NotificationModes.AfterDelete
+							)
 						)
-							await _aggregateChangeNotifier.AfterDeleteAsync(aggregate, afterCommitCancellationToken);
-						else if (operationContext.NotificationMode.HasFlag(NotificationModes.AfterSave))
+							await _aggregateChangeNotifier.AfterDeleteAsync(
+								aggregate,
+								afterCommitCancellationToken
+							);
+						else if (
+							operationContext.NotificationMode.HasFlag(NotificationModes.AfterSave)
+						)
 							await _aggregateChangeNotifier.AfterSaveAsync(
 								aggregate,
 								previousAggregateVersion,
@@ -323,12 +362,18 @@ partial class SqlServerEventStore<T>
 		}
 	}
 
-	async Task<ValidationResult> GuardAsync(T aggregate, CancellationToken cancellationToken = default)
+	async Task<ValidationResult> GuardAsync(
+		T aggregate,
+		CancellationToken cancellationToken = default
+	)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
 		return _validator == null
-			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(aggregate, cancellationToken)
+			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(
+				aggregate,
+				cancellationToken
+			)
 			: await _validator.ValidateAsync(aggregate, cancellationToken);
 	}
 
@@ -394,7 +439,7 @@ partial class SqlServerEventStore<T>
 
 			if (ex.Number is 2627 or 2601)
 			{
-				throw new Exceptions.ConcurrencyException(
+				throw new ConcurrencyException(
 					aggregate.Id(),
 					idempotencyId,
 					aggregate.Details.CurrentVersion,
@@ -402,7 +447,7 @@ partial class SqlServerEventStore<T>
 				);
 			}
 
-			throw new Exceptions.CommitException(
+			throw new CommitException(
 				aggregate.Id(),
 				idempotencyId,
 				aggregate.Details.CurrentVersion,
@@ -502,7 +547,11 @@ partial class SqlServerEventStore<T>
 			catch (Exception ex)
 #pragma warning restore CA1031
 			{
-				_eventStoreTelemetry.CacheRemovalFailure(aggregate.Id(), _aggregateTypeFullName, ex);
+				_eventStoreTelemetry.CacheRemovalFailure(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					ex
+				);
 			}
 		});
 	}

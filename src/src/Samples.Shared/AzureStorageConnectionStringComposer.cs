@@ -30,7 +30,9 @@ public static class AzureStorageConnectionStringComposer
 		if (parts.Count == 0)
 			return string.Empty;
 
-		foreach (var key in parts.Keys.Except(AllowedKeys, StringComparer.OrdinalIgnoreCase).ToArray())
+		foreach (
+			var key in parts.Keys.Except(AllowedKeys, StringComparer.OrdinalIgnoreCase).ToArray()
+		)
 			parts.Remove(key);
 
 		if (
@@ -40,7 +42,10 @@ public static class AzureStorageConnectionStringComposer
 		)
 		{
 			var basePath = $"/{accountName}";
-			var trimmedPath = blobEndpoint.AbsolutePath.StartsWith(basePath + "/", StringComparison.OrdinalIgnoreCase)
+			var trimmedPath = blobEndpoint.AbsolutePath.StartsWith(
+				basePath + "/",
+				StringComparison.OrdinalIgnoreCase
+			)
 				? basePath
 				: blobEndpoint.AbsolutePath;
 
@@ -130,7 +135,10 @@ public static class AzureStorageConnectionStringComposer
 		if (string.IsNullOrWhiteSpace(value))
 			return string.Empty;
 
-		var parts = value.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+		var parts = value.Split(
+			';',
+			StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
+		);
 
 		return parts.Length == 0 ? string.Empty : string.Join(';', parts);
 	}

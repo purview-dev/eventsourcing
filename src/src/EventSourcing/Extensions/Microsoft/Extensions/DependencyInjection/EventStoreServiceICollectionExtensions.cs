@@ -24,10 +24,16 @@ public static class EventStoreServiceICollectionExtensions
 				.AddSingleton<IAggregateEventNameMapper, AggregateEventNameMapper>()
 				.AddAggregateChangeFeedNotifierTelemetry()
 				.AddScoped<IAggregateRequirementsManager, AggregateRequiredServiceManager>()
-				.AddScoped(typeof(IAggregateChangeFeedNotifier<>), typeof(AggregateChangeFeedNotifier<>))
+				.AddScoped(
+					typeof(IAggregateChangeFeedNotifier<>),
+					typeof(AggregateChangeFeedNotifier<>)
+				)
 				.AddSingleton<IEventUpcasterRegistry, EventUpcasterRegistry>();
 
-			services.TryAddSingleton<IEventStoreCorrelationIdProvider, ActivityEventStoreCorrelationIdProvider>();
+			services.TryAddSingleton<
+				IEventStoreCorrelationIdProvider,
+				ActivityEventStoreCorrelationIdProvider
+			>();
 			services.TryAddSingleton<IEventStoreTransactionFactory, EventStoreTransactionFactory>();
 
 			return services;
@@ -64,9 +70,10 @@ public static class EventStoreServiceICollectionExtensions
 		{
 			services
 				.AddSingleton<IEventUpcaster<TSource, TTarget>, TUpcaster>()
-				.AddSingleton<IEventUpcasterDescriptor>(sp => new EventUpcasterDescriptor<TSource, TTarget>(
-					sp.GetRequiredService<IEventUpcaster<TSource, TTarget>>()
-				));
+				.AddSingleton<IEventUpcasterDescriptor>(sp => new EventUpcasterDescriptor<
+					TSource,
+					TTarget
+				>(sp.GetRequiredService<IEventUpcaster<TSource, TTarget>>()));
 
 			return services;
 		}

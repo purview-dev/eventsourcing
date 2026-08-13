@@ -34,7 +34,8 @@ public sealed record class EventStoreOperationContext
 	/// <summary>
 	/// Gets or sets the default value for the <see cref="UseSnapshotCache"/>. Defaults to true.
 	/// </summary>
-	public static SnapshotCachingOptions UseDefaultCacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
+	public static SnapshotCachingOptions UseDefaultCacheMode { get; set; } =
+		SnapshotCachingOptions.GetAndStore;
 
 	/// <summary>
 	/// Used during the saving of aggregates.
@@ -59,7 +60,8 @@ public sealed record class EventStoreOperationContext
 	/// Gets/ sets a value indicating how the <see cref="IEventStore{T}"/>
 	/// uses the <see cref="IDistributedCache"/> during it's operations. Defaults to <see cref="SnapshotCachingOptions.GetAndStore"/>.
 	/// </summary>
-	public SnapshotCachingOptions SnapshotCacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
+	public SnapshotCachingOptions SnapshotCacheMode { get; set; } =
+		SnapshotCachingOptions.GetAndStore;
 
 	/// <summary>
 	/// Manages caching operations for the operation.
@@ -100,7 +102,8 @@ public sealed record class EventStoreOperationContext
 	/// If true, a valid <see cref="ClaimIdentifier"/> must be returned from <see cref="ClaimsPrincipal"/> or
 	/// an exception is thrown.
 	/// </summary>
-	public bool RequiresValidPrincipalIdentifier { get; set; } = RequiresValidPrincipalIdentifierDefault;
+	public bool RequiresValidPrincipalIdentifier { get; set; } =
+		RequiresValidPrincipalIdentifierDefault;
 
 	/// <summary>
 	/// The claim identifier to use when retrieving the Id from the <see cref="ClaimsPrincipal"/>.
@@ -115,7 +118,9 @@ public sealed record class EventStoreOperationContext
 	/// <summary>
 	/// Sets the snapshot strategy to use for <typeparamref name="TAggregate"/> for this operation.
 	/// </summary>
-	public EventStoreOperationContext SetSnapshotStrategy<TAggregate>(ISnapshotStrategy<TAggregate> strategy)
+	public EventStoreOperationContext SetSnapshotStrategy<TAggregate>(
+		ISnapshotStrategy<TAggregate> strategy
+	)
 		where TAggregate : class, IAggregate, new()
 	{
 		ArgumentNullException.ThrowIfNull(strategy);

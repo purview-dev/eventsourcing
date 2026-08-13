@@ -44,7 +44,10 @@ sealed class CreateModel(IQueryableEventStore store) : PageModel
 		var location = await store.GetAsync<LocationAggregate>(locationId, ct);
 		if (location is null || location.Details.IsDeleted)
 		{
-			ModelState.AddModelError(nameof(LocationId), "Please select a valid physical location.");
+			ModelState.AddModelError(
+				nameof(LocationId),
+				"Please select a valid physical location."
+			);
 			await LoadLocationsAsync(ct);
 			return Page();
 		}
@@ -64,7 +67,13 @@ sealed class CreateModel(IQueryableEventStore store) : PageModel
 		}
 
 		var item = await store.CreateAsync<InventoryAggregate>(cancellationToken: ct);
-		item.Create(productId, productName, location.LocationId, location.LocationName, InitialQuantity);
+		item.Create(
+			productId,
+			productName,
+			location.LocationId,
+			location.LocationName,
+			InitialQuantity
+		);
 		await store.SaveAsync(item, ct);
 
 		TempData["Success"] = $"Inventory item '{item.ProductName}' created.";

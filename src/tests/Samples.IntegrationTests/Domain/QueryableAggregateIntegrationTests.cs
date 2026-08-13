@@ -24,8 +24,11 @@ public sealed class QueryableAggregateIntegrationTests(SqlServerSnapshotEventSto
 		var search = "a";
 		var showInactive = false;
 		Expression<Func<CustomerAggregate, bool>> where = c =>
-			(string.IsNullOrEmpty(search) || ((string)c.Name).Contains(search) || ((string)c.Email).Contains(search))
-			&& (showInactive || c.IsActive);
+			(
+				string.IsNullOrEmpty(search)
+				|| ((string)c.Name).Contains(search)
+				|| ((string)c.Email).Contains(search)
+			) && (showInactive || c.IsActive);
 
 		var result = await store.QueryAsync(
 			where,
@@ -79,8 +82,18 @@ public sealed class QueryableAggregateIntegrationTests(SqlServerSnapshotEventSto
 	{
 		var store = fixture.CreateSnapshotStore<InventoryAggregate>();
 
-		var highAvailable = NewInventory("prod-alpha", "Alpha Widget", quantityOnHand: 20, reserved: 2);
-		var lowAvailable = NewInventory("prod-beta", "Beta Widget", quantityOnHand: 10, reserved: 6);
+		var highAvailable = NewInventory(
+			"prod-alpha",
+			"Alpha Widget",
+			quantityOnHand: 20,
+			reserved: 2
+		);
+		var lowAvailable = NewInventory(
+			"prod-beta",
+			"Beta Widget",
+			quantityOnHand: 10,
+			reserved: 6
+		);
 		var nonMatch = NewInventory("prod-gamma", "Gamma Gizmo", quantityOnHand: 50, reserved: 0);
 
 		await store.SnapshotAsync(highAvailable, cancellationToken);
@@ -110,8 +123,18 @@ public sealed class QueryableAggregateIntegrationTests(SqlServerSnapshotEventSto
 	{
 		var store = fixture.CreateSnapshotStore<InventoryAggregate>();
 
-		var highAvailable = NewInventory("prod-alpha", "Alpha Widget", quantityOnHand: 20, reserved: 2);
-		var lowAvailable = NewInventory("prod-beta", "Beta Widget", quantityOnHand: 10, reserved: 6);
+		var highAvailable = NewInventory(
+			"prod-alpha",
+			"Alpha Widget",
+			quantityOnHand: 20,
+			reserved: 2
+		);
+		var lowAvailable = NewInventory(
+			"prod-beta",
+			"Beta Widget",
+			quantityOnHand: 10,
+			reserved: 6
+		);
 
 		await store.SnapshotAsync(highAvailable, cancellationToken);
 		await store.SnapshotAsync(lowAvailable, cancellationToken);
@@ -146,7 +169,8 @@ public sealed class QueryableAggregateIntegrationTests(SqlServerSnapshotEventSto
 #pragma warning disable CA1308 // intentional: mirror page model query shape
 		var search = "widget".ToLowerInvariant();
 		Expression<Func<InventoryAggregate, bool>> where = i =>
-			i.ProductId.ToLowerInvariant().Contains(search) || i.ProductName.ToLowerInvariant().Contains(search);
+			i.ProductId.ToLowerInvariant().Contains(search)
+			|| i.ProductName.ToLowerInvariant().Contains(search);
 #pragma warning restore CA1308
 #pragma warning restore CA1862
 
@@ -206,7 +230,9 @@ public sealed class QueryableAggregateIntegrationTests(SqlServerSnapshotEventSto
 		await Assert.That(totalCount).IsEqualTo(2);
 		await Assert.That(page1.Results).Count().IsEqualTo(1);
 		await Assert.That(page2.Results).Count().IsEqualTo(1);
-		await Assert.That(page1.Results[0].Details.SavedVersion).IsGreaterThan(page2.Results[0].Details.SavedVersion);
+		await Assert
+			.That(page1.Results[0].Details.SavedVersion)
+			.IsGreaterThan(page2.Results[0].Details.SavedVersion);
 		await Assert.That(page1.Results[0].CustomerId).IsEqualTo(selectedCustomerId);
 		await Assert.That(page2.Results[0].CustomerId).IsEqualTo(selectedCustomerId);
 	}
@@ -222,7 +248,12 @@ public sealed class QueryableAggregateIntegrationTests(SqlServerSnapshotEventSto
 		return customer;
 	}
 
-	static InventoryAggregate NewInventory(string productId, string productName, int quantityOnHand, int reserved)
+	static InventoryAggregate NewInventory(
+		string productId,
+		string productName,
+		int quantityOnHand,
+		int reserved
+	)
 	{
 		var inventory = new InventoryAggregate();
 		inventory.Details.Id = $"{Guid.NewGuid()}";

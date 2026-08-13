@@ -4,7 +4,8 @@ using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.Samples.Web.Pages.BackOffice;
 
-sealed class IndexModel(IQueryableEventStore inventoryStore, IQueryableEventStore orderStore) : PageModel
+sealed class IndexModel(IQueryableEventStore inventoryStore, IQueryableEventStore orderStore)
+	: PageModel
 {
 	public int UniqueProductCount { get; private set; }
 	public long InventoryItemCount { get; private set; }
@@ -29,13 +30,20 @@ sealed class IndexModel(IQueryableEventStore inventoryStore, IQueryableEventStor
 		InventoryItemCount = await inventoryStore.CountAsync<InventoryAggregate>(null, ct);
 		TotalAvailableStock = allItems.Sum(i => i.AvailableQuantity);
 
-		DraftOrderCount = await orderStore.CountAsync<OrderAggregate>(o => o.Status.Value == OrderStatusCode.Draft, ct);
+		DraftOrderCount = await orderStore.CountAsync<OrderAggregate>(
+			o => o.Status.Value == OrderStatusCode.Draft,
+			ct
+		);
 		ActiveOrderCount = await orderStore.CountAsync<OrderAggregate>(
-			o => o.Status.Value == OrderStatusCode.Confirmed || o.Status.Value == OrderStatusCode.Shipped,
+			o =>
+				o.Status.Value == OrderStatusCode.Confirmed
+				|| o.Status.Value == OrderStatusCode.Shipped,
 			ct
 		);
 		CompletedOrderCount = await orderStore.CountAsync<OrderAggregate>(
-			o => o.Status.Value == OrderStatusCode.Completed || o.Status.Value == OrderStatusCode.Cancelled,
+			o =>
+				o.Status.Value == OrderStatusCode.Completed
+				|| o.Status.Value == OrderStatusCode.Cancelled,
 			ct
 		);
 	}

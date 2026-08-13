@@ -20,5 +20,6 @@ public sealed class FulfilmentResult
 			Inventory = inventory,
 		};
 
-	public static FulfilmentResult Fail(string message) => new() { Succeeded = false, ErrorMessage = message };
+	public static FulfilmentResult Fail(string message) =>
+		new() { Succeeded = false, ErrorMessage = message };
 }

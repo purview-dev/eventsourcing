@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
@@ -7,12 +7,17 @@ namespace Purview.EventSourcing.MongoDB.StorageClient;
 
 partial class MongoDBClient
 {
-	public async Task SubmitBatchAsync(BatchOperation operation, CancellationToken cancellationToken = default)
+	public async Task SubmitBatchAsync(
+		BatchOperation operation,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var collection = GetCollection<BsonDocument>().WithWriteConcern(WriteConcern.WMajority);
 		try
 		{
-			using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
+			using var session = await _client.StartSessionAsync(
+				cancellationToken: cancellationToken
+			);
 
 			TransactionOptions transactionOptions = new(writeConcern: WriteConcern.WMajority);
 			await session.WithTransactionAsync(
@@ -22,6 +27,7 @@ partial class MongoDBClient
 					{
 						foreach (var op in operation.GetActions())
 						{
+#pragma warning disable IDE0010 // Add missing cases
 							switch (op.ActionType)
 							{
 								case TransactionActionType.Insert:
@@ -52,6 +58,7 @@ partial class MongoDBClient
 									);
 									break;
 							}
+#pragma warning restore IDE0010 // Add missing cases
 						}
 
 						await s.CommitTransactionAsync(ct);
@@ -69,9 +76,17 @@ partial class MongoDBClient
 			);
 		}
 		catch (NotSupportedException ex)
-			when (ex.Message.Contains("do not support transactions", StringComparison.OrdinalIgnoreCase))
+			when (ex.Message.Contains(
+					"do not support transactions",
+					StringComparison.OrdinalIgnoreCase
+				)
+			)
 		{
-			await SubmitBatchWithoutTransactionAsync(collection, operation.GetActions(), cancellationToken);
+			await SubmitBatchWithoutTransactionAsync(
+				collection,
+				operation.GetActions(),
+				cancellationToken
+			);
 		}
 	}
 
@@ -83,7 +98,9 @@ partial class MongoDBClient
 		var collection = GetCollection<BsonDocument>().WithWriteConcern(WriteConcern.WMajority);
 		try
 		{
-			using var session = await _client.StartSessionAsync(cancellationToken: cancellationToken);
+			using var session = await _client.StartSessionAsync(
+				cancellationToken: cancellationToken
+			);
 
 			TransactionOptions transactionOptions = new(writeConcern: WriteConcern.WMajority);
 			await session.WithTransactionAsync(
@@ -119,7 +136,11 @@ partial class MongoDBClient
 			);
 		}
 		catch (NotSupportedException ex)
-			when (ex.Message.Contains("do not support transactions", StringComparison.OrdinalIgnoreCase))
+			when (ex.Message.Contains(
+					"do not support transactions",
+					StringComparison.OrdinalIgnoreCase
+				)
+			)
 		{
 			foreach (var id in entityIds)
 			{
@@ -142,10 +163,14 @@ partial class MongoDBClient
 	{
 		foreach (var op in actions)
 		{
+#pragma warning disable IDE0010 // Add missing cases
 			switch (op.ActionType)
 			{
 				case TransactionActionType.Insert:
-					await collection.InsertOneAsync(op.Document.ToBsonDocument(), cancellationToken: cancellationToken);
+					await collection.InsertOneAsync(
+						op.Document.ToBsonDocument(),
+						cancellationToken: cancellationToken
+					);
 					break;
 				case TransactionActionType.Update:
 					var d = op.Document.ToBsonDocument();
@@ -164,19 +189,31 @@ partial class MongoDBClient
 					);
 					break;
 			}
+#pragma warning restore IDE0010 // Add missing cases
 		}
 	}
 
-	public async Task<T?> GetAsync<T>(FilterDefinition<T> predicate, CancellationToken cancellationToken = default)
+	public async Task<T?> GetAsync<T>(
+		FilterDefinition<T> predicate,
+		CancellationToken cancellationToken = default
+	)
 		where T : class
 	{
 		var collection = GetCollection<T>();
-		var findResult = await collection.FindAsync(predicate, new FindOptions<T, T> { Limit = 1 }, cancellationToken);
+		var findResult = await collection.FindAsync(
+			predicate,
+			new FindOptions<T, T> { Limit = 1 },
+			cancellationToken
+		);
 
 		return await findResult.SingleOrDefaultAsync(cancellationToken);
 	}
 
-	public Task<T?> GetAsync<T>(string id, int? entityType, CancellationToken cancellationToken = default)
+	public Task<T?> GetAsync<T>(
+		string id,
+		int? entityType,
+		CancellationToken cancellationToken = default
+	)
 		where T : class => GetAsync(BuildPredicate<T>(id, entityType), cancellationToken);
 
 	public async Task<T?> GetAsync<T>(
@@ -192,7 +229,9 @@ partial class MongoDBClient
 			options: new() { Limit = 1 },
 			cancellationToken: cancellationToken
 		);
-		return await result.MoveNextAsync(cancellationToken) ? result.Current.FirstOrDefault() : null;
+		return await result.MoveNextAsync(cancellationToken)
+			? result.Current.FirstOrDefault()
+			: null;
 	}
 
 	public async Task<bool> UpsertAsync<T>(
@@ -247,7 +286,10 @@ partial class MongoDBClient
 	public async Task InsertAsync<T>(T[] documents, CancellationToken cancellationToken = default)
 		where T : class => await InsertAsync(documents.AsEnumerable(), cancellationToken);
 
-	public async Task InsertAsync<T>(IEnumerable<T> documents, CancellationToken cancellationToken = default)
+	public async Task InsertAsync<T>(
+		IEnumerable<T> documents,
+		CancellationToken cancellationToken = default
+	)
 		where T : class
 	{
 		var collection = GetCollection<T>();
@@ -255,7 +297,10 @@ partial class MongoDBClient
 		await collection.InsertManyAsync(documents, null, cancellationToken);
 	}
 
-	public async Task DeleteAsync<T>(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
+	public async Task DeleteAsync<T>(
+		Expression<Func<T, bool>> predicate,
+		CancellationToken cancellationToken = default
+	)
 		where T : class
 	{
 		var collection = GetCollection<T>();
@@ -263,7 +308,10 @@ partial class MongoDBClient
 		await collection.DeleteOneAsync(predicate, cancellationToken);
 	}
 
-	public async Task DeleteAsync<T>(FilterDefinition<T> predicate, CancellationToken cancellationToken = default)
+	public async Task DeleteAsync<T>(
+		FilterDefinition<T> predicate,
+		CancellationToken cancellationToken = default
+	)
 		where T : class
 	{
 		var collection = GetCollection<T>();

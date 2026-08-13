@@ -21,7 +21,10 @@ public interface IEventStore
 	/// <param name="aggregateId">Optional, the Id of the <typeparamref name="T">aggregate.</typeparamref>.</param>
 	/// <param name="cancellationToken">The stopping token.</param>
 	/// <returns>A new <see cref="IAggregate"/> of <typeparamref name="T"/>.</returns>
-	Task<T> CreateAsync<T>(string? aggregateId = null, CancellationToken cancellationToken = default)
+	Task<T> CreateAsync<T>(
+		string? aggregateId = null,
+		CancellationToken cancellationToken = default
+	)
 		where T : class, IAggregate, new();
 
 	/// <summary>
@@ -150,7 +153,10 @@ public interface IEventStore
 	/// <param name="includeDeleted">Indicates if the results should contain soft-deleted aggregates or not.</param>
 	/// <param name="cancellationToken">The stopping token.</param>
 	/// <returns>The aggregate Id available.</returns>
-	IAsyncEnumerable<string> GetAggregateIdsAsync<T>(bool includeDeleted, CancellationToken cancellationToken = default)
+	IAsyncEnumerable<string> GetAggregateIdsAsync<T>(
+		bool includeDeleted,
+		CancellationToken cancellationToken = default
+	)
 		where T : class, IAggregate, new();
 
 	/// <summary>
@@ -160,7 +166,10 @@ public interface IEventStore
 	/// <param name="cancellationToken">The stopping token.</param>
 	/// <returns>A <see cref="ExistsState"/> that determines the existence (in either a deleted or non-deleted state),
 	/// or if it exists at all. If the aggregate does exist, it's version is also returned.</returns>
-	Task<ExistsState> ExistsAsync<T>(string aggregateId, CancellationToken cancellationToken = default)
+	Task<ExistsState> ExistsAsync<T>(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	)
 		where T : class, IAggregate, new();
 
 	/// <summary>

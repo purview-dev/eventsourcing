@@ -20,7 +20,10 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(aggregate).IsNotNull();
 
 		// Act
-		var result = await eventStore.RestoreAsync(aggregate!, cancellationToken: cancellationToken);
+		var result = await eventStore.RestoreAsync(
+			aggregate!,
+			cancellationToken: cancellationToken
+		);
 
 		// Assert
 		await Assert.That(result).IsTrue();

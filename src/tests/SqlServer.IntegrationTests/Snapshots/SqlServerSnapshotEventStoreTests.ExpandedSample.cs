@@ -45,7 +45,9 @@ partial class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task CountAsync_GivenNoMatchingAggregates_ReturnsZero(CancellationToken cancellationToken)
+	public async Task CountAsync_GivenNoMatchingAggregates_ReturnsZero(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var store = fixture.CreateSnapshotStore<PersistenceAggregate>();
@@ -57,7 +59,10 @@ partial class SqlServerSnapshotEventStoreTests
 		await Assert.That(saveResult).IsTrue();
 
 		// Act
-		var count = await store.CountAsync(m => m.IncrementInt32 == -1, cancellationToken: cancellationToken);
+		var count = await store.CountAsync(
+			m => m.IncrementInt32 == -1,
+			cancellationToken: cancellationToken
+		);
 
 		// Assert
 		await Assert.That(count).IsEqualTo(0);
@@ -137,7 +142,9 @@ partial class SqlServerSnapshotEventStoreTests
 
 		// Act
 		List<PersistenceAggregate> aggregates = [];
-		await foreach (var aggregate in store.GetListEnumerableAsync(cancellationToken: cancellationToken))
+		await foreach (
+			var aggregate in store.GetListEnumerableAsync(cancellationToken: cancellationToken)
+		)
 			aggregates.Add(aggregate);
 
 		// Assert
@@ -196,7 +203,10 @@ partial class SqlServerSnapshotEventStoreTests
 		await Assert.That(fromDb.ComplexTestType.StringProperty).IsEqualTo("complex-test");
 
 		// Also verify via LINQ query
-		var queried = await store.SingleOrDefaultAsync(m => m.Int32Value == 42, cancellationToken: cancellationToken);
+		var queried = await store.SingleOrDefaultAsync(
+			m => m.Int32Value == 42,
+			cancellationToken: cancellationToken
+		);
 		await Assert.That(queried).IsNotNull();
 		await Assert.That(queried!.Id()).IsEqualTo(aggregateId);
 		await Assert.That(queried.ComplexTestType).IsNotNull();
@@ -204,7 +214,9 @@ partial class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenMultipleSavesOfSameAggregate_UpdatesSnapshot(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenMultipleSavesOfSameAggregate_UpdatesSnapshot(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var store = fixture.CreateSnapshotStore<PersistenceAggregate>();

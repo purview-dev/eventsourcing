@@ -72,14 +72,18 @@ public sealed class SnapshotStrategyTests
 		var strategy = new IntervalSnapshotStrategy<TestAggregate>(1);
 
 		// Act & Assert
-		await Assert.That(() => strategy.ShouldSnapshot(null!, eventsApplied: 1)).Throws<ArgumentNullException>();
+		await Assert
+			.That(() => strategy.ShouldSnapshot(null!, eventsApplied: 1))
+			.Throws<ArgumentNullException>();
 	}
 
 	[Test]
 	[Arguments(0)]
 	[Arguments(-1)]
 	[Arguments(-100)]
-	public async Task IntervalStrategy_GivenIntervalLessThanOne_ThrowsArgumentOutOfRangeException(int interval)
+	public async Task IntervalStrategy_GivenIntervalLessThanOne_ThrowsArgumentOutOfRangeException(
+		int interval
+	)
 	{
 		// Act & Assert
 		await Assert
@@ -209,7 +213,9 @@ public sealed class SnapshotStrategyTests
 		var contextSelectorStrategy = new RecordingSnapshotStrategy { Result = true };
 		var context = new EventStoreOperationContext
 		{
-			SnapshotStrategySelector = new SnapshotStrategySelector().SetDefault(contextSelectorStrategy),
+			SnapshotStrategySelector = new SnapshotStrategySelector().SetDefault(
+				contextSelectorStrategy
+			),
 		};
 
 		var aggregate = CreateAggregate(savedVersion: 1);

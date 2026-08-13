@@ -45,7 +45,9 @@ public sealed class AdminPortalOptions
 			throw new InvalidOperationException("AdminPortalOptions.RoutePrefix cannot be empty.");
 
 		if (!RoutePrefix.StartsWith('/'))
-			throw new InvalidOperationException("AdminPortalOptions.RoutePrefix must start with '/'.");
+			throw new InvalidOperationException(
+				"AdminPortalOptions.RoutePrefix must start with '/'."
+			);
 
 		AdminFeatureOptions.Validate(Features);
 		Paging.Validate();
@@ -146,9 +148,13 @@ public sealed class AdminProjectionOptions
 	public void Validate()
 	{
 		if (MaxVersionsPerQuery < 1)
-			throw new InvalidOperationException("AdminProjectionOptions.MaxVersionsPerQuery must be >= 1.");
+			throw new InvalidOperationException(
+				"AdminProjectionOptions.MaxVersionsPerQuery must be >= 1."
+			);
 
 		if (MaxTimeRangePerQuery < TimeSpan.Zero)
-			throw new InvalidOperationException("AdminProjectionOptions.MaxTimeRangePerQuery cannot be negative.");
+			throw new InvalidOperationException(
+				"AdminProjectionOptions.MaxTimeRangePerQuery cannot be negative."
+			);
 	}
 }

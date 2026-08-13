@@ -12,7 +12,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// - Validation with DataAnnotations
 /// - Collection management (line items)
 /// </summary>
-[GenerateAggregate]
+[Aggregate]
 public sealed partial class OrderAggregate : AggregateBase
 {
 	public string CustomerId { get; private set; } = default!;
@@ -50,9 +50,11 @@ public sealed partial class OrderAggregate : AggregateBase
 
 	public OrderAggregate ConfirmOrder() => SetStatusCode(status: OrderStatusCode.Confirmed);
 
-	public OrderAggregate ShipOrder() => ShipOrder(status: OrderStatusCode.Shipped, DateTimeOffset.UtcNow);
+	public OrderAggregate ShipOrder() =>
+		ShipOrder(status: OrderStatusCode.Shipped, DateTimeOffset.UtcNow);
 
-	public OrderAggregate CompleteOrder() => CompleteOrder(status: OrderStatusCode.Completed, DateTimeOffset.UtcNow);
+	public OrderAggregate CompleteOrder() =>
+		CompleteOrder(status: OrderStatusCode.Completed, DateTimeOffset.UtcNow);
 
 	public OrderAggregate CancelOrder() => SetStatusCode(status: OrderStatusCode.Cancelled);
 
@@ -60,7 +62,12 @@ public sealed partial class OrderAggregate : AggregateBase
 	/// Merges or adds a line item, handling duplicate products by increasing quantity.
 	/// Validates inputs and order status.
 	/// </summary>
-	public OrderAggregate AddLineItem(string productId, string productName, int quantity, decimal unitPrice)
+	public OrderAggregate AddLineItem(
+		string productId,
+		string productName,
+		int quantity,
+		decimal unitPrice
+	)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(productId);
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
@@ -68,7 +75,9 @@ public sealed partial class OrderAggregate : AggregateBase
 
 		var existingLineItem = LineItems.FirstOrDefault(li => li.ProductId == productId);
 		var updatedLineItems = LineItems
-			.Select(li => li.ProductId == productId ? li with { Quantity = li.Quantity + quantity } : li)
+			.Select(li =>
+				li.ProductId == productId ? li with { Quantity = li.Quantity + quantity } : li
+			)
 			.ToList();
 
 		if (existingLineItem is null)
@@ -99,29 +108,43 @@ public sealed partial class OrderAggregate : AggregateBase
 	static decimal CalculateTotalAmount(IEnumerable<OrderLineItem> lineItems) =>
 		lineItems.Sum(lineItem => lineItem.Quantity * lineItem.UnitPrice);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate CreateOrder(string customerId);
 
-	[GenerateAggregateEvent]
-	public partial OrderAggregate AddLineItem(EventStoreList<OrderLineItem> lineItems, decimal totalAmount);
+	[Event]
+	public partial OrderAggregate AddLineItem(
+		EventStoreList<OrderLineItem> lineItems,
+		decimal totalAmount
+	);
 
-	[GenerateAggregateEvent]
-	public partial OrderAggregate RemoveLineItem(EventStoreList<OrderLineItem> lineItems, decimal totalAmount);
+	[Event]
+	public partial OrderAggregate RemoveLineItem(
+		EventStoreList<OrderLineItem> lineItems,
+		decimal totalAmount
+	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate SetShippingAddress(string? shippingAddress);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate UpdateNotes(string? notes);
 
-	[GenerateAggregateEvent]
+	[Event]
 	private partial OrderAggregate SetStatusCode(OrderStatusCode status);
 
-	[GenerateAggregateEvent]
+	[Event]
 	private partial OrderAggregate ShipOrder(OrderStatusCode status, DateTimeOffset shippedAt);
 
-	[GenerateAggregateEvent]
-	private partial OrderAggregate CompleteOrder(OrderStatusCode status, DateTimeOffset completedAt);
+	[Event]
+	private partial OrderAggregate CompleteOrder(
+		OrderStatusCode status,
+		DateTimeOffset completedAt
+	);
 }
 
-public sealed record OrderLineItem(string ProductId, string ProductName, int Quantity, decimal UnitPrice);
+public sealed record OrderLineItem(
+	string ProductId,
+	string ProductName,
+	int Quantity,
+	decimal UnitPrice
+);

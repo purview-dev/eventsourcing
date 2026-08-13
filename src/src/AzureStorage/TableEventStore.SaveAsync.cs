@@ -36,7 +36,8 @@ partial class TableEventStore<T>
 
 		FulfilRequirements(aggregate);
 
-		var idempotencyId = operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
+		var idempotencyId =
+			operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
 		static SaveResult<T> ReturnSaveResult(
@@ -59,7 +60,11 @@ partial class TableEventStore<T>
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
 			throw new Exceptions.MissingAggregateIdException(idempotencyId);
 
-		_eventStoreTelemetry.SaveCalled(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+		_eventStoreTelemetry.SaveCalled(
+			aggregate.Id(),
+			_aggregateTypeFullName,
+			aggregate.AggregateType
+		);
 		if (!aggregate.HasUnsavedEvents() && (additionalEvents?.Length ?? 0) == 0)
 		{
 			_eventStoreTelemetry.SaveContainedNoChanges(
@@ -72,8 +77,15 @@ partial class TableEventStore<T>
 		}
 
 		var isNew = aggregate.IsNew();
-		var changeEvents = aggregate.GetUnsavedEvents().Concat((additionalEvents ?? []).AsEnumerable()).ToArray();
-		var idempotencyMarkerOperation = CreateIdempotencyMarkerOperation(aggregate, idempotencyId, changeEvents);
+		var changeEvents = aggregate
+			.GetUnsavedEvents()
+			.Concat((additionalEvents ?? []).AsEnumerable())
+			.ToArray();
+		var idempotencyMarkerOperation = CreateIdempotencyMarkerOperation(
+			aggregate,
+			idempotencyId,
+			changeEvents
+		);
 
 		if (changeEvents.Length > _eventStoreOptions.Value.MaxEventCountOnSave)
 			throw new ArgumentOutOfRangeException(
@@ -131,8 +143,13 @@ partial class TableEventStore<T>
 			else
 				batchOperation.Update(streamEntity, merge: false);
 
-			var userId = ClaimsPrincipal.Current?.FindFirst(operationContext.ClaimIdentifier)?.Value;
-			if (operationContext.RequiresValidPrincipalIdentifier && string.IsNullOrWhiteSpace(userId))
+			var userId = ClaimsPrincipal
+				.Current?.FindFirst(operationContext.ClaimIdentifier)
+				?.Value;
+			if (
+				operationContext.RequiresValidPrincipalIdentifier
+				&& string.IsNullOrWhiteSpace(userId)
+			)
 				throw new NullReferenceException(
 					$"Missing ClaimsPrincipal identifier '{operationContext.ClaimIdentifier}'. Unable to save aggregate."
 				);
@@ -167,7 +184,9 @@ partial class TableEventStore<T>
 						idempotencyMarkerOperation.RowKey
 					);
 
-					serializedEventPointer.EventType = _eventNameMapper.GetName<T>(largeEventPointer);
+					serializedEventPointer.EventType = _eventNameMapper.GetName<T>(
+						largeEventPointer
+					);
 
 					batchOperation.Add(serializedEventPointer);
 					largeChangeEvents.Add(eventEntity.RowKey, changeEvent);
@@ -206,9 +225,17 @@ partial class TableEventStore<T>
 				await CreateSnapshotAsync(aggregate, cancellationToken);
 
 			if (changeEvents.OfType<Deleted>().Any())
-				_eventStoreTelemetry.AggregateDeleted(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+				_eventStoreTelemetry.AggregateDeleted(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					aggregate.AggregateType
+				);
 			else if (changeEvents.OfType<Restored>().Any())
-				_eventStoreTelemetry.AggregateRestored(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+				_eventStoreTelemetry.AggregateRestored(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					aggregate.AggregateType
+				);
 
 			_eventStoreTelemetry.SavedAggregate(
 				aggregate.Id(),
@@ -221,10 +248,18 @@ partial class TableEventStore<T>
 			await UpdateCacheAsync(aggregate, operationContext.CacheOptions);
 
 			// ...or here.
-			if (aggregate.Details.IsDeleted && operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete))
+			if (
+				aggregate.Details.IsDeleted
+				&& operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete)
+			)
 				await _aggregateChangeNotifier.AfterDeleteAsync(aggregate);
 			else if (operationContext.NotificationMode.HasFlag(NotificationModes.AfterSave))
-				await _aggregateChangeNotifier.AfterSaveAsync(aggregate, previousAggregateVersion, isNew, changeEvents);
+				await _aggregateChangeNotifier.AfterSaveAsync(
+					aggregate,
+					previousAggregateVersion,
+					isNew,
+					changeEvents
+				);
 		}
 		catch (Exception ex)
 		{
@@ -242,12 +277,18 @@ partial class TableEventStore<T>
 		return ReturnSaveResult(aggregate, true, false);
 	}
 
-	async Task<ValidationResult> GuardAsync(T aggregate, CancellationToken cancellationToken = default)
+	async Task<ValidationResult> GuardAsync(
+		T aggregate,
+		CancellationToken cancellationToken = default
+	)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
 		return _validator == null
-			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(aggregate, cancellationToken)
+			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(
+				aggregate,
+				cancellationToken
+			)
 			: await _validator.ValidateAsync(aggregate, cancellationToken);
 	}
 
@@ -355,9 +396,14 @@ partial class TableEventStore<T>
 			// idx 1: StreamEntity - Add or Update (merge: false)
 			// idx x: Events - Add
 
-			var batchResults = await _tableClient.SubmitBatchAsync(batchOperation, cancellationToken);
+			var batchResults = await _tableClient.SubmitBatchAsync(
+				batchOperation,
+				cancellationToken
+			);
 
-			aggregate.Details.Etag = batchResults.Responses[useIdempotencyMarker ? 1 : 0].Headers.ETag?.ToString();
+			aggregate.Details.Etag = batchResults
+				.Responses[useIdempotencyMarker ? 1 : 0]
+				.Headers.ETag?.ToString();
 
 			var currentVersion = aggregate.Details.CurrentVersion;
 
@@ -367,7 +413,12 @@ partial class TableEventStore<T>
 		}
 		catch (RequestFailedException ex)
 		{
-			_eventStoreTelemetry.SaveFailedAtStorage(aggregate.Id(), _aggregateTypeFullName, ex.Status, ex);
+			_eventStoreTelemetry.SaveFailedAtStorage(
+				aggregate.Id(),
+				_aggregateTypeFullName,
+				ex.Status,
+				ex
+			);
 
 			var statusCode = (HttpStatusCode)ex.Status;
 
@@ -439,12 +490,24 @@ partial class TableEventStore<T>
 		var snapshotName = GenerateSnapshotBlobName(aggregate.Id());
 
 		using MemoryStream content = new();
-		using (StreamWriter writer = new(content, Encoding.UTF8, SerializationBufferSize, leaveOpen: true))
+		using (
+			StreamWriter writer = new(
+				content,
+				Encoding.UTF8,
+				SerializationBufferSize,
+				leaveOpen: true
+			)
+		)
 			await writer.WriteAsync(snapshot);
 
 		content.Position = 0;
 
-		await _blobClient.UploadAsync(snapshotName, content, overwrite: true, cancellationToken: cancellationToken);
+		await _blobClient.UploadAsync(
+			snapshotName,
+			content,
+			overwrite: true,
+			cancellationToken: cancellationToken
+		);
 	}
 
 	EventEntity CreateSerializedEvent(
@@ -476,7 +539,11 @@ partial class TableEventStore<T>
 			catch (Exception ex)
 #pragma warning restore CA1031
 			{
-				_eventStoreTelemetry.CacheRemovalFailure(aggregate.Id(), _aggregateTypeFullName, ex);
+				_eventStoreTelemetry.CacheRemovalFailure(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					ex
+				);
 			}
 		});
 	}

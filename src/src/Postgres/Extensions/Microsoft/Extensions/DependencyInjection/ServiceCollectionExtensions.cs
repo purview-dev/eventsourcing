@@ -60,7 +60,10 @@ public static class ServiceCollectionExtensions
 				.AddTransient(typeof(INonQueryableEventStore<>), typeof(PostgresEventStore<>))
 				.AddTransient(typeof(IPostgresEventStore<>), typeof(PostgresEventStore<>))
 				.AddTransient<IEventStore, EventStoreFacade>();
-			services.TryAddSingleton<IPostgresEventStoreTransactionFactory, PostgresEventStoreTransactionFactory>();
+			services.TryAddSingleton<
+				IPostgresEventStoreTransactionFactory,
+				PostgresEventStoreTransactionFactory
+			>();
 
 			services.AddPostgresEventStoreTelemetry();
 
@@ -69,7 +72,9 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration.GetSection(PostgresEventStoreOptions.PostgresEventStore).Bind(options);
+						configuration
+							.GetSection(PostgresEventStoreOptions.PostgresEventStore)
+							.Bind(options);
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
 							options.ConnectionString = configuration.GetRequiredConnectionString([
@@ -100,15 +105,24 @@ public static class ServiceCollectionExtensions
 			);
 
 			services
-				.AddTransient(typeof(IQueryableEventStoreCore<>), typeof(PostgresSnapshotEventStore<>))
-				.AddTransient(typeof(IPostgresSnapshotEventStore<>), typeof(PostgresSnapshotEventStore<>))
+				.AddTransient(
+					typeof(IQueryableEventStoreCore<>),
+					typeof(PostgresSnapshotEventStore<>)
+				)
+				.AddTransient(
+					typeof(IPostgresSnapshotEventStore<>),
+					typeof(PostgresSnapshotEventStore<>)
+				)
 				.AddPostgresSnapshotEventStoreTelemetry();
 
 			services.TryAddTransient<IQueryableEventStore, QueryableEventStoreFacade>();
 
 			if (registerAsIEventStore)
 			{
-				services.AddTransient(typeof(IEventStoreCore<>), typeof(PostgresSnapshotEventStore<>));
+				services.AddTransient(
+					typeof(IEventStoreCore<>),
+					typeof(PostgresSnapshotEventStore<>)
+				);
 				services.TryAddTransient<IEventStore, EventStoreFacade>();
 			}
 
@@ -117,7 +131,9 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration.GetSection(PostgresSnapshotEventStoreOptions.PostgresEventStore).Bind(options);
+						configuration
+							.GetSection(PostgresSnapshotEventStoreOptions.PostgresEventStore)
+							.Bind(options);
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
 							options.ConnectionString = configuration.GetRequiredConnectionString([

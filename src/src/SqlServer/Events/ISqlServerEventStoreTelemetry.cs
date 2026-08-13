@@ -15,7 +15,11 @@ public interface ISqlServerEventStoreTelemetry
 	Activity? GetAggregate(string aggregateId, [Baggage] string aggregateTypeFullName);
 
 	[Activity]
-	Activity? GetAggregateAtVersion(string aggregateId, int version, [Baggage] string aggregateTypeFullName);
+	Activity? GetAggregateAtVersion(
+		string aggregateId,
+		int version,
+		[Baggage] string aggregateTypeFullName
+	);
 
 	[Activity]
 	Activity? SaveAggregate(string aggregateId, [Baggage] string aggregateTypeFullName);
@@ -66,10 +70,18 @@ public interface ISqlServerEventStoreTelemetry
 	);
 
 	[Log(LogLevel.Debug)]
-	void GetAggregateAtSpecificVersionStart(string aggregateId, int specificVersion, string aggregateTypeFullName);
+	void GetAggregateAtSpecificVersionStart(
+		string aggregateId,
+		int specificVersion,
+		string aggregateTypeFullName
+	);
 
 	[Log(LogLevel.Debug)]
-	void SaveContainedNoChanges(string aggregateId, string aggregateTypeFullName, string aggregateType);
+	void SaveContainedNoChanges(
+		string aggregateId,
+		string aggregateTypeFullName,
+		string aggregateType
+	);
 
 	[Log(LogLevel.Warning)]
 	void SkippedUnknownEvent(
@@ -91,10 +103,18 @@ public interface ISqlServerEventStoreTelemetry
 	);
 
 	[Log(LogLevel.Debug)]
-	void GetAggregateComplete(string aggregateId, string aggregateTypeFullName, long elapsedMilliseconds);
+	void GetAggregateComplete(
+		string aggregateId,
+		string aggregateTypeFullName,
+		long elapsedMilliseconds
+	);
 
 	[Log(LogLevel.Error)]
-	void SnapshotDeserializationFailed(string aggregateId, string aggregateTypeFullName, Exception exception);
+	void SnapshotDeserializationFailed(
+		string aggregateId,
+		string aggregateTypeFullName,
+		Exception exception
+	);
 
 	[Log(LogLevel.Warning)]
 	void CacheGetFailure(string aggregateId, string aggregateTypeFullName, Exception exception);
@@ -135,10 +155,19 @@ public interface ISqlServerEventStoreTelemetry
 	void CacheRemovalFailure(string aggregateId, string aggregateTypeFullName, Exception exception);
 
 	[Log(LogLevel.Warning)]
-	void EventDeserializationFailed(string aggregateId, string aggregateTypeFullName, Exception exception);
+	void EventDeserializationFailed(
+		string aggregateId,
+		string aggregateTypeFullName,
+		Exception exception
+	);
 
 	[Log(LogLevel.Debug)]
-	void SavedAggregate(string aggregateId, string aggregateTypeFullName, int eventCount, string aggregateType);
+	void SavedAggregate(
+		string aggregateId,
+		string aggregateTypeFullName,
+		int eventCount,
+		string aggregateType
+	);
 
 	[Log(LogLevel.Error)]
 	void GetAggregateFailed(string aggregateId, string aggregateTypeFullName, Exception exception);
@@ -154,7 +183,12 @@ public interface ISqlServerEventStoreTelemetry
 	void StreamVersionNotFound(string aggregateId);
 
 	[Log(LogLevel.Debug)]
-	void StreamVersionFound(string aggregateId, int streamVersion, string aggregateType, bool isDeleted);
+	void StreamVersionFound(
+		string aggregateId,
+		int streamVersion,
+		string aggregateType,
+		bool isDeleted
+	);
 
 	[Log(LogLevel.Error)]
 	void GetStreamVersionFailed(string aggregateId, Exception exception);

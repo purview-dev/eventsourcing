@@ -5,7 +5,9 @@ using Purview.EventSourcing.Samples.ValueObjects;
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
-public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
+public sealed class ReportUploadAggregateSnapshotEventStoreTests(
+	SqlServerSnapshotEventStoreFixture fixture
+)
 {
 	static readonly Faker Faker = new();
 
@@ -22,12 +24,18 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 					}
 				),
 				ParserDetails = new(10, 5, 5, TimeSpan.FromMinutes(1)),
-				Projects = Faker.Make(2, i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")),
+				Projects = Faker.Make(
+					2,
+					i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")
+				),
 				VulnerabilityDetails = new VulnerabilityDetails(100, 10, 10, 20, 30, 40),
 			}
 		);
 
-	static ReportUploadAggregate CreateCompletedAggregate(string id, ReportSummary? reportSummary = null) =>
+	static ReportUploadAggregate CreateCompletedAggregate(
+		string id,
+		ReportSummary? reportSummary = null
+	) =>
 		TestHelpers.Aggregate<ReportUploadAggregate>(
 			id,
 			agg =>
@@ -79,7 +87,9 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 		await Assert.That(translatableQuery.Results).Count().IsEqualTo(1);
 		await Assert.That(translatableQuery.Results[0].Id()).IsEqualTo(id);
 		await Assert.That(translatableQuery.Results[0].ReportSummaryScalar).IsNotNull();
-		await Assert.That(translatableQuery.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines).IsEqualTo(5);
+		await Assert
+			.That(translatableQuery.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines)
+			.IsEqualTo(5);
 	}
 
 	[Test]
@@ -101,7 +111,9 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 		await Assert.That(query.Results).Count().IsEqualTo(1);
 		await Assert.That(query.Results[0].Id()).IsEqualTo(id);
 		await Assert.That(query.Results[0].ReportSummaryScalar).IsNotNull();
-		await Assert.That(query.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines).IsEqualTo(5);
+		await Assert
+			.That(query.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines)
+			.IsEqualTo(5);
 	}
 
 	[Test]
@@ -121,7 +133,9 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 				cancellationToken: cancellationToken
 			);
 
-		var unsupportedException = await Assert.That(UnsupportedAct).Throws<InvalidOperationException>();
+		var unsupportedException = await Assert
+			.That(UnsupportedAct)
+			.Throws<InvalidOperationException>();
 		await Assert.That(unsupportedException).IsNotNull();
 		await Assert.That(unsupportedException!.Message).Contains("could not be translated");
 

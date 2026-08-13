@@ -6,7 +6,9 @@ namespace Purview.EventSourcing.MongoDB.Events;
 
 partial class GenericMongoDBEventStoreTests<TAggregate>
 {
-	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(CancellationToken cancellationToken)
+	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -34,7 +36,12 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(aggregate.Details.IsDeleted).IsTrue();
 		await Assert.That(aggregate.Details.Locked).IsTrue();
 
-		await ValidateEntitiesDeletedAsync(aggregate, eventClient, snapshotClient, cancellationToken);
+		await ValidateEntitiesDeletedAsync(
+			aggregate,
+			eventClient,
+			snapshotClient,
+			cancellationToken
+		);
 	}
 
 	public async Task DeleteAsync_GivenAggregateExistsWithLargeEvent_PermanentlyDeletesAllData(
@@ -81,7 +88,12 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(aggregate.Details.IsDeleted).IsTrue();
 		await Assert.That(aggregate.Details.Locked).IsTrue();
 
-		await ValidateEntitiesDeletedAsync(aggregate, eventClient, snapshotClient, cancellationToken);
+		await ValidateEntitiesDeletedAsync(
+			aggregate,
+			eventClient,
+			snapshotClient,
+			cancellationToken
+		);
 	}
 
 	async Task ValidateEntitiesDeletedAsync(

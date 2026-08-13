@@ -10,7 +10,9 @@ static class IAsyncEnumerableExtensions
 {
 	extension<TSource>([NotNull] IAsyncEnumerable<TSource> source)
 	{
-		public async IAsyncEnumerable<TResult> SelectAsync<TResult>([NotNull] Func<TSource, Task<TResult>> selector)
+		public async IAsyncEnumerable<TResult> SelectAsync<TResult>(
+			[NotNull] Func<TSource, Task<TResult>> selector
+		)
 		{
 			await foreach (var item in source)
 			{
@@ -19,7 +21,9 @@ static class IAsyncEnumerableExtensions
 			}
 		}
 
-		public async IAsyncEnumerable<TResult> SelectAsync<TResult>([NotNull] Func<TSource, TResult> selector)
+		public async IAsyncEnumerable<TResult> SelectAsync<TResult>(
+			[NotNull] Func<TSource, TResult> selector
+		)
 		{
 			await foreach (var item in source)
 			{

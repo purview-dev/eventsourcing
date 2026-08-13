@@ -11,7 +11,9 @@ sealed class SourceGeneratorPerformanceRunner
 	[
 		MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
 		MetadataReference.CreateFromFile(typeof(Attribute).Assembly.Location),
-		MetadataReference.CreateFromFile(System.Reflection.Assembly.Load("System.Runtime").Location),
+		MetadataReference.CreateFromFile(
+			System.Reflection.Assembly.Load("System.Runtime").Location
+		),
 		MetadataReference.CreateFromFile(typeof(System.Text.Json.JsonSerializer).Assembly.Location),
 		MetadataReference.CreateFromFile(
 			System
@@ -22,11 +24,14 @@ sealed class SourceGeneratorPerformanceRunner
 		),
 	];
 
-	static readonly CSharpCompilationOptions CompilationOptions = new(OutputKind.DynamicallyLinkedLibrary);
+	static readonly CSharpCompilationOptions CompilationOptions = new(
+		OutputKind.DynamicallyLinkedLibrary
+	);
 
 	public PerformanceRun RunQuick() => Run("Quick", warmupIterations: 1, measurementIterations: 3);
 
-	public PerformanceRun RunBenchmark() => Run("Benchmark", warmupIterations: 3, measurementIterations: 12);
+	public PerformanceRun RunBenchmark() =>
+		Run("Benchmark", warmupIterations: 3, measurementIterations: 12);
 
 	PerformanceRun Run(string mode, int warmupIterations, int measurementIterations)
 	{
@@ -92,7 +97,11 @@ sealed class SourceGeneratorPerformanceRunner
 		return new Measurement(stopwatch.Elapsed.TotalMilliseconds / measurementIterations);
 	}
 
-	static void RunOnce(string source, bool compileWithGenerator, Func<IIncrementalGenerator> generatorFactory)
+	static void RunOnce(
+		string source,
+		bool compileWithGenerator,
+		Func<IIncrementalGenerator> generatorFactory
+	)
 	{
 		var syntaxTree = CSharpSyntaxTree.ParseText(source);
 		var compilation = CSharpCompilation.Create(
@@ -104,8 +113,14 @@ sealed class SourceGeneratorPerformanceRunner
 
 		if (compileWithGenerator)
 		{
-			GeneratorDriver driver = CSharpGeneratorDriver.Create(generatorFactory().AsSourceGenerator());
-			driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var _, out var diagnostics);
+			GeneratorDriver driver = CSharpGeneratorDriver.Create(
+				generatorFactory().AsSourceGenerator()
+			);
+			driver = driver.RunGeneratorsAndUpdateCompilation(
+				compilation,
+				out var _,
+				out var diagnostics
+			);
 
 			foreach (var diagnostic in diagnostics)
 			{

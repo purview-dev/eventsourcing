@@ -6,9 +6,15 @@ namespace Purview.EventSourcing.Services;
 
 sealed partial class AggregateEventNameMapper : IAggregateEventNameMapper
 {
-	readonly ConcurrentDictionary<string, string> _eventNamesByAssemblyTypeName = new(StringComparer.InvariantCulture);
-	readonly ConcurrentDictionary<string, string> _eventNamesByDefinedTypeName = new(StringComparer.InvariantCulture);
-	readonly ConcurrentDictionary<string, string> _registeredAggregateTypes = new(StringComparer.InvariantCulture);
+	readonly ConcurrentDictionary<string, string> _eventNamesByAssemblyTypeName = new(
+		StringComparer.InvariantCulture
+	);
+	readonly ConcurrentDictionary<string, string> _eventNamesByDefinedTypeName = new(
+		StringComparer.InvariantCulture
+	);
+	readonly ConcurrentDictionary<string, string> _registeredAggregateTypes = new(
+		StringComparer.InvariantCulture
+	);
 
 	public string GetName<T>(IEvent @event)
 		where T : IAggregate => GetName<T>(@event.GetType());
@@ -19,7 +25,12 @@ sealed partial class AggregateEventNameMapper : IAggregateEventNameMapper
 		var eventTypeAssemblyQualifiedName = aggregateEventType.AssemblyQualifiedName.OrDefault(
 			aggregateEventType.ToString()
 		);
-		if (!_eventNamesByAssemblyTypeName.TryGetValue(eventTypeAssemblyQualifiedName, out var eventName))
+		if (
+			!_eventNamesByAssemblyTypeName.TryGetValue(
+				eventTypeAssemblyQualifiedName,
+				out var eventName
+			)
+		)
 		{
 			eventName = TypeNameHelper.GetName(aggregateEventType, "Event", true);
 
@@ -48,7 +59,9 @@ sealed partial class AggregateEventNameMapper : IAggregateEventNameMapper
 	{
 		ArgumentNullException.ThrowIfNull(eventTypeName.OrNull(), nameof(eventTypeName));
 
-		return _eventNamesByDefinedTypeName.TryGetValue(eventTypeName, out var eventName) ? eventName : null;
+		return _eventNamesByDefinedTypeName.TryGetValue(eventTypeName, out var eventName)
+			? eventName
+			: null;
 	}
 
 	public string InitializeAggregate<T>()
@@ -83,7 +96,12 @@ sealed partial class AggregateEventNameMapper : IAggregateEventNameMapper
 			var eventTypeAssemblyQualifiedName = aggregateEventType.AssemblyQualifiedName.OrDefault(
 				aggregateEventType.ToString()
 			);
-			if (!_eventNamesByAssemblyTypeName.TryGetValue(eventTypeAssemblyQualifiedName, out var _))
+			if (
+				!_eventNamesByAssemblyTypeName.TryGetValue(
+					eventTypeAssemblyQualifiedName,
+					out var _
+				)
+			)
 			{
 				var eventName = TypeNameHelper.GetName(aggregateEventType, "Event", true);
 				if (eventName != aggregateEventType.FullName)

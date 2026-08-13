@@ -14,7 +14,10 @@ static class PostgresAdminTableResolver
 		if (!string.IsNullOrWhiteSpace(aggregateType))
 			return [ResolveTable(options, aggregateType)];
 
-		List<PostgresAdminTableDescriptor> tables = [new(null, options.SchemaName, options.TableName)];
+		List<PostgresAdminTableDescriptor> tables =
+		[
+			new(null, options.SchemaName, options.TableName),
+		];
 
 		foreach (var overrideEntry in options.AggregateTableOverrides)
 		{
@@ -33,13 +36,23 @@ static class PostgresAdminTableResolver
 		return tables;
 	}
 
-	public static PostgresAdminTableDescriptor ResolveTable(PostgresEventStoreOptions options, string aggregateType)
+	public static PostgresAdminTableDescriptor ResolveTable(
+		PostgresEventStoreOptions options,
+		string aggregateType
+	)
 	{
 		ArgumentNullException.ThrowIfNull(options);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 
-		if (!options.AggregateTableOverrides.TryGetValue(aggregateType, out var overrideEntry) || overrideEntry is null)
-			return new PostgresAdminTableDescriptor(aggregateType, options.SchemaName, options.TableName);
+		if (
+			!options.AggregateTableOverrides.TryGetValue(aggregateType, out var overrideEntry)
+			|| overrideEntry is null
+		)
+			return new PostgresAdminTableDescriptor(
+				aggregateType,
+				options.SchemaName,
+				options.TableName
+			);
 
 		// If an override exists for the aggregate type, use the override values (if provided) or fall back to the default options
 		return new PostgresAdminTableDescriptor(

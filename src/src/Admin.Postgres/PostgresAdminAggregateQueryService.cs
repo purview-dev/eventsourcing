@@ -23,7 +23,12 @@ public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventSto
 		var pageSize = Math.Max(1, query.PageSize);
 
 		var candidates = new List<AggregateSummaryResponse>();
-		foreach (var table in PostgresAdminTableResolver.ResolveTables(options.Value, query.AggregateType))
+		foreach (
+			var table in PostgresAdminTableResolver.ResolveTables(
+				options.Value,
+				query.AggregateType
+			)
+		)
 		{
 			await using var context = CreateContext(options.Value, table);
 			var rows = await BuildAggregateRowsAsync(context, table, query, cancellationToken);
@@ -46,7 +51,16 @@ public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventSto
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
 
-		var query = new AggregateSearchQuery(aggregateType, aggregateId, null, null, null, null, 1, 1);
+		var query = new AggregateSearchQuery(
+			aggregateType,
+			aggregateId,
+			null,
+			null,
+			null,
+			null,
+			1,
+			1
+		);
 		var result = await SearchAsync(query, cancellationToken);
 		return result.Items.Count == 0 ? null : result.Items[0];
 	}
@@ -61,7 +75,10 @@ public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventSto
 		var aggregateTypeFilter = table.AggregateTypeFilter;
 		var rows = context
 			.EventStoreEntities.AsNoTracking()
-			.Where(x => x.EntityType == 0 && (aggregateTypeFilter == null || x.AggregateType == aggregateTypeFilter));
+			.Where(x =>
+				x.EntityType == 0
+				&& (aggregateTypeFilter == null || x.AggregateType == aggregateTypeFilter)
+			);
 
 		if (!string.IsNullOrWhiteSpace(query.AggregateId))
 			rows = rows.Where(x => x.AggregateId == query.AggregateId);
@@ -90,7 +107,10 @@ public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventSto
 			.ToListAsync(cancellationToken);
 	}
 
-	static IEnumerable<AggregateSummaryResponse> ApplySort(IEnumerable<AggregateSummaryResponse> rows, string sort)
+	static IEnumerable<AggregateSummaryResponse> ApplySort(
+		IEnumerable<AggregateSummaryResponse> rows,
+		string sort
+	)
 	{
 		var descending = sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
 
@@ -110,7 +130,10 @@ public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventSto
 		};
 	}
 
-	static EventStoreDbContext CreateContext(PostgresEventStoreOptions options, PostgresAdminTableDescriptor table)
+	static EventStoreDbContext CreateContext(
+		PostgresEventStoreOptions options,
+		PostgresAdminTableDescriptor table
+	)
 	{
 		var builder = new DbContextOptionsBuilder<EventStoreDbContext>();
 		builder.UseNpgsql(options.ConnectionString);

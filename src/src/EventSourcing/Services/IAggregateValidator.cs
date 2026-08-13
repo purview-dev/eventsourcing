@@ -8,5 +8,8 @@ public interface IAggregateValidator<TAggregate>
 {
 	ValidationResult Validate(TAggregate aggregate);
 
-	Task<ValidationResult> ValidateAsync(TAggregate aggregate, CancellationToken cancellationToken = default);
+	Task<ValidationResult> ValidateAsync(
+		TAggregate aggregate,
+		CancellationToken cancellationToken = default
+	);
 }

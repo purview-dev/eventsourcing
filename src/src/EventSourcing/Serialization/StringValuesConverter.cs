@@ -10,7 +10,11 @@ namespace Purview.EventSourcing.Serialization;
 sealed class StringValuesConverter : JsonConverter<StringValues>
 {
 	/// <inheritdoc/>
-	public override StringValues Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+	public override StringValues Read(
+		ref Utf8JsonReader reader,
+		Type typeToConvert,
+		JsonSerializerOptions options
+	)
 	{
 		if (reader.TokenType == JsonTokenType.StartArray)
 		{
@@ -26,7 +30,11 @@ sealed class StringValuesConverter : JsonConverter<StringValues>
 	}
 
 	/// <inheritdoc/>
-	public override void Write(Utf8JsonWriter writer, StringValues value, JsonSerializerOptions options)
+	public override void Write(
+		Utf8JsonWriter writer,
+		StringValues value,
+		JsonSerializerOptions options
+	)
 	{
 		if (value.Count == 0)
 			writer.WriteNullValue();

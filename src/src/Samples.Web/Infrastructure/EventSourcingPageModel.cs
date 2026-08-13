@@ -19,7 +19,11 @@ abstract class EventSourcingPageModel : PageModel
 	/// Executes <paramref name="saveAction"/>, sets a success or conflict message,
 	/// and returns <paramref name="result"/> in both cases.
 	/// </summary>
-	protected async Task<IActionResult> TrySaveAsync(Func<Task> saveAction, string successMessage, IActionResult result)
+	protected async Task<IActionResult> TrySaveAsync(
+		Func<Task> saveAction,
+		string successMessage,
+		IActionResult result
+	)
 	{
 		try
 		{

@@ -153,7 +153,9 @@ public sealed class EventStoreSet<T> : IList<T>, IReadOnlySet<T>, IReadOnlyList<
 				return;
 
 			if (_set.Contains(value))
-				throw new InvalidOperationException("EventStoreSet does not allow duplicate values.");
+				throw new InvalidOperationException(
+					"EventStoreSet does not allow duplicate values."
+				);
 
 			_set.Remove(existing);
 			_items[index] = value;

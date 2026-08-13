@@ -1,6 +1,5 @@
-using Microsoft.CodeAnalysis;
-
 using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
@@ -17,7 +16,7 @@ sealed record class AggregateInfo(
 sealed record class AggregateStatePropertyInfo(string PropertyName, string TypeName);
 
 /// <summary>
-/// 
+///
 /// </summary>
 /// <param name="MethodName"></param>
 /// <param name="EventName"></param>
@@ -27,12 +26,12 @@ sealed record class AggregateStatePropertyInfo(string PropertyName, string TypeN
 /// <param name="ReturnKind"></param>
 /// <param name="MethodAccessibility"></param>
 /// <param name="Version">
-/// The schema version declared via <c>[GenerateEvent(Version = N)]</c>.
+/// The schema version declared via <c>[Event(Version = N)]</c>.
 /// Defaults to 1.
 /// </param>
 /// <param name="IsSchemaVersionExplicit">Indicates whether <see cref="Version"/> was explicitly configured on the event attribute.</param>
 /// <param name="ManualApply">Indicates whether Apply(...) implementation is user-supplied and should not be auto-generated.</param>
-/// <param name="CollectionEvent">Collection-event metadata when the method is decorated with [GenerateAggregateCollectionEvent].</param>
+/// <param name="CollectionEvent">Collection-event metadata when the method is decorated with [CollectionEvent].</param>
 sealed record class AggregateEventMethodInfo(
 	string MethodName,
 	string EventName,
@@ -47,7 +46,6 @@ sealed record class AggregateEventMethodInfo(
 	CollectionEventInfo? CollectionEvent = null
 )
 {
-
 	public bool IsCollectionEvent => CollectionEvent is not null;
 }
 
@@ -76,9 +74,6 @@ enum CollectionMutationOperation
 
 sealed record class InvalidAggregateEventMethodInfo(string Signature, string[] DiagnosticIds);
 
-/// <summary>
-/// 
-/// </summary>
 /// <param name="ParameterName"></param>
 /// <param name="ParameterTypeName"></param>
 /// <param name="PropertyTypeName"></param>
@@ -127,11 +122,9 @@ enum EventParameterConversionKind
 	ContextualCreate = 3,
 }
 
-sealed record class EventMethodValidationResult(ImmutableArray<Diagnostic> Diagnostics);
+sealed record class EventMethodValidationResult(ImmutableArray<DiagnosticInfo> Diagnostics);
 
-sealed record class EventTypeValidationResult(ImmutableArray<Diagnostic> Diagnostics);
-
-readonly record struct AttributeStringValue(string? Value, bool IsPresent);
+sealed record class EventTypeValidationResult(ImmutableArray<DiagnosticInfo> Diagnostics);
 
 enum EventMethodReturnKind
 {

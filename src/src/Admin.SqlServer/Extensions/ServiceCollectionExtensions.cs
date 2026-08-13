@@ -6,11 +6,16 @@ namespace Purview.EventSourcing.Admin.SqlServer;
 
 public static class AdminSqlServerServiceCollectionExtensions
 {
-	public static IServiceCollection AddPurviewEventSourcingAdminSqlServer(this IServiceCollection services)
+	public static IServiceCollection AddPurviewEventSourcingAdminSqlServer(
+		this IServiceCollection services
+	)
 	{
 		ArgumentNullException.ThrowIfNull(services);
 
-		services.TryAddTransient<IAdminAggregateQueryService, SqlServerAdminAggregateQueryService>();
+		services.TryAddTransient<
+			IAdminAggregateQueryService,
+			SqlServerAdminAggregateQueryService
+		>();
 		services.TryAddTransient<IAdminEventQueryService, SqlServerAdminEventQueryService>();
 		services.TryAddTransient<IAdminProjectionService, SqlServerAdminProjectionService>();
 

@@ -4,7 +4,8 @@ using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
-public sealed class AggregateSourceGeneratorTests : SourceGeneratorTestBase<AggregateSourceGenerator>
+public sealed class AggregateSourceGeneratorTests
+	: SourceGeneratorTestBase<AggregateSourceGenerator>
 {
 	/// <summary>
 	/// Helper to get the generated source text for the aggregate file (excludes attribute files).
@@ -17,10 +18,16 @@ public sealed class AggregateSourceGeneratorTests : SourceGeneratorTestBase<Aggr
 	}
 
 	static Diagnostic[] GetGeneratorDiagnostics(GeneratorDriverRunResult result) =>
-		[.. result.Results.SelectMany(static generatorResult => generatorResult.Diagnostics).OrderBy(static d => d.Id)];
+		[
+			.. result
+				.Results.SelectMany(static generatorResult => generatorResult.Diagnostics)
+				.OrderBy(static d => d.Id),
+		];
 
 	[Test]
-	public async Task Generate_GivenEmptySource_GeneratesAttributesOnly(CancellationToken cancellationToken)
+	public async Task Generate_GivenEmptySource_GeneratesAttributesOnly(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
@@ -32,37 +39,39 @@ namespace Testing
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCount);
 	}
 
 	[Test]
-	public async Task Generate_GivenSimpleAggregate_GeneratesExpectedCode(CancellationToken cancellationToken)
+	public async Task Generate_GivenSimpleAggregate_GeneratesExpectedCode(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId, decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert — 4 attribute files + 1 generated aggregate file
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
@@ -78,7 +87,7 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class EmptyAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 	}
@@ -86,7 +95,7 @@ namespace Testing
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
@@ -102,33 +111,35 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CounterAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Increment();
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
 	}
 
 	[Test]
-	public async Task Generate_GivenNonPartialClass_DoesNotGenerate(CancellationToken cancellationToken)
+	public async Task Generate_GivenNonPartialClass_DoesNotGenerate(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public class NonPartialAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		protected override void RegisterEvents() { }
@@ -137,7 +148,7 @@ namespace Testing
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert — only attribute files, no generated aggregate
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCount);
@@ -147,28 +158,30 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenMultipleParameters_GeneratesAllProperties(CancellationToken cancellationToken)
+	public async Task Generate_GivenMultipleParameters_GeneratesAllProperties(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProductAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; }
 		public decimal Price { get; private set; }
 		public int Quantity { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetProduct(string name, decimal price, int quantity);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
@@ -190,14 +203,14 @@ namespace Testing
 		Failed
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -215,7 +228,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE017");
@@ -237,14 +250,14 @@ namespace Testing
 		Failed
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -254,7 +267,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE018");
@@ -277,12 +290,12 @@ namespace Testing
 		private ProjectId(string value) => Value = value;
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetName(string name);
 
 		public bool ShouldClear(ProjectId? projectId) => projectId == null;
@@ -290,7 +303,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE019");
@@ -319,12 +332,12 @@ namespace Testing
 		private ProjectId(string value) => Value = value;
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetName(string name);
 
 		public bool ShouldClear(ProjectId? projectId) => projectId is null;
@@ -332,7 +345,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE019");
@@ -359,18 +372,18 @@ namespace Testing
 		private ReportSummaryScalar(ReportSummary value) => Value = value;
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public ReportSummaryScalar Summary { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetSummary(ReportSummary value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE020");
@@ -399,18 +412,18 @@ namespace Testing
 		private ProjectId(string value) => Value = value;
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public ProjectId ProjectId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetProjectId(string projectId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE020");
@@ -432,14 +445,14 @@ namespace Testing
 		Failed
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -451,7 +464,7 @@ namespace Testing
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
 		await Assert.That(diagnostics).DoesNotContain("EVENTSTORE018");
 		await Assert.That(diagnostics).DoesNotContain("EVENTSTORE019");
@@ -479,14 +492,14 @@ namespace Testing
 		Failed
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -499,7 +512,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE018");
 		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE019");
@@ -521,14 +534,14 @@ namespace Testing
 		Failed
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -540,11 +553,13 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 		await Assert
 			.That(generatedSource)
-			.Contains("partial void OnComputingCompletedEvent(ref global::Testing.ReportProcessingStatus status);");
+			.Contains(
+				"partial void OnComputingCompletedEvent(ref global::Testing.ReportProcessingStatus status);"
+			);
 		await Assert
 			.That(generatedSource)
 			.Contains(
@@ -576,14 +591,14 @@ namespace Testing
 		Failed
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CompletedEvent"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CompletedEvent"")]
 		public partial ReportUploadAggregate MarkAsCompleted(
 			string blob,
 			object summary,
@@ -597,7 +612,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
 		await Assert.That(diagnostics).DoesNotContain("EVENTSTORE018");
 		await Assert.That(diagnostics).DoesNotContain("EVENTSTORE019");
@@ -618,14 +633,14 @@ namespace Testing
 		Complete
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ReportUploadAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Blob { get; private set; }
 		public object Summary { get; private set; }
 		public ReportProcessingStatus Status { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""MarkAsCompleted"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""MarkAsCompleted"")]
 		public partial ReportUploadAggregate MarkAsComplete(
 			string blob,
 			object summary,
@@ -635,7 +650,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 		await Assert.That(generatedSource).Contains("OnComputingMarkAsCompletedEvent");
 		await Assert.That(generatedSource).Contains("OnRaisingMarkAsCompletedEvent");
@@ -650,19 +665,19 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class SimpleAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 ";
 
 		// Act
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 
 		// Assert — no generator exceptions
 		foreach (var genResult in result.Results)
@@ -689,25 +704,27 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — event class uses the default namespace pattern
 		await Assert.That(generatedSource).Contains("namespace Testing.Order");
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
-		await Assert.That(generatedSource).Contains(": global::Purview.EventSourcing.Aggregates.Events.EventBase");
+		await Assert
+			.That(generatedSource)
+			.Contains(": global::Purview.EventSourcing.Aggregates.Events.EventBase");
 	}
 
 	[Test]
@@ -719,24 +736,28 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
-		await Assert.That(generatedSource).Contains("JsonConverter(typeof(OrderAggregateJsonConverter))");
 		await Assert
 			.That(generatedSource)
-			.Contains("internal static OrderAggregate CreateFromJsonModel(OrderAggregateJsonModel jsonModel)");
+			.Contains("JsonConverter(typeof(OrderAggregateJsonConverter))");
+		await Assert
+			.That(generatedSource)
+			.Contains(
+				"internal static OrderAggregate CreateFromJsonModel(OrderAggregateJsonModel jsonModel)"
+			);
 		await Assert.That(generatedSource).Contains("sealed class OrderAggregateJsonConverter");
 		await Assert.That(generatedSource).Contains("sealed class OrderAggregateJsonModel");
 	}
@@ -751,20 +772,20 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId, decimal total);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — event properties are generated with PascalCase names
@@ -782,20 +803,20 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; }
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetOrder(string name, int count);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — BuildEventHash adds each property
@@ -816,28 +837,32 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateOrder(string customerId);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — RegisterEvents contains Register calls for each event
 		await Assert.That(generatedSource).Contains("protected override void RegisterEvents()");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.OrderEvents.OrderUpdatedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.OrderEvents.OrderUpdatedEvent>(Apply);");
 	}
 
 	[Test]
@@ -850,23 +875,25 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — Apply method is generated with property assignments from event
-		await Assert.That(generatedSource).Contains("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
+		await Assert
+			.That(generatedSource)
+			.Contains("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
 		await Assert.That(generatedSource).Contains("CustomerId = @event.CustomerId;");
 	}
 
@@ -880,27 +907,29 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId, decimal total);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — command method calls RecordAndApply with a new event
 		await Assert
 			.That(generatedSource)
 			.Contains("public partial void CreateOrder(string customerId, decimal total)");
-		await Assert.That(generatedSource).Contains("var @event = new global::Testing.OrderEvents.OrderCreated");
+		await Assert
+			.That(generatedSource)
+			.Contains("var @event = new global::Testing.OrderEvents.OrderCreated");
 		await Assert.That(generatedSource).Contains("RecordAndApply(@event);");
 		await Assert.That(generatedSource).Contains("CustomerId = customerId,");
 		await Assert.That(generatedSource).Contains("Total = total,");
@@ -915,24 +944,26 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProfileAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Rename(string name);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public partial void Rename(string name)");
 		await Assert
 			.That(generatedSource)
-			.Contains("if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))");
+			.Contains(
+				"if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))"
+			);
 	}
 
 	[Test]
@@ -944,19 +975,19 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProductAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; } = default!;
 		public int Quantity { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Update(string name, int quantity);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
@@ -976,24 +1007,28 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProfileAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial ProfileAggregate Rename(string name);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
-		await Assert.That(generatedSource).Contains("public partial ProfileAggregate Rename(string name)");
 		await Assert
 			.That(generatedSource)
-			.Contains("if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))");
+			.Contains("public partial ProfileAggregate Rename(string name)");
+		await Assert
+			.That(generatedSource)
+			.Contains(
+				"if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))"
+			);
 		await Assert.That(generatedSource).Contains("return this;");
 	}
 
@@ -1006,24 +1041,26 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProfileAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial bool Rename(string name);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public partial bool Rename(string name)");
 		await Assert
 			.That(generatedSource)
-			.Contains("if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))");
+			.Contains(
+				"if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))"
+			);
 		await Assert.That(generatedSource).Contains("return false;");
 		await Assert.That(generatedSource).Contains("return true;");
 	}
@@ -1038,19 +1075,19 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CounterAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Increment();
 	}
 }
 ";
 
 		// Act
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)
@@ -1061,11 +1098,15 @@ namespace Testing
 		await Assert.That(generatedSource).Contains("public partial void Increment()");
 		await Assert
 			.That(generatedSource)
-			.Contains("private partial void Apply(global::Testing.CounterEvents.IncrementedEvent @event);");
+			.Contains(
+				"private partial void Apply(global::Testing.CounterEvents.IncrementedEvent @event);"
+			);
 		await Assert
 			.That(generatedSource)
 			.Contains("protected override void BuildEventHash(ref global::System.HashCode _)");
-		await Assert.That(generatedSource).Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
+		await Assert
+			.That(generatedSource)
+			.Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
 		await Assert.That(generatedSource).Contains("RecordAndApply(@event);");
 		await Assert.That(errors.Select(static e => e.Id)).Contains("CS8795");
 	}
@@ -1088,18 +1129,18 @@ namespace Testing
 		public static implicit operator Name(string value) => new(value);
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CustomerAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public Name Name { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void ChangeName(string name);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)
@@ -1123,25 +1164,27 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ToggleAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public bool IsActive { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		private partial ToggleAggregate ChangeIsActive(bool isActive);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
 			.ToArray();
 
-		await Assert.That(generatedSource).Contains("private partial ToggleAggregate ChangeIsActive(bool isActive)");
+		await Assert
+			.That(generatedSource)
+			.Contains("private partial ToggleAggregate ChangeIsActive(bool isActive)");
 		await Assert.That(generatedSource).Contains("public sealed class IsActiveChanged");
 		await Assert.That(errors).IsEmpty();
 	}
@@ -1156,7 +1199,7 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class EmptyAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 	}
@@ -1164,7 +1207,7 @@ namespace Testing
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — RegisterEvents exists but has no Register calls
@@ -1183,23 +1226,23 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId, decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — both event classes exist
@@ -1216,22 +1259,24 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NotAnAggregate
 	{
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void DoSomething(string value);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
 		await Assert
 			.That(generatedSource)
-			.Contains("public partial class NotAnAggregate : global::Purview.EventSourcing.Aggregates.AggregateBase");
+			.Contains(
+				"public partial class NotAnAggregate : global::Purview.EventSourcing.Aggregates.AggregateBase"
+			);
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
 			.DoesNotContain("EVENTSTORE002");
@@ -1244,30 +1289,32 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenNonPartialMethod_MethodIsSkipped(CancellationToken cancellationToken)
+	public async Task Generate_GivenNonPartialMethod_MethodIsSkipped(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class MixedAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetName(string name);
 
 		// This method is NOT partial, so it should be ignored even though it has the attribute
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public void NonPartialMethod(string value) { }
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — only the partial method generates an event, the non-partial is skipped
@@ -1291,18 +1338,18 @@ namespace Testing
 	{
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class InterfaceOnlyAggregate : ITaggable
 	{
 		public string Value { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
@@ -1331,19 +1378,19 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	internal partial class InternalAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — the generated partial class uses 'internal' access modifier
@@ -1351,7 +1398,7 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenAttributeFiles_ContainsGenerateAggregateAttribute(
+	public async Task Generate_GivenAttributeFiles_ContainsAggregateAttribute(
 		CancellationToken cancellationToken
 	)
 	{
@@ -1365,7 +1412,7 @@ namespace Testing
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert — attribute files are generated
 		var attributeSources = result.GeneratedTrees.Select(t => t.GetText().ToString()).ToList();
@@ -1374,38 +1421,40 @@ namespace Testing
 
 		var allAttributeSource = string.Join("\n", attributeSources);
 		await Assert.That(allAttributeSource).Contains("class EmbeddedAttribute");
-		await Assert.That(allAttributeSource).Contains("class AggregatePropertyAttribute");
-		await Assert.That(allAttributeSource).Contains("class GenerateAggregateAttribute");
-		await Assert.That(allAttributeSource).Contains("class GenerateAggregateDefaultsAttribute");
-		await Assert.That(allAttributeSource).Contains("class GenerateEventAttribute");
+		await Assert.That(allAttributeSource).Contains("class PropertyAttribute");
+		await Assert.That(allAttributeSource).Contains("class AggregateAttribute");
+		await Assert.That(allAttributeSource).Contains("class AggregateDefaultsAttribute");
+		await Assert.That(allAttributeSource).Contains("class EventAttribute");
 		await Assert.That(allAttributeSource).Contains("class MetadataAttribute");
 	}
 
 	[Test]
-	public async Task Generate_GivenSimpleAggregate_OutputCompilationHasNoErrors(CancellationToken cancellationToken)
+	public async Task Generate_GivenSimpleAggregate_OutputCompilationHasNoErrors(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId, decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
 		// Act
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 
 		// Assert — no generator exceptions
 		foreach (var genResult in result.Results)
@@ -1423,24 +1472,26 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenGeneratedFile_HasAutoGeneratedHeader(CancellationToken cancellationToken)
+	public async Task Generate_GivenGeneratedFile_HasAutoGeneratedHeader(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class SimpleAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void DoWork();
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — generated file starts with auto-generated header
@@ -1458,19 +1509,19 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — default version is 1
@@ -1487,19 +1538,19 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 3)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 3)]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — explicit version 3
@@ -1516,28 +1567,34 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 2)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — both SchemaVersion overrides appear
-		var v1Index = generatedSource.IndexOf("public override int SchemaVersion => 1;", StringComparison.Ordinal);
-		var v2Index = generatedSource.IndexOf("public override int SchemaVersion => 2;", StringComparison.Ordinal);
+		var v1Index = generatedSource.IndexOf(
+			"public override int SchemaVersion => 1;",
+			StringComparison.Ordinal
+		);
+		var v2Index = generatedSource.IndexOf(
+			"public override int SchemaVersion => 2;",
+			StringComparison.Ordinal
+		);
 
 		await Assert.That(v1Index).IsGreaterThanOrEqualTo(0);
 		await Assert.That(v2Index).IsGreaterThanOrEqualTo(0);
@@ -1554,18 +1611,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 0)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 0)]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE021");
@@ -1580,22 +1637,22 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 2)]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 2)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE022");
@@ -1610,22 +1667,22 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 1)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 1)]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 3)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 3)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).Contains("EVENTSTORE023");
@@ -1640,22 +1697,22 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 2)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 2)]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(Version = 3)]
+		[Purview.EventSourcing.Aggregates.Event(Version = 3)]
 		public partial void UpdateTotal(decimal total);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert.That(diagnostics.Select(static d => d.Id)).DoesNotContain("EVENTSTORE023");
@@ -1676,11 +1733,11 @@ namespace Testing
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert — the generated attribute file exposes a Version property
 		var attributeTree = result.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("GenerateEventAttribute.g.cs", StringComparison.Ordinal)
+			t.FilePath.EndsWith("EventAttribute.g.cs", StringComparison.Ordinal)
 		);
 		var attributeSource = (await attributeTree.GetTextAsync(cancellationToken)).ToString();
 
@@ -1689,14 +1746,16 @@ namespace Testing
 		await Assert.That(attributeSource).Contains("string? EventNamespace");
 
 		var aggregateAttributeTree = result.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("GenerateAggregateAttribute.g.cs", StringComparison.Ordinal)
+			t.FilePath.EndsWith("AggregateAttribute.g.cs", StringComparison.Ordinal)
 		);
-		var aggregateAttributeSource = (await aggregateAttributeTree.GetTextAsync(cancellationToken)).ToString();
+		var aggregateAttributeSource = (
+			await aggregateAttributeTree.GetTextAsync(cancellationToken)
+		).ToString();
 		await Assert.That(aggregateAttributeSource).Contains("string? EventNamespace");
 		await Assert.That(aggregateAttributeSource).Contains("string? EventSuffix");
 
 		var aggregateDefaultsAttributeTree = result.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("GenerateAggregateDefaultsAttribute.g.cs", StringComparison.Ordinal)
+			t.FilePath.EndsWith("AggregateDefaultsAttribute.g.cs", StringComparison.Ordinal)
 		);
 		var aggregateDefaultsAttributeSource = (
 			await aggregateDefaultsAttributeTree.GetTextAsync(cancellationToken)
@@ -1705,29 +1764,35 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenInferredEventName_AppliesSuffixByDefault(CancellationToken cancellationToken)
+	public async Task Generate_GivenInferredEventName_AppliesSuffixByDefault(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
 	}
 
 	[Test]
@@ -1736,22 +1801,22 @@ namespace Testing
 	)
 	{
 		var source =
-			@"[assembly: Purview.EventSourcing.Aggregates.GenerateAggregateDefaults(EventSuffix = ""DomainEvent"")]
+			@"[assembly: Purview.EventSourcing.Aggregates.AggregateDefaults(EventSuffix = ""DomainEvent"")]
 
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreatedDomainEvent");
@@ -1769,22 +1834,22 @@ namespace Testing
 	)
 	{
 		var source =
-			@"[assembly: Purview.EventSourcing.Aggregates.GenerateAggregateDefaults(EventSuffix = ""DomainEvent"")]
+			@"[assembly: Purview.EventSourcing.Aggregates.AggregateDefaults(EventSuffix = ""DomainEvent"")]
 
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate(EventSuffix = ""CustomEvent"")]
+	[Purview.EventSourcing.Aggregates.Aggregate(EventSuffix = ""CustomEvent"")]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreatedCustomEvent");
@@ -1805,18 +1870,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate(EventNamespace = ""Testing.Custom.Events"")]
+	[Purview.EventSourcing.Aggregates.Aggregate(EventNamespace = ""Testing.Custom.Events"")]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("namespace Testing.Custom.Events");
@@ -1834,24 +1899,28 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate(EventNamespace = ""Testing.Custom.Events"")]
+	[Purview.EventSourcing.Aggregates.Aggregate(EventNamespace = ""Testing.Custom.Events"")]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""OrderCreated"", EventNamespace = ""Testing.Domain.Ordering"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""OrderCreated"", EventNamespace = ""Testing.Domain.Ordering"")]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("namespace Testing.Domain.Ordering");
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.Domain.Ordering.OrderCreated>(Apply);");
-		await Assert.That(generatedSource).Contains("void Apply(global::Testing.Domain.Ordering.OrderCreated @event)");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.Domain.Ordering.OrderCreated>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("void Apply(global::Testing.Domain.Ordering.OrderCreated @event)");
 	}
 
 	[Test]
@@ -1865,16 +1934,16 @@ namespace Testing
 {
 	public abstract class AggregateBase { }
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NotARealAggregate : AggregateBase
 	{
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Rename(string name);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -1882,7 +1951,9 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenNestedAggregate_ReportsDiagnostic(CancellationToken cancellationToken)
+	public async Task Generate_GivenNestedAggregate_ReportsDiagnostic(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
@@ -1890,19 +1961,19 @@ namespace Testing
 {
 	public static class AggregateContainer
 	{
-		[Purview.EventSourcing.Aggregates.GenerateAggregate]
+		[Purview.EventSourcing.Aggregates.Aggregate]
 		public partial class NestedAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 		{
 			public string Value { get; private set; } = default!;
 
-			[Purview.EventSourcing.Aggregates.GenerateEvent]
+			[Purview.EventSourcing.Aggregates.Event]
 			public partial void SetValue(string value);
 		}
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -1910,24 +1981,26 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenGenericAggregate_ReportsDiagnostic(CancellationToken cancellationToken)
+	public async Task Generate_GivenGenericAggregate_ReportsDiagnostic(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class GenericAggregate<TValue> : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public TValue Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(TValue value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -1935,26 +2008,28 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenManualRegisterEvents_ReportsDiagnostic(CancellationToken cancellationToken)
+	public async Task Generate_GivenManualRegisterEvents_ReportsDiagnostic(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ManualRegistrationAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
 		protected override void RegisterEvents() { }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -1967,7 +2042,7 @@ namespace Testing
 	[Arguments("internal set")]
 	[Arguments("protected internal set")]
 	[Arguments("private protected set")]
-	public async Task Generate_GivenAggregatePropertySetterIsNotPrivate_ReportsError(
+	public async Task Generate_GivenPropertySetterIsNotPrivate_ReportsError(
 		string setterAccess,
 		CancellationToken cancellationToken
 	)
@@ -1976,18 +2051,18 @@ namespace Testing
 			$@"
 namespace Testing
 {{
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class PublicSetterAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{{
 		public string Value {{ get; {setterAccess}; }} = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}}
 }}
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 		var errorIds = diagnostics
 			.Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
@@ -2005,7 +2080,9 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenEventMethodOutsideAggregate_ReportsDiagnostic(CancellationToken cancellationToken)
+	public async Task Generate_GivenEventMethodOutsideAggregate_ReportsDiagnostic(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
@@ -2013,13 +2090,13 @@ namespace Testing
 {
 	public partial class UtilityType
 	{
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void DoWork(string value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -2035,18 +2112,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class InvalidSignatureAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial string SetValue(string value);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
@@ -2072,28 +2149,30 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class InvalidSignatureAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public static partial string SetValue(string value);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
 			.Contains("EVENTSTORE008");
-		await Assert.That(generatedSource).Contains("public static partial string SetValue(string value)");
+		await Assert
+			.That(generatedSource)
+			.Contains("public static partial string SetValue(string value)");
 		await Assert
 			.That(generatedSource)
 			.Contains(
-				"The generated aggregate event method 'public static partial string SetValue(string value)' is unavailable because [GenerateEvent] validation failed. Review the suppressed generator diagnostics for this method (EVENTSTORE008)."
+				"The generated aggregate event method 'public static partial string SetValue(string value)' is unavailable because [Event] validation failed. Review the suppressed generator diagnostics for this method (EVENTSTORE008)."
 			);
 		await Assert
 			.That(
@@ -2114,22 +2193,22 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class DuplicateEventAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 		public int Count { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Update(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Update(int count);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
@@ -2149,24 +2228,26 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenMissingPropertyMapping_ReportsDiagnostic(CancellationToken cancellationToken)
+	public async Task Generate_GivenMissingPropertyMapping_ReportsDiagnostic(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class MappingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Rename(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -2182,27 +2263,35 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class MappingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Rename([Purview.EventSourcing.Aggregates.Metadata] string initialPropertyToTest);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
 			.DoesNotContain(GeneratorDiagnostics.EventParameterMustMapToWritableProperty.Id);
-		await Assert.That(generatedSource).Contains("public partial void Rename(string initialPropertyToTest)");
-		await Assert.That(generatedSource).Contains("public string InitialPropertyToTest { get; set; } = default!;");
-		await Assert.That(generatedSource).Contains("OnRaisingRenamedEvent(ref initialPropertyToTest);");
-		await Assert.That(generatedSource).Contains("InitialPropertyToTest = initialPropertyToTest,");
+		await Assert
+			.That(generatedSource)
+			.Contains("public partial void Rename(string initialPropertyToTest)");
+		await Assert
+			.That(generatedSource)
+			.Contains("public string InitialPropertyToTest { get; set; } = default!;");
+		await Assert
+			.That(generatedSource)
+			.Contains("OnRaisingRenamedEvent(ref initialPropertyToTest);");
+		await Assert
+			.That(generatedSource)
+			.Contains("InitialPropertyToTest = initialPropertyToTest,");
 		await Assert.That(generatedSource).Contains("OnRaisedRenamedEvent(@event);");
 		await Assert
 			.That(
@@ -2223,12 +2312,12 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class MappingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Rename(
 			[Purview.EventSourcing.Aggregates.Metadata(false)] string correlationId,
 			[Purview.EventSourcing.Aggregates.Metadata] string correlationToStoreImplicitId,
@@ -2238,7 +2327,7 @@ namespace Testing
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
@@ -2254,14 +2343,18 @@ namespace Testing
 			.Contains(
 				"OnRaisingRenamedEvent(ref string correlationId, ref string correlationToStoreImplicitId, ref string? correlationToStoreExplicitId);"
 			);
-		await Assert.That(generatedSource).DoesNotContain("public string CorrelationId { get; set; } = default!;");
+		await Assert
+			.That(generatedSource)
+			.DoesNotContain("public string CorrelationId { get; set; } = default!;");
 		await Assert
 			.That(generatedSource)
 			.Contains("public string CorrelationToStoreImplicitId { get; set; } = default!;");
 		await Assert
 			.That(generatedSource)
 			.Contains("public string? CorrelationToStoreExplicitId { get; set; } = default!;");
-		await Assert.That(generatedSource).Contains("var @event = new global::Testing.MappingEvents.Renamed");
+		await Assert
+			.That(generatedSource)
+			.Contains("var @event = new global::Testing.MappingEvents.Renamed");
 		await Assert
 			.That(
 				outputCompilation
@@ -2273,7 +2366,7 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenAggregatePropertyOverride_MapsParameterToSpecifiedAggregateProperty(
+	public async Task Generate_GivenPropertyOverride_MapsParameterToSpecifiedProperty(
 		CancellationToken cancellationToken
 	)
 	{
@@ -2281,23 +2374,27 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class MappingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public int QuantityOnHand { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
-		public partial void ReceiveStock([Purview.EventSourcing.Aggregates.AggregateProperty(nameof(QuantityOnHand))] int initialQuantity);
+		[Purview.EventSourcing.Aggregates.Event]
+		public partial void ReceiveStock([Purview.EventSourcing.Aggregates.Property(nameof(QuantityOnHand))] int initialQuantity);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
-		await Assert.That(generatedSource).Contains("public int InitialQuantity { get; set; } = default!;");
+		await Assert
+			.That(generatedSource)
+			.Contains("public int InitialQuantity { get; set; } = default!;");
 		await Assert.That(generatedSource).Contains("QuantityOnHand = @event.InitialQuantity;");
-		await Assert.That(generatedSource).Contains("OnRaisingStockReceivedEvent(ref initialQuantity);");
+		await Assert
+			.That(generatedSource)
+			.Contains("OnRaisingStockReceivedEvent(ref initialQuantity);");
 		await Assert
 			.That(
 				outputCompilation
@@ -2309,7 +2406,7 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenAggregatePropertyOverrideTargetMissing_ReportsDiagnostic(
+	public async Task Generate_GivenPropertyOverrideTargetMissing_ReportsDiagnostic(
 		CancellationToken cancellationToken
 	)
 	{
@@ -2317,18 +2414,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class MappingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public int QuantityOnHand { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
-		public partial void ReceiveStock([Purview.EventSourcing.Aggregates.AggregateProperty(""MissingProperty"")] int initialQuantity);
+		[Purview.EventSourcing.Aggregates.Event]
+		public partial void ReceiveStock([Purview.EventSourcing.Aggregates.Property(""MissingProperty"")] int initialQuantity);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -2336,24 +2433,26 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenInitOnlyMappedProperty_ReportsDiagnostic(CancellationToken cancellationToken)
+	public async Task Generate_GivenInitOnlyMappedProperty_ReportsDiagnostic(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class InitOnlyAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; init; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		await Assert
 			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
@@ -2369,32 +2468,36 @@ namespace Testing
 			@"
 namespace First
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 
 namespace Second
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetValue(string value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
-		var aggregateTrees = ExcludeGenAttribs(result).Select(static tree => tree.FilePath).ToArray();
-		var aggregateFileNames = aggregateTrees.Select(static path => Path.GetFileName(path)).ToArray();
+		var (result, _) = Generate(source, cancellationToken);
+		var aggregateTrees = ExcludeGenAttribs(result)
+			.Select(static tree => tree.FilePath)
+			.ToArray();
+		var aggregateFileNames = aggregateTrees
+			.Select(static path => Path.GetFileName(path))
+			.ToArray();
 
 		await Assert.That(aggregateTrees).Count().IsEqualTo(2);
 		await Assert.That(aggregateTrees.Distinct(StringComparer.Ordinal)).Count().IsEqualTo(2);
@@ -2409,7 +2512,9 @@ namespace Second
 			.That(
 				aggregateFileNames.All(fileName =>
 					fileName.Length
-					== "OrderAggregate_".Length + HintNameHashHexLength + GeneratedSourceFileSuffix.Length
+					== "OrderAggregate_".Length
+						+ HintNameHashHexLength
+						+ GeneratedSourceFileSuffix.Length
 				)
 			)
 			.IsTrue();
@@ -2425,7 +2530,7 @@ namespace Second
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
@@ -2433,19 +2538,19 @@ namespace Testing
 		public string Status { get; private set; }
 		public string ShippingAddress { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateTotal(decimal total);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetShippingAddress(string shippingAddress);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void ConfirmOrder();
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CancelOrder();
 
 		private partial void Apply(global::Testing.OrderEvents.OrderConfirmedEvent @event)
@@ -2462,7 +2567,7 @@ namespace Testing
 ";
 
 		// Act
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — all 5 event classes
@@ -2473,15 +2578,21 @@ namespace Testing
 		await Assert.That(generatedSource).Contains("public sealed class OrderCanceledEvent"); // US spelling
 
 		// Assert — all 5 Register calls
-		await Assert.That(generatedSource).Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.OrderEvents.TotalUpdatedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.OrderEvents.TotalUpdatedEvent>(Apply);");
 		await Assert
 			.That(generatedSource)
 			.Contains("Register<global::Testing.OrderEvents.ShippingAddressSetEvent>(Apply);");
 		await Assert
 			.That(generatedSource)
 			.Contains("Register<global::Testing.OrderEvents.OrderConfirmedEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.OrderEvents.OrderCanceledEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.OrderEvents.OrderCanceledEvent>(Apply);");
 
 		// Assert — compiles without errors
 		var errors = outputCompilation
@@ -2502,7 +2613,7 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProductAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Name { get; private set; }
@@ -2510,14 +2621,14 @@ namespace Testing
 		public int Quantity { get; private set; }
 		public bool IsAvailable { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateProduct(string name, decimal price, int quantity, bool isAvailable);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — all parameter types are represented as properties
@@ -2553,19 +2664,19 @@ namespace Testing
 	{
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class AccountAggregate : DomainAggregateBase
 	{
 		public string AccountName { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateAccount(string accountName);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 
 		// Assert — attribute files + 1 generated aggregate
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
@@ -2594,18 +2705,18 @@ namespace Testing
 	{
 	}
 
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class InvoiceAggregate : BillingAggregateBase
 	{
 		public string InvoiceNumber { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateInvoice(string invoiceNumber);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert.That(result.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
@@ -2619,33 +2730,37 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenNestedNamespace_GeneratesCorrectEventsNamespace(CancellationToken cancellationToken)
+	public async Task Generate_GivenNestedNamespace_GeneratesCorrectEventsNamespace(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange — deeply nested namespace
 		const string source =
 			@"
 namespace Company.Domain.Orders
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — events namespace follows the pattern
 		await Assert.That(generatedSource).Contains("namespace Company.Domain.Orders.OrderEvents");
 		await Assert
 			.That(generatedSource)
-			.Contains("Register<global::Company.Domain.Orders.OrderEvents.OrderCreatedEvent>(Apply);");
+			.Contains(
+				"Register<global::Company.Domain.Orders.OrderEvents.OrderCreatedEvent>(Apply);"
+			);
 		await Assert.That(generatedSource).Contains("namespace Company.Domain.Orders");
 	}
 
@@ -2659,22 +2774,22 @@ namespace Company.Domain.Orders
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CounterAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public int Count { get; private set; }
 		public string Label { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Increment();
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Decrement();
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetLabel(string label);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Reset();
 
 		private partial void Apply(global::Testing.CounterEvents.IncrementedEvent @event) => Count++;
@@ -2685,21 +2800,35 @@ namespace Testing
 ";
 
 		// Act
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — parameterless use () constructor, parameterized use { } initializer
-		await Assert.That(generatedSource).Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
-		await Assert.That(generatedSource).Contains("var @event = new global::Testing.CounterEvents.DecrementedEvent");
-		await Assert.That(generatedSource).Contains("var @event = new global::Testing.CounterEvents.ResetEvent");
+		await Assert
+			.That(generatedSource)
+			.Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
+		await Assert
+			.That(generatedSource)
+			.Contains("var @event = new global::Testing.CounterEvents.DecrementedEvent");
+		await Assert
+			.That(generatedSource)
+			.Contains("var @event = new global::Testing.CounterEvents.ResetEvent");
 		await Assert.That(generatedSource).Contains("RecordAndApply(@event);");
 		await Assert.That(generatedSource).Contains("Label = label,");
 
 		// Assert — all 4 Register calls
-		await Assert.That(generatedSource).Contains("Register<global::Testing.CounterEvents.IncrementedEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.CounterEvents.DecrementedEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.CounterEvents.LabelSetEvent>(Apply);");
-		await Assert.That(generatedSource).Contains("Register<global::Testing.CounterEvents.ResetEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.CounterEvents.IncrementedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.CounterEvents.DecrementedEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.CounterEvents.LabelSetEvent>(Apply);");
+		await Assert
+			.That(generatedSource)
+			.Contains("Register<global::Testing.CounterEvents.ResetEvent>(Apply);");
 
 		// Assert — compiles without errors
 		var errors = outputCompilation
@@ -2710,26 +2839,28 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenNullableParameter_GeneratesNullableProperty(CancellationToken cancellationToken)
+	public async Task Generate_GivenNullableParameter_GeneratesNullableProperty(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ProfileAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string? Bio { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void UpdateBio(string? bio);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — nullable parameter generates property and Apply method
@@ -2741,24 +2872,26 @@ namespace Testing
 	}
 
 	[Test]
-	public async Task Generate_GivenPublicAccessibility_GeneratesPublicPartialClass(CancellationToken cancellationToken)
+	public async Task Generate_GivenPublicAccessibility_GeneratesPublicPartialClass(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		const string source =
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class PublicAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void DoAction();
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert
@@ -2775,23 +2908,25 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NoteAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Content { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetContent(string content);
 	}
 }
 ";
 
 		// Act
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		// Assert — command method matches partial declaration
-		await Assert.That(generatedSource).Contains("public partial void SetContent(string content)");
+		await Assert
+			.That(generatedSource)
+			.Contains("public partial void SetContent(string content)");
 		// Assert — RecordAndApply creates event with property
 		await Assert.That(generatedSource).Contains("Content = content,");
 	}
@@ -2805,18 +2940,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CustomerAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetCustomerId(string customerId);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		var firstShouldApplyIndex = generatedSource.IndexOf(
@@ -2854,14 +2989,14 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CustomerAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public int ShouldApplyCallCount { get; private set; }
 		public string? LastRaisedValue { get; private set; }
 		public string? CustomerId { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial bool SetCustomerId(string customerId);
 
 		partial void OnRaisingCustomerIdSetEvent(ref string customerId)
@@ -2887,8 +3022,12 @@ namespace Testing
 		var result = (bool)setCustomerId.Invoke(instance, ["input-value"])!;
 
 		await Assert.That(result).IsFalse();
-		await Assert.That(aggregateType.GetProperty("ShouldApplyCallCount")!.GetValue(instance)).IsEqualTo(2);
-		await Assert.That(aggregateType.GetProperty("LastRaisedValue")!.GetValue(instance)).IsEqualTo("raised-value");
+		await Assert
+			.That(aggregateType.GetProperty("ShouldApplyCallCount")!.GetValue(instance))
+			.IsEqualTo(2);
+		await Assert
+			.That(aggregateType.GetProperty("LastRaisedValue")!.GetValue(instance))
+			.IsEqualTo("raised-value");
 		await Assert.That(aggregateType.GetProperty("CustomerId")!.GetValue(instance)).IsNull();
 	}
 
@@ -2901,12 +3040,12 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class CustomerAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void SetCustomerId(string customerId);
 
 		partial void OnCustomerIdChanging(ref string customerId) => global::System.ArgumentNullException.ThrowIfNull(customerId);
@@ -2914,7 +3053,7 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		var onChangingIndex = generatedSource.IndexOf(
@@ -2963,13 +3102,13 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 		public decimal Total { get; private set; }
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId, decimal total);
 	}
 }
@@ -2989,10 +3128,16 @@ namespace Testing
 		var json = JsonSerializer.Serialize(instance, aggregateType);
 		var roundTripped = JsonSerializer.Deserialize(json, aggregateType)!;
 
-		await Assert.That(aggregateType.GetProperty("CustomerId")!.GetValue(roundTripped)).IsEqualTo("customer-1");
-		await Assert.That(aggregateType.GetProperty("Total")!.GetValue(roundTripped)).IsEqualTo(12.5m);
+		await Assert
+			.That(aggregateType.GetProperty("CustomerId")!.GetValue(roundTripped))
+			.IsEqualTo("customer-1");
+		await Assert
+			.That(aggregateType.GetProperty("Total")!.GetValue(roundTripped))
+			.IsEqualTo(12.5m);
 		var roundTrippedDetails = detailsProperty.GetValue(roundTripped)!;
-		await Assert.That(detailsType.GetProperty("Id")!.GetValue(roundTrippedDetails)).IsEqualTo("aggregate-1");
+		await Assert
+			.That(detailsType.GetProperty("Id")!.GetValue(roundTrippedDetails))
+			.IsEqualTo("aggregate-1");
 	}
 
 	[Test]
@@ -3004,12 +3149,12 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string CustomerId { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent]
+		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CreateOrder(string customerId);
 	}
 }
@@ -3020,7 +3165,10 @@ namespace Testing
 		var instance = Activator.CreateInstance(eventType)!;
 		eventType.GetProperty("CustomerId")!.SetValue(instance, "customer-2");
 
-		var detailsProperty = eventType.GetProperty("Details", BindingFlags.Public | BindingFlags.Instance)!;
+		var detailsProperty = eventType.GetProperty(
+			"Details",
+			BindingFlags.Public | BindingFlags.Instance
+		)!;
 		var detailsType = detailsProperty.PropertyType;
 		var details = Activator.CreateInstance(detailsType)!;
 		detailsType.GetProperty("CorrelationId")!.SetValue(details, "corr-1");
@@ -3029,9 +3177,13 @@ namespace Testing
 		var json = JsonSerializer.Serialize(instance, eventType);
 		var roundTripped = JsonSerializer.Deserialize(json, eventType)!;
 
-		await Assert.That(eventType.GetProperty("CustomerId")!.GetValue(roundTripped)).IsEqualTo("customer-2");
+		await Assert
+			.That(eventType.GetProperty("CustomerId")!.GetValue(roundTripped))
+			.IsEqualTo("customer-2");
 		var roundTrippedDetails = detailsProperty.GetValue(roundTripped)!;
-		await Assert.That(detailsType.GetProperty("CorrelationId")!.GetValue(roundTrippedDetails)).IsEqualTo("corr-1");
+		await Assert
+			.That(detailsType.GetProperty("CorrelationId")!.GetValue(roundTrippedDetails))
+			.IsEqualTo("corr-1");
 	}
 
 	[Test]
@@ -3043,33 +3195,41 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NamingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CustomerRegistered"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CustomerRegistered"")]
 		public partial void NewCustomer(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CustomerCreated"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CustomerCreated"")]
 		public partial void CustomerRegistered(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ValueChanged"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""ValueChanged"")]
 		public partial void NameChanged(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ValueSet"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""ValueSet"")]
 		public partial void Handle(string value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result).Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
+		var (result, _) = Generate(source, cancellationToken);
+		var warnings = GetGeneratorDiagnostics(result)
+			.Where(d => d.Severity == DiagnosticSeverity.Warning)
+			.ToArray();
 
 		await Assert
-			.That(warnings.Count(d => d.Id == GeneratorDiagnostics.AggregateMethodShouldBeVerbPhrase.Id))
+			.That(
+				warnings.Count(d =>
+					d.Id == GeneratorDiagnostics.AggregateMethodShouldBeVerbPhrase.Id
+				)
+			)
 			.IsEqualTo(4);
-		await Assert.That(warnings.Select(d => d.Id)).DoesNotContain(GeneratorDiagnostics.UnableToInferEventName.Id);
+		await Assert
+			.That(warnings.Select(d => d.Id))
+			.DoesNotContain(GeneratorDiagnostics.UnableToInferEventName.Id);
 		await Assert
 			.That(warnings.Select(d => d.Id))
 			.DoesNotContain(GeneratorDiagnostics.EventNameOverrideShouldBePastTense.Id);
@@ -3084,34 +3244,38 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NamingAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = default!;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""RegisterCustomer"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""RegisterCustomer"")]
 		public partial void NewCustomer(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""CreateCustomer"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""CreateCustomer"")]
 		public partial void CreateCustomer(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ApproveQuestion"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""ApproveQuestion"")]
 		public partial void ApproveQuestion(string value);
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""WithdrawConsent"")]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""WithdrawConsent"")]
 		public partial void WithdrawConsent(string value);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result).Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
+		var (result, _) = Generate(source, cancellationToken);
+		var warnings = GetGeneratorDiagnostics(result)
+			.Where(d => d.Severity == DiagnosticSeverity.Warning)
+			.ToArray();
 
 		await Assert.That(warnings.Count(d => d.Id == "EVENTSTORE014")).IsEqualTo(4);
 	}
 
 	[Test]
-	public async Task Generate_GivenManualEventTypes_ReportsPastTenseDiagnostics(CancellationToken cancellationToken)
+	public async Task Generate_GivenManualEventTypes_ReportsPastTenseDiagnostics(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source =
 			@"
@@ -3140,15 +3304,23 @@ namespace Testing
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result).Where(d => d.Severity == DiagnosticSeverity.Warning).ToArray();
+		var (result, _) = Generate(source, cancellationToken);
+		var warnings = GetGeneratorDiagnostics(result)
+			.Where(d => d.Severity == DiagnosticSeverity.Warning)
+			.ToArray();
 
-		await Assert.That(warnings.Select(d => d.Id)).Contains(GeneratorDiagnostics.EventNameShouldBePastTense.Id);
-		await Assert.That(warnings.Count(d => d.Id == GeneratorDiagnostics.EventNameShouldBePastTense.Id)).IsEqualTo(1);
+		await Assert
+			.That(warnings.Select(d => d.Id))
+			.Contains(GeneratorDiagnostics.EventNameShouldBePastTense.Id);
+		await Assert
+			.That(warnings.Count(d => d.Id == GeneratorDiagnostics.EventNameShouldBePastTense.Id))
+			.IsEqualTo(1);
 		await Assert
 			.That(warnings.Select(d => d.Id))
 			.DoesNotContain(GeneratorDiagnostics.EventNameOverrideShouldBePastTense.Id);
-		await Assert.That(warnings.Select(d => d.Id)).DoesNotContain(GeneratorDiagnostics.UnableToInferEventName.Id);
+		await Assert
+			.That(warnings.Select(d => d.Id))
+			.DoesNotContain(GeneratorDiagnostics.UnableToInferEventName.Id);
 	}
 
 	[Test]
@@ -3163,18 +3335,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NoteAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 			public string? Note { get; private set; }
 
-			[Purview.EventSourcing.Aggregates.GenerateEvent]
+			[Purview.EventSourcing.Aggregates.Event]
 			public partial void SetNote(string note);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var warnings = GetGeneratorDiagnostics(result)
 			.Where(static d => d.Severity == DiagnosticSeverity.Info)
 			.ToArray();
@@ -3203,18 +3375,18 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class NoteAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 			public string? Note { get; private set; }
 
-			[Purview.EventSourcing.Aggregates.GenerateEvent]
+			[Purview.EventSourcing.Aggregates.Event]
 			public partial void SetNote(string? note);
 	}
 }
 ";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var warnings = GetGeneratorDiagnostics(result)
 			.Where(static d => d.Severity == DiagnosticSeverity.Warning)
 			.ToArray();
@@ -3242,28 +3414,33 @@ namespace Testing
 			$@"
 namespace Testing
 {{
-		[Purview.EventSourcing.Aggregates.GenerateAggregate]
+		[Purview.EventSourcing.Aggregates.Aggregate]
 		public partial class ItemAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 		{{
 			public {collectionType} Tags {{ get; private set; }}
 
-			[Purview.EventSourcing.Aggregates.GenerateEvent]
+			[Purview.EventSourcing.Aggregates.Event]
 			public partial void SetTags({collectionType} tags);
 		}}
 }}
 ";
 
-		var (result, _) = await GenerateAsync(source, false, cancellationToken);
+		var (result, _) = Generate(source, false, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert
 			.That(diagnostics.Select(static d => d.Id))
-			.Contains(GeneratorDiagnostics.AggregatePropertyCollectionTypeMustUseEventStoreCollections.Id);
+			.Contains(
+				GeneratorDiagnostics.AggregatePropertyCollectionTypeMustUseEventStoreCollections.Id
+			);
 		await Assert
 			.That(
 				diagnostics
 					.Where(static d =>
-						d.Id == GeneratorDiagnostics.AggregatePropertyCollectionTypeMustUseEventStoreCollections.Id
+						d.Id
+						== GeneratorDiagnostics
+							.AggregatePropertyCollectionTypeMustUseEventStoreCollections
+							.Id
 					)
 					.Select(static d => d.Severity)
 			)
@@ -3282,23 +3459,25 @@ namespace Testing
 			$@"
 namespace Testing
 {{
-		[Purview.EventSourcing.Aggregates.GenerateAggregate]
+		[Purview.EventSourcing.Aggregates.Aggregate]
 		public partial class ItemAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 		{{
 			public {collectionType} Tags {{ get; private set; }} = new();
 
-			[Purview.EventSourcing.Aggregates.GenerateEvent]
+			[Purview.EventSourcing.Aggregates.Event]
 			public partial void SetTags({collectionType} tags);
 		}}
 }}
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, false, cancellationToken);
+		var (result, outputCompilation) = Generate(source, false, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
 		await Assert
 			.That(diagnostics.Select(static d => d.Id))
-			.DoesNotContain(GeneratorDiagnostics.AggregatePropertyCollectionTypeMustUseEventStoreCollections.Id);
+			.DoesNotContain(
+				GeneratorDiagnostics.AggregatePropertyCollectionTypeMustUseEventStoreCollections.Id
+			);
 
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)
@@ -3316,27 +3495,29 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ItemAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public Purview.EventSourcing.EventStoreSet<string> Tags { get; private set; } = [];
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags))]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags))]
 		public partial ItemAggregate AddTag(string tag);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags))]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags))]
 		public partial ItemAggregate AddTags(System.Collections.Generic.IEnumerable<string> tags);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags))]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags))]
 		public partial ItemAggregate AddTags(params string[] tags);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, false, cancellationToken);
+		var (result, outputCompilation) = Generate(source, false, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
 		var generatedSource = GetAggregateGeneratedSource(result);
-		await Assert.That(diagnostics).DoesNotContain(GeneratorDiagnostics.UnsupportedEventMethodSignature.Id);
+		await Assert
+			.That(diagnostics)
+			.DoesNotContain(GeneratorDiagnostics.UnsupportedEventMethodSignature.Id);
 		await Assert
 			.That(generatedSource)
 			.Contains(
@@ -3344,14 +3525,18 @@ namespace Testing
 			);
 		await Assert
 			.That(generatedSource)
-			.Contains("partial void OnValidatingAddTags(global::System.Collections.Generic.IEnumerable<string> tags);");
+			.Contains(
+				"partial void OnValidatingAddTags(global::System.Collections.Generic.IEnumerable<string> tags);"
+			);
 		await Assert.That(generatedSource).Contains("if (Tags.Contains(__itemValue))");
 		await Assert
 			.That(generatedSource)
 			.Contains("var __eventItems = __itemsValue as string[] ?? [.. __itemsValue];");
 		await Assert
 			.That(generatedSource)
-			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Add(__item);");
+			.Contains(
+				"((global::System.Collections.Generic.ICollection<string>)Tags).Add(__item);"
+			);
 
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)
@@ -3369,23 +3554,25 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ManualAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public string Value { get; private set; } = string.Empty;
 
-		[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = ""ValueCommandAppliedEvent"", Manual = true)]
+		[Purview.EventSourcing.Aggregates.Event(EventName = ""ValueCommandAppliedEvent"", Manual = true)]
 		public partial void ApplyValueCommand(string input);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, cancellationToken);
+		var (result, outputCompilation) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
 			.That(generatedSource)
-			.Contains("private partial void Apply(global::Testing.ManualEvents.ValueCommandAppliedEvent @event);");
+			.Contains(
+				"private partial void Apply(global::Testing.ManualEvents.ValueCommandAppliedEvent @event);"
+			);
 		await Assert.That(generatedSource).DoesNotContain("Value = @event.Input;");
 
 		var errors = outputCompilation
@@ -3404,23 +3591,25 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ManualCollectionAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public Purview.EventSourcing.EventStoreList<string> Tags { get; private set; } = [];
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags), Manual = true)]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags), Manual = true)]
 		public partial void AddTag(string tag);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, false, cancellationToken);
+		var (result, outputCompilation) = Generate(source, false, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert
 			.That(generatedSource)
-			.Contains("private partial void Apply(global::Testing.ManualCollectionEvents.TagAddedEvent @event);");
+			.Contains(
+				"private partial void Apply(global::Testing.ManualCollectionEvents.TagAddedEvent @event);"
+			);
 		await Assert
 			.That(generatedSource)
 			.DoesNotContain("((global::System.Collections.Generic.ICollection<string>)Tags).Add(");
@@ -3441,25 +3630,29 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ItemAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public Purview.EventSourcing.EventStoreSet<string> Tags { get; private set; } = [];
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags))]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags))]
 		public partial ItemAggregate RemoveTag(string tag);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, false, cancellationToken);
+		var (result, outputCompilation) = Generate(source, false, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
 		var generatedSource = GetAggregateGeneratedSource(result);
-		await Assert.That(diagnostics).DoesNotContain(GeneratorDiagnostics.UnsupportedEventMethodSignature.Id);
+		await Assert
+			.That(diagnostics)
+			.DoesNotContain(GeneratorDiagnostics.UnsupportedEventMethodSignature.Id);
 		await Assert.That(generatedSource).Contains("if (!Tags.Contains(__itemValue))");
 		await Assert
 			.That(generatedSource)
-			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);");
+			.Contains(
+				"((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);"
+			);
 
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)
@@ -3477,32 +3670,38 @@ namespace Testing
 			@"
 namespace Testing
 {
-	[Purview.EventSourcing.Aggregates.GenerateAggregate]
+	[Purview.EventSourcing.Aggregates.Aggregate]
 	public partial class ItemAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 	{
 		public Purview.EventSourcing.EventStoreSet<string> Tags { get; private set; } = [];
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags), Operation = Purview.EventSourcing.Aggregates.CollectionEventOperation.Remove)]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags), Operation = Purview.EventSourcing.Aggregates.CollectionEventOperation.Remove)]
 		public partial ItemAggregate ArchiveTag(string tag);
 
-		[Purview.EventSourcing.Aggregates.GenerateAggregateCollectionEvent(nameof(Tags), Operation = Purview.EventSourcing.Aggregates.CollectionEventOperation.Add)]
+		[Purview.EventSourcing.Aggregates.CollectionEvent(nameof(Tags), Operation = Purview.EventSourcing.Aggregates.CollectionEventOperation.Add)]
 		public partial ItemAggregate DeleteTag(string tag);
 	}
 }
 ";
 
-		var (result, outputCompilation) = await GenerateAsync(source, false, cancellationToken);
+		var (result, outputCompilation) = Generate(source, false, cancellationToken);
 		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
 		var generatedSource = GetAggregateGeneratedSource(result);
-		await Assert.That(diagnostics).DoesNotContain(GeneratorDiagnostics.UnsupportedEventMethodSignature.Id);
+		await Assert
+			.That(diagnostics)
+			.DoesNotContain(GeneratorDiagnostics.UnsupportedEventMethodSignature.Id);
 		await Assert.That(generatedSource).Contains("if (!Tags.Contains(__itemValue))");
 		await Assert.That(generatedSource).Contains("if (Tags.Contains(__itemValue))");
 		await Assert
 			.That(generatedSource)
-			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);");
+			.Contains(
+				"((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);"
+			);
 		await Assert
 			.That(generatedSource)
-			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Add(@event.Tag);");
+			.Contains(
+				"((global::System.Collections.Generic.ICollection<string>)Tags).Add(@event.Tag);"
+			);
 
 		var errors = outputCompilation
 			.GetDiagnostics(cancellationToken)

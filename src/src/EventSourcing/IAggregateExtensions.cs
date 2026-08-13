@@ -27,7 +27,8 @@ public static class IAggregateExtensions
 	/// </summary>
 	/// <param name="aggregate">The <see cref="IAggregate"/> to check.</param>
 	/// <returns>Returns true if the <see cref="AggregateDetails.SavedVersion"/> is 0, zero. Otherwise, returns false.</returns>
-	public static bool IsNew([NotNull] this IAggregate aggregate) => aggregate.Details.SavedVersion == 0;
+	public static bool IsNew([NotNull] this IAggregate aggregate) =>
+		aggregate.Details.SavedVersion == 0;
 
 	/// <summary>
 	/// <para>
@@ -59,7 +60,10 @@ public static class IAggregateExtensions
 		where TEvent : IEvent
 	{
 		if (aggregatePropertyExpression.Body is not MemberExpression aggregateExpressionMember)
-			throw new ArgumentException("Invalid property expression.", nameof(aggregatePropertyExpression));
+			throw new ArgumentException(
+				"Invalid property expression.",
+				nameof(aggregatePropertyExpression)
+			);
 
 		var existingValue = aggregatePropertyExpression.Compile()(aggregate);
 		if (!EqualityComparer<TProperty>.Default.Equals(existingValue, proposedValue))

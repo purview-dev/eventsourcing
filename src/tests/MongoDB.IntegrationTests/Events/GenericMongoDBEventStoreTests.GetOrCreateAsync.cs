@@ -11,7 +11,10 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
 		// Act
-		var result = await eventStore.GetOrCreateAsync(aggregateId, cancellationToken: cancellationToken);
+		var result = await eventStore.GetOrCreateAsync(
+			aggregateId,
+			cancellationToken: cancellationToken
+		);
 
 		// Assert
 		await Assert.That(result).IsNotNull();

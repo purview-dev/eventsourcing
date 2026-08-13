@@ -70,7 +70,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(result!.Id()).IsEqualTo(aggregate.Id());
 		await Assert.That(result!.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
 		await Assert.That(result!.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert.That(result!.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert
+			.That(result!.Details.CurrentVersion)
+			.IsEqualTo(aggregate.Details.CurrentVersion);
 		await Assert.That(result!.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 		await Assert
 			.That(result!.Details.SnapshotVersion)
@@ -96,7 +98,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 		var totalEventsToCreate = eventsToCreate + eventCountOffset;
 
 		var aggregateId = $"{Guid.NewGuid()}";
-		var eventStore = fixture.CreateEventStore<TAggregate>(snapshotRecalculationInterval: snapshotInterval);
+		var eventStore = fixture.CreateEventStore<TAggregate>(
+			snapshotRecalculationInterval: snapshotInterval
+		);
 
 		// Act
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -165,7 +169,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 				Any<string>(),
 				Any<string>(),
 				Any<string>(),
-				Is<string>(eventType => eventType!.Contains(typeof(OldEvent).Name, StringComparison.Ordinal)),
+				Is<string>(eventType =>
+					eventType!.Contains(nameof(OldEvent), StringComparison.Ordinal)
+				),
 				Any<int>()
 			)
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
@@ -240,7 +246,13 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Assert
 		telemetry
-			.SkippedUnknownEvent(aggregateId, Any<string>(), Any<string>(), unknownEventType, Any<int>())
+			.SkippedUnknownEvent(
+				aggregateId,
+				Any<string>(),
+				Any<string>(),
+				unknownEventType,
+				Any<int>()
+			)
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
 
 		await Assert.That(result).IsNotNull();

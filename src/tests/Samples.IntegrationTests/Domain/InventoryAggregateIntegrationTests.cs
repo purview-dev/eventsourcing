@@ -22,7 +22,9 @@ public sealed class InventoryAggregateIntegrationTests(SqlServerSnapshotEventSto
 	#region Round-Trip Persistence
 
 	[Test]
-	public async Task SaveAsync_GivenInitializedInventory_LoadedQuantitiesMatch(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenInitializedInventory_LoadedQuantitiesMatch(
+		CancellationToken cancellationToken
+	)
 	{
 		var inv = CreateInitialized($"{Guid.NewGuid()}", qty: 50);
 
@@ -123,7 +125,9 @@ public sealed class InventoryAggregateIntegrationTests(SqlServerSnapshotEventSto
 	#region Version Tracking
 
 	[Test]
-	public async Task SaveAsync_GivenMultipleOperations_VersionIsTrackedCorrectly(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenMultipleOperations_VersionIsTrackedCorrectly(
+		CancellationToken cancellationToken
+	)
 	{
 		var inv = CreateInitialized($"{Guid.NewGuid()}", qty: 100); // v1
 		inv.ReceiveStock(50); // v2
@@ -176,7 +180,9 @@ public sealed class InventoryAggregateIntegrationTests(SqlServerSnapshotEventSto
 		inv.ShipStock(50, "order-snap");
 		inv.ReceiveStock(100);
 
-		var store = fixture.CreateSnapshotStore(snapshotStrategy: new AlwaysSnapshotStrategy<InventoryAggregate>());
+		var store = fixture.CreateSnapshotStore(
+			snapshotStrategy: new AlwaysSnapshotStrategy<InventoryAggregate>()
+		);
 		await store.SaveAsync(inv, cancellationToken);
 
 		var loaded = await store.GetAsync(inv.Id(), cancellationToken);

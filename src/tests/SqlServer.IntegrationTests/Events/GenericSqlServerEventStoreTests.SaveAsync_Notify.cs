@@ -32,13 +32,17 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await Assert.That(beforeWasCalled).IsTrue();
 		await Assert.That(afterWasCalled).IsTrue();
 
-		aggregateChangeNotifier.BeforeSaveAsync(aggregate, true, Any<CancellationToken>()).WasCalled(Times.Once);
+		aggregateChangeNotifier
+			.BeforeSaveAsync(aggregate, true, Any<CancellationToken>())
+			.WasCalled(Times.Once);
 		aggregateChangeNotifier
 			.AfterSaveAsync(aggregate, Any<int>(), true, Any<IEvent[]>(), Any<CancellationToken>())
 			.WasCalled(Times.Once);
 	}
 
-	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -54,7 +58,13 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 			.BeforeSaveAsync(Any<TAggregate>(), Any<bool>(), Any<CancellationToken>())
 			.WasNeverCalled();
 		aggregateChangeNotifier
-			.AfterSaveAsync(Any<TAggregate>(), Any<int>(), Any<bool>(), Any<IEvent[]>(), Any<CancellationToken>())
+			.AfterSaveAsync(
+				Any<TAggregate>(),
+				Any<int>(),
+				Any<bool>(),
+				Any<IEvent[]>(),
+				Any<CancellationToken>()
+			)
 			.WasNeverCalled();
 	}
 }

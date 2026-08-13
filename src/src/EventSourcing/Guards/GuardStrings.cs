@@ -60,10 +60,14 @@ public static class GuardStrings
 	}
 
 	[return: NotNull]
-	public static string KeyUpper(this IEnumerable<string> keys, char separator = DefaultKeySeparator) =>
-		Key(keys, separator).Upper();
+	public static string KeyUpper(
+		this IEnumerable<string> keys,
+		char separator = DefaultKeySeparator
+	) => Key(keys, separator).Upper();
 
 	[return: NotNull]
-	public static string KeyLower(this IEnumerable<string> keys, char separator = DefaultKeySeparator) =>
-		Key(keys, separator).Lower();
+	public static string KeyLower(
+		this IEnumerable<string> keys,
+		char separator = DefaultKeySeparator
+	) => Key(keys, separator).Lower();
 }

@@ -6,7 +6,11 @@ namespace Purview.EventSourcing.Samples.ValueObjects;
 
 [Scalar]
 public readonly partial record struct ReportProcessingStatus
-	: IContextualValueObject<ReportProcessingStatus, ReportProcessingStatusCode, ReportUploadAggregate>
+	: IContextualValueObject<
+		ReportProcessingStatus,
+		ReportProcessingStatusCode,
+		ReportUploadAggregate
+	>
 {
 	public ReportProcessingStatusCode Value { get; }
 
@@ -20,7 +24,9 @@ public readonly partial record struct ReportProcessingStatus
 		var current = context.Aggregate.Status;
 		return IsValidTransition(current, value)
 			? new(value)
-			: throw new InvalidOperationException($"Invalid status transition from {current} to {value}");
+			: throw new InvalidOperationException(
+				$"Invalid status transition from {current} to {value}"
+			);
 	}
 
 	static bool IsValidTransition(ReportProcessingStatusCode from, ReportProcessingStatusCode to) =>

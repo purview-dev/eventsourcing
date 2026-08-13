@@ -27,7 +27,9 @@ sealed class AggregateAuditService(IEventStore eventStore) : IAggregateAuditServ
 
 	public static bool IsSupportedAggregateType(string? aggregateType) =>
 		!string.IsNullOrWhiteSpace(aggregateType)
-		&& SupportedAggregateTypes.Any(m => m.Equals(aggregateType.Trim(), StringComparison.OrdinalIgnoreCase));
+		&& SupportedAggregateTypes.Any(m =>
+			m.Equals(aggregateType.Trim(), StringComparison.OrdinalIgnoreCase)
+		);
 
 	public Task<ContinuationResponse<AggregateEventHistoryItem>> GetHistoryAsync(
 		string aggregateType,
@@ -37,10 +39,26 @@ sealed class AggregateAuditService(IEventStore eventStore) : IAggregateAuditServ
 	) =>
 		NormalizeAggregateType(aggregateType) switch
 		{
-			"CUSTOMER" => eventStore.GetEventHistoryAsync<CustomerAggregate>(aggregateId, request, cancellationToken),
-			"ORDER" => eventStore.GetEventHistoryAsync<OrderAggregate>(aggregateId, request, cancellationToken),
-			"INVENTORY" => eventStore.GetEventHistoryAsync<InventoryAggregate>(aggregateId, request, cancellationToken),
-			"LOCATION" => eventStore.GetEventHistoryAsync<LocationAggregate>(aggregateId, request, cancellationToken),
+			"CUSTOMER" => eventStore.GetEventHistoryAsync<CustomerAggregate>(
+				aggregateId,
+				request,
+				cancellationToken
+			),
+			"ORDER" => eventStore.GetEventHistoryAsync<OrderAggregate>(
+				aggregateId,
+				request,
+				cancellationToken
+			),
+			"INVENTORY" => eventStore.GetEventHistoryAsync<InventoryAggregate>(
+				aggregateId,
+				request,
+				cancellationToken
+			),
+			"LOCATION" => eventStore.GetEventHistoryAsync<LocationAggregate>(
+				aggregateId,
+				request,
+				cancellationToken
+			),
 			"REPORTUPLOAD" => eventStore.GetEventHistoryAsync<ReportUploadAggregate>(
 				aggregateId,
 				request,
@@ -71,7 +89,11 @@ sealed class AggregateAuditService(IEventStore eventStore) : IAggregateAuditServ
 				maxRecords,
 				cancellationToken
 			),
-			"ORDER" => await GetEventsAcrossAggregatesAsync<OrderAggregate>(request, maxRecords, cancellationToken),
+			"ORDER" => await GetEventsAcrossAggregatesAsync<OrderAggregate>(
+				request,
+				maxRecords,
+				cancellationToken
+			),
 			"INVENTORY" => await GetEventsAcrossAggregatesAsync<InventoryAggregate>(
 				request,
 				maxRecords,
@@ -96,7 +118,10 @@ sealed class AggregateAuditService(IEventStore eventStore) : IAggregateAuditServ
 
 		return
 		[
-			.. candidates.OrderByDescending(m => m.When).ThenByDescending(m => m.AggregateVersion).Take(maxRecords),
+			.. candidates
+				.OrderByDescending(m => m.When)
+				.ThenByDescending(m => m.AggregateVersion)
+				.Take(maxRecords),
 		];
 	}
 
@@ -111,7 +136,12 @@ sealed class AggregateAuditService(IEventStore eventStore) : IAggregateAuditServ
 		where T : class, IAggregate, new()
 	{
 		List<AggregateEventHistoryItem> items = [];
-		await foreach (var aggregateId in eventStore.GetAggregateIdsAsync<T>(includeDeleted: false, cancellationToken))
+		await foreach (
+			var aggregateId in eventStore.GetAggregateIdsAsync<T>(
+				includeDeleted: false,
+				cancellationToken
+			)
+		)
 		{
 			if (string.IsNullOrWhiteSpace(aggregateId))
 				continue;

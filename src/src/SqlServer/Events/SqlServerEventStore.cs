@@ -12,7 +12,9 @@ namespace Purview.EventSourcing.SqlServer.Events;
 // SQL strings are built from validated identifiers at construction time, not from user input.
 #pragma warning disable CA2100
 
-public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, ITransactionalEventStore<T>
+public sealed partial class SqlServerEventStore<T>
+	: ISqlServerEventStore<T>,
+		ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
 	const int StreamVersionType = 0;
@@ -93,11 +95,18 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 				await _distributedCache.RemoveAsync(cacheKey, cancellationToken);
 			else
 			{
-				if (!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache))
+				if (
+					!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache)
+				)
 					return;
 
 				var data = SerializeSnapshot(aggregate);
-				await _distributedCache.SetStringAsync(cacheKey, data, cacheEntryOptions, cancellationToken);
+				await _distributedCache.SetStringAsync(
+					cacheKey,
+					data,
+					cacheEntryOptions,
+					cancellationToken
+				);
 			}
 		}
 #pragma warning disable CA1031
@@ -108,8 +117,11 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 		}
 	}
 
-	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
-		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
+	DistributedCacheEntryOptions GetCacheEntryOptions(
+		DistributedCacheEntryOptions? cacheEntryOptions
+	) =>
+		cacheEntryOptions
+		?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
@@ -201,7 +213,12 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 		return result;
 	}
 
-	static bool ReturnAggregate(bool isDeleted, string aggregateId, EventStoreOperationContext context)
+	[SuppressMessage("Style", "IDE0010:Add missing cases")]
+	static bool ReturnAggregate(
+		bool isDeleted,
+		string aggregateId,
+		EventStoreOperationContext context
+	)
 	{
 		if (isDeleted)
 		{
@@ -217,7 +234,8 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 		return true;
 	}
 
-	string CreateStreamVersionId(string aggregateId) => $"s_{_aggregateTypeShortName}_{aggregateId}";
+	string CreateStreamVersionId(string aggregateId) =>
+		$"s_{_aggregateTypeShortName}_{aggregateId}";
 
 	string CreateEventId(string aggregateId, int version) =>
 		$"e_{_aggregateTypeShortName}_{aggregateId}_{$"{version}".PadLeft(_eventStoreOptions.Value.EventSuffixLength, '0')}";
@@ -227,21 +245,27 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 
 	string CreateSnapshotId(string aggregateId) => $"snap_{_aggregateTypeShortName}_{aggregateId}";
 
-	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToUpperInvariant();
+	public string CreateCacheKey(string aggregateId) =>
+		$"{_aggregateTypeShortName}:{aggregateId}".ToUpperInvariant();
 
-	async Task EnsureConfiguredAsync(CancellationToken cancellationToken)
-	{
-		if (_eventStoreOptions.Value.AutoCreateTable)
-			await _client.EnsureTableExistsAsync(cancellationToken);
-	}
+	//async Task EnsureConfiguredAsync(CancellationToken cancellationToken)
+	//{
+	//	if (_eventStoreOptions.Value.AutoCreateTable)
+	//		await _client.EnsureTableExistsAsync(cancellationToken);
+	//}
 
 	/// <summary>
 	/// Merges global options with any per-aggregate-type table override.
 	/// Returns an options instance with the effective schema and table name.
 	/// </summary>
-	static SqlServerEventStoreOptions ResolveClientOptions(SqlServerEventStoreOptions options, string aggregateTypeName)
+	static SqlServerEventStoreOptions ResolveClientOptions(
+		SqlServerEventStoreOptions options,
+		string aggregateTypeName
+	)
 	{
-		return !options.AggregateTableOverrides.TryGetValue(aggregateTypeName, out var ovr) || ovr is null ? options
+		return !options.AggregateTableOverrides.TryGetValue(aggregateTypeName, out var ovr)
+			|| ovr is null
+				? options
 			: ovr.SchemaName is null && ovr.TableName is null ? options
 			: new SqlServerEventStoreOptions
 			{

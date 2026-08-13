@@ -81,8 +81,10 @@ public sealed class SqlServerSnapshotEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<string, SqlServerSnapshotAggregateTableOverride> AggregateTableOverrides { get; init; } =
-	[with(StringComparer.OrdinalIgnoreCase)];
+	public Dictionary<
+		string,
+		SqlServerSnapshotAggregateTableOverride
+	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 
 	/// <summary>
 	/// Configures runtime-managed SQL Server indexes over the snapshot payload JSON column.

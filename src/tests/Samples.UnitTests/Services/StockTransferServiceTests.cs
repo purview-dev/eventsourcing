@@ -49,7 +49,11 @@ public sealed class StockTransferServiceTests
 	StockTransferService CreateService(
 		IEventStoreTransactionFactory? transactionFactory = null,
 		IQueryableEventStore? store = null
-	) => new(transactionFactory ?? IEventStoreTransactionFactory.Mock(), store ?? IQueryableEventStore.Mock());
+	) =>
+		new(
+			transactionFactory ?? IEventStoreTransactionFactory.Mock(),
+			store ?? IQueryableEventStore.Mock()
+		);
 
 	[Test]
 	public async Task TransferAsync_GivenSameSourceAndDestinationLocation_ReturnsFail(
@@ -59,10 +63,15 @@ public sealed class StockTransferServiceTests
 		var source = StockedItem("inv-1", "LOC-001", "Warehouse North", 100);
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 
-		var result = await CreateService(store: store).TransferAsync("inv-1", "LOC-001", 5, "test", cancellationToken);
+		var result = await CreateService(store: store)
+			.TransferAsync("inv-1", "LOC-001", 5, "test", cancellationToken);
 
 		await Assert.That(result.Succeeded).IsFalse();
 		await Assert.That(result.ErrorMessage).Contains("different");
@@ -73,61 +82,98 @@ public sealed class StockTransferServiceTests
 	{
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("missing"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("missing"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns((InventoryAggregate?)null);
 
-		var result = await CreateService(store: store).TransferAsync("missing", "inv-2", 5, "test", cancellationToken);
+		var result = await CreateService(store: store)
+			.TransferAsync("missing", "inv-2", 5, "test", cancellationToken);
 
 		await Assert.That(result.Succeeded).IsFalse();
 		await Assert.That(result.ErrorMessage).Contains("Source");
 	}
 
 	[Test]
-	public async Task TransferAsync_GivenNullDestination_ReturnsFail(CancellationToken cancellationToken)
+	public async Task TransferAsync_GivenNullDestination_ReturnsFail(
+		CancellationToken cancellationToken
+	)
 	{
 		var source = StockedItem("inv-1", "LOC-001", "Warehouse North", 100);
 		var sourceLocation = Location("LOC-001", "Warehouse North");
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("missing"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("missing"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns((LocationAggregate?)null);
 
-		var result = await CreateService(store: store).TransferAsync("inv-1", "missing", 5, "test", cancellationToken);
+		var result = await CreateService(store: store)
+			.TransferAsync("inv-1", "missing", 5, "test", cancellationToken);
 
 		await Assert.That(result.Succeeded).IsFalse();
 		await Assert.That(result.ErrorMessage).Contains("Destination");
 	}
 
 	[Test]
-	public async Task TransferAsync_GivenMissingSourceLocationAggregate_ReturnsFail(CancellationToken cancellationToken)
+	public async Task TransferAsync_GivenMissingSourceLocationAggregate_ReturnsFail(
+		CancellationToken cancellationToken
+	)
 	{
 		var source = StockedItem("inv-1", "LOC-001", "Warehouse North", 100, productId: "SKU-001");
 		var destinationLocation = Location("LOC-002", "Warehouse South");
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns((LocationAggregate?)null);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 
-		var result = await CreateService(store: store).TransferAsync("inv-1", "LOC-002", 5, "test", cancellationToken);
+		var result = await CreateService(store: store)
+			.TransferAsync("inv-1", "LOC-002", 5, "test", cancellationToken);
 
 		await Assert.That(result.Succeeded).IsFalse();
 		await Assert.That(result.ErrorMessage).Contains("Source location");
 	}
 
 	[Test]
-	public async Task TransferAsync_GivenInsufficientStock_ReturnsFail(CancellationToken cancellationToken)
+	public async Task TransferAsync_GivenInsufficientStock_ReturnsFail(
+		CancellationToken cancellationToken
+	)
 	{
 		var source = StockedItem("inv-1", "LOC-001", "Warehouse North", 3);
 		var sourceLocation = Location("LOC-001", "Warehouse North");
@@ -136,13 +182,25 @@ public sealed class StockTransferServiceTests
 
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 		store
 			.FirstOrDefaultAsync(
@@ -152,14 +210,17 @@ public sealed class StockTransferServiceTests
 			)
 			.Returns(dest);
 
-		var result = await CreateService(store: store).TransferAsync("inv-1", "LOC-002", 10, "test", cancellationToken);
+		var result = await CreateService(store: store)
+			.TransferAsync("inv-1", "LOC-002", 10, "test", cancellationToken);
 
 		await Assert.That(result.Succeeded).IsFalse();
 		await Assert.That(result.ErrorMessage).Contains("Insufficient");
 	}
 
 	[Test]
-	public async Task TransferAsync_GivenValidData_ReturnsSuccess(CancellationToken cancellationToken)
+	public async Task TransferAsync_GivenValidData_ReturnsSuccess(
+		CancellationToken cancellationToken
+	)
 	{
 		var source = StockedItem("inv-1", "LOC-001", "Warehouse North", 100);
 		var sourceLocation = Location("LOC-001", "Warehouse North");
@@ -173,13 +234,25 @@ public sealed class StockTransferServiceTests
 
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 		store
 			.FirstOrDefaultAsync(
@@ -213,13 +286,25 @@ public sealed class StockTransferServiceTests
 
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 		store
 			.FirstOrDefaultAsync(
@@ -250,17 +335,31 @@ public sealed class StockTransferServiceTests
 		var transactionFactory = IEventStoreTransactionFactory.Mock();
 		var transaction = IEventStoreTransaction.Mock();
 		transactionFactory.Create(Any<string?>()).Returns(transaction);
-		transaction.CommitAsync(cancellationToken).Returns(SuccessfulTransaction(source, createdDestination));
+		transaction
+			.CommitAsync(cancellationToken)
+			.Returns(SuccessfulTransaction(source, createdDestination));
 
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 		store
 			.FirstOrDefaultAsync(
@@ -269,7 +368,9 @@ public sealed class StockTransferServiceTests
 				Is(cancellationToken)
 			)
 			.Returns((InventoryAggregate?)null);
-		store.CreateAsync<InventoryAggregate>(Any<string?>(), Is(cancellationToken)).Returns(createdDestination);
+		store
+			.CreateAsync<InventoryAggregate>(Any<string?>(), Is(cancellationToken))
+			.Returns(createdDestination);
 
 		var result = await CreateService(transactionFactory, store)
 			.TransferAsync("inv-1", "LOC-002", 10, "test", cancellationToken);
@@ -279,11 +380,15 @@ public sealed class StockTransferServiceTests
 		await Assert.That(createdDestination.LocationName).IsEqualTo("Warehouse South");
 		await Assert.That(createdDestination.ProductId).IsEqualTo(source.ProductId);
 		await Assert.That(createdDestination.QuantityOnHand).IsEqualTo(10);
-		store.CreateAsync<InventoryAggregate>(Any<string?>(), Is(cancellationToken)).WasCalled(Times.Once);
+		store
+			.CreateAsync<InventoryAggregate>(Any<string?>(), Is(cancellationToken))
+			.WasCalled(Times.Once);
 	}
 
 	[Test]
-	public async Task TransferAsync_WhenTransactionCommitFails_ReturnsFail(CancellationToken cancellationToken)
+	public async Task TransferAsync_WhenTransactionCommitFails_ReturnsFail(
+		CancellationToken cancellationToken
+	)
 	{
 		var source = StockedItem("inv-1", "LOC-001", "Warehouse North", 100);
 		var sourceLocation = Location("LOC-001", "Warehouse North");
@@ -297,13 +402,25 @@ public sealed class StockTransferServiceTests
 
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 		store
 			.FirstOrDefaultAsync(
@@ -337,13 +454,25 @@ public sealed class StockTransferServiceTests
 
 		var store = IQueryableEventStore.Mock();
 		store
-			.GetAsync<InventoryAggregate>(Is("inv-1"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<InventoryAggregate>(
+				Is("inv-1"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(source);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-001"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-001"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(sourceLocation);
 		store
-			.GetAsync<LocationAggregate>(Is("LOC-002"), Any<EventStoreOperationContext?>(), Is(cancellationToken))
+			.GetAsync<LocationAggregate>(
+				Is("LOC-002"),
+				Any<EventStoreOperationContext?>(),
+				Is(cancellationToken)
+			)
 			.Returns(destinationLocation);
 		store
 			.FirstOrDefaultAsync(

@@ -17,7 +17,11 @@ public sealed class SqlServerJsonIndexOptions
 	/// <summary>
 	/// Gets or sets the JSON indexes to create for the payload column.
 	/// </summary>
-	[SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "DTO")]
+	[SuppressMessage(
+		"Performance",
+		"CA1819:Properties should not return arrays",
+		Justification = "DTO"
+	)]
 	public SqlServerJsonIndexDefinition[] Indexes { get; set; } = [];
 }
 
@@ -59,12 +63,17 @@ public sealed class SqlServerJsonIndexDefinition
 	/// Gets or sets the computed-column persistence mode.
 	/// </summary>
 	[EnumDataType(typeof(SqlServerJsonComputedColumnMode))]
-	public SqlServerJsonComputedColumnMode ComputedColumnMode { get; set; } = SqlServerJsonComputedColumnMode.Persisted;
+	public SqlServerJsonComputedColumnMode ComputedColumnMode { get; set; } =
+		SqlServerJsonComputedColumnMode.Persisted;
 
 	/// <summary>
 	/// Gets or sets the optional include columns for the generated index.
 	/// </summary>
-	[SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "DTO")]
+	[SuppressMessage(
+		"Performance",
+		"CA1819:Properties should not return arrays",
+		Justification = "DTO"
+	)]
 	public string[] IncludeColumns { get; set; } = [];
 
 	/// <summary>

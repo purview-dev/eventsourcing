@@ -40,14 +40,15 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 	{
 		if (Page < 1)
 			Page = 1;
-		if (PageSize < 5 || PageSize > 100)
+		if (PageSize is < 5 or > 100)
 			PageSize = DefaultPageSize;
 
 		var ct = HttpContext.RequestAborted;
 		var skipCount = (Page - 1) * PageSize;
 		var request = new ContinuationRequest
 		{
-			ContinuationToken = skipCount > 0 ? skipCount.ToString(CultureInfo.InvariantCulture) : null,
+			ContinuationToken =
+				skipCount > 0 ? skipCount.ToString(CultureInfo.InvariantCulture) : null,
 			MaxRecords = PageSize,
 		};
 
@@ -57,7 +58,10 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 		Expression<Func<InventoryAggregate, bool>> where = i =>
 			i.ProductId.Contains(search) || i.ProductName.Contains(search);
 
-		Func<IQueryable<InventoryAggregate>, IQueryable<InventoryAggregate>> orderBy = (SortBy, SortDir) switch
+		Func<IQueryable<InventoryAggregate>, IQueryable<InventoryAggregate>> orderBy = (
+			SortBy,
+			SortDir
+		) switch
 		{
 			("onhand", "asc") => q => q.OrderBy(i => i.QuantityOnHand),
 			("onhand", _) => q => q.OrderByDescending(i => i.QuantityOnHand),

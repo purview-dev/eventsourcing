@@ -79,7 +79,8 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 			eventNameMapper: _eventNameMapper,
 			mongoDbOptions: Microsoft.Extensions.Options.Options.Create(mongoDBOptions),
 			distributedCache: cache,
-			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
+			aggregateChangeNotifier: aggregateChangeNotifier
+				?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			eventStoreTelemetry: telemetry,
 			mongoDBClientTelemetry: mongoDBClientTelemetry,
 			aggregateRequirementsManager: aggregateRequirementsManager
@@ -87,7 +88,11 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 
 		var eventClient = new MongoDBClient(
 			mongoDBClientTelemetry,
-			new() { ConnectionString = mongoDBOptions.ConnectionString, ReplicaName = mongoDBOptions.ReplicaName },
+			new()
+			{
+				ConnectionString = mongoDBOptions.ConnectionString,
+				ReplicaName = mongoDBOptions.ReplicaName,
+			},
 			mongoDBOptions.Database,
 			mongoDBOptions.EventCollection
 		);
@@ -95,7 +100,11 @@ public sealed class MongoDBEventStoreFixture : IAsyncInitializer, IAsyncDisposab
 
 		var snapshotClient = new MongoDBClient(
 			mongoDBClientTelemetry,
-			new() { ConnectionString = mongoDBOptions.ConnectionString, ReplicaName = mongoDBOptions.ReplicaName },
+			new()
+			{
+				ConnectionString = mongoDBOptions.ConnectionString,
+				ReplicaName = mongoDBOptions.ReplicaName,
+			},
 			mongoDBOptions.Database,
 			mongoDBOptions.SnapshotCollection
 		);

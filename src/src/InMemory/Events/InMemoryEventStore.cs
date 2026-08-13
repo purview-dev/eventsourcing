@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
@@ -32,10 +32,15 @@ public partial class InMemoryEventStore<T>(
 		return Task.CompletedTask;
 	}
 
-	static Task<bool> ReturnAggregateAsync(bool isDeleted, string aggregateId, EventStoreOperationContext context)
+	static Task<bool> ReturnAggregateAsync(
+		bool isDeleted,
+		string aggregateId,
+		EventStoreOperationContext context
+	)
 	{
 		if (isDeleted)
 		{
+#pragma warning disable IDE0010 // Add missing cases
 			switch (context.DeleteMode)
 			{
 				case DeleteHandlingMode.ThrowsException:
@@ -43,12 +48,16 @@ public partial class InMemoryEventStore<T>(
 				case DeleteHandlingMode.ReturnsNull:
 					return Task.FromResult(false);
 			}
+#pragma warning restore IDE0010 // Add missing cases
 		}
 
 		return Task.FromResult(true);
 	}
 
-	public async Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
+	public async Task<T> CreateAsync(
+		string? aggregateId = null,
+		CancellationToken cancellationToken = default
+	)
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))
 		{
@@ -94,7 +103,11 @@ public partial class InMemoryEventStore<T>(
 
 		Deleted deleteAggregateEvent = new()
 		{
-			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
+			Details =
+			{
+				AggregateVersion = aggregate.Details.CurrentVersion + 1,
+				When = DateTimeOffset.UtcNow,
+			},
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
@@ -134,7 +147,10 @@ public partial class InMemoryEventStore<T>(
 		return Task.FromResult(aggregate);
 	}
 
-	public async Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default)
+	public async Task<ExistsState> ExistsAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	)
 	{
 		await Task.CompletedTask;
 
@@ -182,7 +198,13 @@ public partial class InMemoryEventStore<T>(
 
 		if (_aggregates.TryGetValue(aggregateId, out var aggregate))
 		{
-			if (!await ReturnAggregateAsync(aggregate.Details.IsDeleted, aggregateId, operationContext))
+			if (
+				!await ReturnAggregateAsync(
+					aggregate.Details.IsDeleted,
+					aggregateId,
+					operationContext
+				)
+			)
 				return null;
 		}
 
@@ -210,7 +232,10 @@ public partial class InMemoryEventStore<T>(
 		return FulfilRequirements(aggregate);
 	}
 
-	public async Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default)
+	public async Task<T?> GetDeletedAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var aggregate = await GetAsync(
 			aggregateId,
@@ -235,7 +260,9 @@ public partial class InMemoryEventStore<T>(
 
 		// We have some events... so query and return.
 		return eventList
-			.Where(kvp => kvp.Key >= versionFrom && (!versionTo.HasValue || kvp.Key <= versionTo.Value))
+			.Where(kvp =>
+				kvp.Key >= versionFrom && (!versionTo.HasValue || kvp.Key <= versionTo.Value)
+			)
 			.OrderBy(kvp => kvp.Key)
 			.Select(kvp => (kvp.Value, kvp.Value.GetType().Name))
 			.ToAsyncEnumerable();
@@ -257,7 +284,10 @@ public partial class InMemoryEventStore<T>(
 		return await CreateAsync(aggregateId, cancellationToken);
 	}
 
-	public async Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+	public async Task<bool> IsDeletedAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	) =>
 		await ExistsAsync(aggregateId, cancellationToken)
 		&& (_aggregates.TryGetValue(aggregateId, out var aggregate) && aggregate.Details.IsDeleted);
 
@@ -275,7 +305,11 @@ public partial class InMemoryEventStore<T>(
 
 		Restored restoreAggregateEvent = new()
 		{
-			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
+			Details =
+			{
+				AggregateVersion = aggregate.Details.CurrentVersion + 1,
+				When = DateTimeOffset.UtcNow,
+			},
 		};
 		aggregate.ApplyEvent(restoreAggregateEvent);
 
@@ -342,8 +376,13 @@ public partial class InMemoryEventStore<T>(
 
 		try
 		{
-			var userId = ClaimsPrincipal.Current?.FindFirst(operationContext.ClaimIdentifier)?.Value;
-			if (operationContext.RequiresValidPrincipalIdentifier && string.IsNullOrWhiteSpace(userId))
+			var userId = ClaimsPrincipal
+				.Current?.FindFirst(operationContext.ClaimIdentifier)
+				?.Value;
+			if (
+				operationContext.RequiresValidPrincipalIdentifier
+				&& string.IsNullOrWhiteSpace(userId)
+			)
 				throw new NullReferenceException(
 					$"Missing ClaimsPrincipal identifier '{operationContext.ClaimIdentifier}'. Unable to save aggregate."
 				);
@@ -374,7 +413,12 @@ public partial class InMemoryEventStore<T>(
 			if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
 			{
 				var deleteRequested = changeEvents.OfType<Deleted>().Any();
-				await aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, ex, cancellationToken);
+				await aggregateChangeNotifier.FailureAsync(
+					aggregate,
+					deleteRequested,
+					ex,
+					cancellationToken
+				);
 			}
 
 			throw;
@@ -398,12 +442,18 @@ public partial class InMemoryEventStore<T>(
 		GC.SuppressFinalize(this);
 	}
 
-	async Task<ValidationResult> GuardAsync(T aggregate, CancellationToken cancellationToken = default)
+	async Task<ValidationResult> GuardAsync(
+		T aggregate,
+		CancellationToken cancellationToken = default
+	)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
 		return _validator == null
-			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(aggregate, cancellationToken)
+			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(
+				aggregate,
+				cancellationToken
+			)
 			: await _validator.ValidateAsync(aggregate, cancellationToken);
 	}
 }

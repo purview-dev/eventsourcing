@@ -14,11 +14,15 @@ public sealed class IEventStoreExtensionsEnlistTests
 		aggregate.Increment();
 
 		// Act & Assert
-		await Assert.That(() => ((IEventStore)null!).Enlist(aggregate)).Throws<ArgumentNullException>();
+		await Assert
+			.That(() => ((IEventStore)null!).Enlist(aggregate))
+			.Throws<ArgumentNullException>();
 	}
 
 	[Test]
-	public async Task Enlist_GivenSingleAggregate_ReturnsPreparedTransaction(CancellationToken cancellationToken)
+	public async Task Enlist_GivenSingleAggregate_ReturnsPreparedTransaction(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var aggregate = TestHelpers.Aggregate<TestAggregate>(clearEvents: false);
@@ -26,7 +30,11 @@ public sealed class IEventStoreExtensionsEnlistTests
 
 		var eventStore = IEventStore.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
 			.Returns(new SaveResult<TestAggregate>(aggregate, new ValidationResult(), true, false));
 
 		// Act
@@ -42,7 +50,9 @@ public sealed class IEventStoreExtensionsEnlistTests
 	}
 
 	[Test]
-	public async Task Enlist_GivenMultipleAggregates_EnlistsAllInTransaction(CancellationToken cancellationToken)
+	public async Task Enlist_GivenMultipleAggregates_EnlistsAllInTransaction(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var agg1 = TestHelpers.Aggregate<TestAggregate>(clearEvents: false);
@@ -53,8 +63,15 @@ public sealed class IEventStoreExtensionsEnlistTests
 
 		var eventStore = IEventStore.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
-			.Returns(static (a, _, _) => new SaveResult<TestAggregate>(a, new ValidationResult(), true, false));
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
+			.Returns(
+				static (a, _, _) =>
+					new SaveResult<TestAggregate>(a, new ValidationResult(), true, false)
+			);
 
 		// Act
 		await using var transaction = eventStore.Enlist(agg1, agg2);
@@ -72,7 +89,9 @@ public sealed class IEventStoreExtensionsEnlistTests
 	}
 
 	[Test]
-	public async Task Enlist_WithCorrelationId_PropagatesCorrelationIdToTransaction(CancellationToken cancellationToken)
+	public async Task Enlist_WithCorrelationId_PropagatesCorrelationIdToTransaction(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var correlationId = "my-correlation-id";
@@ -81,7 +100,11 @@ public sealed class IEventStoreExtensionsEnlistTests
 
 		var eventStore = IEventStore.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
 			.Returns(new SaveResult<TestAggregate>(aggregate, new ValidationResult(), true, false));
 
 		// Act
@@ -91,7 +114,11 @@ public sealed class IEventStoreExtensionsEnlistTests
 		// Assert — the transaction uses the provided correlation ID
 		await Assert.That(transaction.CorrelationId).IsEqualTo(correlationId);
 		eventStore
-			.SaveAsync(Is(aggregate), ctx => ctx!.CorrelationId == correlationId, Any<CancellationToken>())
+			.SaveAsync(
+				Is(aggregate),
+				ctx => ctx!.CorrelationId == correlationId,
+				Any<CancellationToken>()
+			)
 			.WasCalled(Times.Once);
 	}
 
@@ -135,7 +162,11 @@ public sealed class IEventStoreExtensionsEnlistTests
 
 		var eventStore = IEventStore.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
 			.Returns(new SaveResult<TestAggregate>(aggregate, new ValidationResult(), true, false));
 
 		// Act
@@ -145,7 +176,11 @@ public sealed class IEventStoreExtensionsEnlistTests
 		// Assert — the transaction inherits the correlation ID from the context
 		await Assert.That(transaction.CorrelationId).IsEqualTo(correlationId);
 		eventStore
-			.SaveAsync(Is(aggregate), ctx => ctx!.CorrelationId == correlationId, Any<CancellationToken>())
+			.SaveAsync(
+				Is(aggregate),
+				ctx => ctx!.CorrelationId == correlationId,
+				Any<CancellationToken>()
+			)
 			.WasCalled(Times.Once);
 	}
 
@@ -159,7 +194,10 @@ public sealed class IEventStoreExtensionsEnlistTests
 		var eventStore = IEventStore.Mock();
 
 		// Act
-		await using var transaction = eventStore.Enlist((EventStoreOperationContext?)null, aggregate);
+		await using var transaction = eventStore.Enlist(
+			(EventStoreOperationContext?)null,
+			aggregate
+		);
 
 		// Assert — auto-generated correlation ID
 		await Assert.That(transaction.CorrelationId).IsNotEmpty();
@@ -205,7 +243,11 @@ public sealed class IEventStoreExtensionsEnlistTests
 		// Assert — nothing to save, result has no entries but commits without error
 		await Assert.That(result.Results).Count().IsEqualTo(0);
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
 			.WasNeverCalled();
 	}
 
@@ -225,8 +267,15 @@ public sealed class IEventStoreExtensionsEnlistTests
 
 		var eventStore = IEventStore.Mock();
 		eventStore
-			.SaveAsync(Any<TestAggregate>(), Any<EventStoreOperationContext?>(), Any<CancellationToken>())
-			.Returns(static (a, _, _) => new SaveResult<TestAggregate>(a, new ValidationResult(), true, false));
+			.SaveAsync(
+				Any<TestAggregate>(),
+				Any<EventStoreOperationContext?>(),
+				Any<CancellationToken>()
+			)
+			.Returns(
+				static (a, _, _) =>
+					new SaveResult<TestAggregate>(a, new ValidationResult(), true, false)
+			);
 
 		// Act
 		await using var transaction = eventStore.Enlist(context, agg1, agg2);

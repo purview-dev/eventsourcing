@@ -32,7 +32,12 @@ partial class CosmosDbSnapshotEventStore<T>
 	)
 	{
 		return _cosmosDbClient
-			.GetListEnumerableAsync(orderByClause, _partitionKey, maxRecordsPerIteration, cancellationToken)
+			.GetListEnumerableAsync(
+				orderByClause,
+				_partitionKey,
+				maxRecordsPerIteration,
+				cancellationToken
+			)
 			.SelectAsync(FulfilRequirements);
 	}
 
@@ -57,7 +62,11 @@ partial class CosmosDbSnapshotEventStore<T>
 
 		results.Results = [.. results.Results.Select(FulfilRequirements)];
 		if (request.IncludeTotalCount)
-			results.TotalCount = await _cosmosDbClient.CountAsync(expressionToRun, _partitionKey, cancellationToken);
+			results.TotalCount = await _cosmosDbClient.CountAsync(
+				expressionToRun,
+				_partitionKey,
+				cancellationToken
+			);
 
 		return results;
 	}
@@ -81,7 +90,11 @@ partial class CosmosDbSnapshotEventStore<T>
 
 		results.Results = [.. results.Results.Select(FulfilRequirements)];
 		if (request.IncludeTotalCount)
-			results.TotalCount = await _cosmosDbClient.CountAsync(expressionToRun, _partitionKey, cancellationToken);
+			results.TotalCount = await _cosmosDbClient.CountAsync(
+				expressionToRun,
+				_partitionKey,
+				cancellationToken
+			);
 
 		return results;
 	}
@@ -92,7 +105,12 @@ partial class CosmosDbSnapshotEventStore<T>
 	)
 	{
 		// Leave as 2 as it'll throw when expected.
-		var query = await GetSpecificNumberAsync(whereClause, null, 2, cancellationToken: cancellationToken);
+		var query = await GetSpecificNumberAsync(
+			whereClause,
+			null,
+			2,
+			cancellationToken: cancellationToken
+		);
 		return query.SingleOrDefault();
 	}
 
@@ -102,11 +120,19 @@ partial class CosmosDbSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	)
 	{
-		var query = await GetSpecificNumberAsync(whereClause, orderByClause, 1, cancellationToken: cancellationToken);
+		var query = await GetSpecificNumberAsync(
+			whereClause,
+			orderByClause,
+			1,
+			cancellationToken: cancellationToken
+		);
 		return query.FirstOrDefault();
 	}
 
-	public Task<long> CountAsync(Expression<Func<T, bool>>? whereClause, CancellationToken cancellationToken = default)
+	public Task<long> CountAsync(
+		Expression<Func<T, bool>>? whereClause,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var expressionToRun = BuildQueryExpression(whereClause);
 
@@ -139,7 +165,11 @@ partial class CosmosDbSnapshotEventStore<T>
 		if (whereClause == null)
 			return PredicateBuilder.New(defaultClause);
 
-		var aggregateClause = PredicateBuilder.Extend(defaultClause, whereClause, PredicateOperator.And);
+		var aggregateClause = PredicateBuilder.Extend(
+			defaultClause,
+			whereClause,
+			PredicateOperator.And
+		);
 		var expressionToRun = aggregateClause.Expand();
 
 		return expressionToRun;

@@ -9,7 +9,7 @@ namespace Purview.EventSourcing.Serialization;
 /// These defaults can be overridden on individual [ValueObject] attributes.
 /// </summary>
 [global::System.AttributeUsage(global::System.AttributeTargets.Assembly)]
-public sealed class GenerateValueObjectDefaultsAttribute : global::System.Attribute
+public sealed class ValueObjectDefaultsAttribute : global::System.Attribute
 {
 	/// <summary>
 	/// Gets or sets whether parameterless constructors should be generated for value objects.
@@ -17,9 +17,10 @@ public sealed class GenerateValueObjectDefaultsAttribute : global::System.Attrib
 	/// Individual [ValueObject] attributes can override this setting.
 	/// Default: true
 	/// </summary>
-	public bool GenerateConstructor { get; init; } = true;
+	public bool GenerateConstructor { get; set; } = true;
 
-	public GenerateValueObjectDefaultsAttribute()
+	public ValueObjectDefaultsAttribute(bool generateConstructor)
 	{
+		GenerateConstructor = generateConstructor;
 	}
 }

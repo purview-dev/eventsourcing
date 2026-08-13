@@ -24,7 +24,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Act
 		List<string> returnedTypes = [];
-		await foreach (var id in eventStore.GetAggregateIdsAsync(true, cancellationToken: cancellationToken))
+		await foreach (
+			var id in eventStore.GetAggregateIdsAsync(true, cancellationToken: cancellationToken)
+		)
 			returnedTypes.Add(id);
 
 		// Assert
@@ -65,7 +67,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Act
 		List<string> returnedTypes = [];
-		await foreach (var id in eventStore.GetAggregateIdsAsync(false, cancellationToken: cancellationToken))
+		await foreach (
+			var id in eventStore.GetAggregateIdsAsync(false, cancellationToken: cancellationToken)
+		)
 			returnedTypes.Add(id);
 
 		// Assert
@@ -108,11 +112,15 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Act
 		List<string> returnedTypes = [];
-		await foreach (var id in eventStore.GetAggregateIdsAsync(true, cancellationToken: cancellationToken))
+		await foreach (
+			var id in eventStore.GetAggregateIdsAsync(true, cancellationToken: cancellationToken)
+		)
 			returnedTypes.Add(id);
 
 		// Assert
-		await Assert.That(returnedTypes.Count).IsEqualTo(deletedAggregateIdCount + nonDeletedAggregateIdCount);
+		await Assert
+			.That(returnedTypes.Count)
+			.IsEqualTo(deletedAggregateIdCount + nonDeletedAggregateIdCount);
 		await Assert.That(generatedIds).IsEquivalentTo(returnedTypes);
 	}
 }

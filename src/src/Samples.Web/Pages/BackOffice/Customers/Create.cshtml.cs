@@ -18,7 +18,9 @@ sealed class CreateModel(IQueryableEventStore store) : PageModel
 		if (!ModelState.IsValid)
 			return Page();
 
-		var customer = await store.CreateAsync<CustomerAggregate>(cancellationToken: HttpContext.RequestAborted);
+		var customer = await store.CreateAsync<CustomerAggregate>(
+			cancellationToken: HttpContext.RequestAborted
+		);
 		customer.RegisterCustomer(Name, Email);
 		await store.SaveAsync(customer, HttpContext.RequestAborted);
 

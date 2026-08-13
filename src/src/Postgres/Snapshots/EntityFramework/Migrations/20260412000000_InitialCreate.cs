@@ -17,8 +17,16 @@ public partial class InitialCreate : Migration
 			schema: "public",
 			columns: table => new
 			{
-				Id = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
-				AggregateType = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+				Id = table.Column<string>(
+					type: "character varying(450)",
+					maxLength: 450,
+					nullable: false
+				),
+				AggregateType = table.Column<string>(
+					type: "character varying(450)",
+					maxLength: 450,
+					nullable: false
+				),
 				Payload = table.Column<string>(type: "jsonb", nullable: false),
 			},
 			constraints: table =>

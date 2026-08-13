@@ -34,7 +34,12 @@ public class PostgresEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		Action<PostgresEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new() =>
-		CreateEventStoreContext(aggregateChangeNotifier, removeFromCacheOnDelete, runId, configureOptions).EventStore;
+		CreateEventStoreContext(
+			aggregateChangeNotifier,
+			removeFromCacheOnDelete,
+			runId,
+			configureOptions
+		).EventStore;
 
 	internal (
 		PostgresEventStore<TAggregate> EventStore,
@@ -76,7 +81,8 @@ public class PostgresEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			sqlServerOptions: Microsoft.Extensions.Options.Options.Create(options),
 			distributedCache: cache,
 			eventStoreTelemetry: telemetry,
-			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
+			aggregateChangeNotifier: aggregateChangeNotifier
+				?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			aggregateRequirementsManager: aggregateRequirementsManager
 		);
 

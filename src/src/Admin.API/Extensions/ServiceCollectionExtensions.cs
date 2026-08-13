@@ -19,9 +19,14 @@ public static class AdminApiServiceCollectionExtensions
 		Action<AdminPortalOptions>? configure = null
 	)
 	{
-		services.AddOptions<AdminPortalOptions>().Configure(options => configure?.Invoke(options)).ValidateOnStart();
+		services
+			.AddOptions<AdminPortalOptions>()
+			.Configure(options => configure?.Invoke(options))
+			.ValidateOnStart();
 
-		services.AddSingleton<IValidateOptions<AdminPortalOptions>>(new AdminPortalOptionsValidator());
+		services.AddSingleton<IValidateOptions<AdminPortalOptions>>(
+			new AdminPortalOptionsValidator()
+		);
 
 		return services;
 	}

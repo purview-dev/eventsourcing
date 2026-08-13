@@ -29,16 +29,28 @@ partial class TableEventStore<T>
 
 		Deleted deleteAggregateEvent = new()
 		{
-			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
+			Details =
+			{
+				AggregateVersion = aggregate.Details.CurrentVersion + 1,
+				When = DateTimeOffset.UtcNow,
+			},
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
-		var result = await SaveCoreAsync(aggregate, operationContext, cancellationToken, deleteAggregateEvent);
+		var result = await SaveCoreAsync(
+			aggregate,
+			operationContext,
+			cancellationToken,
+			deleteAggregateEvent
+		);
 
 		return result.Saved;
 	}
 
-	async Task<bool> PermanentlyDeleteAsync(T aggregate, CancellationToken cancellationToken = default)
+	async Task<bool> PermanentlyDeleteAsync(
+		T aggregate,
+		CancellationToken cancellationToken = default
+	)
 	{
 		if (aggregate == null)
 			throw NullAggregate(aggregate);

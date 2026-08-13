@@ -8,8 +8,10 @@ namespace Purview.EventSourcing.Samples.Services;
 /// creating the destination inventory aggregate on demand and enlisting both aggregates in the
 /// same transaction so the commit succeeds or fails atomically.
 /// </summary>
-public sealed class StockTransferService(IEventStoreTransactionFactory transactionFactory, IQueryableEventStore store)
-	: IStockTransferService
+public sealed class StockTransferService(
+	IEventStoreTransactionFactory transactionFactory,
+	IQueryableEventStore store
+) : IStockTransferService
 {
 	public async Task<StockTransferResult> TransferAsync(
 		string sourceInventoryId,
@@ -28,14 +30,26 @@ public sealed class StockTransferService(IEventStoreTransactionFactory transacti
 		if (source is null || source.Details.IsDeleted)
 			return StockTransferResult.Fail("Source stock item not found.");
 
-		if (string.Equals(source.LocationId, destinationLocationId, StringComparison.OrdinalIgnoreCase))
+		if (
+			string.Equals(
+				source.LocationId,
+				destinationLocationId,
+				StringComparison.OrdinalIgnoreCase
+			)
+		)
 			return StockTransferResult.Fail("Source and destination locations must be different.");
 
-		var sourceLocation = await store.GetAsync<LocationAggregate>(source.LocationId, cancellationToken);
+		var sourceLocation = await store.GetAsync<LocationAggregate>(
+			source.LocationId,
+			cancellationToken
+		);
 		if (sourceLocation is null || sourceLocation.Details.IsDeleted)
 			return StockTransferResult.Fail($"Source location '{source.LocationId}' not found.");
 
-		var destinationLocation = await store.GetAsync<LocationAggregate>(destinationLocationId, cancellationToken);
+		var destinationLocation = await store.GetAsync<LocationAggregate>(
+			destinationLocationId,
+			cancellationToken
+		);
 		if (destinationLocation is null || destinationLocation.Details.IsDeleted)
 			return StockTransferResult.Fail("Destination location not found.");
 
@@ -51,7 +65,9 @@ public sealed class StockTransferService(IEventStoreTransactionFactory transacti
 		);
 		if (destination is null)
 		{
-			destination = await store.CreateAsync<InventoryAggregate>(cancellationToken: cancellationToken);
+			destination = await store.CreateAsync<InventoryAggregate>(
+				cancellationToken: cancellationToken
+			);
 			destination.Create(
 				source.ProductId,
 				source.ProductName,

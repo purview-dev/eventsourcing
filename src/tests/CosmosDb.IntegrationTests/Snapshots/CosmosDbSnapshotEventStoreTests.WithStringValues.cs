@@ -10,14 +10,19 @@ partial class CosmosDbSnapshotEventStoreTests
 	[Arguments(1)]
 	[Arguments(5)]
 	[Arguments(10)]
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Performance",
+		"CA1861:Avoid constant arrays as arguments"
+	)]
 	public async Task CanQuery_GivenAggregatesContainsDictionaryWithStringValuesAsValue_QueryAsExpected(
 		int numberOfAggregates,
 		CancellationToken cancellationToken
 	)
 	{
 		// Arrange
-		await using var context = fixture.CreateContext(correlationIdsToGenerate: numberOfAggregates);
+		await using var context = fixture.CreateContext(
+			correlationIdsToGenerate: numberOfAggregates
+		);
 
 		var aggregateType = CreateAggregate().AggregateType;
 		PartitionKey partitionKey = new(aggregateType);
@@ -27,10 +32,16 @@ partial class CosmosDbSnapshotEventStoreTests
 			var aggregate = CreateAggregate($"{aggregateIndex}_{context.RunId}");
 			aggregate.AddKVPs([
 				new KeyValuePair<string, StringValues>("name-1", "value-1"),
-				new KeyValuePair<string, StringValues>("name-2", new[] { "value-100", "value-200" }),
+				new KeyValuePair<string, StringValues>(
+					"name-2",
+					new[] { "value-100", "value-200" }
+				),
 			]);
 
-			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await context.EventStore.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -59,7 +70,9 @@ partial class CosmosDbSnapshotEventStoreTests
 	)
 	{
 		// Arrange
-		await using var context = fixture.CreateContext(correlationIdsToGenerate: numberOfAggregates);
+		await using var context = fixture.CreateContext(
+			correlationIdsToGenerate: numberOfAggregates
+		);
 
 		var aggregateType = CreateAggregate().AggregateType;
 		PartitionKey partitionKey = new(aggregateType);
@@ -72,7 +85,10 @@ partial class CosmosDbSnapshotEventStoreTests
 				new KeyValuePair<string, string>("name-2", "value-100"),
 			]);
 
-			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await context.EventStore.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}

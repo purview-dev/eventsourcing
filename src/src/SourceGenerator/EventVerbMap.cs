@@ -7,7 +7,10 @@ static class EventVerbMap
 {
 	#region Data set
 
-	static readonly FrozenDictionary<string, string> PastTenseByVerb = new Dictionary<string, string>
+	static readonly FrozenDictionary<string, string> PastTenseByVerb = new Dictionary<
+		string,
+		string
+	>
 	{
 		// ── Original entries (Cancel now US-spelled) ──
 		{ "Reactivate", "Reactivated" },
@@ -344,7 +347,8 @@ static class EventVerbMap
 		RegexOptions.Compiled
 	);
 
-	static List<string> SplitPascalCase(string identifier) => [.. PascalCaseSplitter.Split(identifier)];
+	static List<string> SplitPascalCase(string identifier) =>
+		[.. PascalCaseSplitter.Split(identifier)];
 
 	public static bool TryGetPastTense(string verb, out string pastTense)
 	{
@@ -361,7 +365,11 @@ static class EventVerbMap
 		return false;
 	}
 
-	public static bool TryCreateGeneratedEventName(string methodName, string aggregateClassName, out string eventName)
+	public static bool TryCreateGeneratedEventName(
+		string methodName,
+		string aggregateClassName,
+		out string eventName
+	)
 	{
 		var match = ToPastTense(methodName);
 		if (match is not null)
@@ -381,7 +389,8 @@ static class EventVerbMap
 	}
 
 	public static bool IsVerbPhrase(string methodName) =>
-		TryCreatePropertySpecificEventName(methodName, out _) || TryGetVerbPrefix(methodName, out _, out _);
+		TryCreatePropertySpecificEventName(methodName, out _)
+		|| TryGetVerbPrefix(methodName, out _, out _);
 
 	public static bool IsPastTenseEventName(string eventName)
 	{
@@ -479,7 +488,11 @@ static class EventVerbMap
 		return false;
 	}
 
-	static bool TryCreateVerbMappedEventName(string methodName, string aggregateClassName, out string eventName)
+	static bool TryCreateVerbMappedEventName(
+		string methodName,
+		string aggregateClassName,
+		out string eventName
+	)
 	{
 		if (!TryGetVerbPrefix(methodName, out var verb, out var pastTense))
 		{
@@ -534,7 +547,9 @@ static class EventVerbMap
 	}
 
 	static string TrimEventSuffix(string name) =>
-		name.EndsWith("Event", StringComparison.Ordinal) ? name.Substring(0, name.Length - "Event".Length) : name;
+		name.EndsWith("Event", StringComparison.Ordinal)
+			? name.Substring(0, name.Length - "Event".Length)
+			: name;
 
 	static string TrimAggregateSuffix(string aggregateClassName) =>
 		aggregateClassName.EndsWith("Aggregate", StringComparison.Ordinal)

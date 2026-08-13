@@ -1,9 +1,9 @@
+using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-
-using System.Collections.Immutable;
-using System.Text;
+using Purview.SourceGeneratorFramework.Extensions;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
@@ -11,10 +11,14 @@ namespace Purview.EventSourcing.SourceGenerator;
 public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 {
 	const string ScalarAttributeName = "Purview.EventSourcing.Serialization.ScalarAttribute";
-	const string ValueObjectAttributeName = "Purview.EventSourcing.Serialization.ValueObjectAttribute";
-	const string JsonConverterAttributeName = "System.Text.Json.Serialization.JsonConverterAttribute";
-	const string StrictModeName = "Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Strict";
-	const string HydrateModeName = "Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Hydrate";
+	const string ValueObjectAttributeName =
+		"Purview.EventSourcing.Serialization.ValueObjectAttribute";
+	const string JsonConverterAttributeName =
+		"System.Text.Json.Serialization.JsonConverterAttribute";
+	const string StrictModeName =
+		"Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Strict";
+	const string HydrateModeName =
+		"Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Hydrate";
 	const string LessThanOperatorName = "op_LessThan";
 	const string GreaterThanOperatorName = "op_GreaterThan";
 	const string LessThanOrEqualOperatorName = "op_LessThanOrEqual";
@@ -53,15 +57,22 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		if (context.TargetSymbol is not INamedTypeSymbol typeSymbol || context.TargetNode is not TypeDeclarationSyntax)
+		if (
+			context.TargetSymbol is not INamedTypeSymbol typeSymbol
+			|| context.TargetNode is not TypeDeclarationSyntax
+		)
 			return ValueObjectGenerationResult.Empty;
 
 		var attributes = typeSymbol.GetAttributes();
-		var diagnostics = ValidateValueObjectType(typeSymbol, "Scalar", context.TargetNode.GetLocation());
+		var diagnostics = ValidateValueObjectType(
+			typeSymbol,
+			"Scalar",
+			context.TargetNode.GetLocation()
+		);
 		if (HasAttribute(attributes, ValueObjectAttributeName))
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.ConflictingValueObjectAttributes,
 					context.TargetNode.GetLocation(),
 					typeSymbol.Name
@@ -80,7 +91,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		if (scalarProperty is null)
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.ScalarPropertyMissing,
 					context.TargetNode.GetLocation(),
 					typeSymbol.Name,
@@ -94,7 +105,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			.Constructors.Where(static ctor => !ctor.IsStatic)
 			.Any(ctor =>
 				ctor.Parameters.Length == 1
-				&& SymbolEqualityComparer.Default.Equals(ctor.Parameters[0].Type, scalarProperty.Type)
+				&& SymbolEqualityComparer.Default.Equals(
+					ctor.Parameters[0].Type,
+					scalarProperty.Type
+				)
 			);
 
 		var typeModel = BuildTypeModel(typeSymbol);
@@ -104,7 +118,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		if (typeSymbol.TypeKind == TypeKind.Struct && !typeSymbol.IsRecord)
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.ScalarShouldBeRecordStruct,
 					context.TargetNode.GetLocation(),
 					typeSymbol.Name
@@ -130,15 +144,22 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		if (context.TargetSymbol is not INamedTypeSymbol typeSymbol || context.TargetNode is not TypeDeclarationSyntax)
+		if (
+			context.TargetSymbol is not INamedTypeSymbol typeSymbol
+			|| context.TargetNode is not TypeDeclarationSyntax
+		)
 			return ValueObjectGenerationResult.Empty;
 
 		var attributes = typeSymbol.GetAttributes();
-		var diagnostics = ValidateValueObjectType(typeSymbol, "ValueObject", context.TargetNode.GetLocation());
+		var diagnostics = ValidateValueObjectType(
+			typeSymbol,
+			"ValueObject",
+			context.TargetNode.GetLocation()
+		);
 		if (HasAttribute(attributes, ScalarAttributeName))
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.ConflictingValueObjectAttributes,
 					context.TargetNode.GetLocation(),
 					typeSymbol.Name
@@ -167,34 +188,44 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 				&& IsValueObjectPropertyCandidate(typeSymbol, property)
 				&& SymbolEqualityComparer.Default.Equals(property.ContainingType, typeSymbol)
 			)
-			.OrderBy(property => property.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue)
+			.OrderBy(property =>
+				property.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue
+			)
 			.ToArray();
 
 		var ctorExists = typeSymbol
 			.Constructors.Where(static ctor => !ctor.IsStatic)
 			.Any(ctor => ConstructorMatches(ctor, properties));
 
-		var source = GenerateComplexSource(typeSymbol, typeModel.Value, properties, valueObjectOptions, ctorExists);
+		var source = GenerateComplexSource(
+			typeSymbol,
+			typeModel.Value,
+			properties,
+			valueObjectOptions,
+			ctorExists
+		);
 		var hintName = BuildHintName(typeSymbol, "ComplexValueObject");
 		return new ValueObjectGenerationResult(hintName, source, [.. diagnostics]);
 	}
 
-	static List<Diagnostic> ValidateValueObjectType(
+	static List<DiagnosticInfo> ValidateValueObjectType(
 		INamedTypeSymbol typeSymbol,
 		string attributeName,
 		Location location
 	)
 	{
-		List<Diagnostic> diagnostics = [];
+		List<DiagnosticInfo> diagnostics = [];
 
 		var isPartial = typeSymbol
 			.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax())
 			.OfType<TypeDeclarationSyntax>()
-			.Any(syntax => syntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PartialKeyword)));
+			.Any(syntax =>
+				syntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PartialKeyword))
+			);
 		if (!isPartial)
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.ValueObjectMustBePartial,
 					location,
 					typeSymbol.Name,
@@ -206,7 +237,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		if (typeSymbol.ContainingType is not null)
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.NestedValueObjectsAreNotSupported,
 					location,
 					typeSymbol.Name,
@@ -218,7 +249,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		if (typeSymbol.TypeParameters.Length > 0)
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.GenericValueObjectsAreNotSupported,
 					location,
 					typeSymbol.Name,
@@ -236,13 +267,16 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		IPropertySymbol scalarProperty,
 		ScalarOptions options,
 		bool ctorExists,
-		List<Diagnostic> diagnostics
+		List<DiagnosticInfo> diagnostics
 	)
 	{
 		var typeName = typeModel.FullyQualifiedName;
 		var scalarTypeName = ToTypeName(scalarProperty.Type);
-		var compareParameterTypeName = scalarProperty.Type.IsReferenceType ? $"{scalarTypeName}?" : scalarTypeName;
-		var compareToSelfParameterTypeName = typeSymbol.TypeKind == TypeKind.Class ? $"{typeName}?" : typeName;
+		var compareParameterTypeName = scalarProperty.Type.IsReferenceType
+			? $"{scalarTypeName}?"
+			: scalarTypeName;
+		var compareToSelfParameterTypeName =
+			typeSymbol.TypeKind == TypeKind.Class ? $"{typeName}?" : typeName;
 		var scalarCanBeNull =
 			scalarProperty.Type.IsReferenceType
 			|| scalarProperty.Type.NullableAnnotation == NullableAnnotation.Annotated;
@@ -252,16 +286,23 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		var hydrateExists = HasStaticFactory(typeSymbol, "Hydrate", [scalarProperty.Type]);
 		var tryCreateExists = HasTryCreate(typeSymbol, scalarProperty.Type);
 		var compareToSelfExists = HasInstanceMethod(typeSymbol, "CompareTo", [typeSymbol]);
-		var compareToPrimitiveExists = HasInstanceMethod(typeSymbol, "CompareTo", [scalarProperty.Type]);
+		var compareToPrimitiveExists = HasInstanceMethod(
+			typeSymbol,
+			"CompareTo",
+			[scalarProperty.Type]
+		);
 		var compareToObjectExists = HasCompareToObject(typeSymbol);
-		var equalsSelfExists = typeSymbol.IsRecord || HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
+		var equalsSelfExists =
+			typeSymbol.IsRecord || HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
 		var equalsPrimitiveExists = HasInstanceMethod(typeSymbol, "Equals", [scalarProperty.Type]);
 		var equalsObjectExists = HasEqualsObject(typeSymbol);
 		var getHashCodeExists = HasParameterlessMethod(typeSymbol, "GetHashCode");
 		var sameTypeEqualityOperatorExists =
-			typeSymbol.IsRecord || HasBinaryOperator(typeSymbol, "op_Equality", [typeSymbol, typeSymbol]);
+			typeSymbol.IsRecord
+			|| HasBinaryOperator(typeSymbol, "op_Equality", [typeSymbol, typeSymbol]);
 		var sameTypeInequalityOperatorExists =
-			typeSymbol.IsRecord || HasBinaryOperator(typeSymbol, "op_Inequality", [typeSymbol, typeSymbol]);
+			typeSymbol.IsRecord
+			|| HasBinaryOperator(typeSymbol, "op_Inequality", [typeSymbol, typeSymbol]);
 		var primitiveEqualityOperatorExists = HasBinaryOperator(
 			typeSymbol,
 			"op_Equality",
@@ -282,11 +323,22 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			"op_Inequality",
 			[scalarProperty.Type, typeSymbol]
 		);
-		var enumPropertiesEnabled = options.GenerateEnumProperties && scalarProperty.Type.TypeKind == TypeKind.Enum;
+		var enumPropertiesEnabled =
+			options.GenerateEnumProperties && scalarProperty.Type.TypeKind == TypeKind.Enum;
 		var toStringExists = HasParameterlessMethod(typeSymbol, "ToString");
 		var hasJsonConverterAttribute = HasAttribute(typeSymbol, JsonConverterAttributeName);
-		var declareOnNormalize = ShouldEmitScalarHookDeclaration(typeSymbol, "OnNormalize", 1, includeRef: true);
-		var declareOnValidate = ShouldEmitScalarHookDeclaration(typeSymbol, "OnValidate", 1, includeRef: false);
+		var declareOnNormalize = ShouldEmitScalarHookDeclaration(
+			typeSymbol,
+			"OnNormalize",
+			1,
+			includeRef: true
+		);
+		var declareOnValidate = ShouldEmitScalarHookDeclaration(
+			typeSymbol,
+			"OnValidate",
+			1,
+			includeRef: false
+		);
 
 		if (
 			options.DeserializationMode == StrictModeName
@@ -295,7 +347,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		)
 		{
 			diagnostics.Add(
-				Diagnostic.Create(
+				DiagnosticInfo.Create(
 					GeneratorDiagnostics.StrictDeserializationRequiresCreate,
 					typeSymbol.Locations.FirstOrDefault(),
 					typeSymbol.Name
@@ -330,7 +382,9 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		sb.AppendLine($"{indent}{{");
 
 		if (declareOnNormalize)
-			sb.AppendLine($"{indent}\tstatic partial void OnNormalize(ref {scalarTypeName} value);");
+			sb.AppendLine(
+				$"{indent}\tstatic partial void OnNormalize(ref {scalarTypeName} value);"
+			);
 		if (declareOnValidate)
 			sb.AppendLine($"{indent}\tstatic partial void OnValidate({scalarTypeName} value);");
 		if (declareOnNormalize || declareOnValidate)
@@ -429,12 +483,29 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 
 			if (options.GenerateComparisonOperators)
 			{
-				EmitRelationalOperators(sb, indent, typeSymbol, typeName, typeName, "CompareTo(right)");
+				EmitRelationalOperators(
+					sb,
+					indent,
+					typeSymbol,
+					typeName,
+					typeName,
+					"CompareTo(right)"
+				);
 
-				var scalarAndSelfAreSameType = SymbolEqualityComparer.Default.Equals(scalarProperty.Type, typeSymbol);
+				var scalarAndSelfAreSameType = SymbolEqualityComparer.Default.Equals(
+					scalarProperty.Type,
+					typeSymbol
+				);
 				if (!scalarAndSelfAreSameType)
 				{
-					EmitRelationalOperators(sb, indent, typeSymbol, typeName, scalarTypeName, "CompareTo(right)");
+					EmitRelationalOperators(
+						sb,
+						indent,
+						typeSymbol,
+						typeName,
+						scalarTypeName,
+						"CompareTo(right)"
+					);
 				}
 			}
 
@@ -561,7 +632,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			);
 		}
 
-		if (options.GenerateImplicitToPrimitive && !HasConversionOperator(typeSymbol, scalarProperty.Type, false))
+		if (
+			options.GenerateImplicitToPrimitive
+			&& !HasConversionOperator(typeSymbol, scalarProperty.Type, false)
+		)
 		{
 			sb.AppendLine(
 				$"{indent}\tpublic static implicit operator {scalarTypeName}({typeName} valueObject) => valueObject.{scalarPropertyName};"
@@ -623,20 +697,31 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		var typeName = typeModel.FullyQualifiedName;
 		var propertyTypeNames = properties.Select(property => ToTypeName(property.Type)).ToArray();
 		var propertyNames = properties.Select(property => property.Name).ToArray();
-		var hydrateExists = HasStaticFactory(typeSymbol, "Hydrate", [.. properties.Select(property => property.Type)]);
+		var hydrateExists = HasStaticFactory(
+			typeSymbol,
+			"Hydrate",
+			[.. properties.Select(property => property.Type)]
+		);
 		var compareToSelfExists = HasInstanceMethod(typeSymbol, "CompareTo", [typeSymbol]);
 		var compareToObjectExists = HasCompareToObject(typeSymbol);
 		var isReferenceType = typeSymbol.TypeKind == TypeKind.Class;
 		var compareToSelfParameterTypeName = isReferenceType ? $"{typeName}?" : typeName;
-		var equalsSelfExists = typeSymbol.IsRecord || HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
+		var equalsSelfExists =
+			typeSymbol.IsRecord || HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
 		var equalsObjectExists = HasEqualsObject(typeSymbol);
 		var getHashCodeExists = HasParameterlessMethod(typeSymbol, "GetHashCode");
 		var equalityOperatorExists =
-			typeSymbol.IsRecord || HasBinaryOperator(typeSymbol, "op_Equality", [typeSymbol, typeSymbol]);
+			typeSymbol.IsRecord
+			|| HasBinaryOperator(typeSymbol, "op_Equality", [typeSymbol, typeSymbol]);
 		var inequalityOperatorExists =
-			typeSymbol.IsRecord || HasBinaryOperator(typeSymbol, "op_Inequality", [typeSymbol, typeSymbol]);
+			typeSymbol.IsRecord
+			|| HasBinaryOperator(typeSymbol, "op_Inequality", [typeSymbol, typeSymbol]);
 		var hasJsonConverterAttribute = HasAttribute(typeSymbol, JsonConverterAttributeName);
-		var createExists = HasStaticFactory(typeSymbol, "Create", [.. properties.Select(property => property.Type)]);
+		var createExists = HasStaticFactory(
+			typeSymbol,
+			"Create",
+			[.. properties.Select(property => property.Type)]
+		);
 		var declareOnNormalize = ShouldEmitComplexHookDeclaration(
 			typeSymbol,
 			"OnNormalize",
@@ -649,7 +734,8 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			.Constructors.Where(static ctor => !ctor.IsStatic)
 			.Any(ctor => ctor.Parameters.Length == 0 && !ctor.IsImplicitlyDeclared);
 
-		var hydrateFactoryName = options.DeserializationMode == StrictModeName ? "Create" : "Hydrate";
+		var hydrateFactoryName =
+			options.DeserializationMode == StrictModeName ? "Create" : "Hydrate";
 
 		StringBuilder sb = new();
 		sb.AppendLine("// <auto-generated />");
@@ -681,7 +767,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		{
 			var normalizeParams = string.Join(
 				", ",
-				propertyTypeNames.Zip(propertyNames, static (type, name) => $"ref {type} {ToCamelCase(name)}")
+				propertyTypeNames.Zip(
+					propertyNames,
+					static (type, name) => $"ref {type} {ToCamelCase(name)}"
+				)
 			);
 			sb.AppendLine($"{indent}\tstatic partial void OnNormalize({normalizeParams});");
 			sb.AppendLine();
@@ -691,7 +780,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		{
 			var createParams = string.Join(
 				", ",
-				propertyTypeNames.Zip(propertyNames, static (type, name) => $"{type} {ToCamelCase(name)}")
+				propertyTypeNames.Zip(
+					propertyNames,
+					static (type, name) => $"{type} {ToCamelCase(name)}"
+				)
 			);
 			var createArgs = string.Join(", ", propertyNames.Select(ToCamelCase));
 			var normalizeInvocation =
@@ -714,7 +806,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		{
 			var validateParams = string.Join(
 				", ",
-				propertyTypeNames.Zip(propertyNames, static (type, name) => $"{type} {ToCamelCase(name)}")
+				propertyTypeNames.Zip(
+					propertyNames,
+					static (type, name) => $"{type} {ToCamelCase(name)}"
+				)
 			);
 			var validateReadOnly =
 				typeSymbol.TypeKind == TypeKind.Struct
@@ -731,7 +826,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		{
 			var hydrateParams = string.Join(
 				", ",
-				propertyTypeNames.Zip(propertyNames, static (type, name) => $"{type} {ToCamelCase(name)}")
+				propertyTypeNames.Zip(
+					propertyNames,
+					static (type, name) => $"{type} {ToCamelCase(name)}"
+				)
 			);
 			var hydrateArgs = string.Join(", ", propertyNames.Select(ToCamelCase));
 			sb.AppendLine(
@@ -757,7 +855,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		{
 			var ctorParams = string.Join(
 				", ",
-				propertyTypeNames.Zip(propertyNames, static (type, name) => $"{type} {ToCamelCase(name)}")
+				propertyTypeNames.Zip(
+					propertyNames,
+					static (type, name) => $"{type} {ToCamelCase(name)}"
+				)
 			);
 			sb.AppendLine();
 			sb.AppendLine(
@@ -782,7 +883,9 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			sb.AppendLine(
 				$"{indent}\t/// This constructor is required to work around EF Core's ConstructorBindingConvention,"
 			);
-			sb.AppendLine($"{indent}\t/// which cannot bind complex type parameters during JSON deserialization.");
+			sb.AppendLine(
+				$"{indent}\t/// which cannot bind complex type parameters during JSON deserialization."
+			);
 			sb.AppendLine(
 				$"{indent}\t/// EF Core uses this parameterless constructor to instantiate the value object,"
 			);
@@ -910,15 +1013,28 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 
 			if (options.GenerateComparisonOperators)
 			{
-				EmitRelationalOperators(sb, indent, typeSymbol, typeName, typeName, "CompareTo(right)");
+				EmitRelationalOperators(
+					sb,
+					indent,
+					typeSymbol,
+					typeName,
+					typeName,
+					"CompareTo(right)"
+				);
 			}
 		}
 
 		if (options.GenerateJsonConverter)
 		{
 			var modelTypeName = $"{typeModel.Name}JsonModel";
-			var toModelAssignments = string.Join(", ", propertyNames.Select(static name => $"{name} = value.{name}"));
-			var hydrateArgs = string.Join(", ", propertyNames.Select(static name => $"model.{name}"));
+			var toModelAssignments = string.Join(
+				", ",
+				propertyNames.Select(static name => $"{name} = value.{name}")
+			);
+			var hydrateArgs = string.Join(
+				", ",
+				propertyNames.Select(static name => $"model.{name}")
+			);
 
 			sb.AppendLine();
 			sb.AppendLine(
@@ -967,7 +1083,12 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 
 		for (var i = 0; i < properties.Length; i++)
 		{
-			if (!SymbolEqualityComparer.Default.Equals(constructor.Parameters[i].Type, properties[i].Type))
+			if (
+				!SymbolEqualityComparer.Default.Equals(
+					constructor.Parameters[i].Type,
+					properties[i].Type
+				)
+			)
 				return false;
 		}
 
@@ -982,7 +1103,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	{
 		if (properties.Length > 0)
 		{
-			arguments = string.Join(", ", properties.Select(static property => GetEmptyValueExpression(property.Type)));
+			arguments = string.Join(
+				", ",
+				properties.Select(static property => GetEmptyValueExpression(property.Type))
+			);
 			return true;
 		}
 
@@ -1004,24 +1128,39 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		return false;
 	}
 
-	static bool IsValueObjectPropertyCandidate(INamedTypeSymbol typeSymbol, IPropertySymbol property) =>
+	static bool IsValueObjectPropertyCandidate(
+		INamedTypeSymbol typeSymbol,
+		IPropertySymbol property
+	) =>
 		!property.IsImplicitlyDeclared
-		|| typeSymbol.IsRecord
+		|| (
+			typeSymbol.IsRecord
 			&& typeSymbol
 				.InstanceConstructors.Where(static ctor => !ctor.IsStatic)
 				.SelectMany(static ctor => ctor.Parameters)
 				.Any(parameter =>
 					SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)
-					&& string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)
-				);
+					&& string.Equals(
+						parameter.Name,
+						property.Name,
+						StringComparison.OrdinalIgnoreCase
+					)
+				)
+		);
 
 	static bool HasAttribute(INamedTypeSymbol typeSymbol, string metadataName) =>
-		typeSymbol.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
+		typeSymbol
+			.GetAttributes()
+			.Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
 
 	static bool HasAttribute(ImmutableArray<AttributeData> attributes, string metadataName) =>
 		attributes.Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
 
-	static bool HasStaticFactory(INamedTypeSymbol typeSymbol, string name, ITypeSymbol[] parameterTypes)
+	static bool HasStaticFactory(
+		INamedTypeSymbol typeSymbol,
+		string name,
+		ITypeSymbol[] parameterTypes
+	)
 	{
 		return typeSymbol
 			.GetMembers(name)
@@ -1050,7 +1189,11 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			);
 	}
 
-	static bool HasInstanceMethod(INamedTypeSymbol typeSymbol, string name, IReadOnlyList<ITypeSymbol> parameterTypes)
+	static bool HasInstanceMethod(
+		INamedTypeSymbol typeSymbol,
+		string name,
+		IReadOnlyList<ITypeSymbol> parameterTypes
+	)
 	{
 		return typeSymbol
 			.GetMembers(name)
@@ -1181,9 +1324,14 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		typeSymbol
 			.GetMembers(name)
 			.OfType<IMethodSymbol>()
-			.Any(method => !method.IsStatic && !method.IsImplicitlyDeclared && method.Parameters.Length == 0);
+			.Any(method =>
+				!method.IsStatic && !method.IsImplicitlyDeclared && method.Parameters.Length == 0
+			);
 
-	static bool ParametersMatch(ImmutableArray<IParameterSymbol> parameters, IReadOnlyList<ITypeSymbol> expected)
+	static bool ParametersMatch(
+		ImmutableArray<IParameterSymbol> parameters,
+		IReadOnlyList<ITypeSymbol> expected
+	)
 	{
 		for (var i = 0; i < expected.Count; i++)
 		{
@@ -1194,7 +1342,11 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		return true;
 	}
 
-	static bool HasConversionOperator(INamedTypeSymbol typeSymbol, ITypeSymbol primitiveType, bool fromPrimitive)
+	static bool HasConversionOperator(
+		INamedTypeSymbol typeSymbol,
+		ITypeSymbol primitiveType,
+		bool fromPrimitive
+	)
 	{
 		return typeSymbol
 			.GetMembers()
@@ -1205,11 +1357,20 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 				&& (
 					fromPrimitive
 						? method.Parameters.Length == 1
-							&& SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, primitiveType)
+							&& SymbolEqualityComparer.Default.Equals(
+								method.Parameters[0].Type,
+								primitiveType
+							)
 							&& SymbolEqualityComparer.Default.Equals(method.ReturnType, typeSymbol)
 						: method.Parameters.Length == 1
-							&& SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, typeSymbol)
-							&& SymbolEqualityComparer.Default.Equals(method.ReturnType, primitiveType)
+							&& SymbolEqualityComparer.Default.Equals(
+								method.Parameters[0].Type,
+								typeSymbol
+							)
+							&& SymbolEqualityComparer.Default.Equals(
+								method.ReturnType,
+								primitiveType
+							)
 				)
 			);
 	}
@@ -1273,11 +1434,14 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			.OfType<TypeDeclarationSyntax>()
 			.SelectMany(declaration => declaration.Members.OfType<MethodDeclarationSyntax>())
 			.Where(method =>
-				method.Identifier.Text == methodName && method.ParameterList.Parameters.Count == parameterCount
+				method.Identifier.Text == methodName
+				&& method.ParameterList.Parameters.Count == parameterCount
 			)
 			.ToArray();
 
-		var hasDefinition = declarations.Any(method => method.Body is null && method.ExpressionBody is null);
+		var hasDefinition = declarations.Any(method =>
+			method.Body is null && method.ExpressionBody is null
+		);
 		if (hasDefinition)
 			return false;
 
@@ -1285,7 +1449,9 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			return true;
 
 		var hasRefImplementation = declarations.Any(method =>
-			method.ParameterList.Parameters[0].Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.RefKeyword))
+			method
+				.ParameterList.Parameters[0]
+				.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.RefKeyword))
 		);
 		return hasRefImplementation || declarations.Length == 0;
 	}
@@ -1303,7 +1469,9 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			(
 				!includeRef
 				|| method.ParameterList.Parameters.All(static parameter =>
-					parameter.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.RefKeyword))
+					parameter.Modifiers.Any(static modifier =>
+						modifier.IsKind(SyntaxKind.RefKeyword)
+					)
 				)
 			)
 			&& method.Body is null
@@ -1323,12 +1491,18 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		return hasRefImplementation || declarations.Length == 0;
 	}
 
-	static bool IsComplexHookReadOnly(INamedTypeSymbol typeSymbol, string methodName, int parameterCount)
+	static bool IsComplexHookReadOnly(
+		INamedTypeSymbol typeSymbol,
+		string methodName,
+		int parameterCount
+	)
 	{
 		return GetComplexHookDeclarations(typeSymbol, methodName, parameterCount)
 			.Any(method =>
 				(method.Body is not null || method.ExpressionBody is not null)
-				&& method.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.ReadOnlyKeyword))
+				&& method.Modifiers.Any(static modifier =>
+					modifier.IsKind(SyntaxKind.ReadOnlyKeyword)
+				)
 			);
 	}
 
@@ -1345,7 +1519,8 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 				.OfType<TypeDeclarationSyntax>()
 				.SelectMany(declaration => declaration.Members.OfType<MethodDeclarationSyntax>())
 				.Where(method =>
-					method.Identifier.Text == methodName && method.ParameterList.Parameters.Count == parameterCount
+					method.Identifier.Text == methodName
+					&& method.ParameterList.Parameters.Count == parameterCount
 				),
 		];
 	}
@@ -1448,8 +1623,12 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			.. enumTypeSymbol
 				.GetMembers()
 				.OfType<IFieldSymbol>()
-				.Where(field => field.HasConstantValue && field.DeclaredAccessibility == Accessibility.Public)
-				.OrderBy(field => field.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue),
+				.Where(field =>
+					field.HasConstantValue && field.DeclaredAccessibility == Accessibility.Public
+				)
+				.OrderBy(field =>
+					field.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue
+				),
 		];
 
 	static bool HasMemberWithName(INamedTypeSymbol typeSymbol, string name) =>
@@ -1467,14 +1646,14 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	readonly struct ValueObjectGenerationResult(
 		string? hintName,
 		string? source,
-		ImmutableArray<Diagnostic> diagnostics
+		ImmutableArray<DiagnosticInfo> diagnostics
 	)
 	{
 		public string? HintName { get; } = hintName;
 
 		public string? Source { get; } = source;
 
-		public ImmutableArray<Diagnostic> Diagnostics { get; } = diagnostics;
+		public ImmutableArray<DiagnosticInfo> Diagnostics { get; } = diagnostics;
 
 		public static ValueObjectGenerationResult Empty { get; } = new(null, null, []);
 	}
@@ -1486,7 +1665,8 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 
 	static ValueObjectAssemblyDefaults GetAssemblyValueObjectDefaults(Compilation compilation)
 	{
-		const string assemblyDefaultsName = "Purview.EventSourcing.Serialization.GenerateValueObjectDefaultsAttribute";
+		const string assemblyDefaultsName =
+			"Purview.EventSourcing.Serialization.ValueObjectDefaultsAttribute";
 
 		var assemblyAttributes = compilation.Assembly.GetAttributes();
 		var defaultsAttribute = assemblyAttributes.FirstOrDefault(attr =>
@@ -1496,7 +1676,11 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		if (defaultsAttribute is null)
 			return new ValueObjectAssemblyDefaults(generateConstructor: true);
 
-		var generateConstructor = GetNamedBool(defaultsAttribute.NamedArguments, "GenerateConstructor", true);
+		var generateConstructor = GetNamedBool(
+			defaultsAttribute.NamedArguments,
+			"GenerateConstructor",
+			true
+		);
 		return new ValueObjectAssemblyDefaults(generateConstructor);
 	}
 
@@ -1549,12 +1733,18 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		public static ScalarOptions From(INamedTypeSymbol typeSymbol, string metadataName) =>
 			From(typeSymbol.GetAttributes(), metadataName);
 
-		public static ScalarOptions From(ImmutableArray<AttributeData> attributes, string metadataName)
+		public static ScalarOptions From(
+			ImmutableArray<AttributeData> attributes,
+			string metadataName
+		)
 		{
-			var attribute = attributes.First(data => data.AttributeClass?.ToDisplayString() == metadataName);
+			var attribute = attributes.First(data =>
+				data.AttributeClass?.ToDisplayString() == metadataName
+			);
 
 			var propertyName =
-				attribute.ConstructorArguments.Length > 0 && attribute.ConstructorArguments[0].Value is string value
+				attribute.ConstructorArguments.Length > 0
+				&& attribute.ConstructorArguments[0].Value is string value
 					? value
 					: "Value";
 
@@ -1605,14 +1795,20 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 			bool assemblyDefaultGenerateConstructor = true
 		)
 		{
-			var attribute = attributes.First(data => data.AttributeClass?.ToDisplayString() == metadataName);
+			var attribute = attributes.First(data =>
+				data.AttributeClass?.ToDisplayString() == metadataName
+			);
 
 			return new ValueObjectOptions(
 				GetNamedBool(attribute.NamedArguments, "GenerateJsonConverter", true),
 				GetNamedBool(attribute.NamedArguments, "GenerateComparable", true),
 				GetNamedBool(attribute.NamedArguments, "GenerateComparisonOperators", true),
 				GetNamedBool(attribute.NamedArguments, "GenerateEmpty", true),
-				GetNamedBool(attribute.NamedArguments, "GenerateConstructor", assemblyDefaultGenerateConstructor),
+				GetNamedBool(
+					attribute.NamedArguments,
+					"GenerateConstructor",
+					assemblyDefaultGenerateConstructor
+				),
 				GetDeserializationMode(attribute.NamedArguments, "DeserializationMode")
 			);
 		}
@@ -1633,7 +1829,10 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 		return defaultValue;
 	}
 
-	static string GetDeserializationMode(ImmutableArray<KeyValuePair<string, TypedConstant>> namedArguments, string key)
+	static string GetDeserializationMode(
+		ImmutableArray<KeyValuePair<string, TypedConstant>> namedArguments,
+		string key
+	)
 	{
 		foreach (var namedArgument in namedArguments)
 		{

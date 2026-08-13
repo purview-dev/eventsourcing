@@ -43,7 +43,7 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 	{
 		if (Page < 1)
 			Page = 1;
-		if (PageSize < 5 || PageSize > 100)
+		if (PageSize is < 5 or > 100)
 			PageSize = DefaultPageSize;
 
 		var ct = HttpContext.RequestAborted;
@@ -58,7 +58,7 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 		var activeFilter = ActiveFilter;
 		var hasFilter = search.Length > 0 || activeFilter.HasValue;
 
-		var results = (await store.ListAsync<CustomerAggregate>(maxRecordCount: 100, ct));
+		var results = await store.ListAsync<CustomerAggregate>(maxRecordCount: 100, ct);
 
 		Expression<Func<CustomerAggregate, bool>>? where = hasFilter
 			? c =>
@@ -69,7 +69,10 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 				) && (!activeFilter.HasValue || c.IsActive == activeFilter.Value)
 			: null;
 
-		Func<IQueryable<CustomerAggregate>, IQueryable<CustomerAggregate>> orderBy = (SortBy, SortDir) switch
+		Func<IQueryable<CustomerAggregate>, IQueryable<CustomerAggregate>> orderBy = (
+			SortBy,
+			SortDir
+		) switch
 		{
 			("email", "desc") => q => q.OrderByDescending(c => c.Email),
 			("email", _) => q => q.OrderBy(c => c.Email),

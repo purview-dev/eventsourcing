@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.SqlServer.Events;
@@ -11,7 +11,8 @@ public static class TestHelpers
 	public static IDistributedCacheMock CreateDistributedCache() => IDistributedCache.Mock();
 
 	public static IAggregateChangeFeedNotifier_T_Mock<TAggregate> CreateAggregateChangeFeedNotified<TAggregate>()
-		where TAggregate : class, IAggregate, new() => IAggregateChangeFeedNotifier<TAggregate>.Mock();
+		where TAggregate : class, IAggregate, new() =>
+		IAggregateChangeFeedNotifier<TAggregate>.Mock();
 
 	public static ISqlServerSnapshotEventStoreTelemetryMock CreateSqlServerSnapshotEventStoreTelemetry() =>
 		ISqlServerSnapshotEventStoreTelemetry.Mock();
@@ -35,7 +36,10 @@ public static class TestHelpers
 		return $"{prefix}{GenName(value)}";
 	}
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase")]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Globalization",
+		"CA1308:Normalize strings to uppercase"
+	)]
 	public static string GenAzureBlobContainerName(Guid? value = null, string? prefix = null)
 	{
 		prefix ??= "ENVTest-";
@@ -94,7 +98,10 @@ public static class TestHelpers
 	{
 		TAggregate aggregate = new()
 		{
-			Details = { Id = aggregateId?.ToString() ?? typeof(TAggregate).Name + $"_{Guid.NewGuid()}" },
+			Details =
+			{
+				Id = aggregateId?.ToString() ?? (typeof(TAggregate).Name + $"_{Guid.NewGuid()}"),
+			},
 		};
 
 		creator?.Invoke(aggregate);

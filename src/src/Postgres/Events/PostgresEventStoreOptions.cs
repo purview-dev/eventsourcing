@@ -137,8 +137,10 @@ public sealed class PostgresEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<string, PostgresAggregateTableOverride> AggregateTableOverrides { get; init; } =
-	[with(StringComparer.OrdinalIgnoreCase)];
+	public Dictionary<
+		string,
+		PostgresAggregateTableOverride
+	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 
 	/// <summary>
 	/// Configures runtime-managed PostgreSQL indexes over the event payload JSON column.

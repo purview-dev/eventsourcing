@@ -23,7 +23,10 @@ public sealed class PostgresAdminProjectionService(IOptions<PostgresEventStoreOp
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
 
 		if (targetVersion < 1)
-			throw new ArgumentOutOfRangeException(nameof(targetVersion), "Target version must be >= 1");
+			throw new ArgumentOutOfRangeException(
+				nameof(targetVersion),
+				"Target version must be >= 1"
+			);
 
 		var table = PostgresAdminTableResolver.ResolveTable(options.Value, aggregateType);
 		await using var context = CreateContext(options.Value, table);
@@ -51,7 +54,11 @@ public sealed class PostgresAdminProjectionService(IOptions<PostgresEventStoreOp
 				if (row.Payload != null && row.EventType != null)
 				{
 					using var _ = JsonDocument.Parse(row.Payload);
-					projectedState[$"event_{row.Version}"] = new { eventType = row.EventType, version = row.Version };
+					projectedState[$"event_{row.Version}"] = new
+					{
+						eventType = row.EventType,
+						version = row.Version,
+					};
 					appliedVersions.Add(row.Version);
 				}
 				else
@@ -73,7 +80,9 @@ public sealed class PostgresAdminProjectionService(IOptions<PostgresEventStoreOp
 				? $"Events projected up to available version {rowList.Last().Version} (target was {targetVersion})"
 				: $"Events projected up to version {targetVersion}";
 
-		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
+		var finalState = JsonDocument
+			.Parse(JsonSerializer.Serialize(projectedState))
+			.RootElement.Clone();
 
 		return new ProjectionResponse(
 			aggregateType,
@@ -155,7 +164,9 @@ public sealed class PostgresAdminProjectionService(IOptions<PostgresEventStoreOp
 				? $"Events projected up to available timestamp {latestTimestamp:O} (target was {targetUtc:O})"
 				: $"Events projected up to timestamp {targetUtc:O}";
 
-		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
+		var finalState = JsonDocument
+			.Parse(JsonSerializer.Serialize(projectedState))
+			.RootElement.Clone();
 
 		return new ProjectionResponse(
 			aggregateType,
@@ -173,7 +184,10 @@ public sealed class PostgresAdminProjectionService(IOptions<PostgresEventStoreOp
 		);
 	}
 
-	static EventStoreDbContext CreateContext(PostgresEventStoreOptions options, PostgresAdminTableDescriptor table)
+	static EventStoreDbContext CreateContext(
+		PostgresEventStoreOptions options,
+		PostgresAdminTableDescriptor table
+	)
 	{
 		var builder = new DbContextOptionsBuilder<EventStoreDbContext>();
 		builder.UseNpgsql(options.ConnectionString);

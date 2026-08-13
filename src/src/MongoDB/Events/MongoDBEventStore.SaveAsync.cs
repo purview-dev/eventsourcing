@@ -33,7 +33,8 @@ partial class MongoDBEventStore<T>
 
 		FulfilRequirements(aggregate);
 
-		var idempotencyId = operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
+		var idempotencyId =
+			operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
 		static SaveResult<T> ReturnSaveResult(
@@ -56,7 +57,11 @@ partial class MongoDBEventStore<T>
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
 			throw new MissingAggregateIdException(idempotencyId);
 
-		_eventStoreTelemetry.SaveCalled(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+		_eventStoreTelemetry.SaveCalled(
+			aggregate.Id(),
+			_aggregateTypeFullName,
+			aggregate.AggregateType
+		);
 		if (!aggregate.HasUnsavedEvents() && (additionalEvents?.Length ?? 0) == 0)
 		{
 			_eventStoreTelemetry.SaveContainedNoChanges(
@@ -69,8 +74,15 @@ partial class MongoDBEventStore<T>
 		}
 
 		var isNew = aggregate.IsNew();
-		var changeEvents = aggregate.GetUnsavedEvents().Concat((additionalEvents ?? []).AsEnumerable()).ToArray();
-		var idempotencyMarkerOperation = CreateIdempotencyMarkerOperation(aggregate, idempotencyId, changeEvents);
+		var changeEvents = aggregate
+			.GetUnsavedEvents()
+			.Concat((additionalEvents ?? []).AsEnumerable())
+			.ToArray();
+		var idempotencyMarkerOperation = CreateIdempotencyMarkerOperation(
+			aggregate,
+			idempotencyId,
+			changeEvents
+		);
 
 		if (changeEvents.Length > _eventStoreOptions.Value.MaxEventCountOnSave)
 			throw new ArgumentOutOfRangeException(
@@ -132,8 +144,13 @@ partial class MongoDBEventStore<T>
 			else
 				batchOperation.Update(streamEntity);
 
-			var userId = ClaimsPrincipal.Current?.FindFirst(operationContext.ClaimIdentifier)?.Value;
-			if (operationContext.RequiresValidPrincipalIdentifier && string.IsNullOrWhiteSpace(userId))
+			var userId = ClaimsPrincipal
+				.Current?.FindFirst(operationContext.ClaimIdentifier)
+				?.Value;
+			if (
+				operationContext.RequiresValidPrincipalIdentifier
+				&& string.IsNullOrWhiteSpace(userId)
+			)
 				throw new NullReferenceException(
 					$"Missing ClaimsPrincipal identifier '{operationContext.ClaimIdentifier}'. Unable to save aggregate."
 				);
@@ -162,16 +179,29 @@ partial class MongoDBEventStore<T>
 			if (operationContext.UseIdempotencyMarker)
 				batchOperation.Insert(idempotencyMarkerOperation);
 
-			await SubmitBatchOperationsAsync(aggregate, idempotencyId, batchOperation, cancellationToken);
+			await SubmitBatchOperationsAsync(
+				aggregate,
+				idempotencyId,
+				batchOperation,
+				cancellationToken
+			);
 
 			// We create a snapshot if it's been deleted or restored, could make searching easier later on.
 			if (shouldSnapshot)
 				await CreateSnapshotAsync(aggregate, cancellationToken);
 
 			if (changeEvents.OfType<Deleted>().Any())
-				_eventStoreTelemetry.AggregateDeleted(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+				_eventStoreTelemetry.AggregateDeleted(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					aggregate.AggregateType
+				);
 			else if (changeEvents.OfType<Restored>().Any())
-				_eventStoreTelemetry.AggregateRestored(aggregate.Id(), _aggregateTypeFullName, aggregate.AggregateType);
+				_eventStoreTelemetry.AggregateRestored(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					aggregate.AggregateType
+				);
 
 			_eventStoreTelemetry.SavedAggregate(
 				aggregate.Id(),
@@ -184,10 +214,18 @@ partial class MongoDBEventStore<T>
 			await UpdateCacheAsync(aggregate, operationContext.CacheOptions);
 
 			// ...or here.
-			if (aggregate.Details.IsDeleted && operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete))
+			if (
+				aggregate.Details.IsDeleted
+				&& operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete)
+			)
 				await _aggregateChangeNotifier.AfterDeleteAsync(aggregate);
 			else if (operationContext.NotificationMode.HasFlag(NotificationModes.AfterSave))
-				await _aggregateChangeNotifier.AfterSaveAsync(aggregate, previousAggregateVersion, isNew, changeEvents);
+				await _aggregateChangeNotifier.AfterSaveAsync(
+					aggregate,
+					previousAggregateVersion,
+					isNew,
+					changeEvents
+				);
 		}
 		catch (Exception ex)
 		{
@@ -205,12 +243,18 @@ partial class MongoDBEventStore<T>
 		return ReturnSaveResult(aggregate, true, false);
 	}
 
-	async Task<ValidationResult> GuardAsync(T aggregate, CancellationToken cancellationToken = default)
+	async Task<ValidationResult> GuardAsync(
+		T aggregate,
+		CancellationToken cancellationToken = default
+	)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
 		return _validator == null
-			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(aggregate, cancellationToken)
+			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(
+				aggregate,
+				cancellationToken
+			)
 			: await _validator.ValidateAsync(aggregate, cancellationToken);
 		;
 	}
@@ -220,13 +264,20 @@ partial class MongoDBEventStore<T>
 		return aggregate.Details.IsDeleted || events.OfType<Restored>().Any() || events.Length > 0;
 	}
 
-	IdempotencyMarkerEntity CreateIdempotencyMarkerOperation(T aggregate, string idempotencyId, IEvent[] changeEvents)
+	IdempotencyMarkerEntity CreateIdempotencyMarkerOperation(
+		T aggregate,
+		string idempotencyId,
+		IEvent[] changeEvents
+	)
 	{
 		IdempotencyMarkerEntity marker = new()
 		{
 			Id = CreateIdempotencyCheckId(aggregate.Id(), idempotencyId),
 			AggregateId = aggregate.Id(),
-			EventVersions = [.. changeEvents.Select(m => m.Details.AggregateVersion).OrderBy(m => m)],
+			EventVersions =
+			[
+				.. changeEvents.Select(m => m.Details.AggregateVersion).OrderBy(m => m),
+			],
 			Timestamp = DateTimeOffset.UtcNow,
 		};
 
@@ -329,7 +380,11 @@ partial class MongoDBEventStore<T>
 			catch (Exception ex)
 #pragma warning restore CA1031
 			{
-				_eventStoreTelemetry.CacheRemovalFailure(aggregate.Id(), _aggregateTypeFullName, ex);
+				_eventStoreTelemetry.CacheRemovalFailure(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					ex
+				);
 			}
 		});
 	}

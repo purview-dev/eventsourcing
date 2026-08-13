@@ -16,12 +16,17 @@ public interface ISqlServerEventStoreTransactionFactory
 	ISqlServerEventStoreTransaction CreateSqlServerTransaction(string? correlationId = null);
 }
 
-public sealed class SqlServerEventStoreTransactionFactory(IEventStoreCorrelationIdProvider correlationIdProvider)
-	: IEventStoreTransactionFactory,
-		ISqlServerEventStoreTransactionFactory
+public sealed class SqlServerEventStoreTransactionFactory(
+	IEventStoreCorrelationIdProvider correlationIdProvider
+) : IEventStoreTransactionFactory, ISqlServerEventStoreTransactionFactory
 {
-	public IEventStoreTransaction Create(string? correlationId = null) => CreateSqlServerTransaction(correlationId);
+	public IEventStoreTransaction Create(string? correlationId = null) =>
+		CreateSqlServerTransaction(correlationId);
 
-	public ISqlServerEventStoreTransaction CreateSqlServerTransaction(string? correlationId = null) =>
-		new SqlServerEventStoreTransaction(correlationId ?? correlationIdProvider.GetCorrelationId());
+	public ISqlServerEventStoreTransaction CreateSqlServerTransaction(
+		string? correlationId = null
+	) =>
+		new SqlServerEventStoreTransaction(
+			correlationId ?? correlationIdProvider.GetCorrelationId()
+		);
 }

@@ -7,7 +7,8 @@ using Purview.EventSourcing.Samples.Domain;
 
 namespace Purview.EventSourcing.Samples.Web.Pages.Customer.Orders;
 
-sealed class IndexModel(IQueryableEventStore customerStore, IQueryableEventStore orderStore) : PageModel
+sealed class IndexModel(IQueryableEventStore customerStore, IQueryableEventStore orderStore)
+	: PageModel
 {
 	const int DefaultPageSize = 15;
 
@@ -32,7 +33,7 @@ sealed class IndexModel(IQueryableEventStore customerStore, IQueryableEventStore
 
 		if (Page < 1)
 			Page = 1;
-		if (PageSize < 5 || PageSize > 100)
+		if (PageSize is < 5 or > 100)
 			PageSize = DefaultPageSize;
 
 		var ct = HttpContext.RequestAborted;

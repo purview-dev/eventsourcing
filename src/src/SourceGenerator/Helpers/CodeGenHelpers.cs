@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace Purview.EventSourcing.SourceGenerator.Helpers;
@@ -10,12 +10,14 @@ static class CodeGenHelpers
 
 	const string EmbedAttributesHashDefineName = "PURVIEW_EVENTSOURCING_ATTRIBUTES";
 
-	const string GeneratedCodeConstant = "System.CodeDom.Compiler.GeneratedCodeAttribute(\"{0}\", \"{1}\")";
+	const string GeneratedCodeConstant =
+		"System.CodeDom.Compiler.GeneratedCodeAttribute(\"{0}\", \"{1}\")";
 	const string ConditionalConstant = "System.Diagnostics.ConditionalAttribute(\"{0}\")";
 	const string CompilerGeneratedConstant = "System.Runtime.CompilerServices.CompilerGenerated";
 
 	const string EmbeddedConstant = "Microsoft.CodeAnalysis.EmbeddedAttribute";
-	const string ExcludeFromCodeCoverageConstant = "System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute";
+	const string ExcludeFromCodeCoverageConstant =
+		"System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute";
 
 	static readonly Lazy<string> GeneratedCodeAttribute = new(() =>
 		string.Format(
@@ -27,7 +29,11 @@ static class CodeGenHelpers
 	);
 
 	static readonly Lazy<string> ConditionalAttribute = new(() =>
-		string.Format(CultureInfo.InvariantCulture, ConditionalConstant, EmbedAttributesHashDefineName)
+		string.Format(
+			CultureInfo.InvariantCulture,
+			ConditionalConstant,
+			EmbedAttributesHashDefineName
+		)
 	);
 
 	static readonly Lazy<string[]> GenAttributes = new(() =>
@@ -52,13 +58,13 @@ static class CodeGenHelpers
 	public static string GetGeneratedCodeAttribute(int tabs = 0) =>
 		GeneratedCodeAttributesByTabs.GetOrAdd(
 			tabs,
-			tabs =>
+			static tabs =>
 			{
 				var t = string.Concat(Enumerable.Range(0, tabs).Select(_ => '\t'));
 
-				string result = string.Empty;
+				var result = string.Empty;
 				foreach (var attr in GenAttributes.Value)
-					result += $"{t}{Global(attr)}{Environment.NewLine}";
+					result += $"{t}{Global(attr)}\n";
 
 				return result;
 			}
@@ -71,9 +77,9 @@ static class CodeGenHelpers
 			{
 				var t = string.Concat(Enumerable.Range(0, tabs).Select(_ => '\t'));
 
-				string result = string.Empty;
+				var result = string.Empty;
 				foreach (var attr in NonClassGenAttributes.Value)
-					result += $"{t}{Global(attr)}{Environment.NewLine}";
+					result += $"{t}{Global(attr)}\n";
 
 				return result;
 			}

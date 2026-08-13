@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.Aggregates.Events;
+namespace Purview.EventSourcing.Aggregates.Events;
 
 /// <summary>
 /// Base <see cref="IEvent"/> implementation.
@@ -16,7 +16,7 @@ public abstract class EventBase : IEvent
 	/// <remarks>
 	/// Defaults to 1. Override in a derived class to declare a higher version.
 	/// The source generator will emit the correct override when
-	/// <c>[GenerateEvent(Version = N)]</c> is used.
+	/// <c>[Event(Version = N)]</c> is used.
 	/// </remarks>
 	public virtual int SchemaVersion => 1;
 

@@ -9,5 +9,8 @@ namespace Purview.EventSourcing.Admin.Abstractions.Services;
 /// </summary>
 public interface IAdminPermissionProvider
 {
-	Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(ClaimsPrincipal user, CancellationToken cancellationToken);
+	Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(
+		ClaimsPrincipal user,
+		CancellationToken cancellationToken
+	);
 }

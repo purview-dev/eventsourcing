@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates.Events;
+using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.ChangeFeed;
 
 namespace Purview.EventSourcing.MongoDB.Events;
@@ -20,7 +20,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		for (var i = 0; i < eventsToCreate; i++)
 			aggregate.AppendString($"{i + 1} of {eventsToCreate}(s) to created.");
 
-		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		aggregateChangeNotifier
 			.BeforeSaveAsync(aggregate, true, Any<CancellationToken>())
@@ -44,7 +44,9 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(beforeWasCalled).IsTrue();
 		await Assert.That(afterWasCalled).IsTrue();
 
-		aggregateChangeNotifier.BeforeSaveAsync(aggregate, true, Any<CancellationToken>()).WasCalled(Times.Once);
+		aggregateChangeNotifier
+			.BeforeSaveAsync(aggregate, true, Any<CancellationToken>())
+			.WasCalled(Times.Once);
 
 		aggregateChangeNotifier
 			.AfterSaveAsync(
@@ -57,7 +59,9 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 			.WasCalled(Times.Once);
 	}
 
-	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
@@ -65,7 +69,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 
-		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		// Act
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);

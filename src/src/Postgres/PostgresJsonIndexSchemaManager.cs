@@ -49,7 +49,11 @@ static partial class PostgresJsonIndexSchemaManager
 		}
 	}
 
-	static List<string> CreateIndexCommands(PostgresJsonIndexOptions? options, string schemaName, string tableName)
+	static List<string> CreateIndexCommands(
+		PostgresJsonIndexOptions? options,
+		string schemaName,
+		string tableName
+	)
 	{
 		ValidateIdentifier(schemaName, nameof(schemaName));
 		ValidateIdentifier(tableName, nameof(tableName));
@@ -73,7 +77,10 @@ static partial class PostgresJsonIndexSchemaManager
 		foreach (var pathIndex in options.PathIndexes)
 		{
 			if (pathIndex is null || string.IsNullOrWhiteSpace(pathIndex.Path))
-				throw new ArgumentException("Json path index path cannot be null or empty.", nameof(options));
+				throw new ArgumentException(
+					"Json path index path cannot be null or empty.",
+					nameof(options)
+				);
 
 			var tokens = ParsePath(pathIndex.Path);
 			if (tokens.Length == 0)
@@ -88,7 +95,9 @@ static partial class PostgresJsonIndexSchemaManager
 				: pathIndex.IndexName.Trim();
 			ValidateIdentifier(indexName, nameof(pathIndex.IndexName));
 
-			commands.Add($"CREATE INDEX {QuoteIdentifier(indexName)} ON {quotedTable} ({expression});");
+			commands.Add(
+				$"CREATE INDEX {QuoteIdentifier(indexName)} ON {quotedTable} ({expression});"
+			);
 		}
 
 		return commands;
@@ -102,14 +111,19 @@ static partial class PostgresJsonIndexSchemaManager
 		else if (normalized.StartsWith('$'))
 			normalized = normalized[1..];
 
-		return normalized.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		return normalized.Split(
+			'.',
+			StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+		);
 	}
 
 	static string CreatePgTextPath(IEnumerable<string> tokens) =>
 		"{" + string.Join(",", tokens.Select(EscapePgPathToken)) + "}";
 
 	static string EscapePgPathToken(string token) =>
-		token.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+		token
+			.Replace("\\", "\\\\", StringComparison.Ordinal)
+			.Replace("\"", "\\\"", StringComparison.Ordinal);
 
 	static string CreateStableHash(string value)
 	{
@@ -123,7 +137,10 @@ static partial class PostgresJsonIndexSchemaManager
 			throw new ArgumentException("Identifier cannot be null or empty.", parameterName);
 
 		if (!IdentifierRegex().IsMatch(identifier))
-			throw new ArgumentException($"Identifier '{identifier}' contains invalid characters.", parameterName);
+			throw new ArgumentException(
+				$"Identifier '{identifier}' contains invalid characters.",
+				parameterName
+			);
 	}
 
 	static string QuoteIdentifier(string identifier) => $"\"{identifier}\"";

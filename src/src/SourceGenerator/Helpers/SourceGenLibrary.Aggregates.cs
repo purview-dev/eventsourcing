@@ -1,6 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-
 using Purview.EventSourcing.SourceGenerator.Extensions.Purview.SourceGeneratorFramework.Helpers;
 using Purview.EventSourcing.SourceGenerator.Models;
 
@@ -9,16 +8,15 @@ namespace Purview.EventSourcing.SourceGenerator.Helpers;
 partial class SourceGenLibrary
 {
 	static GeneratorResult<AggregateInfo> GetAggregateInfo(
-	GeneratorAttributeSyntaxContext ctx,
-	GenerationLogger? logger,
-	CancellationToken cancellationToken
-)
+		GeneratorAttributeSyntaxContext ctx,
+		GenerationLogger? logger,
+		CancellationToken cancellationToken
+	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
 		var classSymbol = (INamedTypeSymbol)ctx.TargetSymbol;
 		var syntax = (ClassDeclarationSyntax)ctx.TargetNode;
-
 
 		var compilation = ctx.SemanticModel.Compilation;
 		List<DiagnosticInfo> diagnostics = [];
@@ -64,9 +62,14 @@ partial class SourceGenLibrary
 
 		if (!TypeHelpers.InheritsFrom(classSymbol, TypeLibrary.Aggregates.AggregateBase))
 		{
-			if (classSymbol.BaseType is null)
+			if (
+				classSymbol.BaseType is null
+				|| classSymbol.BaseType.SpecialType == SpecialType.System_Object
+			)
 			{
-				logger?.Info("Aggregate class does not inherit from any base class, so AggregateBase will be declared in generated code.");
+				logger?.Info(
+					"Aggregate class does not inherit from any base class, so AggregateBase will be declared in generated code."
+				);
 				shouldDeclareAggregateBase = true;
 			}
 			else
@@ -95,8 +98,26 @@ partial class SourceGenLibrary
 		}
 
 		TypeValueObject aggregateType = new(classSymbol);
-		var generateAggregateAttributeClassSymbol = GenerationAggregateAttributeData.FromAttributeData(compilation, classSymbol.GetAttributes());
-		var generateAggregateAttributeAssembly = GenerationAggregateAttributeData.FromAttributeData(compilation, compilation.Assembly.GetAttributes());
+		var aggregateAttribute = AggregateAttributeData.FromAttributeData(
+			classSymbol.GetAttributes()
+		);
+		var assemblyDefaults = AggregateDefaultsAttributeData.FromAttributeData(
+			compilation.Assembly.GetAttributes()
+		);
+
+		var aggregateNamespace = classSymbol.ContainingNamespace.IsGlobalNamespace
+			? null
+			: classSymbol.ContainingNamespace.ToDisplayString();
+		var eventNamespaceOverride = aggregateAttribute.Exists
+			? aggregateAttribute.EventNamespace
+			: null;
+		var aggregateEventSuffixOverride = aggregateAttribute.Exists
+			? aggregateAttribute.EventSuffix
+			: null;
+		var assemblyEventSuffix = assemblyDefaults.Exists ? assemblyDefaults.EventSuffix : null;
+		var valueObjectContextType = compilation.GetTypeByMetadataName(
+			"Purview.EventSourcing.ValueObjects.ValueObjectContext`1"
+		);
 
 		var properties = new List<AggregateStatePropertyInfo>();
 		var propertySymbolsByName = new Dictionary<string, IPropertySymbol>(StringComparer.Ordinal);
@@ -107,10 +128,19 @@ partial class SourceGenLibrary
 
 			if (member is IPropertySymbol propertySymbol)
 			{
-				if (propertySymbol.IsStatic || propertySymbol.IsIndexer || propertySymbol.IsImplicitlyDeclared)
+				if (
+					propertySymbol.IsStatic
+					|| propertySymbol.IsIndexer
+					|| propertySymbol.IsImplicitlyDeclared
+				)
 					continue;
 
-				if (TypeHelpers.TryGetComplexScalarValueType(propertySymbol.Type, out var scalarValueTypeDisplayName))
+				if (
+					TypeHelpers.TryGetComplexScalarValueType(
+						propertySymbol.Type,
+						out var scalarValueTypeDisplayName
+					)
+				)
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
@@ -142,7 +172,10 @@ partial class SourceGenLibrary
 					);
 				}
 
-				if (TypeHelpers.IsCollectionLikeType(propertySymbol.Type) && !TypeHelpers.IsEventStoreCollectionType(propertySymbol.Type))
+				if (
+					TypeHelpers.IsCollectionLikeType(propertySymbol.Type)
+					&& !TypeHelpers.IsEventStoreCollectionType(propertySymbol.Type)
+				)
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
@@ -156,7 +189,7 @@ partial class SourceGenLibrary
 				}
 
 				properties.Add(
-					new AggregateStatePropertyInfo(
+					new(
 						propertySymbol.Name,
 						propertySymbol.Type.ToDisplayString(
 							SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
@@ -172,16 +205,22 @@ partial class SourceGenLibrary
 			if (
 				member is IMethodSymbol methodSymbol
 				&& (
-					TypeHelpers.HasAttribute(methodSymbol, TypeLibrary.Attributes.GenerateEventAttribute)
-					|| TypeHelpers.HasAttribute(methodSymbol, TypeLibrary.Attributes.GenerateCollectionEventAttribute)
+					TypeHelpers.HasAttribute(methodSymbol, TypeLibrary.Attributes.EventAttribute)
+					|| TypeHelpers.HasAttribute(
+						methodSymbol,
+						TypeLibrary.Attributes.CollectionEventAttribute
+					)
 				)
 			)
+			{
 				attributedMethods.Add(methodSymbol);
+			}
 		}
 
 		var methods = new List<AggregateEventMethodInfo>();
 		var invalidMethods = new List<InvalidAggregateEventMethodInfo>();
-		var methodsByEventType = new Dictionary<(string EventNamespace, string EventName), IMethodSymbol>();
+		var methodsByEventType =
+			new Dictionary<(string EventNamespace, string EventName), IMethodSymbol>();
 		var methodsBySchemaVersion = new Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)>();
 
 		foreach (var methodSymbol in attributedMethods)
@@ -209,12 +248,19 @@ partial class SourceGenLibrary
 			{
 				var diagnosticIds = diagnostics
 					.Skip(diagnosticsStart)
-					.Select(static diagnostic => diagnostic.Id)
+					.Select(static diagnostic => diagnostic.Descriptor.Id)
 					.Distinct(StringComparer.Ordinal)
 					.OrderBy(static id => id, StringComparer.Ordinal)
 					.ToArray();
 
-				if (TypeHelpers.TryCreateInvalidMethodStub(methodSymbol, diagnosticIds, out var invalidMethod, cancellationToken))
+				if (
+					TypeHelpers.TryCreateInvalidMethodStub(
+						methodSymbol,
+						diagnosticIds,
+						out var invalidMethod,
+						cancellationToken
+					)
+				)
 					invalidMethods.Add(invalidMethod);
 
 				continue;
@@ -226,7 +272,7 @@ partial class SourceGenLibrary
 				diagnostics.Add(
 					DiagnosticInfo.Create(
 						GeneratorDiagnostics.DuplicateGeneratedEventName,
-						methodSymbol.Locations.FirstOrDefault(),
+						methodSymbol,
 						methodSymbol.Name,
 						classSymbol.Name,
 						$"{methodInfo.EventNamespace}.{methodInfo.EventName}"
@@ -235,7 +281,7 @@ partial class SourceGenLibrary
 				diagnostics.Add(
 					DiagnosticInfo.Create(
 						GeneratorDiagnostics.DuplicateGeneratedEventName,
-						conflictingMethod.Locations.FirstOrDefault(),
+						conflictingMethod,
 						conflictingMethod.Name,
 						classSymbol.Name,
 						$"{methodInfo.EventNamespace}.{methodInfo.EventName}"
@@ -255,24 +301,29 @@ partial class SourceGenLibrary
 				continue;
 			}
 
-			if (methodsBySchemaVersion.TryGetValue(methodInfo.Version, out var existingSchemaVersionMethod))
+			if (
+				methodsBySchemaVersion.TryGetValue(
+					methodInfo.Version,
+					out var existingSchemaVersionMethod
+				)
+			)
 			{
 				if (methodInfo.IsSchemaVersionExplicit && existingSchemaVersionMethod.IsExplicit)
 				{
 					diagnostics.Add(
-						Diagnostic.Create(
+						DiagnosticInfo.Create(
 							GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate,
-							methodSymbol.Locations.FirstOrDefault(),
+							methodSymbol,
 							methodSymbol.Name,
 							classSymbol.Name,
-							methodInfo.Version,
+							$"{methodInfo.Version}",
 							existingSchemaVersionMethod.Symbol.Name
 						)
 					);
 					diagnostics.Add(
-						Diagnostic.Create(
+						DiagnosticInfo.Create(
 							GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate,
-							existingSchemaVersionMethod.Symbol.Locations.FirstOrDefault(),
+							existingSchemaVersionMethod.Symbol,
 							existingSchemaVersionMethod.Symbol.Name,
 							classSymbol.Name,
 							methodInfo.Version,
@@ -298,7 +349,10 @@ partial class SourceGenLibrary
 			}
 			else
 			{
-				methodsBySchemaVersion[methodInfo.Version] = (methodSymbol, methodInfo.IsSchemaVersionExplicit);
+				methodsBySchemaVersion[methodInfo.Version] = (
+					methodSymbol,
+					methodInfo.IsSchemaVersionExplicit
+				);
 			}
 
 			methodsByEventType[eventTypeKey] = methodSymbol;
@@ -320,7 +374,11 @@ partial class SourceGenLibrary
 				var previousVersion = explicitSchemaVersions[index - 1];
 				var currentVersion = explicitSchemaVersions[index];
 
-				for (var missingVersion = previousVersion + 1; missingVersion < currentVersion; missingVersion++)
+				for (
+					var missingVersion = previousVersion + 1;
+					missingVersion < currentVersion;
+					missingVersion++
+				)
 					missingSchemaVersions.Add(missingVersion);
 			}
 
@@ -339,8 +397,7 @@ partial class SourceGenLibrary
 		}
 
 		return canGenerate
-				?
-				GeneratorResult<AggregateInfo>.Ok(
+			? GeneratorResult<AggregateInfo>.Ok(
 				new(
 					aggregateType,
 					classSymbol.DeclaredAccessibility,
@@ -348,10 +405,10 @@ partial class SourceGenLibrary
 					properties,
 					methods,
 					invalidMethods,
-					CreateHintName(classSymbol)
-				), [.. diagnostics])
-				: GeneratorResult<AggregateInfo>.Fail([.. diagnostics]);
-
+					TypeHelpers.CreateHintName(classSymbol)
+				),
+				[.. diagnostics]
+			)
+			: GeneratorResult<AggregateInfo>.Fail([.. diagnostics]);
 	}
-
 }

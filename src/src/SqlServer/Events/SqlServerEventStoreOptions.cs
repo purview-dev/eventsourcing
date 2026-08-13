@@ -137,8 +137,10 @@ public sealed class SqlServerEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<string, SqlServerAggregateTableOverride> AggregateTableOverrides { get; init; } =
-	[with(StringComparer.OrdinalIgnoreCase)];
+	public Dictionary<
+		string,
+		SqlServerAggregateTableOverride
+	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 
 	/// <summary>
 	/// Configures runtime-managed SQL Server indexes over the event payload JSON column.

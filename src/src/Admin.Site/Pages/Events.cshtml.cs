@@ -49,14 +49,21 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 			var query = new EventRangeQuery(
 				VersionFrom,
 				VersionTo,
-				TimeFromUtc is not null ? new DateTimeOffset(TimeFromUtc.Value, TimeSpan.Zero) : null,
+				TimeFromUtc is not null
+					? new DateTimeOffset(TimeFromUtc.Value, TimeSpan.Zero)
+					: null,
 				TimeToUtc is not null ? new DateTimeOffset(TimeToUtc.Value, TimeSpan.Zero) : null,
 				PageNo,
 				PageSize,
 				"Version asc"
 			);
 
-			EventRange = await _eventQueryService.GetRangeAsync(AggregateType, AggregateId, query, cancellationToken);
+			EventRange = await _eventQueryService.GetRangeAsync(
+				AggregateType,
+				AggregateId,
+				query,
+				cancellationToken
+			);
 			return Page();
 		}
 		catch (InvalidOperationException ex)

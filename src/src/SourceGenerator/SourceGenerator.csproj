@@ -23,7 +23,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Remove="Templates\Sources\**\*.cs" />
-		<EmbeddedResource Include="Templates\Sources\**\*.cs" />
+		<Compile Remove="Templates\**\*.cs" />
+		<EmbeddedResource Include="Templates\**\*.cs" />
 	</ItemGroup>
 </Project>

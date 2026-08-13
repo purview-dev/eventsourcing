@@ -5,7 +5,7 @@
 namespace Purview.EventSourcing.Aggregates;
 
 /// <summary>
-/// Marks a method on a <see cref="GenerateAggregateAttribute"/>-decorated class
+/// Marks a method on a <see cref="AggregateAttribute"/>-decorated class
 /// as a command that should have an event class and registration generated.
 /// <para>
 /// The method parameters become the event's properties. The generator creates:
@@ -28,7 +28,7 @@ namespace Purview.EventSourcing.Aggregates;
 /// </remarks>
 //{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-sealed class GenerateEventAttribute : global::System.Attribute
+sealed class EventAttribute : global::System.Attribute
 {
 	/// <summary>
 	/// The schema version of the generated event class. Defaults to 1.
@@ -39,8 +39,8 @@ sealed class GenerateEventAttribute : global::System.Attribute
 	/// <summary>
 	/// Overrides the generated event type name for this method.
 	/// Defaults to a deterministic past-tense event name inferred from the method name.
-	/// If not set, <see cref="GenerateAggregateAttribute.EventSuffix"/> and
-	/// <see cref="GenerateAggregateDefaultsAttribute.EventSuffix"/> may append a suffix.
+	/// If not set, <see cref="AggregateAttribute.EventSuffix"/> and
+	/// <see cref="AggregateDefaultsAttribute.EventSuffix"/> may append a suffix.
 	/// </summary>
 	public string? EventName { get; set; }
 

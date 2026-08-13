@@ -11,7 +11,9 @@ public sealed class OrderFulfillmentService(
 ) : IOrderFulfillmentService
 {
 	// Thread-safe price cache shared across all instances.
-	static readonly ConcurrentDictionary<string, decimal> UnitPrices = new(StringComparer.OrdinalIgnoreCase);
+	static readonly ConcurrentDictionary<string, decimal> UnitPrices = new(
+		StringComparer.OrdinalIgnoreCase
+	);
 
 	public async Task<FulfilmentResult> PlaceOrderAsync(
 		string customerId,
@@ -39,7 +41,9 @@ public sealed class OrderFulfillmentService(
 
 		// Create and confirm the order.
 		var order = await store.CreateAsync<OrderAggregate>(cancellationToken: cancellationToken);
-		order.CreateOrder(customerId).AddLineItem(inventory.ProductId, inventory.ProductName, quantity, unitPrice);
+		order
+			.CreateOrder(customerId)
+			.AddLineItem(inventory.ProductId, inventory.ProductName, quantity, unitPrice);
 		if (!string.IsNullOrWhiteSpace(shippingAddress))
 			order.SetShippingAddress(shippingAddress);
 
@@ -65,7 +69,7 @@ public sealed class OrderFulfillmentService(
 		// Derive a stable price from the product ID using a deterministic hash for demo purposes.
 		var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(productId));
 		var hash = (int)(BitConverter.ToUInt32(hashBytes, 0) & 0x7FFFFFFF);
-		var price = Math.Round(9.99m + (hash % 9000) / 100m, 2);
+		var price = Math.Round(9.99m + (hash % 9000 / 100m), 2);
 		return UnitPrices.GetOrAdd(productId, price);
 	}
 }

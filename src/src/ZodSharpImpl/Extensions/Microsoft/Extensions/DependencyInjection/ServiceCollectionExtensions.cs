@@ -27,7 +27,10 @@ public static class ServiceCollectionExtensions
 		where TValidator : class, IZodSchemaValidator<TAggregate>
 	{
 		services.Add(new(typeof(IZodSchemaValidator<TAggregate>), typeof(TValidator), lifetime));
-		services.AddSingleton<IAggregateValidator<TAggregate>, ZodSharpAggregateValidator<TAggregate>>();
+		services.AddSingleton<
+			IAggregateValidator<TAggregate>,
+			ZodSharpAggregateValidator<TAggregate>
+		>();
 
 		return services;
 	}
@@ -53,7 +56,9 @@ public static class ServiceCollectionExtensions
 				sp =>
 				{
 					var validator = sp.GetService<IZodSchemaValidator<TAggregate>>();
-					return validator is null ? null! : new ZodSharpAggregateValidator<TAggregate>(validator);
+					return validator is null
+						? null!
+						: new ZodSharpAggregateValidator<TAggregate>(validator);
 				},
 				lifetime
 			)

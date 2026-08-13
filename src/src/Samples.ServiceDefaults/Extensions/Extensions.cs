@@ -34,7 +34,9 @@ public static class ServiceDefaultsExtensions
 
 		builder
 			.Services.AddOpenTelemetry()
-			.WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation())
+			.WithMetrics(metrics =>
+				metrics.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation()
+			)
 			.WithTracing(tracing =>
 				tracing
 					.AddSource(builder.Environment.ApplicationName)
@@ -50,7 +52,9 @@ public static class ServiceDefaultsExtensions
 	static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder)
 		where TBuilder : IHostApplicationBuilder
 	{
-		var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+		var useOtlpExporter = !string.IsNullOrWhiteSpace(
+			builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+		);
 
 		if (useOtlpExporter)
 			builder.Services.AddOpenTelemetry().UseOtlpExporter();
@@ -61,7 +65,9 @@ public static class ServiceDefaultsExtensions
 	public static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder)
 		where TBuilder : IHostApplicationBuilder
 	{
-		builder.Services.AddHealthChecks().AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
+		builder
+			.Services.AddHealthChecks()
+			.AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
 
 		return builder;
 	}
@@ -71,7 +77,10 @@ public static class ServiceDefaultsExtensions
 		if (app.Environment.IsDevelopment())
 		{
 			app.MapHealthChecks("/health");
-			app.MapHealthChecks("/alive", new HealthCheckOptions { Predicate = r => r.Tags.Contains("live") });
+			app.MapHealthChecks(
+				"/alive",
+				new HealthCheckOptions { Predicate = r => r.Tags.Contains("live") }
+			);
 		}
 
 		return app;

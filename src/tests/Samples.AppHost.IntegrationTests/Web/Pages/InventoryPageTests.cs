@@ -26,9 +26,14 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task BackOfficeCatalogCreate_Post_RedirectsToIndex(CancellationToken cancellationToken)
+	public async Task BackOfficeCatalogCreate_Post_RedirectsToIndex(
+		CancellationToken cancellationToken
+	)
 	{
-		var antiForgery = await GetAntiForgeryTokenAsync("/BackOffice/Catalog/Create", cancellationToken);
+		var antiForgery = await GetAntiForgeryTokenAsync(
+			"/BackOffice/Catalog/Create",
+			cancellationToken
+		);
 		var pageResponse = await _client.GetAsync("/BackOffice/Catalog/Create", cancellationToken);
 		var html = await pageResponse.Content.ReadAsStringAsync(cancellationToken);
 		var locationId = ExtractFirstSelectValue(html, "LocationId");
@@ -49,7 +54,11 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 		};
 
 		using var content = new FormUrlEncodedContent(form);
-		var response = await _client.PostAsync("/BackOffice/Catalog/Create", content, cancellationToken);
+		var response = await _client.PostAsync(
+			"/BackOffice/Catalog/Create",
+			content,
+			cancellationToken
+		);
 
 		await Assert.That((int)response.StatusCode).IsEqualTo(302);
 		await Assert.That(response.Headers.Location?.ToString()).Contains("/BackOffice/Catalog");
@@ -88,20 +97,30 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task BackOfficeCatalogIndex_WithPaging_Returns200(CancellationToken cancellationToken)
+	public async Task BackOfficeCatalogIndex_WithPaging_Returns200(
+		CancellationToken cancellationToken
+	)
 	{
-		var response = await _client.GetAsync("/BackOffice/Catalog?page=1&pageSize=10", cancellationToken);
+		var response = await _client.GetAsync(
+			"/BackOffice/Catalog?page=1&pageSize=10",
+			cancellationToken
+		);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
 	}
 
 	[Test]
-	public async Task BackOfficeCatalogIndex_WithMultiplePages_RendersNextPageLink(CancellationToken cancellationToken)
+	public async Task BackOfficeCatalogIndex_WithMultiplePages_RendersNextPageLink(
+		CancellationToken cancellationToken
+	)
 	{
 		var prefix = $"paging-catalog-{Guid.NewGuid():N}";
 		await CreateInventoryItemsAsync(prefix, 11, cancellationToken);
 
-		var response = await _client.GetAsync($"/BackOffice/Catalog?search={prefix}&pageSize=10", cancellationToken);
+		var response = await _client.GetAsync(
+			$"/BackOffice/Catalog?search={prefix}&pageSize=10",
+			cancellationToken
+		);
 		var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
@@ -109,28 +128,43 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task BackOfficeCatalogIndex_WithSorting_Returns200(CancellationToken cancellationToken)
+	public async Task BackOfficeCatalogIndex_WithSorting_Returns200(
+		CancellationToken cancellationToken
+	)
 	{
-		var response = await _client.GetAsync("/BackOffice/Catalog?sortBy=productid&sortDir=desc", cancellationToken);
+		var response = await _client.GetAsync(
+			"/BackOffice/Catalog?sortBy=productid&sortDir=desc",
+			cancellationToken
+		);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
 	}
 
 	[Test]
-	public async Task BackOfficeCatalogIndex_WithSearch_Returns200(CancellationToken cancellationToken)
+	public async Task BackOfficeCatalogIndex_WithSearch_Returns200(
+		CancellationToken cancellationToken
+	)
 	{
-		var response = await _client.GetAsync("/BackOffice/Catalog?search=widget", cancellationToken);
+		var response = await _client.GetAsync(
+			"/BackOffice/Catalog?search=widget",
+			cancellationToken
+		);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
 	}
 
 	[Test]
-	public async Task BackOfficeStockIndex_WithMultiplePages_RendersNextPageLink(CancellationToken cancellationToken)
+	public async Task BackOfficeStockIndex_WithMultiplePages_RendersNextPageLink(
+		CancellationToken cancellationToken
+	)
 	{
 		var prefix = $"paging-stock-{Guid.NewGuid():N}";
 		await CreateInventoryItemsAsync(prefix, 11, cancellationToken);
 
-		var response = await _client.GetAsync($"/BackOffice/Stock?search={prefix}&pageSize=10", cancellationToken);
+		var response = await _client.GetAsync(
+			$"/BackOffice/Stock?search={prefix}&pageSize=10",
+			cancellationToken
+		);
 		var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
@@ -162,7 +196,11 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 		var searchFrom = selectStart;
 		while (true)
 		{
-			var optionStart = html.IndexOf("<option value=\"", searchFrom, StringComparison.Ordinal);
+			var optionStart = html.IndexOf(
+				"<option value=\"",
+				searchFrom,
+				StringComparison.Ordinal
+			);
 			if (optionStart == -1)
 				return string.Empty;
 
@@ -179,7 +217,11 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 		}
 	}
 
-	async Task CreateInventoryItemsAsync(string prefix, int count, CancellationToken cancellationToken)
+	async Task CreateInventoryItemsAsync(
+		string prefix,
+		int count,
+		CancellationToken cancellationToken
+	)
 	{
 		var store = fixture.QueryableEventStore();
 
@@ -190,7 +232,9 @@ public sealed class InventoryPageTests(AppHostFixture fixture)
 
 		for (var i = 0; i < count; i++)
 		{
-			var item = await store.CreateAsync<InventoryAggregate>(cancellationToken: cancellationToken);
+			var item = await store.CreateAsync<InventoryAggregate>(
+				cancellationToken: cancellationToken
+			);
 			item.Create(
 				$"{prefix}-{i:D2}",
 				$"{prefix}-item-{i:D2}",

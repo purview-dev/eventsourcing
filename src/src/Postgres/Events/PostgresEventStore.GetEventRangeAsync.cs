@@ -58,7 +58,10 @@ partial class PostgresEventStore<T>
 	/// <param name="aggregateVersion">Only used when an unknown event is found.</param>
 	IEvent? DeserializeEvent(PostgresEventStoreClient.RowData eventRow, int aggregateVersion)
 	{
-		static EventUnknown ReturnUnknownEvent(PostgresEventStoreClient.RowData eventRow, int aggregateVersion)
+		static EventUnknown ReturnUnknownEvent(
+			PostgresEventStoreClient.RowData eventRow,
+			int aggregateVersion
+		)
 		{
 			return new EventUnknown
 			{
@@ -97,7 +100,11 @@ partial class PostgresEventStore<T>
 		catch (Exception ex)
 #pragma warning restore CA1031
 		{
-			_eventStoreTelemetry.EventDeserializationFailed(eventRow.AggregateId, _aggregateTypeFullName, ex);
+			_eventStoreTelemetry.EventDeserializationFailed(
+				eventRow.AggregateId,
+				_aggregateTypeFullName,
+				ex
+			);
 
 			return ReturnUnknownEvent(eventRow, aggregateVersion);
 		}

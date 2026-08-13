@@ -2,7 +2,9 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class GenericTableEventStoreTests<TAggregate>
 {
-	public async Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(CancellationToken cancellationToken)
+	public async Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -18,7 +20,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 			?? throw new NullReferenceException();
 
 		// Act
-		var result = await eventStore.DeleteAsync(aggregateResult, cancellationToken: cancellationToken);
+		var result = await eventStore.DeleteAsync(
+			aggregateResult,
+			cancellationToken: cancellationToken
+		);
 
 		// Assert
 		await Assert.That(result).IsTrue();
@@ -49,7 +54,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 			?? throw new NullReferenceException();
 
 		// Act
-		var result = await eventStore.DeleteAsync(aggregateResult, cancellationToken: cancellationToken);
+		var result = await eventStore.DeleteAsync(
+			aggregateResult,
+			cancellationToken: cancellationToken
+		);
 
 		// Assert
 		await Assert.That(result).IsTrue();
@@ -57,7 +65,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 		cache.RemoveAsync(cacheKey, Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 
-	public async Task DeleteAsync_GivenDelete_NotifiesChangeFeed(CancellationToken cancellationToken)
+	public async Task DeleteAsync_GivenDelete_NotifiesChangeFeed(
+		CancellationToken cancellationToken
+	)
 	{
 		// Arrange
 		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
@@ -68,7 +78,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 		aggregate.IncrementInt32Value();
 
-		var eventStore = fixture.CreateEventStore<TAggregate>(aggregateChangeNotifier: aggregateChangeNotifier);
+		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier);
 
 		aggregateChangeNotifier
 			.BeforeDeleteAsync(aggregate, Any<CancellationToken>())
@@ -87,7 +97,11 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(beforeWasCalled).IsTrue();
 		await Assert.That(afterWasCalled).IsTrue();
 
-		aggregateChangeNotifier.BeforeDeleteAsync(aggregate, Any<CancellationToken>()).WasCalled(Times.Once);
-		aggregateChangeNotifier.AfterDeleteAsync(aggregate, Any<CancellationToken>()).WasCalled(Times.Once);
+		aggregateChangeNotifier
+			.BeforeDeleteAsync(aggregate, Any<CancellationToken>())
+			.WasCalled(Times.Once);
+		aggregateChangeNotifier
+			.AfterDeleteAsync(aggregate, Any<CancellationToken>())
+			.WasCalled(Times.Once);
 	}
 }

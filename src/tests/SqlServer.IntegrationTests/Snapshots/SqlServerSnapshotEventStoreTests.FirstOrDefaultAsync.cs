@@ -63,7 +63,10 @@ partial class SqlServerSnapshotEventStoreTests
 
 			aggregate.SetInt32Value(i + 1);
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -99,7 +102,10 @@ partial class SqlServerSnapshotEventStoreTests
 				aggregate.IncrementInt32Value();
 			}
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -131,7 +137,10 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var x = 0; x < matchingIncrement; x++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -177,7 +186,9 @@ partial class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task FirstOrDefaultAsync_GivenNoMatchingAggregates_ReturnsNull(CancellationToken cancellationToken)
+	public async Task FirstOrDefaultAsync_GivenNoMatchingAggregates_ReturnsNull(
+		CancellationToken cancellationToken
+	)
 	{
 		const int matchingIncrement = 10;
 
@@ -190,13 +201,19 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var x = 0; x < matchingIncrement; x++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
 
 		// Act
-		var result = await store.FirstOrDefaultAsync(m => m.IncrementInt32 == -1, cancellationToken: cancellationToken);
+		var result = await store.FirstOrDefaultAsync(
+			m => m.IncrementInt32 == -1,
+			cancellationToken: cancellationToken
+		);
 
 		// Assert
 		await Assert.That(result).IsNull();

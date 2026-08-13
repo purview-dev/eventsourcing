@@ -87,7 +87,12 @@ static class CosmosDbClientExtensions
 		var request = new ContinuationRequest { MaxRecords = maxRecordsPerOperation };
 		do
 		{
-			var response = await cosmosDbClient.ListAsync(orderByClause, request, partitionKey, cancellationToken);
+			var response = await cosmosDbClient.ListAsync(
+				orderByClause,
+				request,
+				partitionKey,
+				cancellationToken
+			);
 			foreach (var result in response.Results)
 				yield return result;
 
@@ -102,7 +107,12 @@ static class CosmosDbClientExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class =>
-		cosmosDbClient.GetListEnumerableAsync<T>(null, partitionKey, maxRecordsPerOperation, cancellationToken);
+		cosmosDbClient.GetListEnumerableAsync<T>(
+			null,
+			partitionKey,
+			maxRecordsPerOperation,
+			cancellationToken
+		);
 
 	public static IAsyncEnumerable<T> GetListEnumerableAsync<T, TOrderBy>(
 		this CosmosDbClient cosmosDbClient,
@@ -147,7 +157,8 @@ static class CosmosDbClientExtensions
 		int maxRecords = ContinuationRequest.DefaultMaxRecords,
 		CancellationToken cancellationToken = default
 	)
-		where T : class => cosmosDbClient.QueryAsync(whereClause, null, partitionKey, maxRecords, cancellationToken);
+		where T : class =>
+		cosmosDbClient.QueryAsync(whereClause, null, partitionKey, maxRecords, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> QueryAsync<T>(
 		[NotNull] this CosmosDbClient cosmosDbClient,
@@ -156,7 +167,8 @@ static class CosmosDbClientExtensions
 		PartitionKey partitionKey,
 		CancellationToken cancellationToken = default
 	)
-		where T : class => cosmosDbClient.QueryAsync(whereClause, null, request, partitionKey, cancellationToken);
+		where T : class =>
+		cosmosDbClient.QueryAsync(whereClause, null, request, partitionKey, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> QueryAsync<T, TOrderBy>(
 		[NotNull] this CosmosDbClient cosmosDbClient,
@@ -217,7 +229,8 @@ static class CosmosDbClientExtensions
 		int maxRecords = ContinuationRequest.DefaultMaxRecords,
 		CancellationToken cancellationToken = default
 	)
-		where T : class => cosmosDbClient.ListAsync<T>(null, partitionKey, maxRecords, cancellationToken);
+		where T : class =>
+		cosmosDbClient.ListAsync<T>(null, partitionKey, maxRecords, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T>(
 		[NotNull] this CosmosDbClient cosmosDbClient,
@@ -225,7 +238,8 @@ static class CosmosDbClientExtensions
 		PartitionKey partitionKey,
 		CancellationToken cancellationToken = default
 	)
-		where T : class => cosmosDbClient.ListAsync<T>(null, request, partitionKey, cancellationToken);
+		where T : class =>
+		cosmosDbClient.ListAsync<T>(null, request, partitionKey, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T, TOrderBy>(
 		[NotNull] this CosmosDbClient cosmosDbClient,
@@ -235,7 +249,12 @@ static class CosmosDbClientExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class =>
-		cosmosDbClient.ListAsync<T>(m => m.OrderBy(orderByAscending), partitionKey, maxRecords, cancellationToken);
+		cosmosDbClient.ListAsync<T>(
+			m => m.OrderBy(orderByAscending),
+			partitionKey,
+			maxRecords,
+			cancellationToken
+		);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T, TOrderBy>(
 		[NotNull] this CosmosDbClient cosmosDbClient,
@@ -245,7 +264,12 @@ static class CosmosDbClientExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class =>
-		cosmosDbClient.ListAsync<T>(m => m.OrderBy(orderByAscending), request, partitionKey, cancellationToken);
+		cosmosDbClient.ListAsync<T>(
+			m => m.OrderBy(orderByAscending),
+			request,
+			partitionKey,
+			cancellationToken
+		);
 
 	#endregion ListAsync
 
@@ -261,7 +285,11 @@ static class CosmosDbClientExtensions
 	{
 		ArgumentNullException.ThrowIfNull(documents, nameof(documents));
 
-		return await cosmosDbClient.DeleteAsync(documents.ToArray(), partitionKey, cancellationToken);
+		return await cosmosDbClient.DeleteAsync(
+			documents.ToArray(),
+			partitionKey,
+			cancellationToken
+		);
 	}
 
 	public static async Task<IEnumerable<ResponseMessage>> InsertAsync<T>(
@@ -274,7 +302,11 @@ static class CosmosDbClientExtensions
 	{
 		ArgumentNullException.ThrowIfNull(documents, nameof(documents));
 
-		return await cosmosDbClient.InsertAsync(documents.ToArray(), partitionKey, cancellationToken);
+		return await cosmosDbClient.InsertAsync(
+			documents.ToArray(),
+			partitionKey,
+			cancellationToken
+		);
 	}
 
 	public static async Task<IEnumerable<ResponseMessage>> UpsertAsync<T>(
@@ -287,7 +319,11 @@ static class CosmosDbClientExtensions
 	{
 		ArgumentNullException.ThrowIfNull(documents, nameof(documents));
 
-		return await cosmosDbClient.UpsertAsync(documents.ToArray(), partitionKey, cancellationToken);
+		return await cosmosDbClient.UpsertAsync(
+			documents.ToArray(),
+			partitionKey,
+			cancellationToken
+		);
 	}
 
 	public static async Task<IEnumerable<ResponseMessage>> ReplaceAsync<T>(
@@ -300,7 +336,11 @@ static class CosmosDbClientExtensions
 	{
 		ArgumentNullException.ThrowIfNull(documents, nameof(documents));
 
-		return await cosmosDbClient.ReplaceAsync(documents.ToArray(), partitionKey, cancellationToken);
+		return await cosmosDbClient.ReplaceAsync(
+			documents.ToArray(),
+			partitionKey,
+			cancellationToken
+		);
 	}
 
 	#endregion CRUD

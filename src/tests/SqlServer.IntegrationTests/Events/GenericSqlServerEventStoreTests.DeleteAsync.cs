@@ -2,7 +2,9 @@ namespace Purview.EventSourcing.SqlServer.Events;
 
 partial class GenericSqlServerEventStoreTests<TAggregate>
 {
-	public async Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(CancellationToken cancellationToken)
+	public async Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -13,7 +15,10 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 			await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken)
 			?? throw new NullReferenceException();
 
-		var result = await eventStore.DeleteAsync(aggregateResult, cancellationToken: cancellationToken);
+		var result = await eventStore.DeleteAsync(
+			aggregateResult,
+			cancellationToken: cancellationToken
+		);
 
 		await Assert.That(result).IsTrue();
 		await Assert.That(aggregateResult.Details.IsDeleted).IsTrue();
@@ -36,13 +41,18 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 			await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken)
 			?? throw new NullReferenceException();
 
-		var result = await eventStore.DeleteAsync(aggregateResult, cancellationToken: cancellationToken);
+		var result = await eventStore.DeleteAsync(
+			aggregateResult,
+			cancellationToken: cancellationToken
+		);
 
 		await Assert.That(result).IsTrue();
 		cache.RemoveAsync(cacheKey, Any<CancellationToken>()).WasCalled(Times.Once);
 	}
 
-	public async Task DeleteAsync_GivenDelete_NotifiesChangeFeed(CancellationToken cancellationToken)
+	public async Task DeleteAsync_GivenDelete_NotifiesChangeFeed(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateChangeNotifier = TestHelpers.CreateAggregateChangeFeedNotified<TAggregate>();
 		var beforeWasCalled = false;
@@ -52,7 +62,9 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 		aggregate.IncrementInt32Value();
 
-		var eventStore = fixture.CreateEventStore(aggregateChangeNotifier: aggregateChangeNotifier.Object);
+		var eventStore = fixture.CreateEventStore(
+			aggregateChangeNotifier: aggregateChangeNotifier.Object
+		);
 
 		aggregateChangeNotifier
 			.BeforeDeleteAsync(aggregate, Any<CancellationToken>())
@@ -68,11 +80,17 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await Assert.That(beforeWasCalled).IsTrue();
 		await Assert.That(afterWasCalled).IsTrue();
 
-		aggregateChangeNotifier.BeforeDeleteAsync(aggregate, Any<CancellationToken>()).WasCalled(Times.Once);
-		aggregateChangeNotifier.AfterDeleteAsync(aggregate, Any<CancellationToken>()).WasCalled(Times.Once);
+		aggregateChangeNotifier
+			.BeforeDeleteAsync(aggregate, Any<CancellationToken>())
+			.WasCalled(Times.Once);
+		aggregateChangeNotifier
+			.AfterDeleteAsync(aggregate, Any<CancellationToken>())
+			.WasCalled(Times.Once);
 	}
 
-	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(CancellationToken cancellationToken)
+	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -91,7 +109,10 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await Assert.That(aggregate.Details.Locked).IsTrue();
 
 		// Verify all data was removed
-		var exists = await eventStore.ExistsAsync(aggregateId, cancellationToken: cancellationToken);
+		var exists = await eventStore.ExistsAsync(
+			aggregateId,
+			cancellationToken: cancellationToken
+		);
 		await Assert.That(exists.Status).IsEqualTo(ExistsStatus.DoesNotExist);
 	}
 }

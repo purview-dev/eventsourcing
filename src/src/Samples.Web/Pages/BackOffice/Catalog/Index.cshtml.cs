@@ -36,7 +36,7 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 	{
 		if (Page < 1)
 			Page = 1;
-		if (PageSize < 5 || PageSize > 100)
+		if (PageSize is < 5 or > 100)
 			PageSize = DefaultPageSize;
 
 		var ct = HttpContext.RequestAborted;
@@ -53,11 +53,15 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 		var hasFilter = !string.IsNullOrEmpty(search);
 
 		Expression<Func<InventoryAggregate, bool>> where = i =>
-			i.ProductId.ToLowerInvariant().Contains(search) || i.ProductName.ToLowerInvariant().Contains(search);
+			i.ProductId.ToLowerInvariant().Contains(search)
+			|| i.ProductName.ToLowerInvariant().Contains(search);
 #pragma warning restore CA1308 // Normalize strings to uppercase
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
-		Func<IQueryable<InventoryAggregate>, IQueryable<InventoryAggregate>> orderBy = (SortBy, SortDir) switch
+		Func<IQueryable<InventoryAggregate>, IQueryable<InventoryAggregate>> orderBy = (
+			SortBy,
+			SortDir
+		) switch
 		{
 			("productid", "desc") => q => q.OrderByDescending(i => i.ProductId),
 			("productid", _) => q => q.OrderBy(i => i.ProductId),

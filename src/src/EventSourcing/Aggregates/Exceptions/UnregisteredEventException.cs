@@ -17,7 +17,9 @@ public sealed class UnregisteredEventException : Exception
 		: base(message, inner) { }
 
 	public UnregisteredEventException(Type eventType, IAggregate aggregate)
-		: base($"The event type '{eventType}' is not a registered event for aggregate type {aggregate}.")
+		: base(
+			$"The event type '{eventType}' is not a registered event for aggregate type {aggregate}."
+		)
 	{
 		EventType = eventType;
 		Aggregate = aggregate;

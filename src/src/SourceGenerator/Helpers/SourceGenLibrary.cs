@@ -1,6 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-
 using Purview.EventSourcing.SourceGenerator.Models;
 
 namespace Purview.EventSourcing.SourceGenerator.Helpers;
@@ -24,10 +23,9 @@ static partial class SourceGenLibrary
 
 		var aggregates = IncrementalPipeline.ForAttributeWithMetadataName(
 			context,
-			TypeLibrary.Attributes.GenerateAggregateAttribute,
+			TypeLibrary.Attributes.AggregateAttribute,
 			predicate: (s, _) => s is ClassDeclarationSyntax,
-			transform: (ctx, ct) =>
-				GetAggregateInfo(ctx, logger, ct),
+			transform: (ctx, ct) => GetAggregateInfo(ctx, logger, ct),
 			trackingName: "GetAggregateTargets"
 		);
 
@@ -40,9 +38,11 @@ static partial class SourceGenLibrary
 
 					List<DiagnosticInfo> diagnostics = [];
 					if (GenerationContext.AggregateBase is null)
-					{
-						diagnostics.Add(DiagnosticInfo.Create(GeneratorDiagnostics.AggregateBaseReferenceMissing, null));
-					}
+						diagnostics.Add(
+							DiagnosticInfo.Create(
+								GeneratorDiagnostics.AggregateBaseReferenceMissing
+							)
+						);
 
 					if (diagnostics.Count > 0)
 						model.Diagnostics = model.Diagnostics.AddRange(diagnostics);
@@ -63,7 +63,6 @@ static partial class SourceGenLibrary
 			);
 	}
 
-
 	public static string AddCodeGen(string source)
 	{
 		return source
@@ -76,5 +75,4 @@ static partial class SourceGenLibrary
 				CodeGenHelpers.GetNonClassGeneratedCodeAttribute()
 			);
 	}
-
 }

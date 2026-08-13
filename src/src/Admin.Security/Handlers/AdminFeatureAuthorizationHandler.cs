@@ -13,10 +13,15 @@ public sealed class AdminFeatureAuthorizationHandler(IAdminPermissionProvider pe
 		AdminFeatureRequirement requirement
 	)
 	{
-		var permissions = await permissionProvider.GetPermissionsAsync(context.User, CancellationToken.None);
+		var permissions = await permissionProvider.GetPermissionsAsync(
+			context.User,
+			CancellationToken.None
+		);
 
 		var hasPermission =
-			permissions.FirstOrDefault(p => p.Feature == requirement.Feature && p.Allowed && (p.AggregateType == null))
+			permissions.FirstOrDefault(p =>
+				p.Feature == requirement.Feature && p.Allowed && (p.AggregateType == null)
+			)
 			is not null;
 
 		if (hasPermission)

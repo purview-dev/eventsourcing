@@ -13,9 +13,9 @@ public static partial class ContainerHelper
 {
 	public static AzuriteContainer CreateAzurite(Action<AzuriteBuilder>? config = null)
 	{
-		var builder = new AzuriteBuilder($"mcr.microsoft.com/azure-storage/azurite:{AzuriteImageTag}").WithCommand(
-			"--skipApiVersionCheck"
-		)
+		var builder = new AzuriteBuilder(
+			$"mcr.microsoft.com/azure-storage/azurite:{AzuriteImageTag}"
+		).WithCommand("--skipApiVersionCheck")
 		//.WithWaitStrategy(Wait.ForUnixContainer()
 		//	.UntilPortIsAvailable(10000) // Blob
 		//	.UntilPortIsAvailable(10001) // Queue
@@ -30,10 +30,15 @@ public static partial class ContainerHelper
 
 	public static CosmosDbContainer CreateCosmosDB(Action<CosmosDbBuilder>? config = null)
 	{
-		var builder = new CosmosDbBuilder($"mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:{CosmosDbImageTag}")
+		var builder = new CosmosDbBuilder(
+			$"mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:{CosmosDbImageTag}"
+		)
 			.WithWaitStrategy(
 				Wait.ForUnixContainer()
-					.AddCustomWaitStrategy(new CosmosDbWaitUntil(), ws => ws.WithTimeout(TimeSpan.FromMinutes(5)))
+					.AddCustomWaitStrategy(
+						new CosmosDbWaitUntil(),
+						ws => ws.WithTimeout(TimeSpan.FromMinutes(5))
+					)
 			)
 			//.WithAutoRemove(true)
 			//.WithCleanUp(true)
@@ -57,7 +62,9 @@ public static partial class ContainerHelper
 			var httpClient = ((CosmosDbContainer)container).HttpClient;
 			try
 			{
-				using var httpResponse = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				using var httpResponse = await httpClient
+					.GetAsync(requestUri)
+					.ConfigureAwait(false);
 				return httpResponse.StatusCode != System.Net.HttpStatusCode.ServiceUnavailable;
 			}
 #pragma warning disable CA1031

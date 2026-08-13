@@ -28,7 +28,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(cancellationToken);
+		await tableEventStoreTests.DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -52,7 +54,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(cancellationToken);
+		await tableEventStoreTests.DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -228,7 +232,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(cancellationToken);
+		await tableEventStoreTests.GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -282,7 +288,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(cancellationToken);
+		await tableEventStoreTests.GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -294,7 +302,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.IsDeletedAsync_GivenDeletedAggregates_ReturnsTrue(cancellationToken);
+		await tableEventStoreTests.IsDeletedAsync_GivenDeletedAggregates_ReturnsTrue(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -306,7 +316,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.IsDeletedAsync_GivenNonDeletedAggregates_ReturnsFalse(cancellationToken);
+		await tableEventStoreTests.IsDeletedAsync_GivenNonDeletedAggregates_ReturnsFalse(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -362,7 +374,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(cancellationToken);
+		await tableEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -374,7 +388,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(cancellationToken);
+		await tableEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -386,7 +402,9 @@ public sealed partial class TableEventStoreTests(TableEventStoreFixture fixture)
 	{
 		var tableEventStoreTests = CreateTableStoreTests(aggregateType);
 
-		await tableEventStoreTests.SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(cancellationToken);
+		await tableEventStoreTests.SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
+			cancellationToken
+		);
 	}
 
 	[Test]

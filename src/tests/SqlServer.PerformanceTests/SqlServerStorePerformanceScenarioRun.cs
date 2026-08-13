@@ -27,7 +27,7 @@ sealed class SqlServerStorePerformanceScenarioRun
 
 	static string FormatDelta(double delta, double previous)
 	{
-		var percent = previous <= 0 ? 0 : (delta / previous) * 100;
+		var percent = previous <= 0 ? 0 : delta / previous * 100;
 		return $"{delta:+0.00;-0.00;0.00} ({percent:+0.0;-0.0;0.0}%)";
 	}
 }

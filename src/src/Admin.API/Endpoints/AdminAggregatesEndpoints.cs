@@ -20,7 +20,9 @@ public static class AdminAggregatesEndpoints
 			.MapPost("/aggregates/search", SearchAggregatesAsync)
 			.WithName("SearchAggregates")
 			.WithSummary("Search for aggregates")
-			.WithDescription("Search aggregates by type, id, date range, or status flags with pagination support.")
+			.WithDescription(
+				"Search aggregates by type, id, date range, or status flags with pagination support."
+			)
 			.RequireAuthorization(AdminPortalPolicies.SearchAggregates);
 	}
 
@@ -30,14 +32,19 @@ public static class AdminAggregatesEndpoints
 			.MapGet("/aggregates/{aggregateType}/{aggregateId}/events", GetEventRangeAsync)
 			.WithName("GetAggregateEventRange")
 			.WithSummary("Get aggregate event range")
-			.WithDescription("Returns the aggregate event stream within version and timestamp bounds.")
+			.WithDescription(
+				"Returns the aggregate event stream within version and timestamp bounds."
+			)
 			.RequireAuthorization(AdminPortalPolicies.ViewEvents);
 	}
 
 	public static void MapProjectionAtVersion(RouteGroupBuilder group)
 	{
 		group
-			.MapGet("/aggregates/{aggregateType}/{aggregateId}/projection", GetProjectionAtVersionAsync)
+			.MapGet(
+				"/aggregates/{aggregateType}/{aggregateId}/projection",
+				GetProjectionAtVersionAsync
+			)
 			.WithName("GetAggregateProjectionAtVersion")
 			.WithSummary("Get aggregate projection at version")
 			.WithDescription("Projects aggregate state at a specific version.")
@@ -47,7 +54,10 @@ public static class AdminAggregatesEndpoints
 	public static void MapProjectionAtTime(RouteGroupBuilder group)
 	{
 		group
-			.MapGet("/aggregates/{aggregateType}/{aggregateId}/projection/time", GetProjectionAtTimeAsync)
+			.MapGet(
+				"/aggregates/{aggregateType}/{aggregateId}/projection/time",
+				GetProjectionAtTimeAsync
+			)
 			.WithName("GetAggregateProjectionAtTime")
 			.WithSummary("Get aggregate projection at time")
 			.WithDescription("Projects aggregate state at a specific UTC timestamp.")
@@ -99,7 +109,12 @@ public static class AdminAggregatesEndpoints
 			request.Sort
 		);
 
-		var result = await queryService.GetRangeAsync(aggregateType, aggregateId, query, cancellationToken);
+		var result = await queryService.GetRangeAsync(
+			aggregateType,
+			aggregateId,
+			query,
+			cancellationToken
+		);
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
 	}
 

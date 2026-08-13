@@ -2,13 +2,19 @@ namespace Purview.EventSourcing.MongoDb.Events;
 
 public interface IMongoDBEventStoreTests
 {
-	Task DeleteAsync_GivenAggregateExistsWithLargeEvent_PermanentlyDeletesAllData(CancellationToken cancellationToken);
+	Task DeleteAsync_GivenAggregateExistsWithLargeEvent_PermanentlyDeletesAllData(
+		CancellationToken cancellationToken
+	);
 
-	Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(CancellationToken cancellationToken);
+	Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
+		CancellationToken cancellationToken
+	);
 
 	Task DeleteAsync_GivenDelete_NotifiesChangeFeed(CancellationToken cancellationToken);
 
-	Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(CancellationToken cancellationToken);
+	Task DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(
+		CancellationToken cancellationToken
+	);
 
 	Task DeleteAsync_WhenTableStoreConfigRemoveDeletedFromCacheIsTrueAndPreviouslySavedAggregate_RemovesFromCache(
 		CancellationToken cancellationToken
@@ -62,7 +68,9 @@ public interface IMongoDBEventStoreTests
 		CancellationToken cancellationToken
 	);
 
-	Task GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(CancellationToken cancellationToken);
+	Task GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(
+		CancellationToken cancellationToken
+	);
 
 	Task GetEventRangeAsync_GivenARequestedRangeOfEvents_EventsAreReturnsInCorrectOrder(
 		int eventsToCreate,
@@ -79,13 +87,17 @@ public interface IMongoDBEventStoreTests
 		CancellationToken cancellationToken
 	);
 
-	Task GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(CancellationToken cancellationToken);
+	Task GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(
+		CancellationToken cancellationToken
+	);
 
 	Task IsDeletedAsync_GivenDeletedAggregates_ReturnsTrue(CancellationToken cancellationToken);
 
 	Task IsDeletedAsync_GivenNonDeletedAggregates_ReturnsFalse(CancellationToken cancellationToken);
 
-	Task RestoreAsync_GivenPreviouslySavedAndDeletedAggregate_MarksAsNotDeleted(CancellationToken cancellationToken);
+	Task RestoreAsync_GivenPreviouslySavedAndDeletedAggregate_MarksAsNotDeleted(
+		CancellationToken cancellationToken
+	);
 
 	Task SaveAsync_GivenAggregateWithChanges_NotifiesChangeFeed(
 		int eventsToCreate,
@@ -96,7 +108,9 @@ public interface IMongoDBEventStoreTests
 		CancellationToken cancellationToken
 	);
 
-	Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(CancellationToken cancellationToken);
+	Task SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
+		CancellationToken cancellationToken
+	);
 
 	Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(CancellationToken cancellationToken);
 
@@ -110,7 +124,9 @@ public interface IMongoDBEventStoreTests
 		CancellationToken cancellationToken
 	);
 
-	Task SaveAsync_GivenAggregateWithComplexProperty_SavesEventWithComplexProperty(CancellationToken cancellationToken);
+	Task SaveAsync_GivenAggregateWithComplexProperty_SavesEventWithComplexProperty(
+		CancellationToken cancellationToken
+	);
 
 	Task SaveAsync_GivenEventCountIsGreaterThanMaximumNumberOfAllowedInBatchOperation_BatchesEvents(
 		int eventsToGenerate,

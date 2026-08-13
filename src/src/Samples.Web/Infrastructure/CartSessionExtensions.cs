@@ -10,7 +10,9 @@ static class CartSessionExtensions
 	public static List<CartItem> GetCart(this ISession session)
 	{
 		var json = session.GetString(CartKey);
-		return string.IsNullOrEmpty(json) ? [] : JsonSerializer.Deserialize<List<CartItem>>(json) ?? [];
+		return string.IsNullOrEmpty(json)
+			? []
+			: JsonSerializer.Deserialize<List<CartItem>>(json) ?? [];
 	}
 
 	public static void SetCart(this ISession session, List<CartItem> cart) =>

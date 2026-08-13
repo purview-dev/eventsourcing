@@ -9,8 +9,10 @@ namespace Purview.EventSourcing.SqlServer.Snapshot;
 
 partial class SqlServerSnapshotEventStore<T>
 {
-	public Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default) =>
-		_eventStore.CreateAsync(aggregateId, cancellationToken);
+	public Task<T> CreateAsync(
+		string? aggregateId = null,
+		CancellationToken cancellationToken = default
+	) => _eventStore.CreateAsync(aggregateId, cancellationToken);
 
 	public Task<T?> GetOrCreateAsync(
 		string? aggregateId,
@@ -75,10 +77,18 @@ partial class SqlServerSnapshotEventStore<T>
 	)
 	{
 		if (_eventStore is not ITransactionalEventStore<T> transactionalEventStore)
-			throw new InvalidOperationException("The inner event store does not support transactional saves.");
+			throw new InvalidOperationException(
+				"The inner event store does not support transactional saves."
+			);
 
-		await transactionalEventStore.EnsureTransactionConfiguredAsync(connection, cancellationToken);
-		await _sqlServerClient.EnsureTableExistsAsync(GetSqlConnection(connection), cancellationToken);
+		await transactionalEventStore.EnsureTransactionConfiguredAsync(
+			connection,
+			cancellationToken
+		);
+		await _sqlServerClient.EnsureTableExistsAsync(
+			GetSqlConnection(connection),
+			cancellationToken
+		);
 	}
 
 	async Task<TransactionalSaveOperation<T>> ITransactionalEventStore<T>.SaveInTransactionAsync(
@@ -92,7 +102,9 @@ partial class SqlServerSnapshotEventStore<T>
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
 		if (_eventStore is not ITransactionalEventStore<T> transactionalEventStore)
-			throw new InvalidOperationException("The inner event store does not support transactional saves.");
+			throw new InvalidOperationException(
+				"The inner event store does not support transactional saves."
+			);
 
 		var eventsApplied = aggregate.GetUnsavedEvents().Count();
 		var innerOperation = await transactionalEventStore.SaveInTransactionAsync(
@@ -127,7 +139,9 @@ partial class SqlServerSnapshotEventStore<T>
 				);
 
 				if (!snapshotSaved)
-					throw new InvalidOperationException("Failed to persist the SQL Server query snapshot.");
+					throw new InvalidOperationException(
+						"Failed to persist the SQL Server query snapshot."
+					);
 			}
 
 			return new TransactionalSaveOperation<T>(
@@ -143,11 +157,15 @@ partial class SqlServerSnapshotEventStore<T>
 		}
 	}
 
-	public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
-		_eventStore.IsDeletedAsync(aggregateId, cancellationToken);
+	public Task<bool> IsDeletedAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	) => _eventStore.IsDeletedAsync(aggregateId, cancellationToken);
 
-	public Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
-		_eventStore.GetDeletedAsync(aggregateId, cancellationToken);
+	public Task<T?> GetDeletedAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	) => _eventStore.GetDeletedAsync(aggregateId, cancellationToken);
 
 	public async Task<bool> DeleteAsync(
 		T aggregate,
@@ -162,7 +180,11 @@ partial class SqlServerSnapshotEventStore<T>
 
 		try
 		{
-			var result = await _eventStore.DeleteAsync(aggregate, operationContext, cancellationToken);
+			var result = await _eventStore.DeleteAsync(
+				aggregate,
+				operationContext,
+				cancellationToken
+			);
 			if (result)
 			{
 				await _sqlServerClient.DeleteAsync(aggregate.Details.Id, cancellationToken);
@@ -198,8 +220,10 @@ partial class SqlServerSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetAggregateIdsAsync(includeDeleted, cancellationToken);
 
-	public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default) =>
-		_eventStore.ExistsAsync(aggregateId, cancellationToken);
+	public Task<ExistsState> ExistsAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	) => _eventStore.ExistsAsync(aggregateId, cancellationToken);
 
 	public T FulfilRequirements(T aggregate) => _eventStore.FulfilRequirements(aggregate);
 

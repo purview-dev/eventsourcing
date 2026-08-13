@@ -7,7 +7,9 @@ using Purview.EventSourcing.Internal;
 
 namespace Purview.EventSourcing.CosmosDb.Snapshot;
 
-public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEventStore<T>, IAsyncDisposable
+public sealed partial class CosmosDbSnapshotEventStore<T>
+	: ICosmosDbSnapshotEventStore<T>,
+		IAsyncDisposable
 	where T : class, IAggregate, new()
 {
 	readonly IEventStoreCore<T> _eventStore;
@@ -23,7 +25,10 @@ public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEve
 	readonly Type _aggregateType = typeof(T);
 	readonly string _aggregateName;
 
-	static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, string> AggregateTypeNames = new();
+	static readonly System.Collections.Concurrent.ConcurrentDictionary<
+		Type,
+		string
+	> AggregateTypeNames = new();
 
 	public CosmosDbSnapshotEventStore(
 		// Explicitly request a non-queryable event store.
@@ -43,7 +48,10 @@ public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEve
 
 		_partitionKey = new(GetAggregateTypeName());
 
-		_cosmosDbClient = new CosmosDbClient(_cosmosDbEventStoreOptions.Value, cosmosClient: cosmosClient);
+		_cosmosDbClient = new CosmosDbClient(
+			_cosmosDbEventStoreOptions.Value,
+			cosmosClient: cosmosClient
+		);
 		_aggregateName = TypeNameHelper.GetName(_aggregateType, "Aggregate");
 	}
 
@@ -61,7 +69,8 @@ public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEve
 			_telemetry.SnapshotCreated(_aggregateName);
 	}
 
-	string GetAggregateTypeName() => AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
+	string GetAggregateTypeName() =>
+		AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
 
 	public async ValueTask DisposeAsync()
 	{

@@ -22,7 +22,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	#region Round-Trip Persistence
 
 	[Test]
-	public async Task SaveAsync_GivenDraftOrderWithLineItems_LoadedLineItemsMatch(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenDraftOrderWithLineItems_LoadedLineItemsMatch(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = CreateDraftWithItems(id);
@@ -44,7 +46,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenDraftOrderWithNullableNotes_LoadedNotesMatch(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenDraftOrderWithNullableNotes_LoadedNotesMatch(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = new OrderAggregate();
@@ -63,7 +67,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenConfirmedOrder_LoadedStatusIsConfirmed(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenConfirmedOrder_LoadedStatusIsConfirmed(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = CreateDraftWithItems(id);
@@ -79,7 +85,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenShippedOrder_LoadedShippedAtAndStatusMatch(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenShippedOrder_LoadedShippedAtAndStatusMatch(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = CreateDraftWithItems(id);
@@ -99,7 +107,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenFullLifecycleOrder_LoadedStateMatchesFinal(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenFullLifecycleOrder_LoadedStateMatchesFinal(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = CreateDraftWithItems(id);
@@ -121,7 +131,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenCancelledOrder_LoadedStatusIsCancelled(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenCancelledOrder_LoadedStatusIsCancelled(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = CreateDraftWithItems(id);
@@ -162,7 +174,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	#region Version Tracking
 
 	[Test]
-	public async Task SaveAsync_GivenFullLifecycleOrder_VersionMatchesEventCount(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenFullLifecycleOrder_VersionMatchesEventCount(
+		CancellationToken cancellationToken
+	)
 	{
 		// CreateOrder + Add + Add + SetAddr + Confirm + Ship + Complete = 7 events
 		var id = $"{Guid.NewGuid()}";
@@ -187,7 +201,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 	#region Point-in-Time Replay
 
 	[Test]
-	public async Task GetAtAsync_GivenOrderAtVersion1_ReturnsDraftStatusWithNoItems(CancellationToken cancellationToken)
+	public async Task GetAtAsync_GivenOrderAtVersion1_ReturnsDraftStatusWithNoItems(
+		CancellationToken cancellationToken
+	)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var order = CreateDraftWithItems(id); // v1=Created, v2=AddItem, v3=AddItem
@@ -240,7 +256,9 @@ public sealed class OrderAggregateIntegrationTests(SqlServerSnapshotEventStoreFi
 		order.SetShippingAddress("1 Event Replay Rd");
 		order.ConfirmOrder();
 
-		var store = fixture.CreateSnapshotStore(snapshotStrategy: new AlwaysSnapshotStrategy<OrderAggregate>());
+		var store = fixture.CreateSnapshotStore(
+			snapshotStrategy: new AlwaysSnapshotStrategy<OrderAggregate>()
+		);
 		await store.SaveAsync(order, cancellationToken);
 
 		var loaded = await store.GetAsync(id, cancellationToken);

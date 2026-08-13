@@ -30,7 +30,8 @@ partial class MongoDBClient
 		{
 			Results = itemResults,
 			RequestedCount = request.MaxRecords,
-			ContinuationToken = itemResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
+			ContinuationToken =
+				itemResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
 		};
 
 		return response;
@@ -59,7 +60,8 @@ partial class MongoDBClient
 		{
 			Results = itemResults,
 			RequestedCount = request.MaxRecords,
-			ContinuationToken = itemResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
+			ContinuationToken =
+				itemResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
 		};
 
 		return response;

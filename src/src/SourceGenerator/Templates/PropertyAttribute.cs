@@ -9,14 +9,14 @@ namespace Purview.EventSourcing.Aggregates;
 /// </summary>
 //{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-sealed class AggregatePropertyAttribute : global::System.Attribute
+sealed class PropertyAttribute : global::System.Attribute
 {
 	/// <summary>
-	/// Initializes a new instance of the <see cref="AggregatePropertyAttribute"/> class with the specified property name.
+	/// Initializes a new instance of the <see cref="PropertyAttribute"/> class with the specified property name.
 	/// </summary>
 	/// <param name="propertyName">The name of the aggregate property that this parameter corresponds to.</param>
 	/// <exception cref="global::System.ArgumentException">Thrown when the property name is null or whitespace.</exception>
-	public AggregatePropertyAttribute(string propertyName)
+	public PropertyAttribute(string propertyName)
 	{
 		if (string.IsNullOrWhiteSpace(propertyName))
 			throw new global::System.ArgumentException("Property name cannot be null or whitespace.", nameof(propertyName));

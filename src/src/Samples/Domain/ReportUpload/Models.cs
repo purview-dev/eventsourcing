@@ -11,7 +11,12 @@ public sealed class ParserReportSummary
 	public required IEnumerable<Project> Projects { get; init; } = [];
 }
 
-public sealed record ParserDetails(int TotalLines, int SuccessfulLines, int FailedLines, TimeSpan ProcessingTime)
+public sealed record ParserDetails(
+	int TotalLines,
+	int SuccessfulLines,
+	int FailedLines,
+	TimeSpan ProcessingTime
+)
 {
 	public bool HasFailures => FailedLines > 0;
 

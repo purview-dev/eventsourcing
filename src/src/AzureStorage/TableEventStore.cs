@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Azure.Data.Tables;
 using Microsoft.Extensions.Caching.Distributed;
@@ -65,7 +65,8 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		var name = typeof(T).Name;
 
 		TableName = nameBuilder?.GetTableName<T>() ?? $"{azureStorageOptions.Value.Table}{name}";
-		ContainerName = nameBuilder?.GetBlobContainerName<T>() ?? azureStorageOptions.Value.Container;
+		ContainerName =
+			nameBuilder?.GetBlobContainerName<T>() ?? azureStorageOptions.Value.Container;
 
 		_tableClient = new(azureStorageOptions.Value, TableName);
 		_blobClient = new(azureStorageOptions.Value, ContainerName);
@@ -108,11 +109,18 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 				await _distributedCache.RemoveAsync(cacheKey, cancellationToken);
 			else
 			{
-				if (!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache))
+				if (
+					!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache)
+				)
 					return;
 
 				var data = SerializeSnapshot(aggregate);
-				await _distributedCache.SetStringAsync(cacheKey, data, cacheEntryOptions, cancellationToken);
+				await _distributedCache.SetStringAsync(
+					cacheKey,
+					data,
+					cacheEntryOptions,
+					cancellationToken
+				);
 			}
 		}
 #pragma warning disable CA1031
@@ -123,8 +131,11 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		}
 	}
 
-	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
-		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
+	DistributedCacheEntryOptions GetCacheEntryOptions(
+		DistributedCacheEntryOptions? cacheEntryOptions
+	) =>
+		cacheEntryOptions
+		?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
@@ -153,7 +164,10 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		CancellationToken cancellationToken
 	)
 	{
-		_eventStoreTelemetry.GetStreamVersionStart(aggregateId, TableEventStoreConstants.StreamVersionRowKey);
+		_eventStoreTelemetry.GetStreamVersionStart(
+			aggregateId,
+			TableEventStoreConstants.StreamVersionRowKey
+		);
 
 		var elapsedMilliseconds = 0L;
 		StreamVersionEntity? result = null;
@@ -193,7 +207,11 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		catch (Exception ex)
 #pragma warning restore CA1031
 		{
-			_eventStoreTelemetry.GetStreamVersionFailed(aggregateId, TableEventStoreConstants.StreamVersionRowKey, ex);
+			_eventStoreTelemetry.GetStreamVersionFailed(
+				aggregateId,
+				TableEventStoreConstants.StreamVersionRowKey,
+				ex
+			);
 		}
 
 		_eventStoreTelemetry.GetStreamVersionComplete(
@@ -205,10 +223,15 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		return result;
 	}
 
-	static bool ReturnAggregate(bool isDeleted, string aggregateId, EventStoreOperationContext context)
+	static bool ReturnAggregate(
+		bool isDeleted,
+		string aggregateId,
+		EventStoreOperationContext context
+	)
 	{
 		if (isDeleted)
 		{
+#pragma warning disable IDE0010 // Add missing cases
 			switch (context.DeleteMode)
 			{
 				case DeleteHandlingMode.ThrowsException:
@@ -216,6 +239,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 				case DeleteHandlingMode.ReturnsNull:
 					return false;
 			}
+#pragma warning restore IDE0010 // Add missing cases
 		}
 
 		return true;
@@ -243,7 +267,8 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
 #pragma warning disable CA1308 // Normalize strings to uppercase
-	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
+	public string CreateCacheKey(string aggregateId) =>
+		$"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
 	public async ValueTask DisposeAsync()

@@ -28,7 +28,10 @@ sealed class AsyncLazy<T> : IDisposable, IAsyncDisposable
 		ArgumentNullException.ThrowIfNull(factory);
 	}
 
-	[Diagnostics.CodeAnalysis.SuppressMessage("Maintainability", "CA1508:Avoid dead conditional code")]
+	[Diagnostics.CodeAnalysis.SuppressMessage(
+		"Maintainability",
+		"CA1508:Avoid dead conditional code"
+	)]
 	public async Task<T> GetValueAsync(CancellationToken cancellationToken = default)
 	{
 		if (_task is not null)
@@ -64,7 +67,10 @@ sealed class AsyncLazy<T> : IDisposable, IAsyncDisposable
 		{
 			if (disposing)
 			{
-				if (_task is { IsCompletedSuccessfully: true } && _task.Result is IDisposable disposable)
+				if (
+					_task is { IsCompletedSuccessfully: true }
+					&& _task.Result is IDisposable disposable
+				)
 					disposable.Dispose();
 
 				try

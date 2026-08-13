@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using Purview.EventSourcing.Aggregates.Persistence;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
@@ -30,7 +30,10 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -38,7 +41,10 @@ partial class SqlServerSnapshotEventStoreTests
 		// Act
 		List<PersistenceAggregate> aggregates = [];
 
-		var aggregateResponse = await store.ListAsync(maxRecordCount: pageCount, cancellationToken: cancellationToken);
+		var aggregateResponse = await store.ListAsync(
+			maxRecordCount: pageCount,
+			cancellationToken: cancellationToken
+		);
 		aggregates.AddRange(aggregateResponse.Results);
 
 		while (aggregateResponse.ContinuationToken != null)
@@ -80,7 +86,10 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -88,13 +97,16 @@ partial class SqlServerSnapshotEventStoreTests
 		// These are non-matching.
 		for (var aggregateIndex = 0; aggregateIndex < numberOfAggregates; aggregateIndex++)
 		{
-			var aggregate = CreateAggregate($"agg_{aggregateIndex + (numberOfAggregates + 100000)}");
+			var aggregate = CreateAggregate($"agg_{aggregateIndex + numberOfAggregates + 100000}");
 
 			// We're changing the event count so as to make the query not match these updated records.
 			for (var eventIndex = 0; eventIndex < (numberOfEvents * 2); eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await store.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -102,7 +114,8 @@ partial class SqlServerSnapshotEventStoreTests
 		// Act
 		List<PersistenceAggregate> aggregates = [];
 
-		Expression<Func<PersistenceAggregate, bool>> query = a => a.IncrementInt32 == numberOfEvents;
+		Expression<Func<PersistenceAggregate, bool>> query = a =>
+			a.IncrementInt32 == numberOfEvents;
 
 		var aggregateResponse = await store.QueryAsync(
 			query,

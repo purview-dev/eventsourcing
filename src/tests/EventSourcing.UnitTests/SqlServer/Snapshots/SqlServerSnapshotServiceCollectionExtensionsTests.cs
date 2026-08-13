@@ -27,14 +27,22 @@ public sealed class SqlServerSnapshotServiceCollectionExtensionsTests
 			options.JsonIndexOptions.Enabled = true;
 			options.JsonIndexOptions.Indexes =
 			[
-				new SqlServerJsonIndexDefinition { JsonPath = "$.StringProperty", IncludeColumns = ["Version"] },
+				new SqlServerJsonIndexDefinition
+				{
+					JsonPath = "$.StringProperty",
+					IncludeColumns = ["Version"],
+				},
 			];
 		});
 
 		using var serviceProvider = services.BuildServiceProvider();
 
 		var exception = await Assert
-			.That(() => serviceProvider.GetRequiredService<IOptions<SqlServerSnapshotEventStoreOptions>>().Value)
+			.That(() =>
+				serviceProvider
+					.GetRequiredService<IOptions<SqlServerSnapshotEventStoreOptions>>()
+					.Value
+			)
 			.Throws<OptionsValidationException>();
 
 		await Assert.That(exception).IsNotNull();

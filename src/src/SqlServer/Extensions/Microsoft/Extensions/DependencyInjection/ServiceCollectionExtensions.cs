@@ -59,7 +59,10 @@ public static class ServiceCollectionExtensions
 				.AddTransient(typeof(INonQueryableEventStore<>), typeof(SqlServerEventStore<>))
 				.AddTransient(typeof(ISqlServerEventStore<>), typeof(SqlServerEventStore<>))
 				.AddTransient<IEventStore, EventStoreFacade>();
-			services.TryAddSingleton<ISqlServerEventStoreTransactionFactory, SqlServerEventStoreTransactionFactory>();
+			services.TryAddSingleton<
+				ISqlServerEventStoreTransactionFactory,
+				SqlServerEventStoreTransactionFactory
+			>();
 
 			services.AddSqlServerEventStoreTelemetry();
 
@@ -68,7 +71,9 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration.GetSection(SqlServerEventStoreOptions.SqlServerEventStore).Bind(options);
+						configuration
+							.GetSection(SqlServerEventStoreOptions.SqlServerEventStore)
+							.Bind(options);
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
 							options.ConnectionString = configuration.GetRequiredConnectionString([
@@ -98,15 +103,24 @@ public static class ServiceCollectionExtensions
 			);
 
 			services
-				.AddTransient(typeof(IQueryableEventStoreCore<>), typeof(SqlServerSnapshotEventStore<>))
-				.AddTransient(typeof(ISqlServerSnapshotEventStore<>), typeof(SqlServerSnapshotEventStore<>))
+				.AddTransient(
+					typeof(IQueryableEventStoreCore<>),
+					typeof(SqlServerSnapshotEventStore<>)
+				)
+				.AddTransient(
+					typeof(ISqlServerSnapshotEventStore<>),
+					typeof(SqlServerSnapshotEventStore<>)
+				)
 				.AddSqlServerSnapshotEventStoreTelemetry();
 
 			services.TryAddTransient<IQueryableEventStore, QueryableEventStoreFacade>();
 
 			if (registerAsIEventStore)
 			{
-				services.AddTransient(typeof(IEventStoreCore<>), typeof(SqlServerSnapshotEventStore<>));
+				services.AddTransient(
+					typeof(IEventStoreCore<>),
+					typeof(SqlServerSnapshotEventStore<>)
+				);
 				services.TryAddTransient<IEventStore, EventStoreFacade>();
 			}
 
@@ -115,7 +129,9 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration.GetSection(SqlServerSnapshotEventStoreOptions.SqlServerEventStore).Bind(options);
+						configuration
+							.GetSection(SqlServerSnapshotEventStoreOptions.SqlServerEventStore)
+							.Bind(options);
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
 							options.ConnectionString = configuration.GetRequiredConnectionString([

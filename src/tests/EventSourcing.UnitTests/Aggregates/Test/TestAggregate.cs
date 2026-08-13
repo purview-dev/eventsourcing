@@ -9,8 +9,14 @@ public class TestAggregate : AggregateBase
 
 	public int IncrementedValue { get; private set; }
 
-	public IReadOnlyDictionary<string, IEnumerable<string>> ReadOnlyDictionary { get; private set; } =
-		new ReadOnlyDictionary<string, IEnumerable<string>>(new Dictionary<string, IEnumerable<string>>());
+	public IReadOnlyDictionary<string, IEnumerable<string>> ReadOnlyDictionary
+	{
+		get;
+		private set;
+	} =
+		new ReadOnlyDictionary<string, IEnumerable<string>>(
+			new Dictionary<string, IEnumerable<string>>()
+		);
 
 	public string? DoNotTouchCasePropertyValue { get; private set; }
 
@@ -30,7 +36,9 @@ public class TestAggregate : AggregateBase
 
 	void Apply(AppendToReadOnlyDictionaryEvent obj)
 	{
-		Dictionary<string, IEnumerable<string>> dict = new(ReadOnlyDictionary.ToDictionary(m => m.Key, m => m.Value))
+		Dictionary<string, IEnumerable<string>> dict = new(
+			ReadOnlyDictionary.ToDictionary(m => m.Key, m => m.Value)
+		)
 		{
 			{ obj.Key, obj.Values },
 		};

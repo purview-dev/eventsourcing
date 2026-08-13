@@ -59,12 +59,17 @@ public sealed class CustomerPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task CustomerSelector_WithMultiplePages_RendersNextPageLink(CancellationToken cancellationToken)
+	public async Task CustomerSelector_WithMultiplePages_RendersNextPageLink(
+		CancellationToken cancellationToken
+	)
 	{
 		var prefix = $"paging-selector-{Guid.NewGuid():N}";
 		await CreateCustomersAsync(prefix, 11, cancellationToken);
 
-		var response = await _client.GetAsync($"/Customer?search={prefix}&pageSize=10", cancellationToken);
+		var response = await _client.GetAsync(
+			$"/Customer?search={prefix}&pageSize=10",
+			cancellationToken
+		);
 		var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
@@ -88,15 +93,28 @@ public sealed class CustomerPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task BackOfficeCustomersCreate_Post_RedirectsToIndex(CancellationToken cancellationToken)
+	public async Task BackOfficeCustomersCreate_Post_RedirectsToIndex(
+		CancellationToken cancellationToken
+	)
 	{
-		var form = new Dictionary<string, string> { ["Name"] = "Test Customer", ["Email"] = "test@example.com" };
+		var form = new Dictionary<string, string>
+		{
+			["Name"] = "Test Customer",
+			["Email"] = "test@example.com",
+		};
 
-		var antiForgery = await GetAntiForgeryTokenAsync("/BackOffice/Customers/Create", cancellationToken);
+		var antiForgery = await GetAntiForgeryTokenAsync(
+			"/BackOffice/Customers/Create",
+			cancellationToken
+		);
 		form["__RequestVerificationToken"] = antiForgery;
 
 		using var content = new FormUrlEncodedContent(form);
-		var response = await _client.PostAsync("/BackOffice/Customers/Create", content, cancellationToken);
+		var response = await _client.PostAsync(
+			"/BackOffice/Customers/Create",
+			content,
+			cancellationToken
+		);
 
 		await Assert.That((int)response.StatusCode).IsEqualTo(302);
 		await Assert.That(response.Headers.Location?.ToString()).Contains("/BackOffice/Customers");
@@ -118,7 +136,10 @@ public sealed class CustomerPageTests(AppHostFixture fixture)
 		var prefix = $"paging-{Guid.NewGuid():N}";
 		await CreateCustomersAsync(prefix, 11, cancellationToken);
 
-		var response = await _client.GetAsync($"/BackOffice/Customers?search={prefix}&pageSize=10", cancellationToken);
+		var response = await _client.GetAsync(
+			$"/BackOffice/Customers?search={prefix}&pageSize=10",
+			cancellationToken
+		);
 		var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
 		await Assert.That(response.IsSuccessStatusCode).IsTrue();
@@ -126,9 +147,14 @@ public sealed class CustomerPageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task CustomerDetails_UnknownId_Returns200OrNotFound(CancellationToken cancellationToken)
+	public async Task CustomerDetails_UnknownId_Returns200OrNotFound(
+		CancellationToken cancellationToken
+	)
 	{
-		var response = await _client.GetAsync("/Customer/Orders/Details/unknown-id", cancellationToken);
+		var response = await _client.GetAsync(
+			"/Customer/Orders/Details/unknown-id",
+			cancellationToken
+		);
 
 		await Assert.That((int)response.StatusCode is 200 or 404 or 302).IsTrue();
 	}
@@ -153,7 +179,9 @@ public sealed class CustomerPageTests(AppHostFixture fixture)
 		var store = fixture.QueryableEventStore();
 		for (var i = 0; i < count; i++)
 		{
-			var customer = await store.CreateAsync<CustomerAggregate>(cancellationToken: cancellationToken);
+			var customer = await store.CreateAsync<CustomerAggregate>(
+				cancellationToken: cancellationToken
+			);
 			customer.RegisterCustomer($"{prefix}-customer-{i:D2}", $"{prefix}-{i:D2}@example.com");
 			var result = await store.SaveAsync(customer, cancellationToken);
 

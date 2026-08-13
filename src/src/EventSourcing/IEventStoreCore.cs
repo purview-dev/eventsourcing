@@ -57,9 +57,15 @@ public interface IEventStoreCore<T>
 		CancellationToken cancellationToken = default
 	);
 
-	IAsyncEnumerable<string> GetAggregateIdsAsync(bool includeDeleted, CancellationToken cancellationToken = default);
+	IAsyncEnumerable<string> GetAggregateIdsAsync(
+		bool includeDeleted,
+		CancellationToken cancellationToken = default
+	);
 
-	Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default);
+	Task<ExistsState> ExistsAsync(
+		string aggregateId,
+		CancellationToken cancellationToken = default
+	);
 
 	T FulfilRequirements(T aggregate);
 

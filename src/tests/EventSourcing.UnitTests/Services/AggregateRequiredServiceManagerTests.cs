@@ -8,9 +8,11 @@ public partial class AggregateRequiredServiceManagerTests
 	static AggregateRequiredServiceManager CreateServiceManager(IServiceProvider serviceProvider) =>
 		new(serviceProvider);
 
-	static AggregateRequiredServiceManagerTests_ITestServiceMock CreateTestService() => ITestService.Mock();
+	static AggregateRequiredServiceManagerTests_ITestServiceMock CreateTestService() =>
+		ITestService.Mock();
 
-	static AggregateRequiredServiceManagerTests_ITestService2Mock CreateTestService2() => ITestService2.Mock();
+	static AggregateRequiredServiceManagerTests_ITestService2Mock CreateTestService2() =>
+		ITestService2.Mock();
 
 	class AggregateRequirementsTest : TestAggregate, IRequirement<ITestService>
 	{

@@ -9,14 +9,17 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 	)
 	{
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId, a => a.SetValidatedProperty(-1));
+		var aggregate = TestHelpers.Aggregate<TAggregate>(
+			aggregateId: aggregateId,
+			a => a.SetValidatedProperty(-1)
+		);
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
 		var result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		await Assert.That(result.Saved).IsFalse();
 		await Assert.That(result.IsValid).IsFalse();
-		await Assert.That(((bool)result)).IsFalse();
+		await Assert.That((bool)result).IsFalse();
 		await Assert.That(result.ValidationResult.Failures).HasSingleItem();
 		await Assert
 			.That(result.ValidationResult.Failures.Single().PropertyName)
@@ -35,13 +38,20 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		var result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 		await Assert.That(result.Saved).IsTrue();
 
-		var aggregateGetResult = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
+		var aggregateGetResult = await eventStore.GetAsync(
+			aggregateId,
+			cancellationToken: cancellationToken
+		);
 
 		await Assert.That(aggregateGetResult).IsNotNull();
-		await Assert.That(aggregate.ComplexTestType).IsEquivalentTo(aggregateGetResult.ComplexTestType);
+		await Assert
+			.That(aggregate.ComplexTestType)
+			.IsEquivalentTo(aggregateGetResult.ComplexTestType);
 	}
 
-	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -52,10 +62,14 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		bool result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		await Assert.That(result).IsFalse();
-		telemetry.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>()).WasCalled(Times.Once);
+		telemetry
+			.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>())
+			.WasCalled(Times.Once);
 	}
 
-	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(CancellationToken cancellationToken)
+	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
+		CancellationToken cancellationToken
+	)
 	{
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -68,13 +82,24 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await Assert.That(result.Skipped).IsFalse();
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
-		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
+		var aggregateFromEventStore = await eventStore.GetAsync(
+			aggregateId,
+			cancellationToken: cancellationToken
+		);
 		await Assert.That(aggregateFromEventStore).IsNotNull();
 		await Assert.That(aggregateFromEventStore.Id()).IsEqualTo(aggregate.Id());
-		await Assert.That(aggregateFromEventStore.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
-		await Assert.That(aggregateFromEventStore.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert.That(aggregateFromEventStore.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert.That(aggregateFromEventStore.Details.SnapshotVersion).IsEqualTo(aggregate.Details.SnapshotVersion);
+		await Assert
+			.That(aggregateFromEventStore.IncrementInt32)
+			.IsEqualTo(aggregate.IncrementInt32);
+		await Assert
+			.That(aggregateFromEventStore.Details.SavedVersion)
+			.IsEqualTo(aggregate.Details.SavedVersion);
+		await Assert
+			.That(aggregateFromEventStore.Details.CurrentVersion)
+			.IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert
+			.That(aggregateFromEventStore.Details.SnapshotVersion)
+			.IsEqualTo(aggregate.Details.SnapshotVersion);
 		await Assert.That(aggregateFromEventStore.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 	}
 

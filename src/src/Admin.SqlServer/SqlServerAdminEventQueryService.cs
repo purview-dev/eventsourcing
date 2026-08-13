@@ -49,7 +49,9 @@ public sealed class SqlServerAdminEventQueryService(IOptions<SqlServerEventStore
 			rows = rows.Where(x => x.Timestamp <= query.TimeToUtc.Value);
 
 		var directionDesc = query.Sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
-		rows = directionDesc ? rows.OrderByDescending(x => x.Version) : rows.OrderBy(x => x.Version);
+		rows = directionDesc
+			? rows.OrderByDescending(x => x.Version)
+			: rows.OrderBy(x => x.Version);
 
 		var totalCount = await rows.LongCountAsync(cancellationToken);
 		var page = Math.Max(1, query.Page);
@@ -57,7 +59,9 @@ public sealed class SqlServerAdminEventQueryService(IOptions<SqlServerEventStore
 		if (totalCount == 0)
 			return new PagedResult<EventEnvelopeResponse>([], page, pageSize, 0);
 
-		var pageRows = await rows.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+		var pageRows = await rows.Skip((page - 1) * pageSize)
+			.Take(pageSize)
+			.ToListAsync(cancellationToken);
 
 		var items = pageRows
 			.Select(row => new EventEnvelopeResponse(
@@ -80,7 +84,10 @@ public sealed class SqlServerAdminEventQueryService(IOptions<SqlServerEventStore
 		return new PagedResult<EventEnvelopeResponse>(items, page, pageSize, totalCount);
 	}
 
-	static EventStoreDbContext CreateContext(SqlServerEventStoreOptions options, SqlServerAdminTableDescriptor table)
+	static EventStoreDbContext CreateContext(
+		SqlServerEventStoreOptions options,
+		SqlServerAdminTableDescriptor table
+	)
 	{
 		var builder = new DbContextOptionsBuilder<EventStoreDbContext>();
 		builder.UseSqlServer(options.ConnectionString);

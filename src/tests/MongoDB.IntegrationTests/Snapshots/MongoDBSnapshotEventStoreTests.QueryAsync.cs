@@ -30,14 +30,20 @@ partial class MongoDBSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
+			bool saveResult = await eventStore.SaveAsync(
+				aggregate,
+				cancellationToken: cancellationToken
+			);
 
 			await Assert.That(saveResult).IsTrue();
 		}
 
 		// Act
 		var aggregates = (
-			await eventStore.QueryAsync(m => m.IncrementInt32 == numberOfEvents, cancellationToken: cancellationToken)
+			await eventStore.QueryAsync(
+				m => m.IncrementInt32 == numberOfEvents,
+				cancellationToken: cancellationToken
+			)
 		).Results;
 
 		// Assert

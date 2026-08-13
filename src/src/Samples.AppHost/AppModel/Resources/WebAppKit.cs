@@ -9,11 +9,18 @@ sealed partial class WebAppKit
 {
 	ImmutableDictionary<string, IResourceBuilder<ProjectResource>> _webAppVariants = [];
 
-	protected override IResourceBuilder<ResourceGroup> BuildResource(IDistributedApplicationBuilder builder)
+	protected override IResourceBuilder<ResourceGroup> BuildResource(
+		IDistributedApplicationBuilder builder
+	)
 	{
-		var resourceGroup = builder.AddResource(new ResourceGroup(Name)).WithIconName("AppFolderFilled");
+		var resourceGroup = builder
+			.AddResource(new ResourceGroup(Name))
+			.WithIconName("AppFolderFilled");
 
-		var variants = ImmutableDictionary.CreateBuilder<string, IResourceBuilder<ProjectResource>>();
+		var variants = ImmutableDictionary.CreateBuilder<
+			string,
+			IResourceBuilder<ProjectResource>
+		>();
 		foreach (var variant in Options.Variants)
 		{
 			var webApp = builder

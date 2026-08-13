@@ -26,11 +26,14 @@ public static class AdminSecurityServiceCollectionExtensions
 		return services;
 	}
 
-	public static AuthorizationBuilder AddPurviewEventSourcingAdminPolicies([NotNull] this AuthorizationBuilder builder)
+	public static AuthorizationBuilder AddPurviewEventSourcingAdminPolicies(
+		[NotNull] this AuthorizationBuilder builder
+	)
 	{
 		builder.AddPolicy(
 			AdminPortalPolicies.SearchAggregates,
-			policy => policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.SearchAggregates))
+			policy =>
+				policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.SearchAggregates))
 		);
 
 		builder.AddPolicy(

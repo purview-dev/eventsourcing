@@ -16,7 +16,7 @@ enum CollectionEventOperation
 }
 
 /// <summary>
-/// Marks a method on a <see cref="GenerateCollectionEventAttribute"/>-decorated class
+/// Marks a method on a <see cref="CollectionEventAttribute"/>-decorated class
 /// as a command that should have an event class and registration generated.
 /// <para>
 /// The method parameters become the event's properties. The generator creates:
@@ -39,9 +39,9 @@ enum CollectionEventOperation
 /// </remarks>
 //{{CodeGen}}
 [global::System.AttributeUsage(global::System.AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-sealed class GenerateCollectionEventAttribute : global::System.Attribute
+sealed class CollectionEventAttribute : global::System.Attribute
 {
-	public GenerateCollectionEventAttribute(string propertyName)
+	public CollectionEventAttribute(string propertyName)
 	{
 		if (string.IsNullOrWhiteSpace(propertyName))
 			throw new global::System.ArgumentException("Property name cannot be null or whitespace.", nameof(propertyName));
@@ -58,8 +58,8 @@ sealed class GenerateCollectionEventAttribute : global::System.Attribute
 	/// <summary>
 	/// Overrides the generated event type name for this method.
 	/// Defaults to a deterministic past-tense event name inferred from the method name.
-	/// If not set, <see cref="GenerateAggregateAttribute.EventSuffix"/> and
-	/// <see cref="GenerateAggregateDefaultsAttribute.EventSuffix"/> may append a suffix.
+	/// If not set, <see cref="AggregateAttribute.EventSuffix"/> and
+	/// <see cref="AggregateDefaultsAttribute.EventSuffix"/> may append a suffix.
 	/// </summary>
 	public string? EventName { get; set; }
 

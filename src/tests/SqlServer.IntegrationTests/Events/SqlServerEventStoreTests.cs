@@ -251,7 +251,9 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	)
 	{
 		var tests = CreateSqlServerStoreTests(aggregateType);
-		await tests.GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(cancellationToken);
+		await tests.GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -284,7 +286,9 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	)
 	{
 		var tests = CreateSqlServerStoreTests(aggregateType);
-		await tests.RestoreAsync_GivenPreviouslySavedAndDeletedAggregate_MarksAsNotDeleted(cancellationToken);
+		await tests.RestoreAsync_GivenPreviouslySavedAndDeletedAggregate_MarksAsNotDeleted(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -296,7 +300,10 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	)
 	{
 		var tests = CreateSqlServerStoreTests(aggregateType);
-		await tests.SaveAsync_GivenAggregateWithChanges_NotifiesChangeFeed(eventsToCreate, cancellationToken);
+		await tests.SaveAsync_GivenAggregateWithChanges_NotifiesChangeFeed(
+			eventsToCreate,
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -320,7 +327,9 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	)
 	{
 		var tests = CreateSqlServerStoreTests(aggregateType);
-		await tests.SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(cancellationToken);
+		await tests.SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
+			cancellationToken
+		);
 	}
 
 	[Test]
@@ -353,7 +362,9 @@ public sealed partial class SqlServerEventStoreTests(SqlServerEventStoreFixture 
 	)
 	{
 		var tests = CreateSqlServerStoreTests(aggregateType);
-		await tests.SaveAsync_GivenAggregateWithComplexProperty_SavesEventWithComplexProperty(cancellationToken);
+		await tests.SaveAsync_GivenAggregateWithComplexProperty_SavesEventWithComplexProperty(
+			cancellationToken
+		);
 	}
 
 	[Test]

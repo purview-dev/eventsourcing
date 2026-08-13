@@ -9,8 +9,9 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
-public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorageEventStoreOptions> options)
-	: IAdminAggregateQueryService
+public sealed class AzureStorageAdminAggregateQueryService(
+	IOptions<AzureStorageEventStoreOptions> options
+) : IAdminAggregateQueryService
 {
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
@@ -34,7 +35,9 @@ public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorage
 		foreach (var tableName in tableNames)
 		{
 			var table = AzureStorageAdminTableHelpers.CreateTableClient(tableService, tableName);
-			var filter = AzureStorageAdminTableHelpers.BuildAggregateSearchFilter(query.AggregateId);
+			var filter = AzureStorageAdminTableHelpers.BuildAggregateSearchFilter(
+				query.AggregateId
+			);
 			try
 			{
 				await foreach (
@@ -48,13 +51,22 @@ public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorage
 					var aggregateType = row.AggregateType;
 					if (!string.IsNullOrWhiteSpace(query.AggregateType))
 					{
-						if (!AzureStorageAdminTableHelpers.MatchesAggregateType(aggregateType, query.AggregateType))
+						if (
+							!AzureStorageAdminTableHelpers.MatchesAggregateType(
+								aggregateType,
+								query.AggregateType
+							)
+						)
 							continue;
 					}
 
 					if (
 						!string.IsNullOrWhiteSpace(query.AggregateId)
-						&& !string.Equals(row.PartitionKey, query.AggregateId, StringComparison.Ordinal)
+						&& !string.Equals(
+							row.PartitionKey,
+							query.AggregateId,
+							StringComparison.Ordinal
+						)
 					)
 						continue;
 
@@ -82,7 +94,8 @@ public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorage
 					);
 				}
 			}
-			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			catch (RequestFailedException ex)
+				when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
 			{
 				continue;
 			}
@@ -104,12 +117,24 @@ public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorage
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
 
-		var query = new AggregateSearchQuery(aggregateType, aggregateId, null, null, null, null, 1, 1);
+		var query = new AggregateSearchQuery(
+			aggregateType,
+			aggregateId,
+			null,
+			null,
+			null,
+			null,
+			1,
+			1
+		);
 		var result = await SearchAsync(query, cancellationToken);
 		return result.Items.Count == 0 ? null : result.Items[0];
 	}
 
-	static IEnumerable<AggregateSummaryResponse> ApplySort(IEnumerable<AggregateSummaryResponse> rows, string sort)
+	static IEnumerable<AggregateSummaryResponse> ApplySort(
+		IEnumerable<AggregateSummaryResponse> rows,
+		string sort
+	)
 	{
 		var descending = sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
 

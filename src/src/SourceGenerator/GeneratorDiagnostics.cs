@@ -9,7 +9,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor AggregateMustBePartial = new(
 		id: "EVENTSTORE001",
 		title: "Aggregate must be partial",
-		messageFormat: "Aggregate '{0}' must be declared partial to use [GenerateAggregate]",
+		messageFormat: "Aggregate '{0}' must be declared partial to use [Aggregate]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -18,7 +18,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor AggregateMustInheritAggregateBase = new(
 		id: "EVENTSTORE002",
 		title: "Aggregate must inherit AggregateBase",
-		messageFormat: "Aggregate '{0}' must inherit from Purview.EventSourcing.Aggregates.AggregateBase to use [GenerateAggregate]",
+		messageFormat: "Aggregate '{0}' must inherit from Purview.EventSourcing.Aggregates.AggregateBase to use [Aggregate]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -27,7 +27,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor NestedAggregatesAreNotSupported = new(
 		id: "EVENTSTORE003",
 		title: "Nested aggregates are not supported",
-		messageFormat: "Aggregate '{0}' cannot be nested inside another type when using [GenerateAggregate]",
+		messageFormat: "Aggregate '{0}' cannot be nested inside another type when using [Aggregate]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -36,7 +36,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor GenericAggregatesAreNotSupported = new(
 		id: "EVENTSTORE004",
 		title: "Generic aggregates are not supported",
-		messageFormat: "Aggregate '{0}' cannot be generic when using [GenerateAggregate]",
+		messageFormat: "Aggregate '{0}' cannot be generic when using [Aggregate]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -45,7 +45,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor ManualRegisterEventsIsNotSupported = new(
 		id: "EVENTSTORE005",
 		title: "RegisterEvents is generated automatically",
-		messageFormat: "Aggregate '{0}' cannot declare RegisterEvents() manually when using [GenerateAggregate]",
+		messageFormat: "Aggregate '{0}' cannot declare RegisterEvents() manually when using [Aggregate]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -53,8 +53,8 @@ static class GeneratorDiagnostics
 
 	public static readonly DiagnosticDescriptor EventMethodRequiresAggregateAttribute = new(
 		id: "EVENTSTORE006",
-		title: "GenerateEvent requires GenerateAggregate",
-		messageFormat: "Method '{0}' must be declared on a [GenerateAggregate] aggregate type",
+		title: "Event requires Aggregate",
+		messageFormat: "Method '{0}' must be declared on a [Aggregate] aggregate type",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -63,7 +63,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor EventMethodMustBePartial = new(
 		id: "EVENTSTORE007",
 		title: "Generated event method must be partial",
-		messageFormat: "Method '{0}' must be declared partial to use [GenerateEvent]",
+		messageFormat: "Method '{0}' must be declared partial to use [Event]",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -72,7 +72,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor UnsupportedEventMethodSignature = new(
 		id: "EVENTSTORE008",
 		title: "Unsupported generated event method signature",
-		messageFormat: "Method '{0}' has an unsupported [GenerateEvent] signature: {1}",
+		messageFormat: "Method '{0}' has an unsupported [Event] signature: {1}",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -81,7 +81,7 @@ static class GeneratorDiagnostics
 	public static readonly DiagnosticDescriptor DuplicateGeneratedEventName = new(
 		id: "EVENTSTORE009",
 		title: "Generated event names must be unique",
-		messageFormat: "Method '{0}' on aggregate '{1}' conflicts with another [GenerateEvent] method because both would generate the event type '{2}'",
+		messageFormat: "Method '{0}' on aggregate '{1}' conflicts with another [Event] method because both would generate the event type '{2}'",
 		category: Category,
 		defaultSeverity: DiagnosticSeverity.Error,
 		isEnabledByDefault: true
@@ -105,32 +105,35 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
-	public static readonly DiagnosticDescriptor AggregatePropertyCollectionTypeMustUseEventStoreCollections = new(
-		id: "EVENTSTORE018",
-		title: "Aggregate collection properties must use EventStore collections",
-		messageFormat: "Aggregate property '{0}' on '{1}' has unsupported collection type '{2}'. Collection and array properties must use Purview.EventSourcing.EventStoreList<T> or Purview.EventSourcing.EventStoreSet<T>.",
-		category: Category,
-		defaultSeverity: DiagnosticSeverity.Error,
-		isEnabledByDefault: true
-	);
+	public static readonly DiagnosticDescriptor AggregatePropertyCollectionTypeMustUseEventStoreCollections =
+		new(
+			id: "EVENTSTORE018",
+			title: "Aggregate collection properties must use EventStore collections",
+			messageFormat: "Aggregate property '{0}' on '{1}' has unsupported collection type '{2}'. Collection and array properties must use Purview.EventSourcing.EventStoreList<T> or Purview.EventSourcing.EventStoreSet<T>.",
+			category: Category,
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 
-	public static readonly DiagnosticDescriptor NullableScalarEqualityNullComparisonShouldUsePatternMatching = new(
-		id: "EVENTSTORE019",
-		title: "Use pattern matching for nullable scalar null checks",
-		messageFormat: "Nullable scalar value object comparison '{0}' can trigger CS9342 due to overloaded equality operators. Use '{1}' instead.",
-		category: Category,
-		defaultSeverity: DiagnosticSeverity.Warning,
-		isEnabledByDefault: true
-	);
+	public static readonly DiagnosticDescriptor NullableScalarEqualityNullComparisonShouldUsePatternMatching =
+		new(
+			id: "EVENTSTORE019",
+			title: "Use pattern matching for nullable scalar null checks",
+			messageFormat: "Nullable scalar value object comparison '{0}' can trigger CS9342 due to overloaded equality operators. Use '{1}' instead.",
+			category: Category,
+			defaultSeverity: DiagnosticSeverity.Warning,
+			isEnabledByDefault: true
+		);
 
-	public static readonly DiagnosticDescriptor ScalarComplexValueMayNotTranslateInSqlSnapshots = new(
-		id: "EVENTSTORE020",
-		title: "Complex scalar Value paths may not translate in SQL snapshot queries",
-		messageFormat: "Aggregate property '{0}' on '{1}' is a [Scalar] whose Value type '{2}' is complex. Deep SQL predicates through '.Value' are typically non-translatable; prefer a computed mirror property for query scenarios.",
-		category: Category,
-		defaultSeverity: DiagnosticSeverity.Warning,
-		isEnabledByDefault: true
-	);
+	public static readonly DiagnosticDescriptor ScalarComplexValueMayNotTranslateInSqlSnapshots =
+		new(
+			id: "EVENTSTORE020",
+			title: "Complex scalar Value paths may not translate in SQL snapshot queries",
+			messageFormat: "Aggregate property '{0}' on '{1}' is a [Scalar] whose Value type '{2}' is complex. Deep SQL predicates through '.Value' are typically non-translatable; prefer a computed mirror property for query scenarios.",
+			category: Category,
+			defaultSeverity: DiagnosticSeverity.Warning,
+			isEnabledByDefault: true
+		);
 
 	public static readonly DiagnosticDescriptor EventSchemaVersionMustBePositive = new(
 		id: "EVENTSTORE021",

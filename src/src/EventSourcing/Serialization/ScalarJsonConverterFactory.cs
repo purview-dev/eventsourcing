@@ -13,7 +13,10 @@ public sealed class ScalarJsonConverterFactory : JsonConverterFactory
 	public override bool CanConvert(Type typeToConvert) =>
 		typeToConvert.GetCustomAttribute<ScalarAttribute>() is not null;
 
-	public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
+	public override JsonConverter CreateConverter(
+		Type typeToConvert,
+		JsonSerializerOptions options
+	) =>
 		Cache.GetOrAdd(
 			typeToConvert,
 			static t =>
@@ -25,8 +28,12 @@ public sealed class ScalarJsonConverterFactory : JsonConverterFactory
 						$"'{t.Name}' missing scalar property '{attr.PropertyName}'."
 					);
 
-				var converterType = typeof(ScalarJsonConverter<,>).MakeGenericType(t, scalarProp.PropertyType);
-				return (JsonConverter)Activator.CreateInstance(converterType, scalarProp, attr.DeserializationMode)!;
+				var converterType = typeof(ScalarJsonConverter<,>).MakeGenericType(
+					t,
+					scalarProp.PropertyType
+				);
+				return (JsonConverter)
+					Activator.CreateInstance(converterType, scalarProp, attr.DeserializationMode)!;
 			}
 		);
 
@@ -38,16 +45,25 @@ public sealed class ScalarJsonConverterFactory : JsonConverterFactory
 		readonly Func<TScalarObject, TScalar> _getScalar = BuildGetter(scalarProperty);
 		readonly Func<TScalar, TScalarObject> _create = BuildCreator(deserializationMode);
 
-		public override TScalarObject Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		public override TScalarObject Read(
+			ref Utf8JsonReader reader,
+			Type typeToConvert,
+			JsonSerializerOptions options
+		)
 		{
 			var scalar = JsonSerializer.Deserialize<TScalar>(ref reader, options);
 			return scalar is null
-				? throw new JsonException($"Cannot deserialize {typeof(TScalarObject).Name} from null.")
+				? throw new JsonException(
+					$"Cannot deserialize {typeof(TScalarObject).Name} from null."
+				)
 				: _create(scalar);
 		}
 
-		public override void Write(Utf8JsonWriter writer, TScalarObject value, JsonSerializerOptions options) =>
-			JsonSerializer.Serialize(writer, _getScalar(value), options);
+		public override void Write(
+			Utf8JsonWriter writer,
+			TScalarObject value,
+			JsonSerializerOptions options
+		) => JsonSerializer.Serialize(writer, _getScalar(value), options);
 
 		static Func<TScalarObject, TScalar> BuildGetter(PropertyInfo property)
 		{
@@ -56,7 +72,9 @@ public sealed class ScalarJsonConverterFactory : JsonConverterFactory
 			return Expression.Lambda<Func<TScalarObject, TScalar>>(body, obj).Compile();
 		}
 
-		static Func<TScalar, TScalarObject> BuildCreator(ValueObjectDeserializationMode deserializationMode)
+		static Func<TScalar, TScalarObject> BuildCreator(
+			ValueObjectDeserializationMode deserializationMode
+		)
 		{
 			var t = typeof(TScalarObject);
 			var preferredFactoryName =
@@ -64,12 +82,22 @@ public sealed class ScalarJsonConverterFactory : JsonConverterFactory
 			var secondaryFactoryName = preferredFactoryName == "Hydrate" ? "Create" : "Hydrate";
 
 			var create =
-				t.GetMethod(preferredFactoryName, BindingFlags.Public | BindingFlags.Static, [typeof(TScalar)])
-				?? t.GetMethod(secondaryFactoryName, BindingFlags.Public | BindingFlags.Static, [typeof(TScalar)]);
+				t.GetMethod(
+					preferredFactoryName,
+					BindingFlags.Public | BindingFlags.Static,
+					[typeof(TScalar)]
+				)
+				?? t.GetMethod(
+					secondaryFactoryName,
+					BindingFlags.Public | BindingFlags.Static,
+					[typeof(TScalar)]
+				);
 			if (create is not null)
 			{
 				var p = Expression.Parameter(typeof(TScalar), "v");
-				return Expression.Lambda<Func<TScalar, TScalarObject>>(Expression.Call(create, p), p).Compile();
+				return Expression
+					.Lambda<Func<TScalar, TScalarObject>>(Expression.Call(create, p), p)
+					.Compile();
 			}
 
 			// Fallback: ctor(TScalar) (public or non-public)
@@ -80,7 +108,9 @@ public sealed class ScalarJsonConverterFactory : JsonConverterFactory
 			if (ctor is not null)
 			{
 				var p = Expression.Parameter(typeof(TScalar), "v");
-				return Expression.Lambda<Func<TScalar, TScalarObject>>(Expression.New(ctor, p), p).Compile();
+				return Expression
+					.Lambda<Func<TScalar, TScalarObject>>(Expression.New(ctor, p), p)
+					.Compile();
 			}
 
 			throw new InvalidOperationException(

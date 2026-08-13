@@ -28,13 +28,18 @@ partial class SqlServerEventStore<T>
 		var getStopwatch = System.Diagnostics.Stopwatch.StartNew();
 		try
 		{
-			var aggregate = operationContext.SnapshotCacheMode.HasFlag(SnapshotCachingOptions.GetFromCache)
+			var aggregate = operationContext.SnapshotCacheMode.HasFlag(
+				SnapshotCachingOptions.GetFromCache
+			)
 				? await GetFromCacheAsync(aggregateId, cancellationToken)
 				: null;
 
 			if (aggregate != null)
 			{
-				_eventStoreTelemetry.AggregateRetrievedFromCache(aggregateId, _aggregateTypeFullName);
+				_eventStoreTelemetry.AggregateRetrievedFromCache(
+					aggregateId,
+					_aggregateTypeFullName
+				);
 
 				return ReturnAggregate(aggregate.Details.IsDeleted, aggregateId, operationContext)
 					? PrepareAggregateForReturn(aggregate, _aggregateRequirementsManager)
@@ -54,7 +59,12 @@ partial class SqlServerEventStore<T>
 
 			aggregate ??= new T { Details = { Id = aggregateId } };
 
-			await GetAndApplyEventsAsync(aggregate, streamVersion, streamVersionIdentifier, cancellationToken);
+			await GetAndApplyEventsAsync(
+				aggregate,
+				streamVersion,
+				streamVersionIdentifier,
+				cancellationToken
+			);
 			await UpdateCacheAsync(aggregate, operationContext.CacheOptions, cancellationToken);
 
 			_eventStoreTelemetry.AggregateLoaded(aggregate.AggregateType);
@@ -160,7 +170,10 @@ partial class SqlServerEventStore<T>
 		{
 			var snapshotId = CreateSnapshotId(aggregateId);
 			var row = await _client.GetByIdAsync(snapshotId, cancellationToken);
-			return row == null || row.EntityType != SnapshotType || string.IsNullOrWhiteSpace(row.Payload)
+			return
+				row == null
+				|| row.EntityType != SnapshotType
+				|| string.IsNullOrWhiteSpace(row.Payload)
 				? null
 				: DeserializeSnapshot(row.Payload);
 		}
@@ -168,7 +181,11 @@ partial class SqlServerEventStore<T>
 		catch (Exception ex)
 #pragma warning restore CA1031
 		{
-			_eventStoreTelemetry.SnapshotDeserializationFailed(aggregateId, _aggregateTypeFullName, ex);
+			_eventStoreTelemetry.SnapshotDeserializationFailed(
+				aggregateId,
+				_aggregateTypeFullName,
+				ex
+			);
 
 			return null;
 		}

@@ -19,5 +19,6 @@ public sealed class ScalarAttribute(string propertyName = "Value") : Attribute
 
 	public bool GenerateEmpty { get; init; } = true;
 
-	public ValueObjectDeserializationMode DeserializationMode { get; init; } = ValueObjectDeserializationMode.Hydrate;
+	public ValueObjectDeserializationMode DeserializationMode { get; init; } =
+		ValueObjectDeserializationMode.Hydrate;
 }

@@ -16,14 +16,9 @@ public sealed class SqlServerAdminTableResolverTests
 
 		var tables = SqlServerAdminTableResolver.ResolveTables(options, null);
 
-		if (tables.Count != 1)
-			throw new InvalidOperationException($"Expected 1 table, got {tables.Count}");
-
-		if (tables[0].SchemaName != "dbo")
-			throw new InvalidOperationException($"Expected dbo schema, got {tables[0].SchemaName}");
-
-		if (tables[0].TableName != "EventStoreEvents")
-			throw new InvalidOperationException($"Expected EventStoreEvents table, got {tables[0].TableName}");
+		await Assert.That(tables.Count).IsEqualTo(1);
+		await Assert.That(tables[0].SchemaName).IsEqualTo("dbo");
+		await Assert.That(tables[0].TableName).IsEqualTo("EventStoreEvents");
 	}
 
 	[Test]
@@ -36,19 +31,18 @@ public sealed class SqlServerAdminTableResolverTests
 			TableName = "EventStoreEvents",
 			AggregateTableOverrides =
 			{
-				["Order"] = new SqlServerAggregateTableOverride { SchemaName = "orders", TableName = "OrderEvents" },
+				["Order"] = new SqlServerAggregateTableOverride
+				{
+					SchemaName = "orders",
+					TableName = "OrderEvents",
+				},
 			},
 		};
 
 		var table = SqlServerAdminTableResolver.ResolveTable(options, "Order");
 
-		if (table.AggregateTypeFilter != "Order")
-			throw new InvalidOperationException($"Expected Order filter, got {table.AggregateTypeFilter}");
-
-		if (table.SchemaName != "orders")
-			throw new InvalidOperationException($"Expected orders schema, got {table.SchemaName}");
-
-		if (table.TableName != "OrderEvents")
-			throw new InvalidOperationException($"Expected OrderEvents table, got {table.TableName}");
+		await Assert.That(table.AggregateTypeFilter).IsEqualTo("Order");
+		await Assert.That(table.SchemaName).IsEqualTo("orders");
+		await Assert.That(table.TableName).IsEqualTo("OrderEvents");
 	}
 }

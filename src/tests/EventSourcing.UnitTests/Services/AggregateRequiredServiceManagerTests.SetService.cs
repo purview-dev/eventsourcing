@@ -10,7 +10,9 @@ partial class AggregateRequiredServiceManagerTests
 		// Arrange
 		var aggregate = TestHelpers.Aggregate<AggregateRequirementsTest>();
 		var testService = CreateTestService();
-		var serviceProvider = TestHelpers.ServiceProvider(new ServiceDefinition(typeof(ITestService), testService));
+		var serviceProvider = TestHelpers.ServiceProvider(
+			new ServiceDefinition(typeof(ITestService), testService)
+		);
 
 		var serviceManager = CreateServiceManager(serviceProvider);
 

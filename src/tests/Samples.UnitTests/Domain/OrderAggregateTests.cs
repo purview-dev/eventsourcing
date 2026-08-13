@@ -23,6 +23,7 @@ public class OrderAggregateTests
 			order.AddLineItem("prod-2", "Widget B", 1, 25.00m);
 		}
 
+#pragma warning disable IDE0010 // Add missing cases
 		switch (statusCode)
 		{
 			case OrderStatusCode.Confirmed:
@@ -35,6 +36,7 @@ public class OrderAggregateTests
 				order.CancelOrder();
 				break;
 		}
+#pragma warning restore IDE0010 // Add missing cases
 
 		return order;
 	}
@@ -61,7 +63,9 @@ public class OrderAggregateTests
 	[Arguments("")]
 	[Arguments(" ")]
 	[Arguments("     ")]
-	public void CreateOrder_GivenNullEmptyOrWhitespaceCustomerId_ThrowsArgumentException(string? customerId)
+	public void CreateOrder_GivenNullEmptyOrWhitespaceCustomerId_ThrowsArgumentException(
+		string? customerId
+	)
 	{
 		var order = new OrderAggregate();
 		Assert.Throws<ArgumentException>(() => order.CreateOrder(customerId!));
@@ -280,7 +284,9 @@ public class OrderAggregateTests
 	[Arguments("")]
 	[Arguments(" ")]
 	[Arguments("     ")]
-	public async Task UpdateDetails_GivenNullOrWhitespaceAddress_RaisesNoEvents(string? shippingAddress)
+	public async Task UpdateDetails_GivenNullOrWhitespaceAddress_RaisesNoEvents(
+		string? shippingAddress
+	)
 	{
 		var order = CreateOrder("order-1");
 		var countBefore = order.GetUnsavedEvents().Count();

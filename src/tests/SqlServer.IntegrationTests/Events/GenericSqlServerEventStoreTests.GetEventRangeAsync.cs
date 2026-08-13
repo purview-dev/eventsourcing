@@ -17,7 +17,14 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		var events = new List<(Aggregates.Events.IEvent @event, string eventType)>();
-		await foreach (var e in eventStore.GetEventRangeAsync(aggregateId, startEvent, endEvent, cancellationToken))
+		await foreach (
+			var e in eventStore.GetEventRangeAsync(
+				aggregateId,
+				startEvent,
+				endEvent,
+				cancellationToken
+			)
+		)
 			events.Add(e);
 
 		// Verify events are in order
@@ -43,7 +50,14 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		var events = new List<(Aggregates.Events.IEvent @event, string eventType)>();
-		await foreach (var e in eventStore.GetEventRangeAsync(aggregateId, startEvent, endEvent, cancellationToken))
+		await foreach (
+			var e in eventStore.GetEventRangeAsync(
+				aggregateId,
+				startEvent,
+				endEvent,
+				cancellationToken
+			)
+		)
 			events.Add(e);
 
 		await Assert.That(events.Count).IsEqualTo(expectedEventCount);

@@ -26,8 +26,10 @@ sealed class SqlServerStorePerformanceRun
 		yield return string.Empty;
 
 		var previousScenarios =
-			previousRun?.Scenarios.ToDictionary(static scenario => scenario.Name, StringComparer.Ordinal)
-			?? [with(StringComparer.Ordinal)];
+			previousRun?.Scenarios.ToDictionary(
+				static scenario => scenario.Name,
+				StringComparer.Ordinal
+			) ?? [with(StringComparer.Ordinal)];
 
 		foreach (var scenario in Scenarios)
 		{

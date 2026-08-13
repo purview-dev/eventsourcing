@@ -6,7 +6,10 @@ public sealed class ScalarJsonConverterFactoryTests
 	public async Task Deserialize_DefaultScalarMode_UsesHydrate()
 	{
 		var options = EventStoreSerializationHelpers.CreateJsonSerializerOptions();
-		var value = System.Text.Json.JsonSerializer.Deserialize<HydratingEmailAddress>("\"not-an-email\"", options);
+		var value = System.Text.Json.JsonSerializer.Deserialize<HydratingEmailAddress>(
+			"\"not-an-email\"",
+			options
+		);
 
 		await Assert.That(value.Value).IsEqualTo("not-an-email");
 	}
@@ -18,7 +21,10 @@ public sealed class ScalarJsonConverterFactoryTests
 		var threw = false;
 		try
 		{
-			_ = System.Text.Json.JsonSerializer.Deserialize<StrictEmailAddress>("\"not-an-email\"", options);
+			_ = System.Text.Json.JsonSerializer.Deserialize<StrictEmailAddress>(
+				"\"not-an-email\"",
+				options
+			);
 		}
 		catch (ArgumentException)
 		{
@@ -46,7 +52,10 @@ public sealed class ScalarJsonConverterFactoryTests
 
 		HydratingEmailAddress(string value) => Value = value;
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage(
+			"Globalization",
+			"CA1308:Normalize strings to uppercase"
+		)]
 		public static HydratingEmailAddress Create(string value)
 		{
 			return value.Contains('@', StringComparison.Ordinal)
@@ -64,7 +73,10 @@ public sealed class ScalarJsonConverterFactoryTests
 
 		StrictEmailAddress(string value) => Value = value;
 
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage(
+			"Globalization",
+			"CA1308:Normalize strings to uppercase"
+		)]
 		public static StrictEmailAddress Create(string value)
 		{
 			return value.Contains('@', StringComparison.Ordinal)

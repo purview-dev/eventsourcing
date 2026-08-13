@@ -7,7 +7,9 @@ partial class MongoDBEventStore<T>
 {
 	static ArgumentNullException NullAggregate(T? aggregate) => new(nameof(aggregate));
 
-	static AggregateIsDeletedException AggregateIsDeletedException(string aggregateId) => new(aggregateId);
+	static AggregateIsDeletedException AggregateIsDeletedException(string aggregateId) =>
+		new(aggregateId);
 
-	static AggregateNotDeletedException AggregateNotDeletedException(string aggregateId) => new(aggregateId);
+	static AggregateNotDeletedException AggregateNotDeletedException(string aggregateId) =>
+		new(aggregateId);
 }

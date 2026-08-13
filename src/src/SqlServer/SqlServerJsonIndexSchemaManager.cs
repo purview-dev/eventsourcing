@@ -136,9 +136,13 @@ static partial class SqlServerJsonIndexSchemaManager
 
 			var sqlType = definition.SqlType?.Trim();
 			if (string.IsNullOrWhiteSpace(sqlType) || !SqlTypeRegex().IsMatch(sqlType))
-				errors.Add($"{optionsName}.Indexes[{i}].SqlType '{definition.SqlType}' is not supported.");
+				errors.Add(
+					$"{optionsName}.Indexes[{i}].SqlType '{definition.SqlType}' is not supported."
+				);
 
-			var filter = string.IsNullOrWhiteSpace(definition.Filter) ? null : definition.Filter.Trim();
+			var filter = string.IsNullOrWhiteSpace(definition.Filter)
+				? null
+				: definition.Filter.Trim();
 			if (filter is not null && !IsSafeFilter(filter))
 				errors.Add($"{optionsName}.Indexes[{i}].Filter contains unsupported SQL text.");
 
@@ -148,7 +152,9 @@ static partial class SqlServerJsonIndexSchemaManager
 			{
 				if (string.IsNullOrWhiteSpace(includeColumn))
 				{
-					errors.Add($"{optionsName}.Indexes[{i}].IncludeColumns cannot contain empty values.");
+					errors.Add(
+						$"{optionsName}.Indexes[{i}].IncludeColumns cannot contain empty values."
+					);
 					continue;
 				}
 
@@ -177,7 +183,10 @@ static partial class SqlServerJsonIndexSchemaManager
 			var computedColumnName = string.IsNullOrWhiteSpace(definition.ComputedColumnName)
 				? $"JX_{CreateStableHash(computedColumnKey)}"
 				: definition.ComputedColumnName.Trim();
-			ValidateIdentifier(computedColumnName, $"{optionsName}.Indexes[{i}].ComputedColumnName");
+			ValidateIdentifier(
+				computedColumnName,
+				$"{optionsName}.Indexes[{i}].ComputedColumnName"
+			);
 
 			var logicalIndexKey = string.Join(
 				"|",
@@ -323,7 +332,8 @@ static partial class SqlServerJsonIndexSchemaManager
 
 	static string QuoteIdentifier(string identifier) => $"[{identifier}]";
 
-	static string EscapeSqlLiteral(string value) => value.Replace("'", "''", StringComparison.Ordinal);
+	static string EscapeSqlLiteral(string value) =>
+		value.Replace("'", "''", StringComparison.Ordinal);
 
 	static string CreateStableHash(string value)
 	{
@@ -344,7 +354,10 @@ static partial class SqlServerJsonIndexSchemaManager
 			throw new ArgumentException("Identifier cannot be null or empty.", parameterName);
 
 		if (!IdentifierRegex().IsMatch(identifier))
-			throw new ArgumentException($"Identifier '{identifier}' contains invalid characters.", parameterName);
+			throw new ArgumentException(
+				$"Identifier '{identifier}' contains invalid characters.",
+				parameterName
+			);
 	}
 
 	[GeneratedRegex(@"^[\w\-\.]+$")]
@@ -356,7 +369,11 @@ static partial class SqlServerJsonIndexSchemaManager
 	[GeneratedRegex(@"^[\[\]\w\s\=\<\>\!\(\)'\.,-]+$")]
 	private static partial Regex FilterRegex();
 
-	sealed record SqlServerJsonComputedColumnDescriptor(string Name, string Expression, bool Persisted);
+	sealed record SqlServerJsonComputedColumnDescriptor(
+		string Name,
+		string Expression,
+		bool Persisted
+	);
 
 	sealed record SqlServerJsonIndexDescriptor(
 		string IndexName,

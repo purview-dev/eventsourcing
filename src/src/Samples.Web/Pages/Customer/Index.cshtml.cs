@@ -37,7 +37,7 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 	{
 		if (Page < 1)
 			Page = 1;
-		if (PageSize < 5 || PageSize > 100)
+		if (PageSize is < 5 or > 100)
 			PageSize = DefaultPageSize;
 
 		var ct = HttpContext.RequestAborted;
@@ -67,7 +67,10 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 		TotalCount = result.TotalCount ?? 0;
 	}
 
-	public async Task<IActionResult> OnPostSelectAsync(string id, CancellationToken cancellationToken)
+	public async Task<IActionResult> OnPostSelectAsync(
+		string id,
+		CancellationToken cancellationToken
+	)
 	{
 		if (string.IsNullOrWhiteSpace(id))
 			return RedirectToPage();

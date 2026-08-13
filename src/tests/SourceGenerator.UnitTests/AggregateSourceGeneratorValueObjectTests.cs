@@ -3,7 +3,8 @@ using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
-public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTestBase<AggregateSourceGenerator>
+public sealed class AggregateSourceGeneratorValueObjectTests
+	: SourceGeneratorTestBase<AggregateSourceGenerator>
 {
 	static string GetAggregateGeneratedSource(GeneratorDriverRunResult result)
 	{
@@ -13,7 +14,9 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 	}
 
 	[Test]
-	public async Task Generate_UsesContextualValueObjectCreateAndHookMethods(CancellationToken cancellationToken)
+	public async Task Generate_UsesContextualValueObjectCreateAndHookMethods(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source = """
 			namespace Testing
@@ -40,13 +43,13 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				public static OrderStatus Hydrate(OrderStatusCode value) => new(value);
 			}
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregate]
+			[Purview.EventSourcing.Aggregates.Aggregate]
 			public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 			{
 				public OrderStatus Status { get; private set; } = OrderStatus.Hydrate(OrderStatusCode.Draft);
 				public int LineItems { get; private set; }
 
-				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "OrderConfirmed")]
+				[Purview.EventSourcing.Aggregates.Event(EventName = "OrderConfirmed")]
 				public partial void ConfirmOrder(OrderStatusCode status);
 
 				public void AddLineItem() => LineItems++;
@@ -63,10 +66,12 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 			}
 			""";
 
-		var (result, _) = await GenerateAsync(source, cancellationToken);
+		var (result, _) = Generate(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
-		await Assert.That(generatedSource).Contains("OnRaisingOrderConfirmedEvent(ref __statusValue);");
+		await Assert
+			.That(generatedSource)
+			.Contains("OnRaisingOrderConfirmedEvent(ref __statusValue);");
 		await Assert.That(generatedSource).Contains("OnRaisedOrderConfirmedEvent(@event);");
 		await Assert
 			.That(generatedSource)
@@ -77,7 +82,9 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 	}
 
 	[Test]
-	public async Task Generate_AllowsHookToRejectInvalidTransition(CancellationToken cancellationToken)
+	public async Task Generate_AllowsHookToRejectInvalidTransition(
+		CancellationToken cancellationToken
+	)
 	{
 		const string source = """
 			namespace Testing
@@ -104,13 +111,13 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				public static OrderStatus Hydrate(OrderStatusCode value) => new(value);
 			}
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregate]
+			[Purview.EventSourcing.Aggregates.Aggregate]
 			public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 			{
 				public OrderStatus Status { get; private set; } = OrderStatus.Hydrate(OrderStatusCode.Draft);
 				public int LineItems { get; private set; }
 
-				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "OrderConfirmed")]
+				[Purview.EventSourcing.Aggregates.Event(EventName = "OrderConfirmed")]
 				public partial void ConfirmOrder(OrderStatusCode status);
 
 				public void AddLineItem() => LineItems++;
@@ -183,7 +190,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				}
 			}
 
-			[Purview.EventSourcing.Aggregates.GenerateAggregate]
+			[Purview.EventSourcing.Aggregates.Aggregate]
 			public partial class CustomerAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 			{
 				public EmailAddress Email { get; private set; } = EmailAddress.Hydrate("init@example.com");
@@ -193,10 +200,10 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 				public string? PreviousEmailValue { get; private set; }
 				public string? CurrentEmailValue { get; private set; }
 
-				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "CustomerRegistered")]
+				[Purview.EventSourcing.Aggregates.Event(EventName = "CustomerRegistered")]
 				public partial CustomerAggregate RegisterCustomer(string email);
 
-				[Purview.EventSourcing.Aggregates.GenerateEvent(EventName = "CustomerEmailChanged")]
+				[Purview.EventSourcing.Aggregates.Event(EventName = "CustomerEmailChanged")]
 				public partial CustomerAggregate ChangeEmail(string email);
 
 				partial void OnEmailChanging(ref EmailAddress email)
@@ -239,13 +246,20 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 		var traceAfterCommand = (string)aggregateType.GetProperty("Trace")!.GetValue(aggregate)!;
 		var changingCalls = (int)aggregateType.GetProperty("ChangingCalls")!.GetValue(aggregate)!;
 		var changedCalls = (int)aggregateType.GetProperty("ChangedCalls")!.GetValue(aggregate)!;
-		var previousValue = (string?)aggregateType.GetProperty("PreviousEmailValue")!.GetValue(aggregate);
-		var currentValue = (string?)aggregateType.GetProperty("CurrentEmailValue")!.GetValue(aggregate);
+		var previousValue = (string?)
+			aggregateType.GetProperty("PreviousEmailValue")!.GetValue(aggregate);
+		var currentValue = (string?)
+			aggregateType.GetProperty("CurrentEmailValue")!.GetValue(aggregate);
 		var createCalls = (int)emailType.GetProperty("CreateCalls")!.GetValue(null)!;
 
-		var hydrateMethod = emailType.GetMethod("Hydrate", BindingFlags.Public | BindingFlags.Static)!;
+		var hydrateMethod = emailType.GetMethod(
+			"Hydrate",
+			BindingFlags.Public | BindingFlags.Static
+		)!;
 		var replayEvent = Activator.CreateInstance(eventType)!;
-		eventType.GetProperty("Email")!.SetValue(replayEvent, hydrateMethod.Invoke(null, ["replay@example.com"]));
+		eventType
+			.GetProperty("Email")!
+			.SetValue(replayEvent, hydrateMethod.Invoke(null, ["replay@example.com"]));
 
 		var applyMethod = aggregateType.GetMethod(
 			"Apply",
@@ -256,8 +270,10 @@ public sealed class AggregateSourceGeneratorValueObjectTests : SourceGeneratorTe
 		)!;
 		applyMethod.Invoke(aggregate, [replayEvent]);
 
-		var changingCallsAfterReplay = (int)aggregateType.GetProperty("ChangingCalls")!.GetValue(aggregate)!;
-		var changedCallsAfterReplay = (int)aggregateType.GetProperty("ChangedCalls")!.GetValue(aggregate)!;
+		var changingCallsAfterReplay = (int)
+			aggregateType.GetProperty("ChangingCalls")!.GetValue(aggregate)!;
+		var changedCallsAfterReplay = (int)
+			aggregateType.GetProperty("ChangedCalls")!.GetValue(aggregate)!;
 		var createCallsAfterReplay = (int)emailType.GetProperty("CreateCalls")!.GetValue(null)!;
 		var traceAfterReplay = (string)aggregateType.GetProperty("Trace")!.GetValue(aggregate)!;
 

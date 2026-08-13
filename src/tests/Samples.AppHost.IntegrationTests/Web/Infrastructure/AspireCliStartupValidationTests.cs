@@ -38,7 +38,9 @@ public sealed class AspireCliStartupValidationTests(AppHostFixture fixture)
 		);
 
 	[Test]
-	public async Task AzureVariants_StartCleanlyUnderAspireCli_AndServePages(CancellationToken cancellationToken)
+	public async Task AzureVariants_StartCleanlyUnderAspireCli_AndServePages(
+		CancellationToken cancellationToken
+	)
 	{
 		foreach (var resourceName in AzureVariantResourceNames)
 		{
@@ -129,7 +131,7 @@ public sealed class AspireCliStartupValidationTests(AppHostFixture fixture)
 			{
 				FileName = "aspire",
 				Arguments = arguments,
-				WorkingDirectory = Path.GetDirectoryName(AppHostProjectPath)!,
+				WorkingDirectory = Path.GetDirectoryName(AppHostProjectPath),
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 				UseShellExecute = false,
@@ -147,7 +149,11 @@ public sealed class AspireCliStartupValidationTests(AppHostFixture fixture)
 		var standardErrorTask = process.StandardError.ReadToEndAsync(timeoutCts.Token);
 		await process.WaitForExitAsync(timeoutCts.Token);
 
-		var result = new AspireCliCommandResult(process.ExitCode, await standardOutputTask, await standardErrorTask);
+		var result = new AspireCliCommandResult(
+			process.ExitCode,
+			await standardOutputTask,
+			await standardErrorTask
+		);
 
 		return result.ExitCode == 0
 			? result
@@ -156,5 +162,9 @@ public sealed class AspireCliStartupValidationTests(AppHostFixture fixture)
 			);
 	}
 
-	readonly record struct AspireCliCommandResult(int ExitCode, string StandardOutput, string StandardError);
+	readonly record struct AspireCliCommandResult(
+		int ExitCode,
+		string StandardOutput,
+		string StandardError
+	);
 }

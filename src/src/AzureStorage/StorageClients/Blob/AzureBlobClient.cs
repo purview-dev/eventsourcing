@@ -13,7 +13,10 @@ sealed class AzureBlobClient : IAsyncDisposable
 	readonly AzureStorageEventStoreOptions _configuration;
 	readonly string? _containerName;
 
-	public AzureBlobClient(AzureStorageEventStoreOptions configuration, string? containerOverride = null)
+	public AzureBlobClient(
+		AzureStorageEventStoreOptions configuration,
+		string? containerOverride = null
+	)
 	{
 		ArgumentNullException.ThrowIfNull(configuration);
 
@@ -23,7 +26,9 @@ sealed class AzureBlobClient : IAsyncDisposable
 		_blobContainerClient = new(InitializeAsync);
 	}
 
-	public async Task<BlobContainerClient> GetContainerClientAsync(CancellationToken cancellationToken = default)
+	public async Task<BlobContainerClient> GetContainerClientAsync(
+		CancellationToken cancellationToken = default
+	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
 
@@ -32,7 +37,10 @@ sealed class AzureBlobClient : IAsyncDisposable
 		return containerClient;
 	}
 
-	public async Task<bool> ExistsAsync(string blobName, CancellationToken cancellationToken = default)
+	public async Task<bool> ExistsAsync(
+		string blobName,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
 		var blobClient = containerClient.GetBlockBlobClient(blobName);
@@ -40,7 +48,10 @@ sealed class AzureBlobClient : IAsyncDisposable
 		return await blobClient.ExistsAsync(cancellationToken);
 	}
 
-	public async Task<T?> GetAsAsync<T>(string blobName, CancellationToken cancellationToken = default)
+	public async Task<T?> GetAsAsync<T>(
+		string blobName,
+		CancellationToken cancellationToken = default
+	)
 		where T : class
 	{
 		var responseStream = await GetStreamAsync(blobName, cancellationToken);
@@ -54,7 +65,10 @@ sealed class AzureBlobClient : IAsyncDisposable
 		return EventStoreSerializationHelpers.Deserialize<T>(content);
 	}
 
-	public async Task<Stream?> GetStreamAsync(string blobName, CancellationToken cancellationToken = default)
+	public async Task<Stream?> GetStreamAsync(
+		string blobName,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var blobClient = await GetBlobClientAsync(blobName, cancellationToken);
 		var response = await blobClient.DownloadAsync(cancellationToken);
@@ -71,7 +85,9 @@ sealed class AzureBlobClient : IAsyncDisposable
 		return await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
 	}
 
-	public async Task<BlobContainerProperties> GetPropertiesAsync(CancellationToken cancellationToken = default)
+	public async Task<BlobContainerProperties> GetPropertiesAsync(
+		CancellationToken cancellationToken = default
+	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
 		return await containerClient.GetPropertiesAsync(cancellationToken: cancellationToken);
@@ -93,10 +109,16 @@ sealed class AzureBlobClient : IAsyncDisposable
 	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
-		return await containerClient.SetMetadataAsync(metadata, cancellationToken: cancellationToken);
+		return await containerClient.SetMetadataAsync(
+			metadata,
+			cancellationToken: cancellationToken
+		);
 	}
 
-	public async Task<BlobClient> GetBlobClientAsync(string blobName, CancellationToken cancellationToken = default)
+	public async Task<BlobClient> GetBlobClientAsync(
+		string blobName,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
 
@@ -194,7 +216,9 @@ sealed class AzureBlobClient : IAsyncDisposable
 		return await blobClient.UploadAsync(
 			content,
 			metadata: metadata,
-			conditions: overwrite ? null : new BlobRequestConditions { IfNoneMatch = new ETag("*") },
+			conditions: overwrite
+				? null
+				: new BlobRequestConditions { IfNoneMatch = new ETag("*") },
 			cancellationToken: cancellationToken
 		);
 	}
@@ -202,15 +226,23 @@ sealed class AzureBlobClient : IAsyncDisposable
 	public async Task<bool> DeleteContainerAsync(CancellationToken cancellationToken = default)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
-		var result = await containerClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
+		var result = await containerClient.DeleteIfExistsAsync(
+			cancellationToken: cancellationToken
+		);
 
 		return result?.Value ?? true;
 	}
 
-	public async Task<bool> DeleteBlobIfExistsAsync(string blobName, CancellationToken cancellationToken = default)
+	public async Task<bool> DeleteBlobIfExistsAsync(
+		string blobName,
+		CancellationToken cancellationToken = default
+	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
-		return await containerClient.DeleteBlobIfExistsAsync(blobName, cancellationToken: cancellationToken);
+		return await containerClient.DeleteBlobIfExistsAsync(
+			blobName,
+			cancellationToken: cancellationToken
+		);
 	}
 
 	public async Task<AsyncPageable<BlobItem>> GetBlobsAsync(
@@ -219,7 +251,10 @@ sealed class AzureBlobClient : IAsyncDisposable
 	)
 	{
 		var containerClient = await _blobContainerClient.GetValueAsync(cancellationToken);
-		return containerClient.GetBlobsAsync(options: new() { Prefix = prefix }, cancellationToken: cancellationToken);
+		return containerClient.GetBlobsAsync(
+			options: new() { Prefix = prefix },
+			cancellationToken: cancellationToken
+		);
 	}
 
 	public async Task<AsyncPageable<BlobHierarchyItem>> GetBlobsByHierarchyAsync(
@@ -262,7 +297,9 @@ sealed class AzureBlobClient : IAsyncDisposable
 	{
 		BlobClientOptions clientOptions = new();
 		if (_configuration.TimeoutInSeconds != null)
-			clientOptions.Retry.NetworkTimeout = TimeSpan.FromSeconds(_configuration.TimeoutInSeconds.Value);
+			clientOptions.Retry.NetworkTimeout = TimeSpan.FromSeconds(
+				_configuration.TimeoutInSeconds.Value
+			);
 
 		return new(_configuration.ConnectionString, _containerName, clientOptions);
 	}
