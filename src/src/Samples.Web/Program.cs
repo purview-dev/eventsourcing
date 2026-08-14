@@ -1,12 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using Azure;
 using Azure.Storage.Blobs;
-
 using Microsoft.AspNetCore.Authentication;
-
 using MongoDB.Driver;
-
 using Npgsql;
-
 using Purview.EventSourcing.Admin.Api;
 using Purview.EventSourcing.Admin.AzureStorage;
 using Purview.EventSourcing.Admin.MongoDB;
@@ -21,9 +18,6 @@ using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Options;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
-
-using System.Diagnostics.CodeAnalysis;
-
 using AzureCommitException = Purview.EventSourcing.AzureStorage.Exceptions.CommitException;
 using AzureConcurrencyException = Purview.EventSourcing.AzureStorage.Exceptions.ConcurrencyException;
 using SqlServerCommitException = Purview.EventSourcing.SqlServer.Events.Exceptions.CommitException;

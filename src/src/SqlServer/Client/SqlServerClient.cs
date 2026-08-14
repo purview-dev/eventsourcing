@@ -825,6 +825,7 @@ sealed partial class SqlServerClient
 		|| type.IsEnum
 		|| type == typeof(string)
 		|| type == typeof(decimal)
+		|| type == typeof(Uri)
 		|| type == typeof(Guid)
 		|| type == typeof(DateTime)
 		|| type == typeof(DateTimeOffset)

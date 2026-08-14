@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
@@ -84,7 +84,9 @@ public sealed class SqlServerSnapshotEventStoreOptions
 	public Dictionary<
 		string,
 		SqlServerSnapshotAggregateTableOverride
+#pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
+#pragma warning restore format
 
 	/// <summary>
 	/// Configures runtime-managed SQL Server indexes over the snapshot payload JSON column.

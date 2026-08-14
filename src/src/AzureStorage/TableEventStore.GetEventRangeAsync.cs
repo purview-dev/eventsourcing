@@ -80,9 +80,8 @@ partial class TableEventStore<T>
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		static EventUnknown ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion)
-		{
-			return new()
+		static EventUnknown ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion) =>
+			new()
 			{
 				Details =
 				{
@@ -92,7 +91,6 @@ partial class TableEventStore<T>
 				},
 				Payload = eventEntity.Payload,
 			};
-		}
 
 		try
 		{

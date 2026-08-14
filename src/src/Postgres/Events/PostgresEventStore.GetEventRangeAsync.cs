@@ -61,9 +61,8 @@ partial class PostgresEventStore<T>
 		static EventUnknown ReturnUnknownEvent(
 			PostgresEventStoreClient.RowData eventRow,
 			int aggregateVersion
-		)
-		{
-			return new EventUnknown
+		) =>
+			new()
 			{
 				Details =
 				{
@@ -73,7 +72,6 @@ partial class PostgresEventStore<T>
 				},
 				Payload = eventRow.Payload,
 			};
-		}
 
 		try
 		{

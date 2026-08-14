@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.ValueObjects;
 
@@ -10,11 +12,6 @@ public sealed partial class ReportUploadAggregate
 
 	public string FileHash { get; private set; } = string.Empty;
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Purview.EventSourcing.SourceGenerator",
-		"EVENTSTORE020",
-		Justification = "Sample aggregate does not execute deep SQL predicates over BlobUri.Value."
-	)]
 	public BlobUri SourceJsonBlob { get; private set; } = BlobUri.Empty;
 
 	public EventStoreSet<ProjectBlobs> ExcelReportBlobs { get; private set; } = [];
@@ -25,11 +22,11 @@ public sealed partial class ReportUploadAggregate
 
 	public string? FailureReason { get; private set; }
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Purview.EventSourcing.SourceGenerator",
-		"EVENTSTORE020",
-		Justification = "Query translation uses ReportSummaryScalar mirror for SQL-safe filtering."
-	)]
+	//[SuppressMessage(
+	//	"Aggregates",
+	//	"EVENTSTORE020",
+	//	Justification = "Query translation uses ReportSummaryScalar mirror for SQL-safe filtering."
+	//)]
 	public ReportSummary? ReportSummary { get; private set; }
 
 	public ParserReportSummary? ReportSummaryScalar { get; private set; }
@@ -42,13 +39,8 @@ public sealed partial class ReportUploadAggregate
 
 	// Event generation methods
 	[Event(EventName = "MarkAsCompleted")]
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Purview.EventSourcing.SourceGenerator",
-		"EVENTSTORE016:Event parameter nullability differs from aggregate property",
-		Justification = "Required properties"
-	)]
 	public partial ReportUploadAggregate MarkAsComplete(
-		ReportSummary reportSummary,
+		[NotNull] ReportSummary? reportSummary,
 		[Computed] ParserReportSummary? reportSummaryScalar = null,
 		[Computed] ReportProcessingStatus status = default
 	);
@@ -57,17 +49,8 @@ public sealed partial class ReportUploadAggregate
 	private partial ReportUploadAggregate AddExcelReport(ProjectBlobs projectBlobs);
 
 	[Event(EventName = "MarkAsFailed")]
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Purview.EventSourcing.SourceGenerator",
-		"EVENTSTORE014:Event name overrides should be past tense"
-	)]
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Purview.EventSourcing.SourceGenerator",
-		"EVENTSTORE016:Event parameter nullability differs from aggregate property",
-		Justification = "Required properties"
-	)]
 	public partial ReportUploadAggregate MarkAsFailed(
-		string failureReason,
+		[Required] string? failureReason,
 		ReportSummary? reportSummary = null,
 		[Computed] ParserReportSummary? reportSummaryScalar = null,
 		[Computed] ReportProcessingStatus status = default

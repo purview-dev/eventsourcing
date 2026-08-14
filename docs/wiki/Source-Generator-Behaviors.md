@@ -150,6 +150,35 @@ public partial class ReportAggregate : AggregateBase
 }
 ```
 
+### Parameter nullability and required guards
+
+The generator honors two standard attributes on event parameters to tighten command-time validation and the shape of the generated event class:
+
+- `[NotNull]` (`System.Diagnostics.CodeAnalysis`) on a nullable parameter generates an `ArgumentNullException` guard and emits the event property as non-nullable.
+- `[Required]` (`System.ComponentModel.DataAnnotations`) on a nullable `string` parameter generates an `ArgumentException` guard for null or whitespace and emits the event property as non-nullable.
+
+Both attributes also cause the generator to use a local copy of the parameter value when calling `On...Changing` hooks and when creating the event. This keeps the original parameter unmodified so the compiler does not require it to be assigned after a `throw` path.
+
+```csharp
+[GenerateAggregate]
+public partial class ProfileAggregate : AggregateBase
+{
+    public string? Bio { get; private set; }
+
+    [GenerateAggregateEvent]
+    public partial void UpdateBio([NotNull] string? bio);
+}
+```
+
+For the event above, the generator produces a property typed as `string` rather than `string?`:
+
+```csharp
+public sealed class BioUpdatedEvent : global::Purview.EventSourcing.Aggregates.Events.EventBase
+{
+    public string Bio { get; set; } = default!;
+}
+```
+
 ## Value-object conversion behavior
 
 - Generated mapping paths use `Create(...)` semantics for strict command-time conversion/validation.

@@ -7,6 +7,10 @@
     <TUnitVersion>1.63.0</TUnitVersion>
     <PurviewSGFrameworkVersion>[1.0.0-prerelease.17,)</PurviewSGFrameworkVersion>
   </PropertyGroup>
+  <ItemGroup Label="Vulnerabilities">
+	<PackageVersion Include="SSH.NET" Version="2026.0.0" />
+
+  </ItemGroup>
   <ItemGroup>
     <PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="13.4.6" />
     <PackageVersion Include="AspireC4.Hosting" Version="13.3.2" />

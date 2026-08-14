@@ -1,9 +1,9 @@
-﻿using Purview.EventSourcing.Aggregates.Events;
+using Purview.EventSourcing.Aggregates.Events;
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
-	"Purview.EventSourcing.SourceGenerator",
+	"Aggregates",
 	"EVENTSTORE013:Event names should be past tense",
 	Justification = "Testing"
 )]

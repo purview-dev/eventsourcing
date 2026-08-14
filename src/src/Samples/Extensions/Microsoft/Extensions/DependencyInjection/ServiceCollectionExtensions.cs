@@ -13,7 +13,7 @@ public static class ServiceCollectionExtensions
 		public IServiceCollection AddDomainServices()
 		{
 			services.AddScoped<ISeedDataService, SeedDataService>();
-			services.AddScoped<IOrderFulfillmentService, OrderFulfillmentService>();
+			services.AddScoped<IOrderFulfilmentService, OrderFulfilmentService>();
 			services.AddScoped<IStockTransferService, StockTransferService>();
 			services.AddScoped<ICartCheckoutService, CartCheckoutService>();
 

@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.Aggregates.Events;
+namespace Purview.EventSourcing.Aggregates.Events;
 
 /// <summary>
 /// Represents a <see cref="IEvent"/> that is used in-place
@@ -12,7 +12,7 @@
 /// <para>However, the event data still exists in the underlying store.</para>
 /// </remarks>
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
-	"Purview.EventSourcing.SourceGenerator",
+	"Aggregates",
 	"EVENTSTORE013:Event names should be past tense"
 )]
 public sealed class EventUnknown : EventBase

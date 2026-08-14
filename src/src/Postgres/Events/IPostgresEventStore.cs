@@ -6,4 +6,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 public interface IPostgresEventStore<T>
 	: INonQueryableEventStore<T>,
 		IAggregateEventHistoryStoreCore<T>
-	where T : class, IAggregate, new() { }
+	where T : class, IAggregate, new()
+{
+	//
+}

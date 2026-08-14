@@ -63,6 +63,14 @@ public sealed class SqlServerSnapshotClientTests
 	}
 
 	[Test]
+	public async Task ValidateAggregatePayloadShape_GivenUriProperty_DoesNotThrow()
+	{
+		await Assert
+			.That(() => ValidateAggregatePayloadShape(typeof(UriAggregate)))
+			.ThrowsNothing();
+	}
+
+	[Test]
 	public async Task RewriteAggregateTypePredicate_GivenScalarEqualsPrimitive_RewritesToPrimitiveComparison()
 	{
 		Expression<Func<ScalarHolder, bool>> whereClause = model =>
@@ -102,6 +110,27 @@ public sealed class SqlServerSnapshotClientTests
 	sealed class ScalarHolder
 	{
 		public ScalarEmail Email { get; init; } = new("default@test.com");
+	}
+
+	sealed class UriAggregate : IAggregate
+	{
+		public string AggregateType => nameof(UriAggregate);
+
+		public AggregateDetails Details { get; init; } = new();
+
+		public Uri BlobUri { get; init; } = new("/", UriKind.Relative);
+
+		public IEnumerable<IEvent> GetUnsavedEvents() => [];
+
+		public bool HasUnsavedEvents() => false;
+
+		public IEnumerable<Type> GetRegisteredEventTypes() => [];
+
+		public bool CanApplyEvent(IEvent aggregateEvent) => false;
+
+		public void ClearUnsavedEvents(int? upToVersion = null) { }
+
+		void IAggregate.ApplyEvent(IEvent @event) { }
 	}
 
 	sealed class SupportedCollectionAggregate : IAggregate

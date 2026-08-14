@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Purview.EventSourcing.SqlServer.Events;
@@ -140,7 +140,9 @@ public sealed class SqlServerEventStoreOptions
 	public Dictionary<
 		string,
 		SqlServerAggregateTableOverride
+#pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
+#pragma warning restore format
 
 	/// <summary>
 	/// Configures runtime-managed SQL Server indexes over the event payload JSON column.

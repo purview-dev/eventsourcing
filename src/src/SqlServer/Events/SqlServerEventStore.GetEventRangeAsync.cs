@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Purview.EventSourcing.Aggregates.Events;
 
 namespace Purview.EventSourcing.SqlServer.Events;
@@ -61,9 +61,8 @@ partial class SqlServerEventStore<T>
 		static EventUnknown ReturnUnknownEvent(
 			SqlServerEventStoreClient.RowData eventRow,
 			int aggregateVersion
-		)
-		{
-			return new EventUnknown
+		) =>
+			new()
 			{
 				Details =
 				{
@@ -73,7 +72,6 @@ partial class SqlServerEventStore<T>
 				},
 				Payload = eventRow.Payload,
 			};
-		}
 
 		try
 		{

@@ -8,7 +8,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 public class MultiAggregateWorkflowTests
 {
 	[Test]
-	public async Task OrderFulfillment_CustomerPlacesOrderWithInventoryReservation_AllAggregatesHaveCorrectState()
+	public async Task OrderFulfilment_CustomerPlacesOrderWithInventoryReservation_AllAggregatesHaveCorrectState()
 	{
 		// Arrange — set up customer, inventory, and order
 		var customer = new CustomerAggregate();

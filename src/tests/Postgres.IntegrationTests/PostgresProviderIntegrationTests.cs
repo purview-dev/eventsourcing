@@ -68,6 +68,7 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 		await store.SnapshotAsync(aggregate, cancellationToken);
 
 		var containsResponse = await store.WherePayloadContainsAsync(
+			/*lang=json,strict*/
 			"""{"ComplexTestType":{"StringProperty":"active"}}""",
 			new ContinuationRequest { MaxRecords = 10 },
 			cancellationToken

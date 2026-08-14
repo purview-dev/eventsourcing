@@ -12,7 +12,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<None
-			Include="buildTransitive\Purview.EventSourcing.ZodSharp.targets"
+			Include="Sdk\buildTransitive\Purview.EventSourcing.ZodSharp.targets"
 			Pack="true"
 			PackagePath="buildTransitive\Purview.EventSourcing.ZodSharp.targets"
 		/>

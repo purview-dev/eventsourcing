@@ -12,7 +12,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 public sealed class MultiAggregateIntegrationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]
-	public async Task SaveAsync_GivenOrderFulfillmentWorkflow_AllAggregatesRestoreWithCoherentState(
+	public async Task SaveAsync_GivenOrderFulfilmentWorkflow_AllAggregatesRestoreWithCoherentState(
 		CancellationToken cancellationToken
 	)
 	{

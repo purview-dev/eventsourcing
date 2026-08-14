@@ -1,0 +1,40 @@
+using Microsoft.CodeAnalysis;
+
+namespace Purview.EventSourcing.SourceGenerator.ValueObject.Models;
+
+sealed record class ScalarValueObjectModel(
+	INamedTypeSymbol TypeSymbol,
+	GeneratedTypeModel TypeModel,
+	IPropertySymbol ScalarProperty,
+	ScalarAttributeData Options,
+	bool CtorExists,
+	string HintName,
+	string TypeName,
+	string ScalarTypeName,
+	string CompareParameterTypeName,
+	string CompareToSelfParameterTypeName,
+	bool ScalarCanBeNull,
+	bool IsReferenceType,
+	string ScalarPropertyName,
+	bool CreateExists,
+	bool HydrateExists,
+	bool TryCreateExists,
+	bool CompareToSelfExists,
+	bool CompareToPrimitiveExists,
+	bool CompareToObjectExists,
+	bool EqualsSelfExists,
+	bool EqualsPrimitiveExists,
+	bool EqualsObjectExists,
+	bool GetHashCodeExists,
+	bool SameTypeEqualityOperatorExists,
+	bool SameTypeInequalityOperatorExists,
+	bool PrimitiveEqualityOperatorExists,
+	bool PrimitiveInequalityOperatorExists,
+	bool ReversePrimitiveEqualityOperatorExists,
+	bool ReversePrimitiveInequalityOperatorExists,
+	bool EnumPropertiesEnabled,
+	bool ToStringExists,
+	bool HasJsonConverterAttribute,
+	bool DeclareOnNormalize,
+	bool DeclareOnValidate
+);

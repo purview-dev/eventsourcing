@@ -30,6 +30,7 @@ public abstract class EventBase : IEvent
 
 		hashCode.Add(GetType().FullName);
 		hashCode.Add(Details);
+		hashCode.Add(SchemaVersion);
 
 		BuildEventHash(ref hashCode);
 
@@ -70,5 +71,9 @@ public abstract class EventBase : IEvent
 	///		}
 	/// }
 	/// </example>
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Design",
+		"CA1045:Do not pass types by reference"
+	)]
 	protected abstract void BuildEventHash(ref HashCode hash);
 }

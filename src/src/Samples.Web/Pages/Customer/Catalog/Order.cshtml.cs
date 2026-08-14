@@ -7,7 +7,7 @@ using Purview.EventSourcing.SqlServer.Events.Exceptions;
 namespace Purview.EventSourcing.Samples.Web.Pages.Customer.Catalog;
 
 sealed class OrderModel(
-	IOrderFulfillmentService fulfillmentService,
+	IOrderFulfilmentService FulfilmentService,
 	IQueryableEventStore customerStore,
 	IQueryableEventStore inventoryStore
 ) : PageModel
@@ -65,7 +65,7 @@ sealed class OrderModel(
 		FulfilmentResult result;
 		try
 		{
-			result = await fulfillmentService.PlaceOrderAsync(
+			result = await FulfilmentService.PlaceOrderAsync(
 				customerId,
 				InventoryId,
 				Quantity,

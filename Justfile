@@ -5,6 +5,7 @@ root_folder := "./src"
 test_root := root_folder + "/tests"
 
 solution_file := root_folder + "/EventSourcing.slnx"
+sg_solution_file := root_folder + "/SourceGeneration.slnf"
 
 sg_perf_tests := test_root + "/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj"
 sql_perf_tests := test_root + "/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj"
@@ -22,6 +23,10 @@ default:
 # Open the solution in Visual Studio
 vs:
     open "{{ solution_file }}"
+
+# Open the solution in Visual Studio
+vs-sg:
+    open "{{ sg_solution_file }}"
 
 # Build the solution
 build *args:
