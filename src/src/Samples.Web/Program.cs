@@ -1,9 +1,12 @@
-using System.Diagnostics.CodeAnalysis;
 using Azure;
 using Azure.Storage.Blobs;
+
 using Microsoft.AspNetCore.Authentication;
+
 using MongoDB.Driver;
+
 using Npgsql;
+
 using Purview.EventSourcing.Admin.Api;
 using Purview.EventSourcing.Admin.AzureStorage;
 using Purview.EventSourcing.Admin.MongoDB;
@@ -18,6 +21,9 @@ using Purview.EventSourcing.Samples;
 using Purview.EventSourcing.Samples.Options;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
+
+using System.Diagnostics.CodeAnalysis;
+
 using AzureCommitException = Purview.EventSourcing.AzureStorage.Exceptions.CommitException;
 using AzureConcurrencyException = Purview.EventSourcing.AzureStorage.Exceptions.ConcurrencyException;
 using SqlServerCommitException = Purview.EventSourcing.SqlServer.Events.Exceptions.CommitException;
@@ -272,6 +278,7 @@ static void ConfigureStoreOptions(
 	SampleStoreOptions sampleStoreOptions
 )
 {
+#pragma warning disable IDE0010 // Add missing cases
 	switch (sampleStoreOptions.EventStore)
 	{
 		case SampleEventStoreKind.MongoDb:
@@ -304,6 +311,7 @@ static void ConfigureStoreOptions(
 			);
 			break;
 	}
+#pragma warning restore IDE0010 // Add missing cases
 
 	if (sampleStoreOptions.QueryStore == SampleQueryStoreKind.MongoDb)
 	{
@@ -382,6 +390,7 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 		options.RoutePrefix = sampleStoreOptions.AdminAPIPath
 	);
 
+#pragma warning disable IDE0010 // Add missing cases
 	switch (sampleStoreOptions.AdminStore)
 	{
 		case SampleAdminStoreKind.SqlServer:
@@ -406,6 +415,7 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 				$"Unsupported admin store '{sampleStoreOptions.AdminStore}'."
 			);
 	}
+#pragma warning restore IDE0010 // Add missing cases
 }
 
 static string NormalizeAlphaNumeric(string value) => new([.. value.Where(char.IsLetterOrDigit)]);
