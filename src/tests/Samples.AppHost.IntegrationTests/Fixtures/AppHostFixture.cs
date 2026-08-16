@@ -35,7 +35,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		[
 			.. base.Args,
 			.. OptionsHelper
-				.ForSet<SampleAppHostKit.SampleAppHostKitOptions>(
+				.ForSet<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
 					c => c.IsTestRun = true,
 					c => c.IsLocal = false,
 					c => c.SqlServer.DatabaseName = _databaseName,

@@ -1,7 +1,5 @@
 using System.Text;
-using Azure.Data.Tables;
 using Purview.EventSourcing.Aggregates;
-using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.AzureStorage;
 
@@ -39,10 +37,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var complexProperty = CreateComplexTestType();
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 
-		aggregate.SetComplexProperty(complexProperty);
+		GenericTableEventStoreTestSeed.SetRandomComplexProperty(aggregate);
 
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 		var result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
@@ -55,10 +52,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 		);
 
 		// Assert
-		await Assert.That(aggregateGetResult).IsNotNull();
-		await Assert
-			.That(aggregate.ComplexTestType)
-			.IsEquivalentTo(aggregateGetResult.ComplexTestType);
+		await GenericTableEventStoreTestSeed.AssertComplexPropertyMatches(
+			aggregate,
+			aggregateGetResult
+		);
 	}
 
 	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
@@ -132,9 +129,11 @@ partial class GenericTableEventStoreTests<TAggregate>
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
-		for (var i = 0; i < eventsToGenerate; i++)
-			aggregate.IncrementInt32Value();
+		var aggregate =
+			GenericTableEventStoreTestSeed.BuildAggregateWithIncrementEvents<TAggregate>(
+				aggregateId,
+				eventsToGenerate
+			);
 
 		var ctx = fixture.CreateEventStoreContext<TAggregate>();
 		var eventStore = ctx.EventStore;
@@ -144,20 +143,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 		bool result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Get and update stream version to remove the Version property.
-		var streamVersion =
-			await tableClient.GetAsync<TableEntity>(
-				aggregateId,
-				TableEventStoreConstants.StreamVersionRowKey,
-				cancellationToken: cancellationToken
-			) ?? throw new NullReferenceException();
-		var streamVersionVersion = streamVersion[nameof(StreamVersionEntity.Version)] as int?;
-
-		streamVersion.Remove(nameof(StreamVersionEntity.Version));
-
-		await tableClient.OperationAsync(
-			TableTransactionActionType.UpdateReplace,
-			streamVersion,
-			cancellationToken: cancellationToken
+		var streamVersionVersion = await GenericTableEventStoreTestSeed.ReadAndRemoveStreamVersion(
+			tableClient,
+			aggregateId,
+			cancellationToken
 		);
 
 		// Assert
@@ -170,20 +159,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 			cancellationToken: cancellationToken
 		);
 
-		await Assert.That(aggregateFromEventStore).IsNotNull();
-		await Assert.That(aggregateFromEventStore.Id()).IsEqualTo(aggregate.Id());
-		await Assert
-			.That(aggregateFromEventStore.IncrementInt32)
-			.IsEqualTo(aggregate.IncrementInt32);
-		await Assert
-			.That(aggregateFromEventStore.Details.SavedVersion)
-			.IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.SnapshotVersion)
-			.IsEqualTo(aggregate.Details.SnapshotVersion);
+		await GenericTableEventStoreTestSeed.AssertRecreatedMatchesSource(
+			aggregateFromEventStore,
+			aggregate
+		);
 
 		await Assert.That(streamVersionVersion).IsEqualTo(eventsToGenerate);
 	}
@@ -314,9 +293,11 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
-		for (var i = 0; i < eventsToGenerate; i++)
-			aggregate.IncrementInt32Value();
+		var aggregate =
+			GenericTableEventStoreTestSeed.BuildAggregateWithIncrementEvents<TAggregate>(
+				aggregateId,
+				eventsToGenerate
+			);
 
 		var ctx3 = fixture.CreateEventStoreContext<TAggregate>();
 		var eventStore = ctx3.EventStore;
@@ -326,15 +307,12 @@ partial class GenericTableEventStoreTests<TAggregate>
 		bool result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Get and update stream version to remove the Version property.
-		var streamVersion = await tableClient.GetAsync<TableEntity>(
-			aggregateId,
-			TableEventStoreConstants.StreamVersionRowKey,
-			cancellationToken: cancellationToken
-		);
-
-		await Assert.That(streamVersion).IsNotNull();
-
-		var streamVersionVersion = streamVersion![nameof(StreamVersionEntity.Version)] as int?;
+		var streamVersionVersion =
+			await GenericTableEventStoreTestSeed.GetStreamVersionNumberAndAssertNotNull(
+				tableClient,
+				aggregateId,
+				cancellationToken
+			);
 
 		// Assert
 		await Assert.That(result).IsTrue();
@@ -346,20 +324,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 			cancellationToken: cancellationToken
 		);
 
-		await Assert.That(aggregateFromEventStore).IsNotNull();
-		await Assert.That(aggregateFromEventStore.Id()).IsEqualTo(aggregate.Id());
-		await Assert
-			.That(aggregateFromEventStore.IncrementInt32)
-			.IsEqualTo(aggregate.IncrementInt32);
-		await Assert
-			.That(aggregateFromEventStore.Details.SavedVersion)
-			.IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.SnapshotVersion)
-			.IsEqualTo(aggregate.Details.SnapshotVersion);
+		await GenericTableEventStoreTestSeed.AssertRecreatedMatchesSource(
+			aggregateFromEventStore,
+			aggregate
+		);
 
 		await Assert.That(streamVersionVersion).IsEqualTo(eventsToGenerate);
 	}
@@ -378,10 +346,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
 		// Act
-		async Task<SaveResult<TAggregate>?> Func() =>
-			await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
-
-		// Get and update stream version to remove the Version property.
-		await Assert.That(Func).Throws<ArgumentOutOfRangeException>();
+		await GenericTableEventStoreTestSeed.AssertSaveThrowsArgumentOutOfRangeException(
+			eventStore,
+			aggregate,
+			cancellationToken
+		);
 	}
 }

@@ -13,4 +13,9 @@ static partial class TypeLibrary
 	public const string SerializationNamespace = "Purview.EventSourcing.Serialization";
 
 	public const string CollectionsNamespace = "Purview.EventSourcing";
+
+	public const string AggregateGeneratorName = "Purview.EventSourcing.AggregateSourceGenerator";
+
+	public const string ValueObjectGeneratorName =
+		"Purview.EventSourcing.ValueObjectSourceGenerator";
 }

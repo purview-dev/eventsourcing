@@ -56,8 +56,8 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 			? c =>
 				(
 					string.IsNullOrEmpty(search)
-					|| ((string)c.Name).Contains(search)
-					|| ((string)c.Email).Contains(search)
+					|| c.Name.Value.Contains(search)
+					|| c.Email.Value.Contains(search)
 				) && (ShowInactive || c.IsActive)
 			: c => true;
 

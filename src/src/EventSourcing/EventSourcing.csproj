@@ -26,14 +26,6 @@
 		/>
 	</ItemGroup>
 
-	<ItemGroup>
-		<None
-			Include="buildTransitive\Purview.EventSourcing.targets"
-			Pack="true"
-			PackagePath="buildTransitive\Purview.EventSourcing.targets"
-		/>
-	</ItemGroup>
-
 	<Target Name="IncludeEventStoreSourceGenerator" DependsOnTargets="Build">
 		<Error
 			Condition="!Exists('$(EventStoreSourceGeneratorAssembly)')"

@@ -37,7 +37,7 @@ partial class TableEventStore<T>
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
-		var result = await SaveCoreAsync(
+		var result = await _saveOperation.SaveCoreAsync(
 			aggregate,
 			operationContext,
 			cancellationToken,

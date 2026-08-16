@@ -12,11 +12,11 @@ static partial class SourceGenLibrary
 	{
 		var isDisabled = IncrementalPipeline.IsDisabledValueProvider(
 			context,
-			PropLibrary.DisableSourceGenerator
+			PropertyLibrary.DisableSourceGenerator
 		);
 		var generationContext = IncrementalPipeline.GenerationContextValueProvider(
 			context,
-			generatorName: $"{AssemblyInfo.AssemblyName}.{nameof(AggregateSourceGenerator)}",
+			generatorName: TypeLibrary.AggregateGeneratorName,
 			generatorVersion: AssemblyInfo.Version,
 			(compilation, validateCodeWriterScopes, generatorName, generatorVersion, _) =>
 				new AggregateGenerationContext(
@@ -67,19 +67,6 @@ static partial class SourceGenLibrary
 					return model;
 				},
 				"CollectAggregates"
-			);
-	}
-
-	public static string AddCodeGen(string source)
-	{
-		return source
-			.Replace(
-				CodeGenHelpers.CodeGenReplacementToken,
-				CodeGenHelpers.GetGeneratedCodeAttribute()
-			)
-			.Replace(
-				CodeGenHelpers.NonClassCodeGenReplacementToken,
-				CodeGenHelpers.GetNonClassGeneratedCodeAttribute()
 			);
 	}
 }

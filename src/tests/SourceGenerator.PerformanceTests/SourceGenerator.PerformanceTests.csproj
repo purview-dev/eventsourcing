@@ -3,9 +3,15 @@
 		<IsTestProject>false</IsTestProject>
 	</PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\SourceGenerator\SourceGenerator.csproj" />
+		<ProjectReference Include="..\..\src\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference
+			Include="..\..\src\SourceGenerator\SourceGenerator.csproj"
+			OutputItemType="Analyzer"
+			ReferenceOutputAssembly="true"
+		/>
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+		<PackageReference Include="Purview.SourceGeneratorFramework" />
 	</ItemGroup>
 </Project>

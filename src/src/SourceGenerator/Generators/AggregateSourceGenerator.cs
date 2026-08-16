@@ -15,14 +15,10 @@ public sealed partial class AggregateSourceGenerator : IIncrementalGenerator
 			ctx.AddEmbeddedAttributeDefinition();
 			_logger?.Debug($" - EmbeddedAttribute");
 
-			foreach (var attribute in TypeLibrary.Attributes.GeneratedAttributes)
+			foreach (var (HintName, Source) in AggregateAttributeEmitter.Emit())
 			{
-				_logger?.Debug($" - {attribute.TypeName}");
-
-				ctx.AddSource(
-					$"{attribute.TypeName}.g.cs",
-					EmbeddedResources.Load(attribute.TypeName)
-				);
+				_logger?.Debug($" - {HintName}");
+				ctx.AddSource(HintName, Source);
 			}
 		});
 

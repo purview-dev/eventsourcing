@@ -1,8 +1,3 @@
-using Purview.EventSourcing.Aggregates.Persistence.Events;
-using Purview.EventSourcing.MongoDB.Events.Entities;
-using Purview.EventSourcing.MongoDB.Events.Exceptions;
-using Purview.EventSourcing.MongoDB.StorageClient;
-
 namespace Purview.EventSourcing.MongoDB.Events;
 
 partial class GenericMongoDBEventStoreTests<TAggregate>
@@ -22,15 +17,11 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await eventStore.DeleteAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Act
-		Task<TAggregate?> Func() =>
-			eventStore.GetAsync(
-				aggregateId,
-				new EventStoreOperationContext { DeleteMode = DeleteHandlingMode.ThrowsException },
-				cancellationToken: cancellationToken
-			);
-
-		// Assert
-		await Assert.That(Func).Throws<AggregateIsDeletedException>();
+		await GenericMongoDBEventStoreTestSeed.AssertGetAsyncThrowsWhenDeleted(
+			eventStore,
+			aggregateId,
+			cancellationToken
+		);
 	}
 
 	public async Task GetAsync_GivenAnAggregateWithSavedEventsButNoSnapshot_RecreatesAggregate(
@@ -51,26 +42,11 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Act
-		var snapshotEntity = await snapshotClient.GetAsync<SnapshotEntity>(
+		await GenericMongoDBEventStoreTestSeed.DeleteSnapshotAndAssertRemoved(
+			snapshotClient,
 			aggregateId,
-			EntityTypes.SnapshotType,
-			cancellationToken: cancellationToken
+			cancellationToken
 		);
-
-		await Assert.That(snapshotEntity).IsNotNull();
-
-		await snapshotClient.DeleteAsync<SnapshotEntity>(
-			m => m.Id == aggregateId,
-			cancellationToken: cancellationToken
-		);
-
-		snapshotEntity = await snapshotClient.GetAsync<SnapshotEntity>(
-			aggregateId,
-			EntityTypes.SnapshotType,
-			cancellationToken: cancellationToken
-		);
-
-		await Assert.That(snapshotEntity).IsNull();
 
 		// Assert
 		var result = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
@@ -141,15 +117,11 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		var totalEvents = eventsToCreate + numberOfOldEventsToCreate;
 
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
-		// Register the event type here...!
-		aggregate.RegisterOldEventType();
-
-		for (var i = 0; i < eventsToCreate; i++)
-			aggregate.IncrementInt32Value();
-
-		for (var i = 0; i < numberOfOldEventsToCreate; i++)
-			aggregate.SetOldEventValue(Guid.NewGuid());
+		var aggregate = GenericMongoDBEventStoreTestSeed.BuildAggregateWithOldEvents<TAggregate>(
+			aggregateId,
+			eventsToCreate,
+			numberOfOldEventsToCreate
+		);
 
 		var ctx = fixture.CreateEventStoreContext<TAggregate>();
 		var eventStore = ctx.EventStore;
@@ -166,25 +138,17 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		);
 
 		// Assert
-		telemetry
-			.CannotApplyEvent(
-				aggregateId,
-				Any<string>(),
-				Any<string>(),
-				Any<string>(),
-				Is<string>(eventType =>
-					eventType!.Contains(nameof(OldEvent), StringComparison.Ordinal)
-				),
-				Any<int>()
-			)
-			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
+		GenericMongoDBEventStoreTestSeed.AssertCannotApplyEventForOldEvents(
+			telemetry,
+			aggregateId,
+			numberOfOldEventsToCreate
+		);
 
-		await Assert.That(result).IsNotNull();
-		await Assert.That(result.IsNew()).IsFalse();
-		await Assert.That(result.Id()).IsEqualTo(aggregate.Id());
-		await Assert.That(result.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
-		await Assert.That(result.Details.SavedVersion).IsEqualTo(totalEvents);
-		await Assert.That(result.Details.CurrentVersion).IsEqualTo(totalEvents);
+		await GenericMongoDBEventStoreTestSeed.AssertRecreatedWithTotals(
+			result,
+			aggregate,
+			totalEvents
+		);
 	}
 
 	// This is testing that the aggregate is still correct after an event type cannot be found - removed
@@ -203,15 +167,11 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		var totalEvents = eventsToCreate + numberOfOldEventsToCreate;
 
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
-		// Register the event type here...!
-		aggregate.RegisterOldEventType();
-
-		for (var i = 0; i < eventsToCreate; i++)
-			aggregate.IncrementInt32Value();
-
-		for (var i = 0; i < numberOfOldEventsToCreate; i++)
-			aggregate.SetOldEventValue(Guid.NewGuid());
+		var aggregate = GenericMongoDBEventStoreTestSeed.BuildAggregateWithOldEvents<TAggregate>(
+			aggregateId,
+			eventsToCreate,
+			numberOfOldEventsToCreate
+		);
 
 		var ctx = fixture.CreateEventStoreContext<TAggregate>();
 		var eventStore = ctx.EventStore;
@@ -222,23 +182,15 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Update existing events to make them unknown types effectively.
-		var eventsToUpdate = eventStore.GetEventRangeEntitiesAsync(
+		await GenericMongoDBEventStoreTestSeed.MarkEventsAsUnknown(
+			eventStore,
+			eventClient,
 			aggregateId,
 			eventsToCreate + 1,
 			totalEvents,
+			unknownEventType,
 			cancellationToken
 		);
-
-		BatchOperation batchOperation = new();
-		var batch = batchOperation;
-		await foreach (var eventToUpdate in eventsToUpdate)
-		{
-			eventToUpdate.EventType = unknownEventType;
-
-			batch.Update(eventToUpdate);
-		}
-
-		await eventClient.SubmitBatchAsync(batch, cancellationToken);
 
 		// Get without using the snapshot, just from the event record.
 		var result = await eventStore.GetAsync(
@@ -248,21 +200,17 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		);
 
 		// Assert
-		telemetry
-			.SkippedUnknownEvent(
-				aggregateId,
-				Any<string>(),
-				Any<string>(),
-				unknownEventType,
-				Any<int>()
-			)
-			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
+		GenericMongoDBEventStoreTestSeed.AssertSkippedUnknownEvent(
+			telemetry,
+			aggregateId,
+			unknownEventType,
+			numberOfOldEventsToCreate
+		);
 
-		await Assert.That(result).IsNotNull();
-		await Assert.That(result.IsNew()).IsFalse();
-		await Assert.That(result.Id()).IsEqualTo(aggregate.Id());
-		await Assert.That(result.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
-		await Assert.That(result.Details.SavedVersion).IsEqualTo(totalEvents);
-		await Assert.That(result.Details.CurrentVersion).IsEqualTo(totalEvents);
+		await GenericMongoDBEventStoreTestSeed.AssertRecreatedWithTotals(
+			result,
+			aggregate,
+			totalEvents
+		);
 	}
 }

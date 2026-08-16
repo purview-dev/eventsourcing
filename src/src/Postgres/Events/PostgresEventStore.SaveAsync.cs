@@ -9,6 +9,7 @@ using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.Postgres.Events.Exceptions;
 using Purview.EventSourcing.Services;
+using Purview.EventSourcing.Storage;
 using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.Postgres.Events;
@@ -78,17 +79,10 @@ partial class PostgresEventStore<T>
 			operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
-		static SaveResult<T> ReturnSaveResult(
-			T aggregate,
-			bool success,
-			bool skipped,
-			ValidationResult? validationResult = null
-		) => new(aggregate, validationResult ?? new ValidationResult(), success, skipped);
-
 		if (!validationResult.IsValid)
 		{
 			return new TransactionalSaveOperation<T>(
-				ReturnSaveResult(aggregate, false, false, validationResult)
+				SaveResultBuilder.Create(aggregate, false, false, validationResult)
 			);
 		}
 
@@ -96,7 +90,9 @@ partial class PostgresEventStore<T>
 		{
 			return operationContext.LockMode is LockHandlingMode.ThrowsException
 				? throw new AggregateLockedException(idempotencyId)
-				: new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, false, false));
+				: new TransactionalSaveOperation<T>(
+					SaveResultBuilder.Create(aggregate, false, false)
+				);
 		}
 
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
@@ -118,7 +114,9 @@ partial class PostgresEventStore<T>
 			);
 			activity?.Dispose();
 
-			return new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, false, true));
+			return new TransactionalSaveOperation<T>(
+				SaveResultBuilder.Create(aggregate, false, true)
+			);
 		}
 
 		var isNew = aggregate.IsNew();
@@ -156,7 +154,7 @@ partial class PostgresEventStore<T>
 					_eventStoreTelemetry.EventsAlreadyApplied(aggregate.Id(), idempotencyId);
 					activity?.Dispose();
 					return new TransactionalSaveOperation<T>(
-						ReturnSaveResult(aggregate, true, true)
+						SaveResultBuilder.Create(aggregate, true, true)
 					);
 				}
 			}
@@ -168,6 +166,35 @@ partial class PostgresEventStore<T>
 			}
 		}
 
+		return await PersistAndNotifyAsync(
+			aggregate,
+			operationContext,
+			idempotencyId,
+			changeEvents,
+			isNew,
+			connection,
+			transaction,
+			idempotencyIdAsString,
+			idempotencyMarkerId,
+			activity,
+			cancellationToken
+		);
+	}
+
+	async Task<TransactionalSaveOperation<T>> PersistAndNotifyAsync(
+		T aggregate,
+		EventStoreOperationContext operationContext,
+		string idempotencyId,
+		IEvent[] changeEvents,
+		bool isNew,
+		NpgsqlConnection? connection,
+		NpgsqlTransaction? transaction,
+		string idempotencyIdAsString,
+		string idempotencyMarkerId,
+		Activity? activity,
+		CancellationToken cancellationToken
+	)
+	{
 		if (
 			operationContext.NotificationMode.HasFlag(NotificationModes.BeforeDelete)
 			&& changeEvents.OfType<Deleted>().Any()
@@ -277,7 +304,7 @@ partial class PostgresEventStore<T>
 			if (shouldSnapshot)
 				await CreateSnapshotAsync(aggregate, connection, transaction, cancellationToken);
 
-			var result = ReturnSaveResult(aggregate, true, false);
+			var result = SaveResultBuilder.Create(aggregate, true, false);
 
 			return new TransactionalSaveOperation<T>(
 				result,
@@ -354,13 +381,23 @@ partial class PostgresEventStore<T>
 			activity?.Dispose();
 			ClearCacheFireAndForget(aggregate);
 
-			if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
-			{
-				var deleteRequested = changeEvents.OfType<Deleted>().Any();
-				await _aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, ex);
-			}
+			await HandleSaveFailureAsync(aggregate, operationContext, changeEvents, ex);
 
 			throw;
+		}
+	}
+
+	async Task HandleSaveFailureAsync(
+		T aggregate,
+		EventStoreOperationContext operationContext,
+		IEvent[] changeEvents,
+		Exception exception
+	)
+	{
+		if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
+		{
+			var deleteRequested = changeEvents.OfType<Deleted>().Any();
+			await _aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, exception);
 		}
 	}
 

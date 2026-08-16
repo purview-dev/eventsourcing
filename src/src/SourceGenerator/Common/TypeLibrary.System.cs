@@ -4,6 +4,16 @@ partial class TypeLibrary
 {
 	public static class System
 	{
+		public static readonly TypeValueObject AttributeUsageAttribute =
+			TypeValueObject.Create<AttributeUsageAttribute>();
+
+		public static readonly TypeValueObject AttributeTargets =
+			TypeValueObject.Create<AttributeTargets>();
+
+		public static readonly TypeValueObject Int32 = TypeValueObject.Create<int>();
+
+		public static readonly TypeValueObject Boolean = TypeValueObject.Create<bool>();
+
 		public static readonly TypeValueObject String = TypeValueObject.Create<string>();
 
 		public static readonly TypeValueObject Guid = TypeValueObject.Create<Guid>();

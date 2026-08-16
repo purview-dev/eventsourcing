@@ -53,16 +53,5 @@ partial class TypeLibrary
 			nameof(ScalarAttribute),
 			SerializationNamespace
 		);
-
-		public static readonly IEnumerable<TypeValueObject> GeneratedAttributes =
-		[
-			PropertyAttribute,
-			ComputedAttribute,
-			AggregateAttribute,
-			CollectionEventAttribute,
-			AggregateDefaultsAttribute,
-			EventAttribute,
-			MetadataAttribute,
-		];
 	}
 }

@@ -140,7 +140,9 @@ public sealed class PostgresEventStoreOptions
 	public Dictionary<
 		string,
 		PostgresAggregateTableOverride
+#pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
+#pragma warning restore format
 
 	/// <summary>
 	/// Configures runtime-managed PostgreSQL indexes over the event payload JSON column.

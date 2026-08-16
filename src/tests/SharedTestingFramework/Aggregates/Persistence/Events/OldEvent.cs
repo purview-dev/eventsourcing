@@ -7,7 +7,7 @@ namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 	"EVENTSTORE013:Event names should be past tense",
 	Justification = "Testing"
 )]
-public class OldEvent : EventBase
+public sealed class OldEvent : EventBase
 {
 	public Guid Value { get; set; }
 

@@ -84,7 +84,9 @@ public sealed class PostgresSnapshotEventStoreOptions
 	public Dictionary<
 		string,
 		PostgresSnapshotAggregateTableOverride
+#pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
+#pragma warning restore format
 
 	/// <summary>
 	/// Configures runtime-managed PostgreSQL indexes over the snapshot payload JSON column.

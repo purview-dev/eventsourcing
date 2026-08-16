@@ -31,7 +31,7 @@ partial class TableEventStore<T>
 		if (aggregate.IsNew())
 			return false;
 
-		var result = await SaveCoreAsync(
+		var result = await _saveOperation.SaveCoreAsync(
 			aggregate,
 			operationContext,
 			cancellationToken,

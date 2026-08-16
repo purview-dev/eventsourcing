@@ -14,9 +14,6 @@ namespace Purview.EventSourcing.AzureStorage;
 public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisposable
 	where T : class, IAggregate, new()
 {
-	const int SerializationBufferSize = 4096;
-	const int MaxEventSize = 32000;
-
 	readonly StorageClients.Table.AzureTableClient _tableClient;
 	readonly StorageClients.Blob.AzureBlobClient _blobClient;
 
@@ -34,6 +31,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
+	readonly TableSaveOperation<T> _saveOperation;
 
 	public TableEventStore(
 		IAggregateEventNameMapper eventNameMapper,
@@ -78,6 +76,20 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		if (!aggregateName.Contains('.', StringComparison.InvariantCulture))
 			// Could do with validating that this is a valid blob container name.
 			_aggregateTypeShortName = aggregateName;
+
+		_saveOperation = new TableSaveOperation<T>(
+			this,
+			_tableClient,
+			_blobClient,
+			_eventNameMapper,
+			_eventStoreOptions,
+			_validator,
+			_aggregateChangeNotifier,
+			_eventStoreTelemetry,
+			_aggregateTypeFullName,
+			_snapshotStrategy,
+			_snapshotStrategySelector
+		);
 	}
 
 	internal string TableName { get; }
@@ -91,7 +103,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		return aggregate;
 	}
 
-	async Task UpdateCacheAsync(
+	internal async Task UpdateCacheAsync(
 		T aggregate,
 		DistributedCacheEntryOptions? cacheEntryOptions,
 		CancellationToken cancellationToken = default
@@ -158,7 +170,7 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		}
 	}
 
-	async Task<StreamVersionEntity?> GetStreamVersionAsync(
+	internal async Task<StreamVersionEntity?> GetStreamVersionAsync(
 		string aggregateId,
 		bool expectedToExist,
 		CancellationToken cancellationToken
@@ -223,6 +235,29 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		return result;
 	}
 
+	internal void ClearCacheFireAndForget(T aggregate)
+	{
+		Task.Run(async () =>
+		{
+			try
+			{
+				var cacheKey = CreateCacheKey(aggregate.Id());
+				// Do not pass in the cancellation token. We want this to carry on as long as possible.
+				await _distributedCache.RemoveAsync(cacheKey);
+			}
+#pragma warning disable CA1031
+			catch (Exception ex)
+#pragma warning restore CA1031
+			{
+				_eventStoreTelemetry.CacheRemovalFailure(
+					aggregate.Id(),
+					_aggregateTypeFullName,
+					ex
+				);
+			}
+		});
+	}
+
 	static bool ReturnAggregate(
 		bool isDeleted,
 		string aggregateId,
@@ -245,14 +280,14 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 		return true;
 	}
 
-	string CreateEventRowKey(int version) =>
+	internal string CreateEventRowKey(int version) =>
 		$"{_eventStoreOptions.Value.EventPrefix}_{$"{version}".PadLeft(_eventStoreOptions.Value.EventSuffixLength, '0')}";
 
-	static string CreateIdempotencyCheckRowKey(string idempotencyId) =>
+	internal static string CreateIdempotencyCheckRowKey(string idempotencyId) =>
 		$"{TableEventStoreConstants.IdempotencyCheckRowKeyPrefix}{idempotencyId}";
 
 #pragma warning disable CA1308 // Normalize strings to uppercase
-	string GenerateEventBlobName(string aggregateId, string eventId) =>
+	internal string GenerateEventBlobName(string aggregateId, string eventId) =>
 		$"{_aggregateTypeShortName}/{aggregateId}/{eventId}.json".ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
 

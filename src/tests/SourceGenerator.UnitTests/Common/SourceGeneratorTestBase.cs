@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -27,11 +26,6 @@ public abstract class SourceGeneratorTestBase<TGenerator>(bool throwOnLogError =
 	public const int HintNameHashHexLength = 16;
 	public const string GeneratedSourceFileSuffix = ".g.cs";
 
-	[SuppressMessage(
-		"Design",
-		"CA1506:AvoidExcessiveClassCoupling",
-		Justification = "Test helper creates compilation and generator driver"
-	)]
 	protected (GeneratorDriverRunResult Result, Compilation OutputCompilation) Generate(
 		string source,
 		bool includeNamespaces,
@@ -55,28 +49,7 @@ using Purview.EventSourcing.ValueObjects;
 
 		var syntaxTree = CSharpSyntaxTree.ParseText(source, cancellationToken: cancellationToken);
 
-		var references = new List<MetadataReference>
-		{
-			// Without this, all of the references to event sourcing types will fail.
-			MetadataReference.CreateFromFile(typeof(Aggregates.IAggregate).Assembly.Location),
-			MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-			MetadataReference.CreateFromFile(typeof(Attribute).Assembly.Location),
-			MetadataReference.CreateFromFile(
-				System.Reflection.Assembly.Load("System.Runtime").Location
-			),
-			MetadataReference.CreateFromFile(
-				typeof(System.Text.Json.JsonSerializer).Assembly.Location
-			),
-			MetadataReference.CreateFromFile(
-				typeof(System.ComponentModel.DataAnnotations.RequiredAttribute).Assembly.Location
-			),
-		};
-
-		// Add netstandard reference
-		var netstandard = System.Reflection.Assembly.Load(
-			"netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51"
-		);
-		references.Add(MetadataReference.CreateFromFile(netstandard.Location));
+		var references = TestMetadataReferences.Create();
 
 		var compilation = CSharpCompilation.Create(
 			"TestAssembly",
@@ -89,25 +62,7 @@ using Purview.EventSourcing.ValueObjects;
 
 		if (generator is ILogSupport logging && TestContext.Current is not null)
 		{
-			logging.SetLogOutput(
-				(message, outputType) =>
-				{
-					var prefix = outputType switch
-					{
-						OutputType.Diagnostic => "DIA",
-						OutputType.Debug => "DBG",
-						OutputType.Info => "INF",
-						OutputType.Warning => "WRN",
-						OutputType.Error => "ERR",
-						_ => "???",
-					};
-
-					TestContext.Current.OutputWriter.WriteLine($"{prefix}: {message}");
-
-					if (throwOnLogError && outputType == OutputType.Error)
-						throw new InvalidOperationException($"Generator logged error: {message}");
-				}
-			);
+			logging.SetLogOutput(GeneratorLogCallback.Create(throwOnLogError));
 		}
 
 		var driver = CSharpGeneratorDriver
@@ -115,7 +70,7 @@ using Purview.EventSourcing.ValueObjects;
 			.RunGeneratorsAndUpdateCompilation(
 				compilation,
 				out var outputCompilation,
-				out var diagnostics,
+				out _,
 				cancellationToken
 			);
 

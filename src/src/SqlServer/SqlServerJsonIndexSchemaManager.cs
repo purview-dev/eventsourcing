@@ -130,110 +130,54 @@ static partial class SqlServerJsonIndexSchemaManager
 				continue;
 			}
 
-			var jsonPath = definition.JsonPath?.Trim();
-			if (string.IsNullOrWhiteSpace(jsonPath) || !jsonPath.StartsWith('$'))
-				errors.Add($"{optionsName}.Indexes[{i}].JsonPath must start with '$'.");
-
-			var sqlType = definition.SqlType?.Trim();
-			if (string.IsNullOrWhiteSpace(sqlType) || !SqlTypeRegex().IsMatch(sqlType))
-				errors.Add(
-					$"{optionsName}.Indexes[{i}].SqlType '{definition.SqlType}' is not supported."
-				);
-
-			var filter = string.IsNullOrWhiteSpace(definition.Filter)
-				? null
-				: definition.Filter.Trim();
-			if (filter is not null && !IsSafeFilter(filter))
-				errors.Add($"{optionsName}.Indexes[{i}].Filter contains unsupported SQL text.");
-
-			var normalizedIncludeColumns = new List<string>();
-			var seenIncludeColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			foreach (var includeColumn in definition.IncludeColumns ?? [])
-			{
-				if (string.IsNullOrWhiteSpace(includeColumn))
-				{
-					errors.Add(
-						$"{optionsName}.Indexes[{i}].IncludeColumns cannot contain empty values."
-					);
-					continue;
-				}
-
-				var normalizedColumn = includeColumn.Trim();
-				if (!seenIncludeColumns.Add(normalizedColumn))
-				{
-					errors.Add(
-						$"{optionsName}.Indexes[{i}].IncludeColumns contains duplicate column '{normalizedColumn}'."
-					);
-					continue;
-				}
-
-				ValidateIdentifier(normalizedColumn, $"{optionsName}.Indexes[{i}].IncludeColumns");
-				if (!supportedIncludeColumns.Contains(normalizedColumn))
-					errors.Add(
-						$"{optionsName}.Indexes[{i}].IncludeColumns contains unsupported column '{normalizedColumn}'."
-					);
-
-				normalizedIncludeColumns.Add(normalizedColumn);
-			}
+			var jsonPath = ValidateJsonPath(definition, optionsName, i, errors);
+			var sqlType = ValidateSqlType(definition, optionsName, i, errors);
+			var filter = ValidateFilter(definition, optionsName, i, errors);
+			var normalizedIncludeColumns = NormalizeIncludeColumns(
+				definition,
+				optionsName,
+				i,
+				supportedIncludeColumns,
+				errors
+			);
 
 			if (errors.Count > errorCountBeforeDefinition)
 				continue;
 
-			var computedColumnKey = $"{jsonPath}|{sqlType}|{definition.ComputedColumnMode}";
-			var computedColumnName = string.IsNullOrWhiteSpace(definition.ComputedColumnName)
-				? $"JX_{CreateStableHash(computedColumnKey)}"
-				: definition.ComputedColumnName.Trim();
-			ValidateIdentifier(
-				computedColumnName,
-				$"{optionsName}.Indexes[{i}].ComputedColumnName"
-			);
-
-			var logicalIndexKey = string.Join(
-				"|",
+			var computedColumnName = ResolveComputedColumnName(
+				definition,
 				jsonPath,
 				sqlType,
-				definition.ComputedColumnMode,
-				definition.Unique,
-				filter ?? string.Empty,
-				string.Join(",", normalizedIncludeColumns)
+				optionsName,
+				i
 			);
-			if (!logicalKeys.Add(logicalIndexKey))
-				errors.Add($"{optionsName}.Indexes[{i}] duplicates another JSON index definition.");
-
-			var indexName = string.IsNullOrWhiteSpace(definition.IndexName)
-				? $"IX_{tableName}_{CreateStableHash(logicalIndexKey)}"
-				: definition.IndexName.Trim();
-			ValidateIdentifier(indexName, $"{optionsName}.Indexes[{i}].IndexName");
-
-			if (!indexNames.Add(indexName))
-				errors.Add($"{optionsName}.Indexes contains duplicate index name '{indexName}'.");
-
-			var computedColumn = new SqlServerJsonComputedColumnDescriptor(
-				computedColumnName,
-				$"TRY_CAST(JSON_VALUE([Payload], N'{EscapeSqlLiteral(jsonPath!)}') AS {sqlType})",
-				definition.ComputedColumnMode == SqlServerJsonComputedColumnMode.Persisted
+			var logicalIndexKey = DetectDuplicateLogicalKey(
+				definition,
+				jsonPath,
+				sqlType,
+				filter,
+				normalizedIncludeColumns,
+				optionsName,
+				i,
+				logicalKeys,
+				errors
 			);
+			var indexName = ResolveIndexName(
+				definition,
+				logicalIndexKey,
+				tableName,
+				optionsName,
+				i
+			);
+			DetectDuplicateIndexName(indexName, optionsName, indexNames, errors);
 
-			if (computedColumns.TryGetValue(computedColumn.Name, out var existingComputedColumn))
-			{
-				if (
-					!string.Equals(
-						existingComputedColumn.Expression,
-						computedColumn.Expression,
-						StringComparison.Ordinal
-					)
-					|| existingComputedColumn.Persisted != computedColumn.Persisted
-				)
-				{
-					errors.Add(
-						$"{optionsName}.Indexes contains conflicting computed-column configuration for '{computedColumn.Name}'."
-					);
-				}
-			}
-			else
-			{
-				computedColumns.Add(computedColumn.Name, computedColumn);
-			}
+			var computedColumn = BuildComputedColumn(
+				definition,
+				jsonPath,
+				sqlType,
+				computedColumnName
+			);
+			DetectComputedColumnConflict(computedColumn, optionsName, computedColumns, errors);
 
 			descriptors.Add(
 				new SqlServerJsonIndexDescriptor(
@@ -251,6 +195,205 @@ static partial class SqlServerJsonIndexSchemaManager
 
 		// Sort descriptors by index name for deterministic order
 		return descriptors.AsReadOnly();
+	}
+
+	static string? ValidateJsonPath(
+		SqlServerJsonIndexDefinition definition,
+		string optionsName,
+		int i,
+		List<string> errors
+	)
+	{
+		var jsonPath = definition.JsonPath?.Trim();
+		if (string.IsNullOrWhiteSpace(jsonPath) || !jsonPath.StartsWith('$'))
+			errors.Add($"{optionsName}.Indexes[{i}].JsonPath must start with '$'.");
+
+		return jsonPath;
+	}
+
+	static string? ValidateSqlType(
+		SqlServerJsonIndexDefinition definition,
+		string optionsName,
+		int i,
+		List<string> errors
+	)
+	{
+		var sqlType = definition.SqlType?.Trim();
+		if (string.IsNullOrWhiteSpace(sqlType) || !SqlTypeRegex().IsMatch(sqlType))
+			errors.Add(
+				$"{optionsName}.Indexes[{i}].SqlType '{definition.SqlType}' is not supported."
+			);
+
+		return sqlType;
+	}
+
+	static string? ValidateFilter(
+		SqlServerJsonIndexDefinition definition,
+		string optionsName,
+		int i,
+		List<string> errors
+	)
+	{
+		var filter = string.IsNullOrWhiteSpace(definition.Filter) ? null : definition.Filter.Trim();
+		if (filter is not null && !IsSafeFilter(filter))
+			errors.Add($"{optionsName}.Indexes[{i}].Filter contains unsupported SQL text.");
+
+		return filter;
+	}
+
+	static List<string> NormalizeIncludeColumns(
+		SqlServerJsonIndexDefinition definition,
+		string optionsName,
+		int i,
+		IReadOnlySet<string> supportedIncludeColumns,
+		List<string> errors
+	)
+	{
+		var normalizedIncludeColumns = new List<string>();
+		var seenIncludeColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var includeColumn in definition.IncludeColumns ?? [])
+		{
+			if (string.IsNullOrWhiteSpace(includeColumn))
+			{
+				errors.Add(
+					$"{optionsName}.Indexes[{i}].IncludeColumns cannot contain empty values."
+				);
+				continue;
+			}
+
+			var normalizedColumn = includeColumn.Trim();
+			if (!seenIncludeColumns.Add(normalizedColumn))
+			{
+				errors.Add(
+					$"{optionsName}.Indexes[{i}].IncludeColumns contains duplicate column '{normalizedColumn}'."
+				);
+				continue;
+			}
+
+			ValidateIdentifier(normalizedColumn, $"{optionsName}.Indexes[{i}].IncludeColumns");
+			if (!supportedIncludeColumns.Contains(normalizedColumn))
+				errors.Add(
+					$"{optionsName}.Indexes[{i}].IncludeColumns contains unsupported column '{normalizedColumn}'."
+				);
+
+			normalizedIncludeColumns.Add(normalizedColumn);
+		}
+
+		return normalizedIncludeColumns;
+	}
+
+	static string ResolveComputedColumnName(
+		SqlServerJsonIndexDefinition definition,
+		string? jsonPath,
+		string? sqlType,
+		string optionsName,
+		int i
+	)
+	{
+		var computedColumnKey = $"{jsonPath}|{sqlType}|{definition.ComputedColumnMode}";
+		var computedColumnName = string.IsNullOrWhiteSpace(definition.ComputedColumnName)
+			? $"JX_{CreateStableHash(computedColumnKey)}"
+			: definition.ComputedColumnName.Trim();
+		ValidateIdentifier(computedColumnName, $"{optionsName}.Indexes[{i}].ComputedColumnName");
+
+		return computedColumnName;
+	}
+
+	static string DetectDuplicateLogicalKey(
+		SqlServerJsonIndexDefinition definition,
+		string? jsonPath,
+		string? sqlType,
+		string? filter,
+		List<string> normalizedIncludeColumns,
+		string optionsName,
+		int i,
+		HashSet<string> logicalKeys,
+		List<string> errors
+	)
+	{
+		var logicalIndexKey = string.Join(
+			"|",
+			jsonPath,
+			sqlType,
+			definition.ComputedColumnMode,
+			definition.Unique,
+			filter ?? string.Empty,
+			string.Join(",", normalizedIncludeColumns)
+		);
+		if (!logicalKeys.Add(logicalIndexKey))
+			errors.Add($"{optionsName}.Indexes[{i}] duplicates another JSON index definition.");
+
+		return logicalIndexKey;
+	}
+
+	static string ResolveIndexName(
+		SqlServerJsonIndexDefinition definition,
+		string logicalIndexKey,
+		string tableName,
+		string optionsName,
+		int i
+	)
+	{
+		var indexName = string.IsNullOrWhiteSpace(definition.IndexName)
+			? $"IX_{tableName}_{CreateStableHash(logicalIndexKey)}"
+			: definition.IndexName.Trim();
+		ValidateIdentifier(indexName, $"{optionsName}.Indexes[{i}].IndexName");
+
+		return indexName;
+	}
+
+	static void DetectDuplicateIndexName(
+		string indexName,
+		string optionsName,
+		HashSet<string> indexNames,
+		List<string> errors
+	)
+	{
+		if (!indexNames.Add(indexName))
+			errors.Add($"{optionsName}.Indexes contains duplicate index name '{indexName}'.");
+	}
+
+	static SqlServerJsonComputedColumnDescriptor BuildComputedColumn(
+		SqlServerJsonIndexDefinition definition,
+		string? jsonPath,
+		string? sqlType,
+		string computedColumnName
+	)
+	{
+		return new SqlServerJsonComputedColumnDescriptor(
+			computedColumnName,
+			$"TRY_CAST(JSON_VALUE([Payload], N'{EscapeSqlLiteral(jsonPath!)}') AS {sqlType})",
+			definition.ComputedColumnMode == SqlServerJsonComputedColumnMode.Persisted
+		);
+	}
+
+	static void DetectComputedColumnConflict(
+		SqlServerJsonComputedColumnDescriptor computedColumn,
+		string optionsName,
+		Dictionary<string, SqlServerJsonComputedColumnDescriptor> computedColumns,
+		List<string> errors
+	)
+	{
+		if (computedColumns.TryGetValue(computedColumn.Name, out var existingComputedColumn))
+		{
+			if (
+				!string.Equals(
+					existingComputedColumn.Expression,
+					computedColumn.Expression,
+					StringComparison.Ordinal
+				)
+				|| existingComputedColumn.Persisted != computedColumn.Persisted
+			)
+			{
+				errors.Add(
+					$"{optionsName}.Indexes contains conflicting computed-column configuration for '{computedColumn.Name}'."
+				);
+			}
+		}
+		else
+		{
+			computedColumns.Add(computedColumn.Name, computedColumn);
+		}
 	}
 
 	static async Task<bool> ColumnExistsAsync(

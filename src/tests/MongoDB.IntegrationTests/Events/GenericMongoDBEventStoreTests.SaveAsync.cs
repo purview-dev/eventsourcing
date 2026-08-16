@@ -37,12 +37,10 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 	)
 	{
 		// Arrange
-		var complexProperty = CreateComplexTestType();
-
 		var aggregateId = $"{Guid.NewGuid()}";
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
 
-		aggregate.SetComplexProperty(complexProperty);
+		GenericMongoDBEventStoreTestSeed.SetRandomComplexProperty(aggregate);
 
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
@@ -56,10 +54,10 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		);
 
 		// Assert
-		await Assert.That(aggregateGetResult).IsNotNull();
-		await Assert
-			.That(aggregate.ComplexTestType)
-			.IsEquivalentTo(aggregateGetResult.ComplexTestType);
+		await GenericMongoDBEventStoreTestSeed.AssertComplexPropertyMatches(
+			aggregate,
+			aggregateGetResult
+		);
 	}
 
 	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
@@ -249,10 +247,10 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
 		// Act
-		async Task<SaveResult<TAggregate>?> Func() =>
-			await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
-
-		// Get and update stream version to remove the Version property.
-		await Assert.That(Func).Throws<ArgumentOutOfRangeException>();
+		await GenericMongoDBEventStoreTestSeed.AssertSaveThrowsArgumentOutOfRangeException(
+			eventStore,
+			aggregate,
+			cancellationToken
+		);
 	}
 }
