@@ -1,52 +1,52 @@
 using Microsoft.CodeAnalysis;
 using Purview.SourceGeneratorFramework.Extensions;
 
-namespace Purview.EventSourcing.SourceGenerator;
+namespace Purview.EventSourcing.SourceGenerator.Generators;
 
 [Generator]
 public sealed partial class AggregateSourceGenerator : IIncrementalGenerator
 {
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
+		context.RegisterEmbeddedAttribute(
+			typeof(AggregateSourceGenerator).FullName,
+			AssemblyInfo.Version
+		);
 		context.RegisterPostInitializationOutput(ctx =>
 		{
-			_logger?.Debug("Adding attribute definitions to compilation");
-
-			ctx.AddEmbeddedAttributeDefinition();
-			_logger?.Debug($" - EmbeddedAttribute");
-
 			foreach (var (HintName, Source) in AggregateAttributeEmitter.Emit())
-			{
-				_logger?.Debug($" - {HintName}");
 				ctx.AddSource(HintName, Source);
-			}
 		});
 
-		var generationModel = SourceGenLibrary.GetGeneratorValueProviders(context, _logger);
+		var generationModel = SourceGenLibrary.GetGeneratorValueProviders(context);
 
 		context.RegisterSourceOutput(
 			generationModel,
 			(spc, model) =>
 			{
-				if (!model.IsSourceGeneratorEnabled)
-				{
-					_logger?.Info("Aggregate source generator is disabled.");
+				if (model.GenerationContext.Settings.IsSourceGeneratorDisabled)
 					return;
-				}
 
 				spc.ReportDiagnostics(model.Diagnostics);
 
 				foreach (var aggregateResult in model.Aggregates)
 				{
-					spc.ReportDiagnostics(aggregateResult.Diagnostics);
+					if (aggregateResult.HasDiagnostics)
+						spc.ReportDiagnostics(aggregateResult.Diagnostics);
 
 					if (aggregateResult.IsFatal || aggregateResult.Value is null)
 						continue;
 
 					var info = aggregateResult.Value;
-					var writer = model.GenerationContext.CreateCodeWriter();
-					AggregateSourceEmitter.GenerateAggregateSource(writer, info, _logger);
-					spc.AddSource(info.HintName, writer);
+
+					AggregateGenerationOutputContext outputContext = new(
+						model.GenerationContext,
+						info
+					);
+
+					AggregateSourceEmitter.GenerateAggregateSource(outputContext);
+
+					spc.AddSource(info.HintName, outputContext.Writer);
 				}
 			}
 		);

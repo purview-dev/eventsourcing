@@ -2,11 +2,12 @@ using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Common;
 
-static class GeneratorDiagnostics
+static class DiagnosticLibrary
 {
 	const string AggregateCategory = "Aggregates";
 	const string ValueObjectCategory = "ValueObjects";
 
+	/// <summary> EVENTSTORE001: Aggregate must be partial </summary>
 	public static readonly DiagnosticDescriptor AggregateMustBePartial = new(
 		id: "EVENTSTORE001",
 		title: "Aggregate must be partial",
@@ -16,6 +17,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE002: Aggregate must inherit AggregateBase </summary>
 	public static readonly DiagnosticDescriptor AggregateMustInheritAggregateBase = new(
 		id: "EVENTSTORE002",
 		title: "Aggregate must inherit AggregateBase",
@@ -25,6 +27,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE003: Nested aggregates are not supported </summary>
 	public static readonly DiagnosticDescriptor NestedAggregatesAreNotSupported = new(
 		id: "EVENTSTORE003",
 		title: "Nested aggregates are not supported",
@@ -34,6 +37,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE004: Generic aggregates are not supported </summary>
 	public static readonly DiagnosticDescriptor GenericAggregatesAreNotSupported = new(
 		id: "EVENTSTORE004",
 		title: "Generic aggregates are not supported",
@@ -43,6 +47,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE005: RegisterEvents is generated automatically </summary>
 	public static readonly DiagnosticDescriptor ManualRegisterEventsIsNotSupported = new(
 		id: "EVENTSTORE005",
 		title: "RegisterEvents is generated automatically",
@@ -52,6 +57,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE006: Event method requires Aggregate attribute </summary>
 	public static readonly DiagnosticDescriptor EventMethodRequiresAggregateAttribute = new(
 		id: "EVENTSTORE006",
 		title: "Event requires Aggregate",
@@ -61,6 +67,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE007: Event method must be partial </summary>
 	public static readonly DiagnosticDescriptor EventMethodMustBePartial = new(
 		id: "EVENTSTORE007",
 		title: "Generated event method must be partial",
@@ -70,6 +77,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE008: Unsupported generated event method signature </summary>
 	public static readonly DiagnosticDescriptor UnsupportedEventMethodSignature = new(
 		id: "EVENTSTORE008",
 		title: "Unsupported generated event method signature",
@@ -79,6 +87,7 @@ static class GeneratorDiagnostics
 		isEnabledByDefault: true
 	);
 
+	/// <summary> EVENTSTORE009: Generated event names must be unique </summary>
 	public static readonly DiagnosticDescriptor DuplicateGeneratedEventName = new(
 		id: "EVENTSTORE009",
 		title: "Generated event names must be unique",

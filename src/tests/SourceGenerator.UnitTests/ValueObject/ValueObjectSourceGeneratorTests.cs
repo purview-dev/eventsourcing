@@ -1,25 +1,20 @@
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Purview.EventSourcing.SourceGenerator.Generators;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 public sealed class ValueObjectSourceGeneratorTests
-	: SourceGeneratorTestBase<ValueObjectSourceGenerator>
+	: EventSourcingSourceGeneratorTestBase<ValueObjectSourceGenerator>
 {
-	static string GetGeneratedSource(GeneratorDriverRunResult result) =>
+	static string GetGeneratedSource(DriverRunResult result) =>
 		string.Join(
 			Environment.NewLine,
-			result
-				.Results.SelectMany(static generatorResult => generatorResult.GeneratedSources)
-				.Select(static generatedSource => generatedSource.SourceText.ToString())
+			ExcludeGenAttribs(result).Select(static tree => tree.GetText().ToString())
 		);
 
-	static Diagnostic[] GetGeneratorDiagnostics(GeneratorDriverRunResult result) =>
-		[
-			.. result
-				.Results.SelectMany(static generatorResult => generatorResult.Diagnostics)
-				.OrderBy(static d => d.Id),
-		];
+	static Diagnostic[] GetGeneratorDiagnostics(DriverRunResult result) =>
+		[.. result.DriverResult.Diagnostics];
 
 	[Test]
 	public async Task ScalarGeneration_UsesStrictCreateAndHydrateCorrectly(
@@ -153,15 +148,15 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, outputCompilation) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
 			.That(generatedSource)
 			.Contains("public int CompareTo(global::Testing.BlobUri? other)");
 
-		var errors = outputCompilation
-			.GetDiagnostics(cancellationToken)
+		var errors = result
+			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(static d => d.Severity == DiagnosticSeverity.Error)
 			.ToArray();
 		await Assert.That(errors).IsEmpty();
@@ -191,7 +186,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 		var diagnostics = GetGeneratorDiagnostics(result);
 
@@ -200,7 +195,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			.Contains("private PhoneNumber(string value) => Value = value;");
 		await Assert
 			.That(diagnostics.Select(static diagnostic => diagnostic.Id))
-			.DoesNotContain(GeneratorDiagnostics.ScalarConstructorMissing.Id);
+			.DoesNotContain(DiagnosticLibrary.ScalarConstructorMissing.Id);
 
 		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
 		var harnessType = assembly.GetType("Testing.PhoneHarness")!;
@@ -226,7 +221,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -259,7 +254,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public override string ToString()");
@@ -285,7 +280,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -336,7 +331,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -371,14 +366,14 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var warnings = GetGeneratorDiagnostics(result)
 			.Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning)
 			.ToArray();
 
 		await Assert
 			.That(warnings.Select(static diagnostic => diagnostic.Id))
-			.Contains(GeneratorDiagnostics.ScalarShouldBeRecordStruct.Id);
+			.Contains(DiagnosticLibrary.ScalarShouldBeRecordStruct.Id);
 	}
 
 	[Test]
@@ -413,7 +408,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -470,7 +465,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -604,7 +599,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("private Address(string line1, string city)");
@@ -647,7 +642,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -678,7 +673,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -721,7 +716,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -758,7 +753,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -798,7 +793,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 		await Assert.That(generatedSource).Contains("return Create(value);");
 
@@ -846,7 +841,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert.That(generatedSource).Contains("public static bool operator <(");
@@ -932,7 +927,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -975,7 +970,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -1006,7 +1001,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert.That(generatedSource).DoesNotContain("public int CompareTo(");
@@ -1037,7 +1032,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -1236,7 +1231,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert
@@ -1393,7 +1388,7 @@ public sealed class ValueObjectSourceGeneratorTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetGeneratedSource(result);
 
 		await Assert

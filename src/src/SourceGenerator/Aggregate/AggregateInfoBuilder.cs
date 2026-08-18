@@ -6,38 +6,32 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 static class AggregateInfoBuilder
 {
 	public static GeneratorResult<AggregateInfo> Build(
-		GeneratorAttributeSyntaxContext ctx,
-		GenerationLogger? logger,
+		GeneratorAttributeSyntaxContext context,
 		CancellationToken cancellationToken
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		var classSymbol = (INamedTypeSymbol)ctx.TargetSymbol;
-		var syntax = (ClassDeclarationSyntax)ctx.TargetNode;
+		var classSymbol = (INamedTypeSymbol)context.TargetSymbol;
+		var syntax = (ClassDeclarationSyntax)context.TargetNode;
 
-		var compilation = ctx.SemanticModel.Compilation;
+		var compilation = context.SemanticModel.Compilation;
 		List<DiagnosticInfo> diagnostics = [];
 
 		var canGenerate = ValidateAggregateClass(
 			classSymbol,
 			syntax,
-			logger,
 			diagnostics,
 			out var shouldDeclareAggregateBase
 		);
 
 		TypeValueObject aggregateType = new(classSymbol);
-		var aggregateAttribute = AggregateAttributeData.FromAttributeData(
-			classSymbol.GetAttributes()
-		);
+		var aggregateAttribute = AggregateAttributeData.FromAttributeData(classSymbol);
 		var assemblyDefaults = AggregateDefaultsAttributeData.FromAttributeData(
-			compilation.Assembly.GetAttributes()
+			compilation.Assembly
 		);
 
-		var aggregateNamespace = classSymbol.ContainingNamespace.IsGlobalNamespace
-			? null
-			: classSymbol.ContainingNamespace.ToDisplayString();
+		var aggregateNamespace = aggregateType.Namespace;
 		var eventNamespaceOverride = aggregateAttribute.Exists
 			? aggregateAttribute.EventNamespace
 			: null;
@@ -49,9 +43,10 @@ static class AggregateInfoBuilder
 			"Purview.EventSourcing.ValueObjects.ValueObjectContext`1"
 		);
 
-		var properties = new List<AggregateStatePropertyInfo>();
-		var propertySymbolsByName = new Dictionary<string, IPropertySymbol>(StringComparer.Ordinal);
-		var attributedMethods = new List<IMethodSymbol>();
+		List<AggregateStatePropertyInfo> properties = [];
+		Dictionary<string, IPropertySymbol> propertySymbolsByName = [with(StringComparer.Ordinal)];
+		List<IMethodSymbol> attributedMethods = [];
+
 		ScanProperties(
 			classSymbol,
 			diagnostics,
@@ -106,7 +101,6 @@ static class AggregateInfoBuilder
 	static bool ValidateAggregateClass(
 		INamedTypeSymbol classSymbol,
 		ClassDeclarationSyntax syntax,
-		GenerationLogger? logger,
 		List<DiagnosticInfo> diagnostics,
 		out bool shouldDeclareAggregateBase
 	)
@@ -119,7 +113,7 @@ static class AggregateInfoBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.AggregateMustBePartial,
+					DiagnosticLibrary.AggregateMustBePartial,
 					syntax.Identifier.GetLocation(),
 					classSymbol.Name
 				)
@@ -131,7 +125,7 @@ static class AggregateInfoBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.NestedAggregatesAreNotSupported,
+					DiagnosticLibrary.NestedAggregatesAreNotSupported,
 					syntax.Identifier.GetLocation(),
 					classSymbol.Name
 				)
@@ -143,7 +137,7 @@ static class AggregateInfoBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.GenericAggregatesAreNotSupported,
+					DiagnosticLibrary.GenericAggregatesAreNotSupported,
 					syntax.Identifier.GetLocation(),
 					classSymbol.Name
 				)
@@ -158,16 +152,13 @@ static class AggregateInfoBuilder
 				|| classSymbol.BaseType.SpecialType == SpecialType.System_Object
 			)
 			{
-				logger?.Info(
-					"Aggregate class does not inherit from any base class, so AggregateBase will be declared in generated code."
-				);
 				shouldDeclareAggregateBase = true;
 			}
 			else
 			{
 				diagnostics.Add(
 					DiagnosticInfo.Create(
-						GeneratorDiagnostics.AggregateMustInheritAggregateBase,
+						DiagnosticLibrary.AggregateMustInheritAggregateBase,
 						syntax.Identifier.GetLocation(),
 						classSymbol.Name
 					)
@@ -185,7 +176,7 @@ static class AggregateInfoBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.ManualRegisterEventsIsNotSupported,
+					DiagnosticLibrary.ManualRegisterEventsIsNotSupported,
 					registerEventsMethod!.Locations.FirstOrDefault(),
 					classSymbol.Name
 				)
@@ -227,7 +218,7 @@ static class AggregateInfoBuilder
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
-							GeneratorDiagnostics.ScalarComplexValueMayNotTranslateInSqlSnapshots,
+							DiagnosticLibrary.ScalarComplexValueMayNotTranslateInSqlSnapshots,
 							propertySymbol.Locations.FirstOrDefault(),
 							propertySymbol.Name,
 							classSymbol.Name,
@@ -245,7 +236,7 @@ static class AggregateInfoBuilder
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
-							GeneratorDiagnostics.AggregatePropertySetterShouldBePrivate,
+							DiagnosticLibrary.AggregatePropertySetterShouldBePrivate,
 							propertySymbol.SetMethod.Locations.FirstOrDefault()
 								?? propertySymbol.Locations.FirstOrDefault(),
 							propertySymbol.Name,
@@ -262,7 +253,7 @@ static class AggregateInfoBuilder
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
-							GeneratorDiagnostics.AggregatePropertyCollectionTypeMustUseEventStoreCollections,
+							DiagnosticLibrary.AggregatePropertyCollectionTypeMustUseEventStoreCollections,
 							propertySymbol.Locations.FirstOrDefault(),
 							propertySymbol.Name,
 							classSymbol.Name,
@@ -370,7 +361,7 @@ static class AggregateInfoBuilder
 			{
 				diagnostics.Add(
 					DiagnosticInfo.Create(
-						GeneratorDiagnostics.DuplicateGeneratedEventName,
+						DiagnosticLibrary.DuplicateGeneratedEventName,
 						methodSymbol,
 						methodSymbol.Name,
 						classSymbol.Name,
@@ -379,7 +370,7 @@ static class AggregateInfoBuilder
 				);
 				diagnostics.Add(
 					DiagnosticInfo.Create(
-						GeneratorDiagnostics.DuplicateGeneratedEventName,
+						DiagnosticLibrary.DuplicateGeneratedEventName,
 						conflictingMethod,
 						conflictingMethod.Name,
 						classSymbol.Name,
@@ -390,7 +381,7 @@ static class AggregateInfoBuilder
 				if (
 					AggregateEventMethodBuilder.TryCreateInvalidMethodStub(
 						methodSymbol,
-						[GeneratorDiagnostics.DuplicateGeneratedEventName.Id],
+						[DiagnosticLibrary.DuplicateGeneratedEventName.Id],
 						out var invalidMethod,
 						cancellationToken
 					)
@@ -411,7 +402,7 @@ static class AggregateInfoBuilder
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
-							GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate,
+							DiagnosticLibrary.DuplicateEventSchemaVersionOnAggregate,
 							methodSymbol,
 							methodSymbol.Name,
 							classSymbol.Name,
@@ -421,7 +412,7 @@ static class AggregateInfoBuilder
 					);
 					diagnostics.Add(
 						DiagnosticInfo.Create(
-							GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate,
+							DiagnosticLibrary.DuplicateEventSchemaVersionOnAggregate,
 							existingSchemaVersionMethod.Symbol,
 							existingSchemaVersionMethod.Symbol.Name,
 							classSymbol.Name,
@@ -433,7 +424,7 @@ static class AggregateInfoBuilder
 					if (
 						AggregateEventMethodBuilder.TryCreateInvalidMethodStub(
 							methodSymbol,
-							[GeneratorDiagnostics.DuplicateEventSchemaVersionOnAggregate.Id],
+							[DiagnosticLibrary.DuplicateEventSchemaVersionOnAggregate.Id],
 							out var invalidMethod,
 							cancellationToken
 						)
@@ -494,7 +485,7 @@ static class AggregateInfoBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventSchemaVersionsShouldBeContiguous,
+					DiagnosticLibrary.EventSchemaVersionsShouldBeContiguous,
 					syntax.Identifier.GetLocation(),
 					classSymbol.Name,
 					string.Join(", ", explicitSchemaVersions),

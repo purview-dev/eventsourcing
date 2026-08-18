@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
@@ -12,9 +12,9 @@ namespace Purview.EventSourcing;
 public static partial class TypeNameHelper
 {
 	[GeneratedRegex("(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])", RegexOptions.Compiled)]
-	private static partial Regex _titleSplitCaseRegex();
+	private static partial Regex TitleSplitCaseRegex();
 
-	static readonly Regex TitleCaseSplit = _titleSplitCaseRegex();
+	static readonly Regex TitleCaseSplit = TitleSplitCaseRegex();
 
 	/// <summary>
 	/// <para>

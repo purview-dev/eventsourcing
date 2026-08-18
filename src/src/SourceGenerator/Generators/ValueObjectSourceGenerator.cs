@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Purview.SourceGeneratorFramework.Extensions;
 
-namespace Purview.EventSourcing.SourceGenerator;
+namespace Purview.EventSourcing.SourceGenerator.Generators;
 
 [Generator]
 public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator

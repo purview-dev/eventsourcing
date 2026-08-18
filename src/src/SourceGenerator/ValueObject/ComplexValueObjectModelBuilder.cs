@@ -37,7 +37,7 @@ static class ComplexValueObjectModelBuilder
 		{
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.ConflictingValueObjectAttributes,
+					DiagnosticLibrary.ConflictingValueObjectAttributes,
 					location,
 					typeSymbol.Name
 				)

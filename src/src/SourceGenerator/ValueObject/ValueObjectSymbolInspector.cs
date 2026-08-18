@@ -39,7 +39,7 @@ static class ValueObjectSymbolInspector
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.ValueObjectMustBePartial,
+					DiagnosticLibrary.ValueObjectMustBePartial,
 					location,
 					typeSymbol.Name,
 					attributeName
@@ -51,7 +51,7 @@ static class ValueObjectSymbolInspector
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.NestedValueObjectsAreNotSupported,
+					DiagnosticLibrary.NestedValueObjectsAreNotSupported,
 					location,
 					typeSymbol.Name,
 					attributeName
@@ -63,7 +63,7 @@ static class ValueObjectSymbolInspector
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.GenericValueObjectsAreNotSupported,
+					DiagnosticLibrary.GenericValueObjectsAreNotSupported,
 					location,
 					typeSymbol.Name,
 					attributeName

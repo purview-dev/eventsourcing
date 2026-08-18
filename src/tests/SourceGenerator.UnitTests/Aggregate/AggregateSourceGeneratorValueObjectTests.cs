@@ -1,16 +1,18 @@
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Purview.EventSourcing.SourceGenerator.Generators;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 
 public sealed class AggregateSourceGeneratorValueObjectTests
-	: SourceGeneratorTestBase<AggregateSourceGenerator>
+	: EventSourcingSourceGeneratorTestBase<AggregateSourceGenerator>
 {
-	static string GetAggregateGeneratedSource(GeneratorDriverRunResult result)
+	static string GetAggregateGeneratedSource(DriverRunResult result)
 	{
-		var aggregateTree = ExcludeGenAttribs(result)?.FirstOrDefault();
-
-		return aggregateTree?.GetText().ToString() ?? string.Empty;
+		return string.Join(
+			Environment.NewLine,
+			ExcludeGenAttribs(result).Select(static tree => tree.GetText().ToString())
+		);
 	}
 
 	[Test]
@@ -66,7 +68,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 			}
 			""";
 
-		var (result, _) = Generate(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = GetAggregateGeneratedSource(result);
 
 		await Assert

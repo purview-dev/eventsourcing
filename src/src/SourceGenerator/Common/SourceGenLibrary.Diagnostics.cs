@@ -72,7 +72,7 @@ static partial class SourceGenLibrary
 
 		// If the method is not contained within an aggregate, report a diagnostic
 		return DiagnosticInfo.Create(
-			GeneratorDiagnostics.EventMethodRequiresAggregateAttribute,
+			DiagnosticLibrary.EventMethodRequiresAggregateAttribute,
 			method,
 			method.Name
 		);
@@ -110,7 +110,7 @@ static partial class SourceGenLibrary
 
 					// If the event name is not in past tense, report a diagnostic
 					return DiagnosticInfo.Create(
-						GeneratorDiagnostics.EventNameShouldBePastTense,
+						DiagnosticLibrary.EventNameShouldBePastTense,
 						typeSymbol,
 						typeSymbol.Name
 					);
@@ -163,7 +163,7 @@ static partial class SourceGenLibrary
 						: "is not null";
 
 					return DiagnosticInfo.Create(
-						GeneratorDiagnostics.NullableScalarEqualityNullComparisonShouldUsePatternMatching,
+						DiagnosticLibrary.NullableScalarEqualityNullComparisonShouldUsePatternMatching,
 						be.GetLocation(),
 						be.ToString(),
 						replacement
@@ -236,7 +236,7 @@ static partial class SourceGenLibrary
 
 					// If the computed parameter is being set by the caller, report a diagnostic
 					return DiagnosticInfo.Create(
-						GeneratorDiagnostics.ComputedParameterCannotBeSetByCaller,
+						DiagnosticLibrary.ComputedParameterCannotBeSetByCaller,
 						targetMethod,
 						targetMethod.Name,
 						computedParameter.Name

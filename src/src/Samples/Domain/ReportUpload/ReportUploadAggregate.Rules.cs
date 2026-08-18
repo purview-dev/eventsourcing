@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Guards;
+using Purview.EventSourcing.Guards;
 using Purview.EventSourcing.Samples.Domain.ReportUpload.ReportUploadEvents;
 using Purview.EventSourcing.Samples.ValueObjects;
 

@@ -98,7 +98,7 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 
 		_committed = true;
 
-		return _enlisted.Count == 0 ? new TransactionResult([])
+		return _enlisted.Count == 0 ? new([])
 			: CanUseNativeTransactionCoordinator()
 				? await CommitWithNativeTransactionAsync(cancellationToken)
 			: await CommitSequentiallyAsync(cancellationToken);

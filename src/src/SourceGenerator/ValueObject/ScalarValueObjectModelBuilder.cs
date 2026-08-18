@@ -37,7 +37,7 @@ static class ScalarValueObjectModelBuilder
 		{
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.ConflictingValueObjectAttributes,
+					DiagnosticLibrary.ConflictingValueObjectAttributes,
 					location,
 					typeSymbol.Name
 				)
@@ -56,7 +56,7 @@ static class ScalarValueObjectModelBuilder
 		{
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.ScalarPropertyMissing,
+					DiagnosticLibrary.ScalarPropertyMissing,
 					location,
 					typeSymbol.Name,
 					scalarOptions.PropertyName
@@ -87,7 +87,7 @@ static class ScalarValueObjectModelBuilder
 		{
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.ScalarShouldBeRecordStruct,
+					DiagnosticLibrary.ScalarShouldBeRecordStruct,
 					location,
 					typeSymbol.Name
 				)
@@ -208,7 +208,7 @@ static class ScalarValueObjectModelBuilder
 		{
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.StrictDeserializationRequiresCreate,
+					DiagnosticLibrary.StrictDeserializationRequiresCreate,
 					typeSymbol.Locations.FirstOrDefault(),
 					typeSymbol.Name
 				)

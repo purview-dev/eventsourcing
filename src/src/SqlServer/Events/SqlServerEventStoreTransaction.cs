@@ -194,15 +194,15 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 			);
 
 		if (failedEnlisted is null && failure is null)
-			return await CommitAndNotifyAsync(transaction, cancellationToken, processed);
+			return await CommitAndNotifyAsync(transaction, processed, cancellationToken);
 
 		// Rollback the transaction and build a result indicating which aggregate failed to save.
 		return await RollbackAndBuildResultAsync(
 			transaction,
-			cancellationToken,
 			processed,
 			failedEnlisted,
-			failure
+			failure,
+			cancellationToken
 		);
 	}
 

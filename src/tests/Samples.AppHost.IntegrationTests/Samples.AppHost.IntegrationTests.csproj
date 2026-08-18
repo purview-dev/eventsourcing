@@ -2,12 +2,19 @@
 	<PropertyGroup>
 		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
 	</PropertyGroup>
+
+	<PropertyGroup>
+		<!-- Temporarily disable the complexity rule until we can refactor the code -->
+		<NoWarn>$(NoWarn);CA1506;</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="TUnit.Aspire" />
 		<PackageReference Include="Aspire.Hosting.Testing" />
 		<PackageReference Include="Purview.Aspire.ResourceKit" />
 		<PackageReference Include="ZodSharp" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
 		<ProjectReference Include="..\..\src\Samples.Shared\Samples.Shared.csproj" />

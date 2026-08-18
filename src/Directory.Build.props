@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
 	<PropertyGroup>
 		<NamespacePrefix>Purview.EventSourcing</NamespacePrefix>
 		<IsPackable>false</IsPackable>

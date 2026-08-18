@@ -1,32 +1,44 @@
-using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 
 sealed record AggregateGenerationModel(
-	bool IsSourceGeneratorEnabled,
-	AggregateGenerationContext GenerationContext
-)
-{
-	public ImmutableArray<GeneratorResult<AggregateInfo>> Aggregates { get; set; } = [];
+	AggregateGenerationContext GenerationContext,
+	EquatableArray<GeneratorResult<AggregateInfo>> Aggregates,
+	EquatableArray<DiagnosticInfo> Diagnostics
+);
 
-	public ImmutableArray<DiagnosticInfo> Diagnostics { get; set; } = [];
+sealed class AggregateGenerationContext(
+	Compilation compilation,
+	GenerationSettings generationSettings,
+	ISourceGenLogger? logger
+) : GenerationContext(compilation, generationSettings, logger)
+{
+	public INamedTypeSymbol? AggregateBase { get; } =
+		compilation.GetTypeByMetadataName(TypeLibrary.Aggregates.AggregateBase.MetadataFullName);
+
+	public CodeWriter Writer { get; private set; }
 }
 
-sealed record class AggregateGenerationContext : GenerationContext
+// This is recreated outside of the pipeline to avoid the state
+// of the CodeWriter being shared across multiple source outputs.
+sealed class AggregateGenerationOutputContext(
+	AggregateGenerationContext generationContext,
+	AggregateInfo aggregate
+) : ISourceGenLogger
 {
-	public AggregateGenerationContext(
-		Compilation compilation,
-		string generatorName,
-		string generatorVersion,
-		bool validateCodeWriterScopes
-	)
-		: base(compilation, generatorName, generatorVersion, validateCodeWriterScopes)
-	{
-		AggregateBase = compilation.GetTypeByMetadataName(
-			TypeLibrary.Aggregates.AggregateBase.MetadataFullName
-		);
-	}
+	public AggregateGenerationContext Generation { get; } = generationContext;
 
-	public INamedTypeSymbol? AggregateBase { get; }
+	public AggregateInfo Aggregate { get; } = aggregate;
+
+	public CodeWriter Writer { get; private set; } = generationContext.CreateCodeWriter();
+
+	public CodeWriter CreateCodeWriter() => Writer = Generation.CreateCodeWriter();
+
+	public void Log(
+		SourceGenLogLevel level,
+		int indentation,
+		string message,
+		params object[] args
+	) => Generation.Log(level, indentation, message, args);
 }

@@ -46,7 +46,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.UnsupportedEventMethodSignature,
+					DiagnosticLibrary.UnsupportedEventMethodSignature,
 					methodSymbol,
 					methodSymbol.Name,
 					$"methods cannot combine [{TypeLibrary.Attributes.EventAttribute.RenderTypeName}] and [{TypeLibrary.Attributes.CollectionEventAttribute.RenderTypeName}]"
@@ -59,7 +59,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventMethodMustBePartial,
+					DiagnosticLibrary.EventMethodMustBePartial,
 					methodSymbol,
 					methodSymbol.Name
 				)
@@ -167,7 +167,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.UnsupportedEventMethodSignature,
+					DiagnosticLibrary.UnsupportedEventMethodSignature,
 					methodSymbol,
 					methodSymbol.Name,
 					reason
@@ -183,7 +183,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.AggregateMethodShouldBeVerbPhrase,
+					DiagnosticLibrary.AggregateMethodShouldBeVerbPhrase,
 					methodSymbol,
 					methodSymbol.Name
 				)
@@ -266,7 +266,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventSchemaVersionMustBePositive,
+					DiagnosticLibrary.EventSchemaVersionMustBePositive,
 					methodSymbol,
 					methodSymbol.Name,
 					methodSymbol.ContainingType.Name,
@@ -381,7 +381,7 @@ static class AggregateEventMethodBuilder
 			{
 				diagnostics.Add(
 					DiagnosticInfo.Create(
-						GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+						DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 						parameter,
 						parameter.Name,
 						methodSymbol.Name,
@@ -444,7 +444,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+					DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 					parameter,
 					parameter.Name,
 					methodSymbol.Name,
@@ -459,7 +459,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+					DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 					parameter,
 					parameter.Name,
 					methodSymbol.Name,
@@ -474,7 +474,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+					DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 					parameter,
 					parameter.Name,
 					methodSymbol.Name,
@@ -503,7 +503,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+					DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 					parameter,
 					parameter.Name,
 					methodSymbol.Name,
@@ -523,7 +523,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterNullabilityMismatch,
+					DiagnosticLibrary.EventParameterNullabilityMismatch,
 					parameter,
 					parameter.Name,
 					methodSymbol.Name,
@@ -572,7 +572,7 @@ static class AggregateEventMethodBuilder
 			{
 				diagnostics.Add(
 					DiagnosticInfo.Create(
-						GeneratorDiagnostics.EventNameOverrideShouldBePastTense,
+						DiagnosticLibrary.EventNameOverrideShouldBePastTense,
 						methodSymbol,
 						resolvedEventName,
 						methodSymbol.Name
@@ -597,7 +597,7 @@ static class AggregateEventMethodBuilder
 
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.UnableToInferEventName,
+					DiagnosticLibrary.UnableToInferEventName,
 					methodSymbol,
 					methodSymbol.Name,
 					suggestedMethodName
@@ -1213,7 +1213,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.UnsupportedEventMethodSignature,
+					DiagnosticLibrary.UnsupportedEventMethodSignature,
 					methodLocation,
 					methodSymbol.Name,
 					"collection property name must be provided via [CollectionEvent(nameof(CollectionProperty))]"
@@ -1227,7 +1227,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+					DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 					methodLocation,
 					methodSymbol.Parameters[0].Name,
 					methodSymbol.Name,
@@ -1242,7 +1242,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.EventParameterMustMapToWritableProperty,
+					DiagnosticLibrary.EventParameterMustMapToWritableProperty,
 					methodLocation,
 					methodSymbol.Parameters[0].Name,
 					methodSymbol.Name,
@@ -1289,7 +1289,7 @@ static class AggregateEventMethodBuilder
 			{
 				diagnostics.Add(
 					DiagnosticInfo.Create(
-						GeneratorDiagnostics.UnsupportedEventMethodSignature,
+						DiagnosticLibrary.UnsupportedEventMethodSignature,
 						parameter,
 						methodSymbol.Name,
 						$"collection item type '{parameterTypeName}' does not match '{elementTypeName}'"
@@ -1305,7 +1305,7 @@ static class AggregateEventMethodBuilder
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
-					GeneratorDiagnostics.UnsupportedEventMethodSignature,
+					DiagnosticLibrary.UnsupportedEventMethodSignature,
 					parameter.Locations.FirstOrDefault() ?? methodLocation,
 					methodSymbol.Name,
 					$"collection methods only support '{elementTypeName}', '{elementTypeName}[]', or IEnumerable<{elementTypeName}> parameters"
@@ -1431,7 +1431,7 @@ static class AggregateEventMethodBuilder
 
 		diagnostics.Add(
 			DiagnosticInfo.Create(
-				GeneratorDiagnostics.UnsupportedEventMethodSignature,
+				DiagnosticLibrary.UnsupportedEventMethodSignature,
 				methodLocation,
 				methodSymbol.Name,
 				"collection event methods must begin with 'Add', 'Remove', or 'Delete', or explicitly set Operation = CollectionEventOperation.Add/Remove"

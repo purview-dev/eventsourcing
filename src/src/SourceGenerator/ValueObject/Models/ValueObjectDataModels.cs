@@ -1,5 +1,3 @@
-using Purview.SourceGeneratorFramework.Generators;
-
 namespace Purview.EventSourcing.SourceGenerator.ValueObject.Models;
 
 [Generate("Purview.EventSourcing.Serialization.ScalarAttribute")]
