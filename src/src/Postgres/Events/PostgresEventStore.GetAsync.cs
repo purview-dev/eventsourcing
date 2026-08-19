@@ -121,10 +121,10 @@ partial class PostgresEventStore<T>
 		await foreach (var eventResult in eventQuery)
 		{
 			var @event = eventResult.@event;
-			if (@event is EventUnknown || !aggregate.CanApplyEvent(@event))
+			if (@event is UnknownEvent || !aggregate.CanApplyEvent(@event))
 			{
 				var eventType = @event.GetType();
-				if (@event is EventUnknown)
+				if (@event is UnknownEvent)
 					_eventStoreTelemetry.SkippedUnknownEvent(
 						aggregateId,
 						_aggregateTypeFullName,

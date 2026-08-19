@@ -58,7 +58,7 @@ partial class SqlServerEventStore<T>
 	/// <param name="aggregateVersion">Only used when an unknown event is found.</param>
 	IEvent? DeserializeEvent(SqlServerEventStoreClient.RowData eventRow, int aggregateVersion)
 	{
-		static EventUnknown ReturnUnknownEvent(
+		static UnknownEvent ReturnUnknownEvent(
 			SqlServerEventStoreClient.RowData eventRow,
 			int aggregateVersion
 		) =>

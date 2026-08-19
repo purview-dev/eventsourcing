@@ -4,9 +4,10 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 {
 	public static readonly string[] GeneratedAttributes =
 	[
-		"EmbeddedAttribute.cs",
+		"EmbeddedAttribute.g.cs",
 		"PropertyAttribute.g.cs",
 		"AggregateAttribute.g.cs",
+		"SentinelEventAttribute.g.cs",
 		"CollectionEventAttribute.g.cs",
 		"AggregateDefaultsAttribute.g.cs",
 		"EventAttribute.g.cs",
@@ -33,5 +34,6 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 		];
 		AdditionalAssemblyTypes = [typeof(Aggregates.IAggregate)];
 		AdditionalReferences = [.. TestMetadataReferences.GetAdditionalReferences()];
+		ExcludeGeneratedSourceHintNames = [.. GeneratedAttributes];
 	}
 }

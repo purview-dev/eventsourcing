@@ -58,7 +58,7 @@ partial class PostgresEventStore<T>
 	/// <param name="aggregateVersion">Only used when an unknown event is found.</param>
 	IEvent? DeserializeEvent(PostgresEventStoreClient.RowData eventRow, int aggregateVersion)
 	{
-		static EventUnknown ReturnUnknownEvent(
+		static UnknownEvent ReturnUnknownEvent(
 			PostgresEventStoreClient.RowData eventRow,
 			int aggregateVersion
 		) =>

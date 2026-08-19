@@ -1,28 +1,33 @@
-using System.Text.RegularExpressions;
-
 namespace Purview.EventSourcing.SourceGenerator.Common;
 
 static partial class EventVerbMap
 {
-	static readonly Regex PascalCaseSplitter = new(
-		// Boundary before an uppercase letter that starts a new word:
-		//  - lower/digit -> Upper   (forceSave -> force|Save)
-		//  - Upper -> Upper+lower   (XMLParse  -> XML|Parse)
-		@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])",
-		RegexOptions.Compiled
-	);
+	// Identifiers with more PascalCase words than this fall back to a heap array
+	// for the word-offset table. Real method names are far shorter.
+	const int MaxStackWords = 32;
 
-	static List<string> SplitPascalCase(string identifier) =>
-		[.. PascalCaseSplitter.Split(identifier)];
+	/// <summary>
+	/// If <see langword="true" />, a bare verb ("Create") keeps its bare past tense ("Created").
+	/// If <see langword="false" />, the past tense is qualified with the aggregate name
+	/// ("Create" on OrderAggregate -> "OrderCreated").
+	/// </summary>
+	/// <remarks>
+	/// <b>WARNING:</b> event type names are persisted discriminators. Changing them is a
+	/// breaking change for existing stores, and qualifying can collide two methods
+	/// onto one name (Create() and CreateOrder() -> both "OrderCreated").
+	/// </remarks>
+	public static bool QualifyBareVerbWithAggregate { get; set; }
 
+	// -------------------------------------------------------------------------
+	// Public API
+	// -------------------------------------------------------------------------
+
+	/// <summary>Exact verb -> past-tense lookup. O(1).</summary>
 	public static bool TryGetPastTense(string verb, out string pastTense)
 	{
-		foreach (var kvp in VerbPairsByPrefixLength)
+		if (PastTenseByVerb.TryGetValue(verb, out var value))
 		{
-			if (!string.Equals(kvp.Key, verb, StringComparison.Ordinal))
-				continue;
-
-			pastTense = kvp.Value;
+			pastTense = value;
 			return true;
 		}
 
@@ -30,103 +35,53 @@ static partial class EventVerbMap
 		return false;
 	}
 
+	/// <summary>
+	/// Converts a command-style method name into its past-tense event name.
+	/// Verb-object:     "CreateOrder"    -> "OrderCreated"
+	/// Multi-word verb: "SignInUser"     -> "UserSignedIn"
+	/// Single verb:     "Ship"           -> "Shipped"
+	/// Modifier prefix: "ForceSave"      -> "ForceSaved"
+	/// Irregular whole: "Rollback"       -> "RolledBack"
+	/// </summary>
 	public static bool TryCreateGeneratedEventName(
 		string methodName,
 		string aggregateClassName,
 		out string eventName
 	)
 	{
-		var match = ToPastTense(methodName);
-		if (match is not null)
+		if (!TryResolve(methodName, out var modifier, out var objectPart, out var pastTense))
 		{
-			eventName = match;
-			return true;
+			eventName = string.Empty;
+			return false;
 		}
 
-		if (TryCreatePropertySpecificEventName(methodName, out eventName))
-			return true;
+		if (objectPart.Length == 0)
+			objectPart = ResolveBareSubject(aggregateClassName);
 
-		if (TryCreateVerbMappedEventName(methodName, aggregateClassName, out eventName))
-			return true;
-
-		eventName = string.Empty;
-		return false;
+		eventName = string.Concat(modifier, objectPart, pastTense);
+		return true;
 	}
 
 	public static bool IsVerbPhrase(string methodName) =>
-		TryCreatePropertySpecificEventName(methodName, out _)
-		|| TryGetVerbPrefix(methodName, out _, out _);
+		TryResolve(methodName, out _, out _, out _);
 
 	public static bool IsPastTenseEventName(string eventName)
 	{
-		var coreName = TrimEventSuffix(eventName);
-		return !string.IsNullOrWhiteSpace(coreName) && TryGetPastTenseSuffix(coreName, out _);
+		var core = TrimEventSuffix(eventName);
+		return !string.IsNullOrWhiteSpace(core) && IsPastTenseCore(core);
 	}
 
 	public static bool TryGetPastTenseEventNameCore(string eventName, out string coreName)
 	{
 		coreName = TrimEventSuffix(eventName);
-		return !string.IsNullOrWhiteSpace(coreName) && IsPastTenseEventName(coreName);
-	}
-
-	/// <summary>
-	/// Converts a command-style identifier into its past-tense event form.
-	/// Default (verb-object): "CreateOrder" -> "OrderCreated", "ShipOrder" -> "OrderShipped".
-	/// Single verb:           "Ship" -> "Shipped".
-	/// Modifier prefix:       "ForceSave" -> "ForceSaved" (inflect last word, preserve order).
-	/// </summary>
-	/// <returns>The past-tense event identifier, or null if no verb could be resolved.</returns>
-	static string? ToPastTense(string identifier)
-	{
-		if (string.IsNullOrEmpty(identifier))
-			return null;
-
-		// 1. Fixed whole-identifier forms (e.g. "Rollback" -> "RolledBack").
-		if (PastTenseByVerb.TryGetValue(identifier, out var wholePast))
-			return wholePast;
-
-		var words = SplitPascalCase(identifier);
-		if (words.Count == 0)
-			return null;
-
-		// 2. Single word: it's the verb. "Ship" -> "Shipped".
-		if (words.Count == 1)
-		{
-			return PastTenseByVerb.TryGetValue(words[0], out var single) ? single : null;
-		}
-
-		var lastIndex = words.Count - 1;
-
-		// 3. Modifier-prefix compound: inflect the LAST word, preserve word order.
-		//    "ForceSave" -> "Force" + "Saved" = "ForceSaved".
-		if (ModifierPrefixes.Contains(words[0]))
-		{
-			if (!PastTenseByVerb.TryGetValue(words[lastIndex], out var headPast))
-				return null;
-
-			words[lastIndex] = headPast;
-			return string.Concat(words);
-		}
-
-		// 4. Default verb-object: FIRST word is the verb, remainder is the object.
-		//    Reorder to object + past-verb. "CreateOrder" -> "Order" + "Created" = "OrderCreated".
-		if (!PastTenseByVerb.TryGetValue(words[0], out var verbPast))
-			return null;
-
-		var sb = new System.Text.StringBuilder();
-		for (var i = 1; i < words.Count; i++)
-			sb.Append(words[i]); // object: "Order" (or multi-word "LineItem")
-		sb.Append(verbPast); // past verb: "Created"
-
-		return sb.ToString();
+		return !string.IsNullOrWhiteSpace(coreName) && IsPastTenseCore(coreName);
 	}
 
 	public static bool TrySuggestVerbPhrase(string methodName, out string suggestedMethodName)
 	{
-		if (methodName.StartsWith("New", StringComparison.Ordinal) && methodName.Length > 3)
+		if (methodName.Length > 3 && methodName.StartsWith("New", StringComparison.Ordinal))
 		{
-			var subject = methodName.Substring(3);
-			suggestedMethodName = $"Register{subject}";
+			suggestedMethodName = "Register" + methodName.Substring(3);
 			return true;
 		}
 
@@ -134,82 +89,161 @@ static partial class EventVerbMap
 		return false;
 	}
 
-	static bool TryCreatePropertySpecificEventName(string methodName, out string eventName)
-	{
-		foreach (var (prefix, suffix) in PropertySpecificPatterns)
-		{
-			if (!methodName.StartsWith(prefix, StringComparison.Ordinal))
-				continue;
+	// -------------------------------------------------------------------------
+	// Core resolver
+	// -------------------------------------------------------------------------
 
-			var subject = methodName.Substring(prefix.Length);
-			if (subject.Length == 0)
-				continue;
-
-			eventName = subject + suffix;
-			return true;
-		}
-
-		eventName = string.Empty;
-		return false;
-	}
-
-	static bool TryCreateVerbMappedEventName(
-		string methodName,
-		string aggregateClassName,
-		out string eventName
+	/// <summary>
+	/// Resolves the (optional) modifier, object, and past-tense verb from a
+	/// command identifier. The verb is the LONGEST leading whole-word span that
+	/// is a known verb, so multi-word verbs ("SignIn") beat their prefixes
+	/// ("Sign"), and sub-word matches ("Set" inside "Settle") are impossible
+	/// because spans always land on PascalCase boundaries.
+	/// </summary>
+	static bool TryResolve(
+		string identifier,
+		out string modifier,
+		out string objectPart,
+		out string pastTense
 	)
 	{
-		if (!TryGetVerbPrefix(methodName, out var verb, out var pastTense))
-		{
-			eventName = string.Empty;
-			return false;
-		}
-
-		var subject = methodName.Substring(verb.Length);
-		if (subject.Length == 0)
-			subject = TrimAggregateSuffix(aggregateClassName);
-
-		if (string.IsNullOrWhiteSpace(subject))
-		{
-			eventName = string.Empty;
-			return false;
-		}
-
-		eventName = subject + pastTense;
-		return true;
-	}
-
-	static bool TryGetVerbPrefix(string methodName, out string verb, out string pastTense)
-	{
-		foreach (var kvp in VerbPairsByPrefixLength)
-		{
-			if (!methodName.StartsWith(kvp.Key, StringComparison.Ordinal))
-				continue;
-
-			verb = kvp.Key;
-			pastTense = kvp.Value;
-			return true;
-		}
-
-		verb = string.Empty;
+		modifier = string.Empty;
+		objectPart = string.Empty;
 		pastTense = string.Empty;
-		return false;
-	}
 
-	static bool TryGetPastTenseSuffix(string eventName, out string suffix)
-	{
-		foreach (var pastTense in PastTenseSuffixes)
+		if (string.IsNullOrEmpty(identifier))
+			return false;
+
+		var wordCount = CountWords(identifier);
+
+		// starts[i] = start index of word i; starts[wordCount] = identifier.Length.
+		var starts =
+			wordCount <= MaxStackWords ? stackalloc int[MaxStackWords + 1] : new int[wordCount + 1];
+		FillWordStarts(identifier, starts);
+
+		// A modifier can only occupy the FIRST word; the verb search starts after it.
+		var verbWord = 0;
+		if (wordCount >= 2)
 		{
-			if (!eventName.EndsWith(pastTense, StringComparison.Ordinal))
+			var firstWord = identifier.Substring(0, starts[1]);
+			if (ModifierPrefixes.Contains(firstWord))
+			{
+				modifier = firstWord;
+				verbWord = 1;
+			}
+		}
+
+		var verbStart = starts[verbWord];
+
+		// Greedy: try the longest leading whole-word span first, shrinking by a
+		// word each iteration. Length bounds prune spans that can't be verbs.
+		for (var k = wordCount; k > verbWord; k--)
+		{
+			var verbLen = starts[k] - verbStart;
+			if (verbLen > MaxVerbLength)
+				continue;
+			if (verbLen < MinVerbLength)
+				break; // spans only get shorter from here — nothing left to match
+
+			var candidate = identifier.Substring(verbStart, verbLen);
+			if (!PastTenseByVerb.TryGetValue(candidate, out var past))
 				continue;
 
-			suffix = pastTense;
+			pastTense = past;
+			var verbEnd = starts[k];
+			objectPart = verbEnd < identifier.Length ? identifier.Substring(verbEnd) : string.Empty;
 			return true;
 		}
 
-		suffix = string.Empty;
+		// No verb resolved — don't leak a matched modifier to the caller.
+		modifier = string.Empty;
 		return false;
 	}
+
+	// -------------------------------------------------------------------------
+	// Validation
+	// -------------------------------------------------------------------------
+
+	/// <summary>Operates on an already-suffix-trimmed core name (no re-trim).</summary>
+	static bool IsPastTenseCore(string core)
+	{
+		var lastStart = LastWordStart(core);
+		var lastWord = lastStart == 0 ? core : core.Substring(lastStart);
+		return KnownPastTenseForms.Contains(lastWord);
+	}
+
+	// -------------------------------------------------------------------------
+	// PascalCase scanning (regex-free, allocation-free)
+	//
+	// Boundaries match the original pattern exactly (ASCII):
+	//   (?<=[a-z0-9])(?=[A-Z]) | (?<=[A-Z])(?=[A-Z][a-z])
+	// i.e. lower/digit -> Upper, and Upper -> Upper-followed-by-lower ("XMLParse").
+	// -------------------------------------------------------------------------
+
+	static int CountWords(string s)
+	{
+		var count = 1;
+		for (var i = 1; i < s.Length; i++)
+		{
+			if (IsWordBoundary(s, i))
+				count++;
+		}
+
+		return count;
+	}
+
+	static void FillWordStarts(string s, Span<int> starts)
+	{
+		starts[0] = 0;
+		var w = 1;
+		for (var i = 1; i < s.Length; i++)
+		{
+			if (IsWordBoundary(s, i))
+				starts[w++] = i;
+		}
+
+		starts[w] = s.Length; // sentinel at index == wordCount
+	}
+
+	static int LastWordStart(string s)
+	{
+		var last = 0;
+		for (var i = 1; i < s.Length; i++)
+		{
+			if (IsWordBoundary(s, i))
+				last = i;
+		}
+
+		return last;
+	}
+
+	static bool IsWordBoundary(string s, int i)
+	{
+		var prev = s[i - 1];
+		var cur = s[i];
+
+		// lower/digit -> Upper   ("forceSave" splits before 'S')
+		if ((IsAsciiLower(prev) || IsAsciiDigit(prev)) && IsAsciiUpper(cur))
+			return true;
+
+		// Upper -> Upper followed by lower   ("XMLParse" -> "XML" | "Parse")
+		if (IsAsciiUpper(prev) && IsAsciiUpper(cur) && i + 1 < s.Length && IsAsciiLower(s[i + 1]))
+			return true;
+
+		return false;
+	}
+
+	static bool IsAsciiUpper(char c) => c is >= 'A' and <= 'Z';
+
+	static bool IsAsciiLower(char c) => c is >= 'a' and <= 'z';
+
+	static bool IsAsciiDigit(char c) => c is >= '0' and <= '9';
+
+	// -------------------------------------------------------------------------
+	// Trimming helpers
+	// -------------------------------------------------------------------------
+	static string ResolveBareSubject(string aggregateClassName) =>
+		QualifyBareVerbWithAggregate ? TrimAggregateSuffix(aggregateClassName) : string.Empty;
 
 	static string TrimEventSuffix(string name) =>
 		name.EndsWith("Event", StringComparison.Ordinal)

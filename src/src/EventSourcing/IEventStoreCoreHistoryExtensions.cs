@@ -94,7 +94,7 @@ public static class IEventStoreCoreHistoryExtensions
 		where T : class, IAggregate, new()
 	{
 		var details = @event.Details;
-		var payload = @event is EventUnknown unknown
+		var payload = @event is UnknownEvent unknown
 			? unknown.Payload
 			: JsonSerializer.Serialize(@event, @event.GetType());
 
@@ -110,7 +110,7 @@ public static class IEventStoreCoreHistoryExtensions
 			UserId = details.UserId,
 			CausationId = details.CausationId,
 			CorrelationId = details.CorrelationId,
-			IsUnknownEvent = @event is EventUnknown,
+			IsUnknownEvent = @event is UnknownEvent,
 			Payload = payload,
 		};
 	}

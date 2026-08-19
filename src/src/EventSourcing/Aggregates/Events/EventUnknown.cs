@@ -11,11 +11,8 @@ namespace Purview.EventSourcing.Aggregates.Events;
 /// </para>
 /// <para>However, the event data still exists in the underlying store.</para>
 /// </remarks>
-[System.Diagnostics.CodeAnalysis.SuppressMessage(
-	"Aggregates",
-	"EVENTSTORE013:Event names should be past tense"
-)]
-public sealed class EventUnknown : EventBase
+[SentinelEvent(Justification = "Used when an existing event could not be deserialized.")]
+public sealed class UnknownEvent : EventBase
 {
 	/// <summary>
 	/// Represents the serialized payload that was the

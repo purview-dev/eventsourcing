@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Samples.Domain.CustomerEvents;
+using Purview.EventSourcing.Samples.Domain.CustomerEvents;
 
 namespace Purview.EventSourcing.Samples.Domain;
 

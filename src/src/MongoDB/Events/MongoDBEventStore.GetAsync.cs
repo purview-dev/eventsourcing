@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Microsoft.Extensions.Caching.Distributed;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.MongoDB.Events;
@@ -135,10 +135,10 @@ partial class MongoDBEventStore<T>
 		await foreach (var eventResult in everQuery)
 		{
 			var @event = eventResult.@event;
-			if (@event is EventUnknown || !aggregate.CanApplyEvent(@event))
+			if (@event is UnknownEvent || !aggregate.CanApplyEvent(@event))
 			{
 				var eventType = @event.GetType();
-				if (@event is EventUnknown)
+				if (@event is UnknownEvent)
 					_eventStoreTelemetry.SkippedUnknownEvent(
 						aggregateId,
 						_aggregateTypeFullName,

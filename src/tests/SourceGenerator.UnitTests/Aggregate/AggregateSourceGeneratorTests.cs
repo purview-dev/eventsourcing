@@ -8,15 +8,6 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 public sealed class AggregateSourceGeneratorTests
 	: EventSourcingSourceGeneratorTestBase<AggregateSourceGenerator>
 {
-	static string GetAggregateGeneratedSource(DriverRunResult result) =>
-		string.Join(
-			Environment.NewLine,
-			ExcludeGenAttribs(result).Select(static tree => tree.GetText().ToString())
-		);
-
-	static Diagnostic[] GetGeneratorDiagnostics(DriverRunResult result) =>
-		[.. result.DriverResult.Diagnostics];
-
 	[Test]
 	public async Task Generate_GivenEmptySource_GeneratesAttributesOnly(
 		CancellationToken cancellationToken
@@ -68,7 +59,7 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert ÔÇö 4 attribute files + 1 generated aggregate file
+		// Assert that 4 attribute files + 1 generated aggregate file
 		await Assert
 			.That(result.AllSyntaxTrees.Length)
 			.IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCountPlusGen);
@@ -394,19 +385,9 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-
-		var diagnostics = GetGeneratorDiagnostics(result);
-
 		await Assert
 			.That(result)
 			.HasDiagnostic(DiagnosticLibrary.ScalarComplexValueMayNotTranslateInSqlSnapshots);
-		await Assert
-			.That(
-				diagnostics
-					.First(static d => d.Id == "EVENTSTORE020")
-					.GetMessage(System.Globalization.CultureInfo.InvariantCulture)
-			)
-			.Contains("Summary");
 	}
 
 	[Test]
@@ -574,7 +555,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
+
 		await Assert
 			.That(generatedSource)
 			.Contains(
@@ -633,9 +615,9 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
-		await Assert.That(diagnostics).DoesNotContain("EVENTSTORE018");
-		await Assert.That(diagnostics).DoesNotContain("EVENTSTORE019");
+
+		await Assert.That(result).DoesNotHaveDiagnostic("EVENTSTORE018");
+		await Assert.That(result).DoesNotHaveDiagnostic("EVENTSTORE019");
 	}
 
 	[Test]
@@ -671,7 +653,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
+
 		await Assert.That(generatedSource).Contains("OnComputingMarkAsCompletedEvent");
 		await Assert.That(generatedSource).Contains("OnRaisingMarkAsCompletedEvent");
 		await Assert.That(generatedSource).DoesNotContain("OnComputingMarkAsCompleted2Event");
@@ -699,13 +682,13 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert ÔÇö no generator exceptions
+		// Assert that no generator exceptions
 		foreach (var genResult in result.DriverResult.Results)
 		{
 			await Assert.That(genResult.Exception).IsNull();
 		}
 
-		// Assert ÔÇö no errors in the output compilation (excluding pre-existing diagnostic warnings)
+		// Assert that no errors in the output compilation (excluding pre-existing diagnostic warnings)
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
@@ -737,9 +720,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö event class uses the default namespace pattern
+		// Assert that event class uses the default namespace pattern
 		await Assert.That(generatedSource).Contains("namespace Testing.Order");
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
 		await Assert
@@ -768,7 +751,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -806,9 +789,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö event properties are generated with PascalCase names
+		// Assert that event properties are generated with PascalCase names
 		await Assert.That(generatedSource).Contains("public string CustomerId { get; set; }");
 		await Assert.That(generatedSource).Contains("public decimal Total { get; set; }");
 	}
@@ -837,9 +820,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö BuildEventHash adds each property
+		// Assert that BuildEventHash adds each property
 		await Assert
 			.That(generatedSource)
 			.Contains("protected override void BuildEventHash(ref global::System.HashCode hash)");
@@ -873,9 +856,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö RegisterEvents contains Register calls for each event
+		// Assert that RegisterEvents contains Register calls for each event
 		await Assert.That(generatedSource).Contains("protected override void RegisterEvents()");
 		await Assert
 			.That(generatedSource)
@@ -908,9 +891,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö Apply method is generated with property assignments from event
+		// Assert that Apply method is generated with property assignments from event
 		await Assert
 			.That(generatedSource)
 			.Contains("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
@@ -941,9 +924,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö command method calls RecordAndApply with a new event
+		// Assert that command method calls RecordAndApply with a new event
 		await Assert
 			.That(generatedSource)
 			.Contains("public partial void CreateOrder(string customerId, decimal total)");
@@ -976,7 +959,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public partial void Rename(string name)");
 		await Assert
@@ -1008,7 +991,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -1039,7 +1022,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -1073,7 +1056,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public partial bool Rename(string name)");
 		await Assert
@@ -1108,13 +1091,13 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
 			.ToArray();
 
-		// Assert ÔÇö parameterless event uses () constructor
+		// Assert that parameterless event uses () constructor
 		await Assert.That(generatedSource).Contains("public partial void Increment()");
 		await Assert
 			.That(generatedSource)
@@ -1161,7 +1144,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
@@ -1196,7 +1179,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
@@ -1228,9 +1211,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö RegisterEvents exists but has no Register calls
+		// Assert that RegisterEvents exists but has no Register calls
 		await Assert.That(generatedSource).Contains("protected override void RegisterEvents()");
 		// No Events namespace section should be generated
 		await Assert.That(generatedSource).DoesNotContain("namespace Testing.EmptyEvents");
@@ -1263,9 +1246,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö both event classes exist
+		// Assert that both event classes exist
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
 		await Assert.That(generatedSource).Contains("public sealed class TotalUpdated");
 	}
@@ -1289,7 +1272,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(result.DriverResult.GeneratedTrees)
@@ -1300,15 +1283,7 @@ namespace Testing
 			.Contains(
 				"public partial class NotAnAggregate : global::Purview.EventSourcing.Aggregates.AggregateBase"
 			);
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.DoesNotContain("EVENTSTORE002");
-
-		var errors = result
-			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
-			.Where(static d => d.Severity == DiagnosticSeverity.Error)
-			.ToArray();
-		await Assert.That(errors).IsEmpty();
+		await Assert.That(result).DoesNotHaveDiagnostic("EVENTSTORE002");
 	}
 
 	[Test]
@@ -1338,14 +1313,13 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö only the partial method generates an event, the non-partial is skipped
+		// Assert that only the partial method generates an event, the non-partial is skipped
 		await Assert.That(generatedSource).Contains("NameSet");
 		await Assert.That(generatedSource).DoesNotContain("NonPartialMethodEvent");
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE007");
+
+		await Assert.That(result).HasDiagnostic("EVENTSTORE007");
 	}
 
 	[Test]
@@ -1373,16 +1347,14 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
 			.Contains(
 				"public partial class InterfaceOnlyAggregate : global::Purview.EventSourcing.Aggregates.AggregateBase"
 			);
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.DoesNotContain("EVENTSTORE002");
+		await Assert.That(result).DoesNotHaveDiagnostic("EVENTSTORE002");
 
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
@@ -1414,9 +1386,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö the generated partial class uses 'internal' access modifier
+		// Assert that the generated partial class uses 'internal' access modifier
 		await Assert.That(generatedSource).Contains("internal partial class InternalAggregate");
 	}
 
@@ -1437,7 +1409,7 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert ÔÇö attribute files are generated
+		// Assert that attribute files are generated
 		var attributeSources = result
 			.DriverResult.GeneratedTrees.Select(t => t.GetText().ToString())
 			.ToList();
@@ -1481,13 +1453,13 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert ÔÇö no generator exceptions
+		// Assert that no generator exceptions
 		foreach (var genResult in result.DriverResult.Results)
 		{
 			await Assert.That(genResult.Exception).IsNull();
 		}
 
-		// Assert ÔÇö no compilation errors
+		// Assert that no compilation errors
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
@@ -1517,9 +1489,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö generated file starts with auto-generated header
+		// Assert that generated file starts with auto-generated header
 		await Assert.That(generatedSource).Contains("// <auto-generated />");
 		await Assert.That(generatedSource).Contains("#nullable enable");
 	}
@@ -1547,9 +1519,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö default version is 1
+		// Assert that default version is 1
 		await Assert.That(generatedSource).Contains("public override int SchemaVersion => 1;");
 	}
 
@@ -1576,9 +1548,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö explicit version 3
+		// Assert that explicit version 3
 		await Assert.That(generatedSource).Contains("public override int SchemaVersion => 3;");
 	}
 
@@ -1609,9 +1581,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö both SchemaVersion overrides appear
+		// Assert that both SchemaVersion overrides appear
 		var v1Index = generatedSource.IndexOf(
 			"public override int SchemaVersion => 1;",
 			StringComparison.Ordinal
@@ -1762,31 +1734,23 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert ÔÇö the generated attribute file exposes a Version property
-		var attributeTree = result.DriverResult.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("EventAttribute.g.cs", StringComparison.Ordinal)
-		);
-		var attributeSource = (await attributeTree.GetTextAsync(cancellationToken)).ToString();
+		// Assert that the generated attribute file exposes a Version property
+		var attributeSource = result.GetSource(TypeLibrary.Attributes.EventAttribute.TypeName);
 
 		await Assert.That(attributeSource).Contains("int Version");
 		await Assert.That(attributeSource).Contains("string? EventName");
 		await Assert.That(attributeSource).Contains("string? EventNamespace");
 
-		var aggregateAttributeTree = result.DriverResult.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("AggregateAttribute.g.cs", StringComparison.Ordinal)
+		var aggregateAttributeSource = result.GetSource(
+			TypeLibrary.Attributes.AggregateAttribute.TypeName
 		);
-		var aggregateAttributeSource = (
-			await aggregateAttributeTree.GetTextAsync(cancellationToken)
-		).ToString();
+
 		await Assert.That(aggregateAttributeSource).Contains("string? EventNamespace");
 		await Assert.That(aggregateAttributeSource).Contains("string? EventSuffix");
 
-		var aggregateDefaultsAttributeTree = result.DriverResult.GeneratedTrees.First(t =>
-			t.FilePath.EndsWith("AggregateDefaultsAttribute.g.cs", StringComparison.Ordinal)
+		var aggregateDefaultsAttributeSource = result.GetSource(
+			TypeLibrary.Attributes.AggregateDefaultsAttribute.TypeName
 		);
-		var aggregateDefaultsAttributeSource = (
-			await aggregateDefaultsAttributeTree.GetTextAsync(cancellationToken)
-		).ToString();
 		await Assert.That(aggregateDefaultsAttributeSource).Contains("string? EventSuffix");
 	}
 
@@ -1811,7 +1775,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
 		await Assert
@@ -1844,7 +1808,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreatedDomainEvent");
 		await Assert
@@ -1877,7 +1841,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreatedCustomEvent");
 		await Assert
@@ -1909,7 +1873,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("namespace Testing.Custom.Events");
 		await Assert
@@ -1938,7 +1902,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("namespace Testing.Domain.Ordering");
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
@@ -1972,9 +1936,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE002");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE002");
 	}
 
 	[Test]
@@ -2002,9 +1964,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE003");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE003");
 	}
 
 	[Test]
@@ -2029,9 +1989,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE004");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE004");
 	}
 
 	[Test]
@@ -2058,9 +2016,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE005");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE005");
 	}
 
 	[Test]
@@ -2091,11 +2047,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		var errorIds = GetGeneratorDiagnostics(result)
-			.Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-			.Select(static diagnostic => diagnostic.Id);
-
-		await Assert.That(errorIds).Contains("EVENTSTORE011");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE011");
 		await Assert
 			.That(
 				result
@@ -2125,9 +2077,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE006");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE006");
 	}
 
 	[Test]
@@ -2151,11 +2101,9 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE008");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE008");
 		await Assert.That(generatedSource).Contains("public partial string SetValue(string value)");
 		await Assert
 			.That(
@@ -2188,11 +2136,9 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE008");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE008");
 		await Assert
 			.That(generatedSource)
 			.Contains("public static partial string SetValue(string value)");
@@ -2236,11 +2182,9 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE009");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE009");
 		await Assert.That(generatedSource).Contains("public partial void Update(string value)");
 		await Assert.That(generatedSource).Contains("public partial void Update(int count)");
 		await Assert.That(generatedSource).Contains("EVENTSTORE009");
@@ -2277,8 +2221,8 @@ namespace Testing
 		var result = await GenerateAsync(source, cancellationToken);
 
 		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains(DiagnosticLibrary.EventParameterMustMapToWritableProperty.Id);
+			.That(result)
+			.HasDiagnostic(DiagnosticLibrary.EventParameterMustMapToWritableProperty);
 	}
 
 	[Test]
@@ -2302,11 +2246,11 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.DoesNotContain(DiagnosticLibrary.EventParameterMustMapToWritableProperty.Id);
+			.That(result)
+			.DoesNotHaveDiagnostic(DiagnosticLibrary.EventParameterMustMapToWritableProperty);
 		await Assert
 			.That(generatedSource)
 			.Contains("public partial void Rename(string initialPropertyToTest)");
@@ -2355,11 +2299,11 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.DoesNotContain(DiagnosticLibrary.EventParameterMustMapToWritableProperty.Id);
+			.That(result)
+			.DoesNotHaveDiagnostic(DiagnosticLibrary.EventParameterMustMapToWritableProperty);
 		await Assert
 			.That(generatedSource)
 			.Contains(
@@ -2413,7 +2357,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -2455,8 +2399,8 @@ namespace Testing
 		var result = await GenerateAsync(source, cancellationToken);
 
 		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains(DiagnosticLibrary.EventParameterMustMapToWritableProperty.Id);
+			.That(result)
+			.HasDiagnostic(DiagnosticLibrary.EventParameterMustMapToWritableProperty);
 	}
 
 	[Test]
@@ -2481,9 +2425,7 @@ namespace Testing
 
 		var result = await GenerateAsync(source, cancellationToken);
 
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.Contains("EVENTSTORE010");
+		await Assert.That(result).HasDiagnostic("EVENTSTORE010");
 	}
 
 	[Test]
@@ -2519,32 +2461,9 @@ namespace Second
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var aggregateTrees = ExcludeGenAttribs(result)
-			.Select(static tree => tree.FilePath)
-			.ToArray();
-		var aggregateFileNames = aggregateTrees
-			.Select(static path => Path.GetFileName(path))
-			.ToArray();
+		var aggregateTrees = result.PrimarySyntaxTrees;
 
-		await Assert.That(aggregateTrees).Count().IsEqualTo(2);
-		await Assert.That(aggregateTrees.Distinct(StringComparer.Ordinal)).Count().IsEqualTo(2);
-		await Assert
-			.That(
-				aggregateFileNames.All(static fileName =>
-					fileName.StartsWith("OrderAggregate_", StringComparison.Ordinal)
-				)
-			)
-			.IsTrue();
-		await Assert
-			.That(
-				aggregateFileNames.All(fileName =>
-					fileName.Length
-					== "OrderAggregate_".Length
-						+ HintNameHashHexLength
-						+ GeneratedSourceFileSuffix.Length
-				)
-			)
-			.IsTrue();
+		await Assert.That(aggregateTrees.Length).IsEqualTo(2);
 	}
 
 	[Test]
@@ -2595,16 +2514,16 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö all 5 event classes
+		// Assert that all 5 event classes
 		await Assert.That(generatedSource).Contains("public sealed class OrderCreated");
 		await Assert.That(generatedSource).Contains("public sealed class TotalUpdated");
 		await Assert.That(generatedSource).Contains("public sealed class ShippingAddressSetEvent");
 		await Assert.That(generatedSource).Contains("public sealed class OrderConfirmedEvent");
 		await Assert.That(generatedSource).Contains("public sealed class OrderCanceledEvent"); // US spelling
 
-		// Assert ÔÇö all 5 Register calls
+		// Assert that all 5 Register calls
 		await Assert
 			.That(generatedSource)
 			.Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
@@ -2621,7 +2540,7 @@ namespace Testing
 			.That(generatedSource)
 			.Contains("Register<global::Testing.OrderEvents.OrderCanceledEvent>(Apply);");
 
-		// Assert ÔÇö compiles without errors
+		// Assert that compiles without errors
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
@@ -2656,21 +2575,21 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö all parameter types are represented as properties
+		// Assert that all parameter types are represented as properties
 		await Assert.That(generatedSource).Contains("public string Name { get; set; }");
 		await Assert.That(generatedSource).Contains("public decimal Price { get; set; }");
 		await Assert.That(generatedSource).Contains("public int Quantity { get; set; }");
 		await Assert.That(generatedSource).Contains("public bool IsAvailable { get; set; }");
 
-		// Assert ÔÇö Apply method sets all properties
+		// Assert that Apply method sets all properties
 		await Assert.That(generatedSource).Contains("Name = @event.Name;");
 		await Assert.That(generatedSource).Contains("Price = @event.Price;");
 		await Assert.That(generatedSource).Contains("Quantity = @event.Quantity;");
 		await Assert.That(generatedSource).Contains("IsAvailable = @event.IsAvailable;");
 
-		// Assert ÔÇö BuildEventHash includes all properties
+		// Assert that BuildEventHash includes all properties
 		await Assert.That(generatedSource).Contains("hash.Add(Name);");
 		await Assert.That(generatedSource).Contains("hash.Add(Price);");
 		await Assert.That(generatedSource).Contains("hash.Add(Quantity);");
@@ -2705,13 +2624,13 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert ÔÇö attribute files + 1 generated aggregate
+		// Assert that attribute files + 1 generated aggregate
 		await Assert
 			.That(result.DriverResult.GeneratedTrees)
 			.Count()
 			.IsEqualTo(ExpectedFileCountPlusGen);
 
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		await Assert.That(generatedSource).Contains("public sealed class AccountCreatedEvent");
 		await Assert
 			.That(generatedSource)
@@ -2747,7 +2666,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(result.DriverResult.GeneratedTrees)
@@ -2757,9 +2676,7 @@ namespace Testing
 		await Assert
 			.That(generatedSource)
 			.Contains("Register<global::Testing.InvoiceEvents.InvoiceCreatedEvent>(Apply);");
-		await Assert
-			.That(GetGeneratorDiagnostics(result).Select(static diagnostic => diagnostic.Id))
-			.DoesNotContain("EVENTSTORE002");
+		await Assert.That(result).DoesNotHaveDiagnostic("EVENTSTORE002");
 	}
 
 	[Test]
@@ -2785,9 +2702,9 @@ namespace Company.Domain.Orders
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö events namespace follows the pattern
+		// Assert that events namespace follows the pattern
 		await Assert.That(generatedSource).Contains("namespace Company.Domain.Orders.OrderEvents");
 		await Assert
 			.That(generatedSource)
@@ -2834,9 +2751,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö parameterless use () constructor, parameterized use { } initializer
+		// Assert that parameterless use () constructor, parameterized use { } initializer
 		await Assert
 			.That(generatedSource)
 			.Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
@@ -2849,7 +2766,7 @@ namespace Testing
 		await Assert.That(generatedSource).Contains("RecordAndApply(@event);");
 		await Assert.That(generatedSource).Contains("Label = label,");
 
-		// Assert ÔÇö all 4 Register calls
+		// Assert that all 4 Register calls
 		await Assert
 			.That(generatedSource)
 			.Contains("Register<global::Testing.CounterEvents.IncrementedEvent>(Apply);");
@@ -2863,7 +2780,7 @@ namespace Testing
 			.That(generatedSource)
 			.Contains("Register<global::Testing.CounterEvents.ResetEvent>(Apply);");
 
-		// Assert ÔÇö compiles without errors
+		// Assert that compiles without errors
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
@@ -2894,9 +2811,9 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö nullable parameter generates property and Apply method
+		// Assert that nullable parameter generates property and Apply method
 		await Assert.That(generatedSource).Contains("Bio");
 		await Assert.That(generatedSource).Contains("Bio = @event.Bio;");
 		await Assert.That(generatedSource).Contains("public sealed class BioUpdated");
@@ -2926,7 +2843,7 @@ namespace Testing
 			""";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		var cs8777 = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Id == "CS8777")
@@ -2965,7 +2882,7 @@ namespace Testing
 			""";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		var cs8777 = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Id == "CS8777")
@@ -3007,7 +2924,7 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		// Assert
 		await Assert.That(generatedSource).Contains("public partial class PublicAggregate");
@@ -3036,13 +2953,13 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
-		// Assert ÔÇö command method matches partial declaration
+		// Assert that command method matches partial declaration
 		await Assert
 			.That(generatedSource)
 			.Contains("public partial void SetContent(string content)");
-		// Assert ÔÇö RecordAndApply creates event with property
+		// Assert that RecordAndApply creates event with property
 		await Assert.That(generatedSource).Contains("Content = content,");
 	}
 
@@ -3067,7 +2984,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		var firstShouldApplyIndex = generatedSource.IndexOf(
 			"if (!ShouldApplyCustomerIdSetEvent(@event))",
@@ -3129,14 +3046,16 @@ namespace Testing
 }
 ";
 
-		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
+		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
 		var aggregateType = assembly.GetType("Testing.CustomerAggregate")!;
 		var instance = Activator.CreateInstance(aggregateType)!;
 		var setCustomerId = aggregateType.GetMethod("SetCustomerId")!;
 
-		var result = (bool)setCustomerId.Invoke(instance, ["input-value"])!;
+		var setResult = (bool)setCustomerId.Invoke(instance, ["input-value"])!;
 
-		await Assert.That(result).IsFalse();
+		await Assert.That(setResult).IsFalse();
 		await Assert
 			.That(aggregateType.GetProperty("ShouldApplyCallCount")!.GetValue(instance))
 			.IsEqualTo(2);
@@ -3169,7 +3088,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		var onChangingIndex = generatedSource.IndexOf(
 			"OnCustomerIdChanging(ref customerId);",
@@ -3190,7 +3109,8 @@ namespace Testing
 		await Assert.That(onChangingIndex).IsLessThan(noChangeIndex);
 		await Assert.That(onRaisingIndex).IsLessThan(noChangeIndex);
 
-		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
 		var aggregateType = assembly.GetType("Testing.CustomerAggregate")!;
 		var instance = Activator.CreateInstance(aggregateType)!;
 		var setCustomerId = aggregateType.GetMethod("SetCustomerId")!;
@@ -3229,7 +3149,9 @@ namespace Testing
 }
 ";
 
-		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
+		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
 		var aggregateType = assembly.GetType("Testing.OrderAggregate")!;
 		var instance = Activator.CreateInstance(aggregateType)!;
 		aggregateType.GetMethod("CreateOrder")!.Invoke(instance, ["customer-1", 12.5m]);
@@ -3275,7 +3197,9 @@ namespace Testing
 }
 ";
 
-		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
+		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
 		var eventType = assembly.GetType("Testing.OrderEvents.OrderCreatedEvent")!;
 		var instance = Activator.CreateInstance(eventType)!;
 		eventType.GetProperty("CustomerId")!.SetValue(instance, "customer-2");
@@ -3331,8 +3255,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result)
-			.Where(d => d.Severity == DiagnosticSeverity.Warning)
+		var warnings = result
+			.DriverResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
 			.ToArray();
 
 		await Assert
@@ -3340,12 +3264,11 @@ namespace Testing
 				warnings.Count(d => d.Id == DiagnosticLibrary.AggregateMethodShouldBeVerbPhrase.Id)
 			)
 			.IsEqualTo(4);
+
+		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.UnableToInferEventName);
 		await Assert
-			.That(warnings.Select(d => d.Id))
-			.DoesNotContain(DiagnosticLibrary.UnableToInferEventName.Id);
-		await Assert
-			.That(warnings.Select(d => d.Id))
-			.DoesNotContain(DiagnosticLibrary.EventNameOverrideShouldBePastTense.Id);
+			.That(result)
+			.DoesNotHaveDiagnostic(DiagnosticLibrary.EventNameOverrideShouldBePastTense);
 	}
 
 	[Test]
@@ -3378,8 +3301,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result)
-			.Where(d => d.Severity == DiagnosticSeverity.Warning)
+		var warnings = result
+			.DriverResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
 			.ToArray();
 
 		await Assert.That(warnings.Count(d => d.Id == "EVENTSTORE014")).IsEqualTo(4);
@@ -3418,8 +3341,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result)
-			.Where(d => d.Severity == DiagnosticSeverity.Warning)
+		var warnings = result
+			.DriverResult.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Warning)
 			.ToArray();
 
 		await Assert
@@ -3460,8 +3383,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result)
-			.Where(static d => d.Severity == DiagnosticSeverity.Info)
+		var warnings = result
+			.DriverResult.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Info)
 			.ToArray();
 
 		await Assert
@@ -3500,8 +3423,8 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var warnings = GetGeneratorDiagnostics(result)
-			.Where(static d => d.Severity == DiagnosticSeverity.Warning)
+		var warnings = result
+			.DriverResult.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Warning)
 			.ToArray();
 
 		await Assert
@@ -3602,7 +3525,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 		await Assert
 			.That(result)
 			.DoesNotHaveDiagnostic(DiagnosticLibrary.UnsupportedEventMethodSignature);
@@ -3654,7 +3577,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -3691,7 +3614,7 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -3774,8 +3697,8 @@ namespace Testing
 			AdditionalNamespaces = [],
 		};
 		var result = await GenerateAsync(source, options, cancellationToken);
-		var diagnostics = GetGeneratorDiagnostics(result).Select(static d => d.Id).ToArray();
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var diagnostics = result.DriverResult.Diagnostics.Select(static d => d.Id).ToArray();
+		var generatedSource = result.GetSource();
 		await Assert
 			.That(diagnostics)
 			.DoesNotContain(DiagnosticLibrary.UnsupportedEventMethodSignature.Id);

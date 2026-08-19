@@ -2,11 +2,7 @@ using Purview.EventSourcing.Aggregates.Events;
 
 namespace Purview.EventSourcing.Aggregates.Persistence.Events;
 
-[System.Diagnostics.CodeAnalysis.SuppressMessage(
-	"Aggregates",
-	"EVENTSTORE013:Event names should be past tense",
-	Justification = "Testing"
-)]
+[SentinelEvent(Justification = "This is an old event used for testing purposes.")]
 public sealed class OldEvent : EventBase
 {
 	public Guid Value { get; set; }

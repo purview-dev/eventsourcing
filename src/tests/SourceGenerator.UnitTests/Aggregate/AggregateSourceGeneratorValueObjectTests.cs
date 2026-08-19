@@ -1,5 +1,4 @@
 using System.Reflection;
-using Microsoft.CodeAnalysis;
 using Purview.EventSourcing.SourceGenerator.Generators;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate;
@@ -7,14 +6,6 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 public sealed class AggregateSourceGeneratorValueObjectTests
 	: EventSourcingSourceGeneratorTestBase<AggregateSourceGenerator>
 {
-	static string GetAggregateGeneratedSource(DriverRunResult result)
-	{
-		return string.Join(
-			Environment.NewLine,
-			ExcludeGenAttribs(result).Select(static tree => tree.GetText().ToString())
-		);
-	}
-
 	[Test]
 	public async Task Generate_UsesContextualValueObjectCreateAndHookMethods(
 		CancellationToken cancellationToken
@@ -69,7 +60,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 			""";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = GetAggregateGeneratedSource(result);
+		var generatedSource = result.GetSource();
 
 		await Assert
 			.That(generatedSource)
@@ -133,7 +124,9 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 			}
 			""";
 
-		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
+		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
 		var aggregateType = assembly.GetType("Testing.OrderAggregate")!;
 		var aggregate = Activator.CreateInstance(aggregateType)!;
 		var orderStatusCodeType = assembly.GetType("Testing.OrderStatusCode")!;
@@ -236,7 +229,9 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 			}
 			""";
 
-		var assembly = await CompileToAssemblyAsync(source, cancellationToken);
+		var result = await GenerateAsync(source, cancellationToken);
+		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
 		var aggregateType = assembly.GetType("Testing.CustomerAggregate")!;
 		var emailType = assembly.GetType("Testing.EmailAddress")!;
 		var eventType = assembly.GetType("Testing.CustomerEvents.CustomerEmailChanged")!;

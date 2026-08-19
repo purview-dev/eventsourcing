@@ -105,6 +105,16 @@ static partial class SourceGenLibrary
 					)
 						return null;
 
+					if (
+						TypeHelpers.HasAttribute(
+							typeSymbol,
+							TypeLibrary.Attributes.SentinelEventAttribute
+						)
+					)
+					{
+						return null;
+					}
+
 					if (EventVerbMap.IsPastTenseEventName(typeSymbol.Name))
 						return null;
 

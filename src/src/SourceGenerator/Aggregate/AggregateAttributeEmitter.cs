@@ -7,6 +7,7 @@ static class AggregateAttributeEmitter
 	public static IEnumerable<(string HintName, SourceText Source)> Emit()
 	{
 		yield return ($"{nameof(AggregateAttribute)}.g.cs", AggregateAttribute());
+		yield return ($"{nameof(SentinelEventAttribute)}.g.cs", SentinelEventAttribute());
 		yield return ($"{nameof(AggregateDefaultsAttribute)}.g.cs", AggregateDefaultsAttribute());
 		yield return ($"{nameof(CollectionEventAttribute)}.g.cs", CollectionEventAttribute());
 		yield return ($"{nameof(ComputedAttribute)}.g.cs", ComputedAttribute());
@@ -61,6 +62,68 @@ static class AggregateAttributeEmitter
 						}
 					);
 			}
+		);
+	}
+
+	static SourceText SentinelEventAttribute()
+	{
+		var writer = CreateCodeWriter(TypeLibrary.Attributes.SentinelEventAttribute);
+		writer
+			.XmlSummary(
+				"Marks an event type as a sentinel (fallback) event that is intentionally exempt from the",
+				$"past-tense naming convention enforced by <c>{DiagnosticLibrary.EventNameShouldBePastTense.Id}</c>."
+			)
+			.XmlRemarks(
+				CodeWriter.XmlInlinePara(
+					"Domain events are named as past-tense facts — <c>OrderPlaced</c>, <c>CustomerRegistered</c>",
+					"- because each records something that has already happened. Sentinel events break that rule on",
+					"purpose: they do not describe a fact, they stand in for one. The canonical case is the type an",
+					"aggregate deserializes to when it reads an event kind it does not recognize (for example",
+					"<c>UnknownEvent</c>); genesis/uninitialized markers and legacy placeholders are the same shape."
+				),
+				CodeWriter.XmlInlinePara(
+					$"Applying this attribute tells the analyzer the name is deliberate, so <c>{DiagnosticLibrary.EventNameShouldBePastTense.Id}</c>",
+					"(\"event names should be past tense\") is suppressed for the annotated type. The attribute is read",
+					"from the semantic model at compile time and has no runtime behavior — it is never inspected via",
+					"reflection and does not need to be emitted."
+				),
+				CodeWriter.XmlInlinePara(
+					"It suppresses only the naming diagnostic; all other event validation still applies. Do not use it",
+					"to silence the warning on a genuine domain event whose name merely is not past tense yet — rename",
+					"that event instead. The convention keeps the log readable as a history of facts, and every",
+					"sentinel is a small hole in that guarantee."
+				),
+				CodeWriter.XmlInlinePara(
+					$"<see cref=\"{typeof(AttributeUsageAttribute)}.Inherited\"/> is <see langword=\"false\"/>: sentinel status is",
+					"per-type and is not conferred on derived records. Each type opts in explicitly."
+				)
+			)
+			.XmlExample(
+				"A fallback event used when an unrecognized event type is read back from the store:",
+				CodeWriter.XmlInlineCodeBlock(
+					"[SentinelEvent]",
+					"public sealed record UnknownEvent(string OriginalTypeName, byte[] Payload);"
+				),
+				$"Without the attribute, <c>UnknownEvent</c> raises <c>{DiagnosticLibrary.EventNameShouldBePastTense.Id}</c> because \"Unknown\"",
+				"is not a past-tense fact."
+			);
+
+		return writer.WriteAttributeClass(
+			new(TypeLibrary.Attributes.SentinelEventAttribute) { IsSealed = true },
+			AttributeTargets.Class | AttributeTargets.Struct,
+			body =>
+				body.XmlSummary(
+						"An optional human-readable reason this event is a sentinel rather than a past-tense fact,",
+						"recorded for audit and code-review purposes. Mirrors",
+						$"{CodeWriter.XmlSee($"{typeof(System.Diagnostics.CodeAnalysis.SuppressMessageAttribute).FullName}.Justification")}."
+					)
+					.WriteProperty(
+						new("Justification", TypeLibrary.System.String.AsTypeReference().Nullable())
+						{
+							Accessibility = TypeDeclarationAccessibility.Public,
+							IsInitOnly = true,
+						}
+					)
 		);
 	}
 

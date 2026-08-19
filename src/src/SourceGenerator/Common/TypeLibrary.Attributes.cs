@@ -19,6 +19,11 @@ partial class TypeLibrary
 			AggregateNamespace
 		);
 
+		public static readonly TypeValueObject SentinelEventAttribute = new(
+			nameof(SentinelEventAttribute),
+			AggregateNamespace
+		);
+
 		public static readonly TypeValueObject CollectionEventAttribute = new(
 			nameof(CollectionEventAttribute),
 			AggregateNamespace

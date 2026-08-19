@@ -4,10 +4,12 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 
 partial class EventVerbMap
 {
+	// Verb -> past-tense form. For EVENT naming the value should be the PAST
+	// PARTICIPLE ("Order" + "Shipped"/"Taken"/"Given"), not the simple past.
 	static readonly FrozenDictionary<string, string> PastTenseByVerb = new Dictionary<
 		string,
 		string
-	>
+	>(StringComparer.Ordinal)
 	{
 		// ── Original entries (Cancel now US-spelled) ──
 		{ "Reactivate", "Reactivated" },
@@ -245,9 +247,14 @@ partial class EventVerbMap
 		{ "Rate", "Rated" },
 		{ "Score", "Scored" },
 		{ "Vote", "Voted" },
-		// ── Irregular verbs (past tense is not -ed) ──
+		// ── Retirement / obsolescence (added — see notes) ──
+		{ "Deprecate", "Deprecated" },
+		{ "Retire", "Retired" },
+		{ "Obsolete", "Obsoleted" },
+		{ "Supersede", "Superseded" },
+		// ── Irregular verbs (past PARTICIPLE — not simple past) ──
 		{ "Make", "Made" },
-		{ "Take", "Took" },
+		{ "Take", "Taken" }, // CORRECTED: was "Took" (simple past); events use participle
 		{ "Give", "Given" },
 		{ "Get", "Got" },
 		{ "Put", "Put" },
@@ -263,7 +270,7 @@ partial class EventVerbMap
 		{ "Teach", "Taught" },
 		{ "Think", "Thought" },
 		{ "Choose", "Chosen" },
-		{ "Run", "Ran" },
+		{ "Run", "Run" }, // CORRECTED: was "Ran" (simple past); participle is "Run"
 		{ "Write", "Written" },
 		{ "Draw", "Drawn" },
 		{ "Throw", "Thrown" },
@@ -292,23 +299,18 @@ partial class EventVerbMap
 		{ "Spread", "Spread" },
 		{ "Cast", "Cast" },
 		{ "Recast", "Recast" },
-	}.ToFrozenDictionary();
+	}.ToFrozenDictionary(StringComparer.Ordinal);
 
-	static readonly (string Prefix, string Suffix)[] PropertySpecificPatterns =
-	[
-		("Change", "Changed"),
-		("Update", "Updated"),
-		("Set", "Set"),
-		("Clear", "Cleared"),
-		("Remove", "Removed"),
-	];
-
-	// Modifier prefixes that attach to a following verb rather than acting as the verb.
-	// "ForceSave" -> Force + Save -> "ForceSaved" (inflect last, keep order).
-	// Matched case-insensitively against the FIRST PascalCase segment.
-	static readonly HashSet<string> ModifierPrefixes =
-	[
-		with(StringComparer.OrdinalIgnoreCase),
+	// Modifier prefixes that attach to a following verb rather than acting as the
+	// verb. "ForceSave" -> Force + Save -> "ForceSaved". Matched case-insensitively
+	// against the FIRST PascalCase segment.
+	//
+	// FrozenSet built from a comparer-seeded HashSet is
+	// the correct O(1), case-insensitive form.
+	static readonly FrozenSet<string> ModifierPrefixes = new HashSet<string>(
+		StringComparer.OrdinalIgnoreCase
+	)
+	{
 		"Force",
 		"Bulk",
 		"Soft",
@@ -319,19 +321,17 @@ partial class EventVerbMap
 		"Quick",
 		"Partial",
 		"Full",
-	];
+	}.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
-	static readonly string[] PastTenseSuffixes =
-	[
-		.. PastTenseByVerb
-			.Select(static pair => pair.Value)
-			.Distinct(StringComparer.Ordinal)
-			.OrderByDescending(static value => value.Length)
-			.ThenBy(static value => value, StringComparer.Ordinal),
-	];
+	// Distinct set of known past-tense forms, for validating whether an
+	// identifier's LAST PascalCase word is a real past-tense verb form. Replaces
+	// the old EndsWith-over-all-suffixes approach, which false-positived on
+	// "Outbound"/"Present"/"Offset" etc.
+	static readonly FrozenSet<string> KnownPastTenseForms = PastTenseByVerb.Values.ToFrozenSet(
+		StringComparer.Ordinal
+	);
 
-	static readonly FrozenDictionary<string, string> VerbPairsByPrefixLength = PastTenseByVerb
-		.OrderByDescending(static pair => pair.Key.Length)
-		.ThenBy(static pair => pair.Key, StringComparer.Ordinal)
-		.ToFrozenDictionary();
+	// Length bounds used to prune the greedy verb-span search.
+	static readonly int MinVerbLength = PastTenseByVerb.Keys.Min(static k => k.Length);
+	static readonly int MaxVerbLength = PastTenseByVerb.Keys.Max(static k => k.Length);
 }

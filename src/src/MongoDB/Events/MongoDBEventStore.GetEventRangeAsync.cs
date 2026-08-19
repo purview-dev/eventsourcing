@@ -80,7 +80,7 @@ partial class MongoDBEventStore<T>
 	/// <param name="aggregateVersion">Only used when an unknown event is found.</param>
 	IEvent? DeserializeEvent(EventEntity eventEntity, int aggregateVersion)
 	{
-		static EventUnknown ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion) =>
+		static UnknownEvent ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion) =>
 			new()
 			{
 				Details =

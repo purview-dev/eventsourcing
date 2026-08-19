@@ -1,4 +1,5 @@
 ### New Rules
+
 | Rule ID | Category | Severity | Notes |
 |---------|----------|----------|-------|
 | EVENTSTORE001 | Aggregates | Error | Aggregate must be partial |

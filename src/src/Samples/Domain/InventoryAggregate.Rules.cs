@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.Samples.Domain;
+namespace Purview.EventSourcing.Samples.Domain;
 
 partial class InventoryAggregate
 {
