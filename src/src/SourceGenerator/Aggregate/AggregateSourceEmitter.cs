@@ -22,80 +22,105 @@ static partial class AggregateSourceEmitter
 				)
 			)
 			{
-				outputContext.Writer.WriteLine($"namespace {namespaceMethods.Key}");
-				outputContext.Writer.WriteLine("{");
-
-				foreach (var method in namespaceMethods)
+				using (outputContext.Writer.WriteBlockNamespaceScope(namespaceMethods.Key))
 				{
-					GenerateEventClass(outputContext, method);
+					foreach (var method in namespaceMethods)
+					{
+						GenerateEventClass(outputContext, method);
+					}
 				}
-
-				outputContext.Writer.WriteLine("}");
-				outputContext.Writer.WriteLine();
 			}
-		}
 
-		// Generate the partial aggregate class in a block-scoped namespace
-		// (required because event classes use a different namespace in the same file)
-		var accessModifier = GetAccessModifier(outputContext.Aggregate.Accessibility);
+			// Generate the partial aggregate class in a block-scoped namespace
+			// (required because event classes use a different namespace in the same file)
+			var accessModifier = GetAccessModifier(outputContext.Aggregate.Accessibility);
 
-		if (outputContext.Aggregate.AggregateClass.Namespace is not null)
-		{
-			outputContext.Writer.WriteLine(
-				$"namespace {outputContext.Aggregate.AggregateClass.Namespace}"
+			if (outputContext.Aggregate.AggregateClass.Namespace is not null)
+			{
+				outputContext.Writer.WriteLine(
+					$"namespace {outputContext.Aggregate.AggregateClass.Namespace}"
+				);
+				outputContext.Writer.WriteLine("{");
+			}
+
+			using var nsBlock = outputContext.Writer.WriteBlockNamespaceScope(
+				outputContext.Aggregate.AggregateClass
 			);
-			outputContext.Writer.WriteLine("{");
-		}
 
-		var indent = outputContext.Aggregate.AggregateClass.Namespace is not null ? "\t" : "";
+			outputContext.Writer.WriteLine(
+				$"{indent}[global::System.Text.Json.Serialization.JsonConverter(typeof({outputContext.Aggregate.AggregateClass.TypeName}JsonConverter))]"
+			);
+			var aggregateBaseClause = outputContext.Aggregate.ShouldDeclareAggregateBase
+				? " : global::Purview.EventSourcing.Aggregates.AggregateBase"
+				: string.Empty;
 
-		outputContext.Writer.WriteLine(
-			$"{indent}[global::System.Text.Json.Serialization.JsonConverter(typeof({outputContext.Aggregate.AggregateClass.TypeName}JsonConverter))]"
-		);
-		var aggregateBaseClause = outputContext.Aggregate.ShouldDeclareAggregateBase
-			? " : global::Purview.EventSourcing.Aggregates.AggregateBase"
-			: string.Empty;
-		outputContext.Writer.WriteLine(
-			$"{indent}{accessModifier} partial class {outputContext.Aggregate.AggregateClass.TypeName}{aggregateBaseClause}"
-		);
-		outputContext.Writer.WriteLine($"{indent}{{");
+			outputContext.Writer.WriteClass(
+				new(outputContext.Aggregate.AggregateClass)
+				{
+					BaseType = outputContext.Aggregate.ShouldDeclareAggregateBase
+						? TypeLibrary.Aggregates.AggregateBase
+						: null,
+					Attributes =
+					[
+						new(TypeLibrary.System.TextJson.JsonConverterAttribute)
+						{
+							Arguments =
+							[
+								new(
+									$"typeof({outputContext.Aggregate.AggregateClass.TypeName}JsonConverter)"
+								),
+							],
+						},
+					],
+				},
+				bodyWriter =>
+				{
+					//
+				}
+			);
 
-		GenerateJsonSerializationSupport(outputContext, indent);
+			//outputContext.Writer.WriteLine(
+			//	$"{indent}{accessModifier} partial class {outputContext.Aggregate.AggregateClass.TypeName}{aggregateBaseClause}"
+			//);
+			//outputContext.Writer.WriteLine($"{indent}{{");
 
-		// Generate RegisterEvents override
-		GenerateRegisterEvents(outputContext, indent);
+			GenerateJsonSerializationSupport(outputContext, indent);
 
-		// Generate Apply methods
-		foreach (var method in outputContext.Aggregate.Methods)
-		{
-			GenerateApplyMethod(outputContext, method, indent);
-		}
+			// Generate RegisterEvents override
+			GenerateRegisterEvents(outputContext, indent);
 
-		// Generate command method implementations
-		foreach (var method in outputContext.Aggregate.Methods)
-		{
-			if (method.IsCollectionEvent)
-				CollectionCommandMethodEmitter.Generate(outputContext, method, indent);
-			else
-				CommandMethodEmitter.Generate(outputContext, method, indent);
-		}
+			// Generate Apply methods
+			foreach (var method in outputContext.Aggregate.Methods)
+			{
+				GenerateApplyMethod(outputContext, method, indent);
+			}
 
-		GenerateCollectionNormalizationValidationHookDeclarations(outputContext, indent);
-		GeneratePropertyHookDeclarations(outputContext, indent);
+			// Generate command method implementations
+			foreach (var method in outputContext.Aggregate.Methods)
+			{
+				if (method.IsCollectionEvent)
+					CollectionCommandMethodEmitter.Generate(outputContext, method, indent);
+				else
+					CommandMethodEmitter.Generate(outputContext, method, indent);
+			}
 
-		foreach (var method in outputContext.Aggregate.InvalidMethods)
-		{
-			GenerateInvalidCommandMethodStub(outputContext, method, indent);
-		}
+			GenerateCollectionNormalizationValidationHookDeclarations(outputContext, indent);
+			GeneratePropertyHookDeclarations(outputContext, indent);
 
-		outputContext.Writer.WriteLine($"{indent}}}");
+			foreach (var method in outputContext.Aggregate.InvalidMethods)
+			{
+				GenerateInvalidCommandMethodStub(outputContext, method, indent);
+			}
 
-		GenerateJsonConverter(outputContext, indent);
-		GenerateJsonModel(outputContext, indent);
+			outputContext.Writer.WriteLine($"{indent}}}");
 
-		if (outputContext.Aggregate.AggregateClass.Namespace is not null)
-		{
-			outputContext.Writer.WriteLine("}");
+			GenerateJsonConverter(outputContext, indent);
+			GenerateJsonModel(outputContext, indent);
+
+			if (outputContext.Aggregate.AggregateClass.Namespace is not null)
+			{
+				outputContext.Writer.WriteLine("}");
+			}
 		}
 	}
 
@@ -114,40 +139,64 @@ static partial class AggregateSourceEmitter
 
 		var hashParameterName = storedParameters.Count == 0 ? "_" : "hash";
 
-		outputContext.Writer.WriteLine(
-			$"\tpublic sealed class {method.EventName} : global::Purview.EventSourcing.Aggregates.Events.EventBase"
+		outputContext.Writer.WriteClass(
+			new(method.EventName)
+			{
+				Accessibility = TypeDeclarationAccessibility.Public,
+				IsSealed = true,
+				IsPartial = false,
+				BaseType = TypeLibrary.Aggregates.EventBase,
+			},
+			bodyWriter =>
+			{
+				foreach (var prop in storedParameters)
+				{
+					outputContext.Writer.WriteProperty(
+						new(prop.PropertyName, prop.EventPropertyTypeName)
+						{
+							Accessibility = TypeDeclarationAccessibility.Public,
+							HasSetter = true,
+							Initializer = "default!",
+						}
+					);
+				}
+
+				outputContext.Writer.WriteProperty(
+					new("SchemaVersion", PurviewTypeLibrary.System.Int32)
+					{
+						Accessibility = TypeDeclarationAccessibility.Public,
+						IsOverride = true,
+						ExpressionBody = $"{method.Version}",
+					}
+				);
+
+				outputContext.Writer.WriteMethod(
+					new("BuildEventHash")
+					{
+						Accessibility = TypeDeclarationAccessibility.Protected,
+						IsOverride = true,
+						Parameters =
+						[
+							new(hashParameterName, TypeLibrary.System.HashCode)
+							{
+								Modifier = ParameterModifier.Ref,
+							},
+						],
+					},
+					methodBodyWriter =>
+					{
+						foreach (var prop in storedParameters)
+						{
+							methodBodyWriter
+								.Write(hashParameterName)
+								.Write(".Add(")
+								.Write(prop.PropertyName)
+								.WriteLine(");");
+						}
+					}
+				);
+			}
 		);
-		outputContext.Writer.WriteLine("\t{");
-
-		foreach (var prop in storedParameters)
-		{
-			outputContext.Writer.WriteLine(
-				$"\t\tpublic {prop.EventPropertyTypeName} {prop.PropertyName} {{ get; set; }} = default!;"
-			);
-		}
-
-		outputContext.Writer.WriteLine();
-
-		// Emit SchemaVersion override only when it differs from the default (1),
-		// but always emit it so consumers can rely on it being present.
-		outputContext.Writer.WriteLine(
-			$"\t\tpublic override int SchemaVersion => {method.Version};"
-		);
-		outputContext.Writer.WriteLine();
-
-		outputContext.Writer.WriteLine(
-			$"\t\tprotected override void BuildEventHash(ref global::System.HashCode {hashParameterName})"
-		);
-		outputContext.Writer.WriteLine("\t\t{");
-
-		foreach (var prop in storedParameters)
-		{
-			outputContext.Writer.WriteLine($"\t\t\t{hashParameterName}.Add({prop.PropertyName});");
-		}
-
-		outputContext.Writer.WriteLine("\t\t}");
-		outputContext.Writer.WriteLine("\t}");
-		outputContext.Writer.WriteLine();
 	}
 
 	static void GenerateRegisterEvents(
@@ -217,10 +266,16 @@ static partial class AggregateSourceEmitter
 	{
 		if (method.ManualApply)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\tprivate partial void Apply(global::{method.EventNamespace}.{method.EventName} @event);"
+			outputContext.Writer.WritePartialMethod(
+				new($"Apply")
+				{
+					Parameters =
+					[
+						new("@event", $"global::{method.EventNamespace}.{method.EventName}"),
+					],
+				}
 			);
-			outputContext.Writer.WriteLine();
+
 			return;
 		}
 
@@ -232,10 +287,16 @@ static partial class AggregateSourceEmitter
 
 		if (method.Parameters.Count == 0)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\tprivate partial void Apply(global::{method.EventNamespace}.{method.EventName} @event);"
+			outputContext.Writer.WritePartialMethod(
+				new($"Apply")
+				{
+					Parameters =
+					[
+						new("@event", $"global::{method.EventNamespace}.{method.EventName}"),
+					],
+				}
 			);
-			outputContext.Writer.WriteLine();
+
 			return;
 		}
 

@@ -31,6 +31,7 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 			"Purview.EventSourcing.Aggregates",
 			"Purview.EventSourcing.Serialization",
 			"Purview.EventSourcing.ValueObjects",
+			typeof(EventStoreSet<>).Namespace!,
 		];
 		AdditionalAssemblyTypes = [typeof(Aggregates.IAggregate)];
 		AdditionalReferences = [.. TestMetadataReferences.GetAdditionalReferences()];

@@ -2,7 +2,7 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 
 partial class TypeLibrary
 {
-	public static class System
+	public static partial class System
 	{
 		public static readonly TypeValueObject AttributeUsageAttribute =
 			TypeValueObject.Create<AttributeUsageAttribute>();
@@ -30,5 +30,7 @@ partial class TypeLibrary
 		public static readonly TypeValueObject DateOnly = new("DateOnly", "System");
 
 		public static readonly TypeValueObject TimeOnly = new("TimeOnly", "System");
+
+		public static readonly TypeValueObject HashCode = new("HashCode", "System");
 	}
 }

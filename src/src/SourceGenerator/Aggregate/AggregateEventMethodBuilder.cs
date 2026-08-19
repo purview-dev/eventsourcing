@@ -64,6 +64,7 @@ static class AggregateEventMethodBuilder
 					methodSymbol.Name
 				)
 			);
+
 			return false;
 		}
 

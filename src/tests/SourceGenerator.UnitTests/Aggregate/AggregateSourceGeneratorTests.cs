@@ -1173,7 +1173,7 @@ namespace Testing
 		public bool IsActive { get; private set; }
 
 		[Purview.EventSourcing.Aggregates.Event]
-		private partial ToggleAggregate ChangeIsActive(bool isActive);
+		partial ToggleAggregate ChangeIsActive(bool isActive);
 	}
 }
 ";
@@ -2499,12 +2499,12 @@ namespace Testing
 		[Purview.EventSourcing.Aggregates.Event]
 		public partial void CancelOrder();
 
-		private partial void Apply(global::Testing.OrderEvents.OrderConfirmedEvent @event)
+		partial void Apply(global::Testing.OrderEvents.OrderConfirmedEvent @event)
 		{
 			Status = ""Confirmed"";
 		}
 
-		private partial void Apply(global::Testing.OrderEvents.OrderCanceledEvent @event)
+		partial void Apply(global::Testing.OrderEvents.OrderCanceledEvent @event)
 		{
 			Status = ""Canceled"";
 		}
@@ -2742,9 +2742,9 @@ namespace Testing
 		[Purview.EventSourcing.Aggregates.Event]
 		public partial void Reset();
 
-		private partial void Apply(global::Testing.CounterEvents.IncrementedEvent @event) => Count++;
-		private partial void Apply(global::Testing.CounterEvents.DecrementedEvent @event) => Count--;
-		private partial void Apply(global::Testing.CounterEvents.ResetEvent @event) => Count = 0;
+		partial void Apply(global::Testing.CounterEvents.IncrementedEvent @event) => Count++;
+		partial void Apply(global::Testing.CounterEvents.DecrementedEvent @event) => Count--;
+		partial void Apply(global::Testing.CounterEvents.ResetEvent @event) => Count = 0;
 	}
 }
 ";
@@ -3317,7 +3317,7 @@ namespace Testing
 			@"
 namespace Testing
 {
-	public sealed record NameChanged : Purview.EventSourcing.Aggregates.Events.EventBase
+	public sealed class NameChanged : Purview.EventSourcing.Aggregates.Events.EventBase
 	{
 		protected override void BuildEventHash(ref global::System.HashCode hash)
 		{
@@ -3331,7 +3331,7 @@ namespace Testing
 		}
 	}
 
-	public sealed record CustomerRegisteredEvent : Purview.EventSourcing.Aggregates.Events.EventBase
+	public sealed record class CustomerRegisteredEvent : Purview.EventSourcing.Aggregates.Events.EventBase
 	{
 		protected override void BuildEventHash(ref global::System.HashCode hash)
 		{

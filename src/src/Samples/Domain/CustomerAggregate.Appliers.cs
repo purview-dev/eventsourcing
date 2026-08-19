@@ -7,10 +7,10 @@ partial class CustomerAggregate
 	partial void OnShouldApplyDeactivatedEvent(DeactivatedEvent @event, ref bool shouldApply) =>
 		shouldApply = IsActive;
 
-	private partial void Apply(DeactivatedEvent @event) => IsActive = false;
+	partial void Apply(DeactivatedEvent @event) => IsActive = false;
 
 	partial void OnShouldApplyReactivatedEvent(ReactivatedEvent @event, ref bool shouldApply) =>
 		shouldApply = !IsActive;
 
-	private partial void Apply(ReactivatedEvent @event) => IsActive = true;
+	partial void Apply(ReactivatedEvent @event) => IsActive = true;
 }

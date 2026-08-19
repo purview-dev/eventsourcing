@@ -7,13 +7,13 @@ static class AggregateAttributeEmitter
 	public static IEnumerable<(string HintName, SourceText Source)> Emit()
 	{
 		yield return ($"{nameof(AggregateAttribute)}.g.cs", AggregateAttribute());
-		yield return ($"{nameof(SentinelEventAttribute)}.g.cs", SentinelEventAttribute());
 		yield return ($"{nameof(AggregateDefaultsAttribute)}.g.cs", AggregateDefaultsAttribute());
 		yield return ($"{nameof(CollectionEventAttribute)}.g.cs", CollectionEventAttribute());
 		yield return ($"{nameof(ComputedAttribute)}.g.cs", ComputedAttribute());
 		yield return ($"{nameof(EventAttribute)}.g.cs", EventAttribute());
 		yield return ($"{nameof(MetadataAttribute)}.g.cs", MetadataAttribute());
 		yield return ($"{nameof(PropertyAttribute)}.g.cs", PropertyAttribute());
+		yield return ($"{nameof(SentinelEventAttribute)}.g.cs", SentinelEventAttribute());
 	}
 
 	static SourceText AggregateAttribute()
@@ -381,6 +381,7 @@ static class AggregateAttributeEmitter
 							Initializer = "1",
 						}
 					);
+
 				body.XmlSummary(
 						"Overrides the generated event type name for this method.",
 						"Defaults to a deterministic past-tense event name inferred from the method name.",

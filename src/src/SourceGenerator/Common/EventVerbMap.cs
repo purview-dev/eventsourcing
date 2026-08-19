@@ -230,6 +230,7 @@ static partial class EventVerbMap
 		if (IsAsciiUpper(prev) && IsAsciiUpper(cur) && i + 1 < s.Length && IsAsciiLower(s[i + 1]))
 			return true;
 
+		// No boundary here
 		return false;
 	}
 

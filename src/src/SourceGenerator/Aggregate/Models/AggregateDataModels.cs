@@ -2,43 +2,48 @@ using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 
-[Generate("Purview.EventSourcing.Aggregates.AggregateAttribute")]
+[Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.AggregateAttribute))]
 readonly partial record struct AggregateAttributeData(string? EventNamespace, string? EventSuffix);
 
-[Generate("Purview.EventSourcing.Aggregates.AggregateDefaultsAttribute")]
+[Generate(
+	TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.AggregateDefaultsAttribute)
+)]
 readonly partial record struct AggregateDefaultsAttributeData(
-	[Property(DefaultValue = "Event")] string? EventSuffix,
-	ITypeSymbol? BaseType
+	string? EventSuffix,
+	ITypeSymbol? EventType
 );
 
-[Generate("Purview.EventSourcing.Aggregates.CollectionEventAttribute")]
+[Generate(
+	TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.CollectionEventAttribute)
+)]
 readonly partial record struct CollectionEventAttributeData(
-	[Argument("propertyName")] string PropertyName,
-	[Property(DefaultValue = 1)] int Version,
+	[Argument("propertyName")] string? PropertyName,
+	[Property(1)] int Version,
 	string? EventName,
 	string? EventNamespace,
 	[Property(
-		DefaultValue = "Purview.EventSourcing.Aggregates.CollectionEventOperation.Auto",
+		TypeLibrary.AggregateNamespace
+			+ "."
+			+ nameof(TypeLibrary.Attributes.CollectionEventOperation)
+			+ ".Auto",
 		IsEnum = true
 	)]
 		string Operation,
-	bool Manual
+	[Property(true)] bool Manual
 );
 
-[Generate("Purview.EventSourcing.Aggregates.EventAttribute")]
+[Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.EventAttribute))]
 readonly partial record struct EventAttributeData(
-	[Property(DefaultValue = 1)] int Version,
+	[Property(1)] int Version,
 	string? EventName,
 	string? EventNamespace,
 	bool Manual
 );
 
-[Generate("Purview.EventSourcing.Aggregates.MetadataAttribute")]
-readonly partial record struct MetadataAttributeData(
-	[Argument("store", DefaultValue = true)] bool Store
-);
+[Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.MetadataAttribute))]
+readonly partial record struct MetadataAttributeData([Argument("store", true)] bool Store);
 
-[Generate("Purview.EventSourcing.Aggregates.PropertyAttribute")]
+[Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.PropertyAttribute))]
 readonly partial record struct PropertyAttributeData(
 	[Argument("propertyName")] string PropertyName
 );
