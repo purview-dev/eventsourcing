@@ -9,6 +9,7 @@ static partial class AggregateSourceEmitter
 			AggregateEventMethodInfo method
 		)
 		{
+			const string indent = "";
 			var collectionEvent = method.CollectionEvent!;
 			var parameter = method.Parameters[0];
 			var hookSuffix = GetHookName(method.EventType);
@@ -16,7 +17,7 @@ static partial class AggregateSourceEmitter
 			var methodAccessModifier = GetAccessModifier(method.MethodAccessibility);
 
 			outputContext.Writer.WriteLine(
-				$"{indent}\t{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({(parameter.IsParams ? "params " : string.Empty)}{parameter.ParameterTypeName} {parameter.ParameterName})"
+				$"{indent}\t{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({(parameter.IsParams ? "params " : string.Empty)}{parameter.ParameterType} {parameter.ParameterName})"
 			);
 			outputContext.Writer.WriteLine($"{indent}\t{{");
 
@@ -237,7 +238,6 @@ static partial class AggregateSourceEmitter
 			string indent
 		)
 		{
-			EmitCa1822Suppression(outputContext, indent);
 			if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
 				outputContext.Writer.WriteLine(
 					$"{indent}\tpartial void OnRaising{hookSuffix}(ref {collectionEvent.ElementType} {parameter.ParameterName});"
@@ -247,7 +247,6 @@ static partial class AggregateSourceEmitter
 					$"{indent}\tpartial void OnRaising{hookSuffix}(ref global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}> {parameter.ParameterName});"
 				);
 
-			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
 				$"{indent}\tbool ShouldApply{hookSuffix}({method.EventType} @event)"
 			);
@@ -258,15 +257,12 @@ static partial class AggregateSourceEmitter
 			);
 			outputContext.Writer.WriteLine($"{indent}\t\treturn shouldApply;");
 			outputContext.Writer.WriteLine($"{indent}\t}}");
-			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
 				$"{indent}\tpartial void OnShouldApply{hookSuffix}({method.EventType} @event, ref bool shouldApply);"
 			);
-			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
 				$"{indent}\tpartial void OnRaised{hookSuffix}({method.EventType} @event);"
 			);
-			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
 				$"{indent}\tpartial void OnApplied{hookSuffix}({method.EventType} @event);"
 			);

@@ -35,6 +35,25 @@ static class AggregateEventMethodBuilder
 
 		var eventAttribute = EventAttributeData.FromAttributeData(methodSymbol);
 		var collectionEventAttribute = CollectionEventAttributeData.FromAttributeData(methodSymbol);
+		var activeAttribute = methodSymbol
+			.GetAttributes()
+			.FirstOrDefault(attribute =>
+				TypeLibrary.Attributes.EventAttribute.Equals(attribute.AttributeClass)
+				|| TypeLibrary.Attributes.CollectionEventAttribute.Equals(attribute.AttributeClass)
+			);
+		var version = collectionEventAttribute.Exists
+			? collectionEventAttribute.Version
+			: eventAttribute.Version;
+		var eventName = collectionEventAttribute.Exists
+			? collectionEventAttribute.EventName
+			: eventAttribute.EventName;
+		var eventNamespaceOverride = collectionEventAttribute.Exists
+			? collectionEventAttribute.EventNamespace
+			: eventAttribute.EventNamespace;
+		var hasExplicitVersion = activeAttribute.NamedArguments.Any(static argument =>
+			argument.Key == "Version"
+		);
+		var hasExplicitEventName = !string.IsNullOrWhiteSpace(eventName);
 
 		if (eventAttribute.Exists && collectionEventAttribute.Exists)
 		{
@@ -117,7 +136,7 @@ static class AggregateEventMethodBuilder
 				collectionEvent,
 				eventSuffix,
 				hasExplicitEventName,
-				eventName,
+				eventName ?? string.Empty,
 				diagnostics,
 				out var resolvedEventName
 			)
@@ -132,9 +151,9 @@ static class AggregateEventMethodBuilder
 
 		methodInfo = new(
 			methodSymbol.Name,
-			new(resolvedEventName, eventNamespace),
+			new(new TypeValueObject(resolvedEventName, eventNamespace)),
 			parameters,
-			returnType,
+			returnTypeName,
 			returnKind,
 			methodSymbol.DeclaredAccessibility,
 			version,
@@ -494,7 +513,7 @@ static class AggregateEventMethodBuilder
 					parameter.Name,
 					methodSymbol.Name,
 					classSymbol.Name,
-					$"parameter type '{parameterType}' cannot be mapped to property '{aggregatePropertyName}' of type '{propertyTypeName}' via implicit conversion or value-object Create(...)"
+					$"parameter type '{parameterType}' cannot be mapped to property '{aggregatePropertyName}' of type '{propertyType}' via implicit conversion or value-object Create(...)"
 				)
 			);
 			return false;

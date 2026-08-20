@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate;
@@ -10,7 +9,6 @@ static partial class CommandMethodEmitter
 		AggregateEventMethodInfo method
 	)
 	{
-		var paramList = BuildParameterList(method);
 		var computedParameters = method
 			.Parameters.Where(static parameter => parameter.IsComputed)
 			.ToList();
@@ -24,10 +22,17 @@ static partial class CommandMethodEmitter
 		var methodAccessModifier = AggregateSourceEmitter.GetAccessModifier(
 			method.MethodAccessibility
 		);
+		var generatedReturnType =
+			method.ReturnKind == EventMethodReturnKind.Aggregate
+				? new TypeReferenceOptions(
+					new TypeValueObject(outputContext.Aggregate.AggregateClass.TypeName, null)
+				)
+				: method.ReturnType;
 
 		outputContext.Writer.WriteMethod(
-			new(method.MethodName, method.ReturnType, methodAccessModifier)
+			new(method.MethodName, generatedReturnType, methodAccessModifier)
 			{
+				IsPartial = true,
 				Parameters =
 				[
 					.. method.Parameters.Select(p => new ParameterDeclarationOptions(
@@ -41,14 +46,21 @@ static partial class CommandMethodEmitter
 			},
 			body =>
 			{
+				var methodOutputContext = outputContext.WithWriter(body);
+
 				if (method.Parameters.Count > 0)
-					EmitParameterPreparationBlock(outputContext, method);
+					EmitParameterPreparationBlock(methodOutputContext, method);
 
 				if (computedParameters.Count > 0)
-					EmitOnComputingBefore(outputContext, method, computedParameters, hookSuffix);
+					EmitOnComputingBefore(
+						methodOutputContext,
+						method,
+						computedParameters,
+						hookSuffix
+					);
 
 				EmitEventCreationAndShouldApply(
-					outputContext,
+					methodOutputContext,
 					method,
 					storedParameters,
 					hookSuffix,
@@ -56,7 +68,7 @@ static partial class CommandMethodEmitter
 				);
 
 				EmitRaisingHook(
-					outputContext,
+					methodOutputContext,
 					method,
 					computedParameters,
 					nonComputedParameters,
@@ -64,10 +76,15 @@ static partial class CommandMethodEmitter
 				);
 
 				if (computedParameters.Count > 0)
-					EmitOnComputingAfter(outputContext, method, computedParameters, hookSuffix);
+					EmitOnComputingAfter(
+						methodOutputContext,
+						method,
+						computedParameters,
+						hookSuffix
+					);
 
 				EmitEventCreationAndShouldApply(
-					outputContext,
+					methodOutputContext,
 					method,
 					storedParameters,
 					hookSuffix,
@@ -81,36 +98,20 @@ static partial class CommandMethodEmitter
 						.ToList();
 
 					if (mappedParameters.Count > 0)
-						EmitUnchangedCheck(outputContext, method, mappedParameters);
+						EmitUnchangedCheck(methodOutputContext, method, mappedParameters);
 				}
 
-				EmitFinalization(outputContext, method, hookSuffix);
-
-				EmitHookDeclarations(
-					outputContext,
-					method,
-					computedParameters,
-					nonComputedParameters,
-					hookSuffix
-				);
+				EmitFinalization(methodOutputContext, method, hookSuffix);
 			}
 		);
-	}
 
-	static string BuildParameterList(AggregateEventMethodInfo method)
-	{
-		var paramList = new StringBuilder();
-		for (var i = 0; i < method.Parameters.Count; i++)
-		{
-			if (i > 0)
-				paramList.Append(", ");
-			var paramsPrefix = method.Parameters[i].IsParams ? "params " : string.Empty;
-			paramList.Append(
-				$"{paramsPrefix}{method.Parameters[i].ParameterType} {method.Parameters[i].ParameterName}"
-			);
-		}
-
-		return paramList.ToString();
+		EmitHookDeclarations(
+			outputContext,
+			method,
+			computedParameters,
+			nonComputedParameters,
+			hookSuffix
+		);
 	}
 
 	static void EmitParameterPreparationBlock(
@@ -161,8 +162,8 @@ static partial class CommandMethodEmitter
 			writer.WriteIfBlock(
 				ifCondition,
 				ifBody =>
-					ifBody.WriteLine(
-						$"throw new global::System.ArgumentException(\"Computed parameter '{prop.ParameterName}' cannot be set by callers.\", nameof({prop.ParameterName}));"
+					ifBody.WriteThrow(
+						$"new global::System.ArgumentException(\"Computed parameter '{prop.ParameterName}' cannot be set by callers.\", nameof({prop.ParameterName}))"
 					)
 			);
 		}
@@ -213,7 +214,7 @@ static partial class CommandMethodEmitter
 					$"global::System.String.IsNullOrWhiteSpace({prop.ParameterName})",
 					ifBody =>
 						ifBody.WriteThrow(
-							$"global::System.ArgumentException(\"Parameter '{prop.ParameterName}' cannot be null or empty.\", nameof({prop.ParameterName}));"
+							$"new global::System.ArgumentException(\"Parameter '{prop.ParameterName}' cannot be null or empty.\", nameof({prop.ParameterName}))"
 						)
 				);
 			}
@@ -223,7 +224,7 @@ static partial class CommandMethodEmitter
 					$"({prop.ParameterName} is null)",
 					ifBody =>
 						ifBody.WriteThrow(
-							$"global::System.ArgumentNullException(nameof({prop.ParameterName}));"
+							$"new global::System.ArgumentNullException(nameof({prop.ParameterName}))"
 						)
 				);
 			}
@@ -271,11 +272,14 @@ static partial class CommandMethodEmitter
 			declareVariable
 		);
 
-		outputContext.Writer.WriteLine($"{indent}\t\tif (!ShouldApply{hookSuffix}(@event))");
-		outputContext.Writer.WriteLine($"{indent}\t\t{{");
-
-		AggregateSourceEmitter.EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
-		outputContext.Writer.WriteLine($"{indent}\t\t}}");
+		outputContext.Writer.WriteIfBlock(
+			$"!ShouldApply{hookSuffix}(@event)",
+			ifBody =>
+				AggregateSourceEmitter.EmitNoChangeReturn(
+					outputContext.WithWriter(ifBody),
+					method.ReturnKind
+				)
+		);
 	}
 
 	static void EmitRaisingHook(
@@ -448,7 +452,7 @@ static partial class CommandMethodEmitter
 		}
 
 		writer.WriteMethod(
-			new("ShouldApply", PurviewTypeLibrary.System.Boolean)
+			new("ShouldApply" + hookSuffix, PurviewTypeLibrary.System.Boolean)
 			{
 				Parameters = [new ParameterDeclarationOptions("@event", method.EventType)],
 			},
@@ -470,7 +474,10 @@ static partial class CommandMethodEmitter
 				Parameters =
 				[
 					new("@event", method.EventType),
-					new("shouldApply", PurviewTypeLibrary.System.Boolean, ParameterModifier.Ref),
+					new("shouldApply", PurviewTypeLibrary.System.Boolean)
+					{
+						Modifier = ParameterModifier.Ref,
+					},
 				],
 			}
 		);
