@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 
 sealed record class AggregateInfo(
-	TypeValueObject AggregateClass,
+	TypeReferenceOptions AggregateClass,
 	Accessibility Accessibility,
 	bool ShouldDeclareAggregateBase,
 	List<AggregateStatePropertyInfo> Properties,
@@ -13,16 +13,18 @@ sealed record class AggregateInfo(
 	string HintName
 );
 
-sealed record class AggregateStatePropertyInfo(string PropertyName, string TypeName);
+sealed record class AggregateStatePropertyInfo(
+	string PropertyName,
+	TypeReferenceOptions PropertyType
+);
 
 /// <summary>
 ///
 /// </summary>
 /// <param name="MethodName"></param>
-/// <param name="EventName"></param>
-/// <param name="EventNamespace"></param>
+/// <param name="EventType"></param>
 /// <param name="Parameters"></param>
-/// <param name="ReturnTypeName"></param>
+/// <param name="ReturnType"></param>
 /// <param name="ReturnKind"></param>
 /// <param name="MethodAccessibility"></param>
 /// <param name="Version">
@@ -34,10 +36,9 @@ sealed record class AggregateStatePropertyInfo(string PropertyName, string TypeN
 /// <param name="CollectionEvent">Collection-event metadata when the method is decorated with [CollectionEvent].</param>
 sealed record class AggregateEventMethodInfo(
 	string MethodName,
-	string EventName,
-	string EventNamespace,
+	TypeReferenceOptions EventType,
 	List<EventPropertyInfo> Parameters,
-	string ReturnTypeName,
+	TypeReferenceOptions ReturnType,
 	EventMethodReturnKind ReturnKind,
 	Accessibility MethodAccessibility,
 	int Version = 1,
@@ -51,8 +52,8 @@ sealed record class AggregateEventMethodInfo(
 
 sealed record class CollectionEventInfo(
 	string PropertyName,
-	string ElementTypeName,
-	string PropertyTypeName,
+	TypeReferenceOptions ElementType,
+	TypeReferenceOptions PropertyType,
 	bool IsSet,
 	CollectionMutationOperation Operation,
 	CollectionParameterShape ParameterShape,
@@ -69,14 +70,15 @@ enum CollectionParameterShape
 enum CollectionMutationOperation
 {
 	Add = 0,
+
 	Remove = 1,
 }
 
 sealed record class InvalidAggregateEventMethodInfo(string Signature, string[] DiagnosticIds);
 
 /// <param name="ParameterName"></param>
-/// <param name="ParameterTypeName"></param>
-/// <param name="PropertyTypeName"></param>
+/// <param name="ParameterType"></param>
+/// <param name="PropertyType"></param>
 /// <param name="AggregatePropertyName"></param>
 /// <param name="HasAggregateProperty"></param>
 /// <param name="IncludeInEvent"></param>
@@ -94,8 +96,8 @@ sealed record class InvalidAggregateEventMethodInfo(string Signature, string[] D
 /// <param name="IsString"></param>
 sealed record class EventPropertyInfo(
 	string ParameterName,
-	string ParameterTypeName,
-	string PropertyTypeName,
+	TypeReferenceOptions ParameterType,
+	TypeReferenceOptions PropertyType,
 	string AggregatePropertyName,
 	bool HasAggregateProperty,
 	bool IncludeInEvent,
@@ -114,16 +116,11 @@ sealed record class EventPropertyInfo(
 	public bool RequiresParameterToPropertyTypeConversion =>
 		ParameterConversionKind is not EventParameterConversionKind.None;
 
-	public string EventPropertyTypeName =>
-		(IsNotNull || IsRequired) && PropertyTypeName.EndsWith("?", StringComparison.Ordinal)
-			? PropertyTypeName.Substring(0, PropertyTypeName.Length - 1)
-			: PropertyTypeName;
-
 	public bool RequiresLocalCopy =>
 		IsComputed
 		|| ParameterConversionKind is not EventParameterConversionKind.None
-		|| (IsNotNull && PropertyTypeName.EndsWith("?", StringComparison.Ordinal))
-		|| (IsRequired && (PropertyTypeName.EndsWith("?", StringComparison.Ordinal) || IsString));
+		|| (IsNotNull && PropertyType.IsNullable)
+		|| (IsRequired && (PropertyType.IsNullable || IsString));
 
 	public static string ToPropertyName(string parameterName) =>
 		string.IsNullOrEmpty(parameterName)

@@ -6,18 +6,17 @@ static partial class AggregateSourceEmitter
 	{
 		public static void Generate(
 			AggregateGenerationOutputContext outputContext,
-			AggregateEventMethodInfo method,
-			string indent
+			AggregateEventMethodInfo method
 		)
 		{
 			var collectionEvent = method.CollectionEvent!;
 			var parameter = method.Parameters[0];
-			var hookSuffix = GetHookName(method.EventName);
+			var hookSuffix = GetHookName(method.EventType);
 			var normalizeValidateSuffix = collectionEvent.NormalizeValidateHookSuffix;
 			var methodAccessModifier = GetAccessModifier(method.MethodAccessibility);
 
 			outputContext.Writer.WriteLine(
-				$"{indent}\t{methodAccessModifier} partial {method.ReturnTypeName} {method.MethodName}({(parameter.IsParams ? "params " : string.Empty)}{parameter.ParameterTypeName} {parameter.ParameterName})"
+				$"{indent}\t{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({(parameter.IsParams ? "params " : string.Empty)}{parameter.ParameterTypeName} {parameter.ParameterName})"
 			);
 			outputContext.Writer.WriteLine($"{indent}\t{{");
 
@@ -104,7 +103,7 @@ static partial class AggregateSourceEmitter
 					$"{indent}\t\tif ({collectionEvent.PropertyName}.Contains(__itemValue))"
 				);
 				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+				EmitNoChangeReturn(outputContext, method.ReturnKind);
 				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 			else if (!isAddOperation)
@@ -114,14 +113,12 @@ static partial class AggregateSourceEmitter
 					$"{indent}\t\tif (!{collectionEvent.PropertyName}.Contains(__itemValue))"
 				);
 				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+				EmitNoChangeReturn(outputContext, method.ReturnKind);
 				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 
 			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tvar @event = new global::{method.EventNamespace}.{method.EventName}"
-			);
+			outputContext.Writer.WriteLine($"{indent}\t\tvar @event = new {method.EventType}");
 			outputContext.Writer.WriteLine($"{indent}\t\t{{");
 			outputContext.Writer.WriteLine(
 				$"{indent}\t\t\t{parameter.PropertyName} = __itemValue,"
@@ -129,7 +126,7 @@ static partial class AggregateSourceEmitter
 			outputContext.Writer.WriteLine($"{indent}\t\t}};");
 			outputContext.Writer.WriteLine($"{indent}\t\tif (!ShouldApply{hookSuffix}(@event))");
 			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+			EmitNoChangeReturn(outputContext, method.ReturnKind);
 			outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			outputContext.Writer.WriteLine();
 			outputContext.Writer.WriteLine($"{indent}\t\tOnRaising{hookSuffix}(ref __itemValue);");
@@ -146,7 +143,7 @@ static partial class AggregateSourceEmitter
 		)
 		{
 			outputContext.Writer.WriteLine(
-				$"{indent}\t\tglobal::System.Collections.Generic.IEnumerable<{collectionEvent.ElementTypeName}> __itemsValue = {parameter.ParameterName};"
+				$"{indent}\t\tglobal::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}> __itemsValue = {parameter.ParameterName};"
 			);
 			outputContext.Writer.WriteLine(
 				$"{indent}\t\tOnNormalizing{normalizeValidateSuffix}(ref __itemsValue);"
@@ -155,11 +152,11 @@ static partial class AggregateSourceEmitter
 				$"{indent}\t\tOnValidating{normalizeValidateSuffix}(__itemsValue);"
 			);
 			outputContext.Writer.WriteLine(
-				$"{indent}\t\tvar __eventItems = __itemsValue as {collectionEvent.ElementTypeName}[] ?? [.. __itemsValue];"
+				$"{indent}\t\tvar __eventItems = __itemsValue as {collectionEvent.ElementType}[] ?? [.. __itemsValue];"
 			);
 			outputContext.Writer.WriteLine($"{indent}\t\tif (__eventItems.Length == 0)");
 			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+			EmitNoChangeReturn(outputContext, method.ReturnKind);
 			outputContext.Writer.WriteLine($"{indent}\t\t}}");
 
 			var isAddOperation = collectionEvent.Operation == CollectionMutationOperation.Add;
@@ -179,7 +176,7 @@ static partial class AggregateSourceEmitter
 				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 				outputContext.Writer.WriteLine($"{indent}\t\tif (!__hasNewValues)");
 				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+				EmitNoChangeReturn(outputContext, method.ReturnKind);
 				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 			else if (!isAddOperation)
@@ -198,14 +195,12 @@ static partial class AggregateSourceEmitter
 				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 				outputContext.Writer.WriteLine($"{indent}\t\tif (!__hasExistingValues)");
 				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+				EmitNoChangeReturn(outputContext, method.ReturnKind);
 				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 
 			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tvar @event = new global::{method.EventNamespace}.{method.EventName}"
-			);
+			outputContext.Writer.WriteLine($"{indent}\t\tvar @event = new {method.EventType}");
 			outputContext.Writer.WriteLine($"{indent}\t\t{{");
 			outputContext.Writer.WriteLine(
 				$"{indent}\t\t\t{parameter.PropertyName} = __eventItems,"
@@ -213,7 +208,7 @@ static partial class AggregateSourceEmitter
 			outputContext.Writer.WriteLine($"{indent}\t\t}};");
 			outputContext.Writer.WriteLine($"{indent}\t\tif (!ShouldApply{hookSuffix}(@event))");
 			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
+			EmitNoChangeReturn(outputContext, method.ReturnKind);
 			outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			outputContext.Writer.WriteLine();
 			outputContext.Writer.WriteLine($"{indent}\t\tOnRaising{hookSuffix}(ref __itemsValue);");
@@ -230,7 +225,7 @@ static partial class AggregateSourceEmitter
 			outputContext.Writer.WriteLine($"{indent}\t\tOnRaised{hookSuffix}(@event);");
 			outputContext.Writer.WriteLine($"{indent}\t\tRecordAndApply(@event);");
 			outputContext.Writer.WriteLine();
-			EmitSuccessReturn(outputContext, method.ReturnKind, indent, 2);
+			EmitSuccessReturn(outputContext, method.ReturnKind);
 		}
 
 		static void EmitCollectionTrailingHookDeclarations(
@@ -245,16 +240,16 @@ static partial class AggregateSourceEmitter
 			EmitCa1822Suppression(outputContext, indent);
 			if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
 				outputContext.Writer.WriteLine(
-					$"{indent}\tpartial void OnRaising{hookSuffix}(ref {collectionEvent.ElementTypeName} {parameter.ParameterName});"
+					$"{indent}\tpartial void OnRaising{hookSuffix}(ref {collectionEvent.ElementType} {parameter.ParameterName});"
 				);
 			else
 				outputContext.Writer.WriteLine(
-					$"{indent}\tpartial void OnRaising{hookSuffix}(ref global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementTypeName}> {parameter.ParameterName});"
+					$"{indent}\tpartial void OnRaising{hookSuffix}(ref global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}> {parameter.ParameterName});"
 				);
 
 			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
-				$"{indent}\tbool ShouldApply{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event)"
+				$"{indent}\tbool ShouldApply{hookSuffix}({method.EventType} @event)"
 			);
 			outputContext.Writer.WriteLine($"{indent}\t{{");
 			outputContext.Writer.WriteLine($"{indent}\t\tvar shouldApply = true;");
@@ -265,15 +260,15 @@ static partial class AggregateSourceEmitter
 			outputContext.Writer.WriteLine($"{indent}\t}}");
 			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnShouldApply{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event, ref bool shouldApply);"
+				$"{indent}\tpartial void OnShouldApply{hookSuffix}({method.EventType} @event, ref bool shouldApply);"
 			);
 			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnRaised{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event);"
+				$"{indent}\tpartial void OnRaised{hookSuffix}({method.EventType} @event);"
 			);
 			EmitCa1822Suppression(outputContext, indent);
 			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnApplied{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event);"
+				$"{indent}\tpartial void OnApplied{hookSuffix}({method.EventType} @event);"
 			);
 			outputContext.Writer.WriteLine();
 		}

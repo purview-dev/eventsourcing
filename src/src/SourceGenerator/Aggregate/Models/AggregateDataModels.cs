@@ -17,7 +17,7 @@ readonly partial record struct AggregateDefaultsAttributeData(
 	TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.CollectionEventAttribute)
 )]
 readonly partial record struct CollectionEventAttributeData(
-	[Argument("propertyName")] string? PropertyName,
+	[Argument("propertyName")] string PropertyName,
 	[Property(1)] int Version,
 	string? EventName,
 	string? EventNamespace,

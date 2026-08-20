@@ -7,8 +7,7 @@ static partial class CommandMethodEmitter
 {
 	public static void Generate(
 		AggregateGenerationOutputContext outputContext,
-		AggregateEventMethodInfo method,
-		string indent
+		AggregateEventMethodInfo method
 	)
 	{
 		var paramList = BuildParameterList(method);
@@ -21,81 +20,80 @@ static partial class CommandMethodEmitter
 		var storedParameters = method
 			.Parameters.Where(static parameter => parameter.IncludeInEvent)
 			.ToList();
-		var hookSuffix = AggregateSourceEmitter.GetHookName(method.EventName);
+		var hookSuffix = AggregateSourceEmitter.GetHookName(method.EventType);
 		var methodAccessModifier = AggregateSourceEmitter.GetAccessModifier(
 			method.MethodAccessibility
 		);
 
-		outputContext.Writer.WriteLine(
-			$"{indent}\t{methodAccessModifier} partial {method.ReturnTypeName} {method.MethodName}({paramList})"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t{{");
-
-		if (method.Parameters.Count > 0)
-			EmitParameterPreparationBlock(outputContext, method, indent);
-
-		if (computedParameters.Count > 0)
-			EmitOnComputingBefore(outputContext, method, computedParameters, hookSuffix, indent);
-
-		EmitEventCreationAndShouldApply(
-			outputContext,
-			method,
-			storedParameters,
-			hookSuffix,
-			indent,
-			declareVariable: true
-		);
-
-		outputContext.Writer.WriteLine();
-		EmitRaisingHook(
-			outputContext,
-			method,
-			computedParameters,
-			nonComputedParameters,
-			hookSuffix,
-			indent
-		);
-
-		if (computedParameters.Count > 0)
-		{
-			outputContext.Writer.WriteLine();
-			EmitOnComputingAfter(outputContext, method, computedParameters, hookSuffix, indent);
-		}
-
-		EmitEventCreationAndShouldApply(
-			outputContext,
-			method,
-			storedParameters,
-			hookSuffix,
-			indent,
-			declareVariable: false
-		);
-
-		if (method.Parameters.Count > 0)
-		{
-			var mappedParameters = method
-				.Parameters.Where(static parameter => parameter.HasAggregateProperty)
-				.ToList();
-
-			if (mappedParameters.Count > 0)
+		outputContext.Writer.WriteMethod(
+			new(method.MethodName, method.ReturnType, methodAccessModifier)
 			{
-				outputContext.Writer.WriteLine();
-				EmitUnchangedCheck(outputContext, method, mappedParameters, indent);
+				Parameters =
+				[
+					.. method.Parameters.Select(p => new ParameterDeclarationOptions(
+						p.ParameterName,
+						p.ParameterType
+					)
+					{
+						IsParams = p.IsParams,
+					}),
+				],
+			},
+			body =>
+			{
+				if (method.Parameters.Count > 0)
+					EmitParameterPreparationBlock(outputContext, method);
+
+				if (computedParameters.Count > 0)
+					EmitOnComputingBefore(outputContext, method, computedParameters, hookSuffix);
+
+				EmitEventCreationAndShouldApply(
+					outputContext,
+					method,
+					storedParameters,
+					hookSuffix,
+					declareVariable: true
+				);
+
+				EmitRaisingHook(
+					outputContext,
+					method,
+					computedParameters,
+					nonComputedParameters,
+					hookSuffix
+				);
+
+				if (computedParameters.Count > 0)
+					EmitOnComputingAfter(outputContext, method, computedParameters, hookSuffix);
+
+				EmitEventCreationAndShouldApply(
+					outputContext,
+					method,
+					storedParameters,
+					hookSuffix,
+					declareVariable: false
+				);
+
+				if (method.Parameters.Count > 0)
+				{
+					var mappedParameters = method
+						.Parameters.Where(static parameter => parameter.HasAggregateProperty)
+						.ToList();
+
+					if (mappedParameters.Count > 0)
+						EmitUnchangedCheck(outputContext, method, mappedParameters);
+				}
+
+				EmitFinalization(outputContext, method, hookSuffix);
+
+				EmitHookDeclarations(
+					outputContext,
+					method,
+					computedParameters,
+					nonComputedParameters,
+					hookSuffix
+				);
 			}
-		}
-
-		EmitFinalization(outputContext, method, hookSuffix, indent);
-
-		outputContext.Writer.WriteLine($"{indent}\t}}");
-		outputContext.Writer.WriteLine();
-
-		EmitHookDeclarations(
-			outputContext,
-			method,
-			computedParameters,
-			nonComputedParameters,
-			hookSuffix,
-			indent
 		);
 	}
 
@@ -108,7 +106,7 @@ static partial class CommandMethodEmitter
 				paramList.Append(", ");
 			var paramsPrefix = method.Parameters[i].IsParams ? "params " : string.Empty;
 			paramList.Append(
-				$"{paramsPrefix}{method.Parameters[i].ParameterTypeName} {method.Parameters[i].ParameterName}"
+				$"{paramsPrefix}{method.Parameters[i].ParameterType} {method.Parameters[i].ParameterName}"
 			);
 		}
 
@@ -117,28 +115,28 @@ static partial class CommandMethodEmitter
 
 	static void EmitParameterPreparationBlock(
 		AggregateGenerationOutputContext outputContext,
-		AggregateEventMethodInfo method,
-		string indent
+		AggregateEventMethodInfo method
 	)
 	{
-		var mappedParameters = method
-			.Parameters.Where(static parameter => parameter.HasAggregateProperty)
-			.ToList();
-
+		var writer = outputContext.Writer;
 		foreach (var prop in method.Parameters)
 		{
 			if (prop.IsComputed)
 			{
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\tvar {AggregateSourceEmitter.GetLocalValueName(prop)} = {prop.ParameterName};"
+				writer.WriteAssignment(
+					"var",
+					AggregateSourceEmitter.GetLocalValueName(prop),
+					prop.ParameterName
 				);
 				continue;
 			}
 
 			if (prop.ParameterConversionKind is not EventParameterConversionKind.None)
 			{
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\tvar {AggregateSourceEmitter.GetLocalValueName(prop)} = {AggregateSourceEmitter.BuildPropertyValueExpression(outputContext, method, prop)};"
+				writer.WriteAssignment(
+					"var",
+					AggregateSourceEmitter.GetLocalValueName(prop),
+					AggregateSourceEmitter.BuildPropertyValueExpression(outputContext, method, prop)
 				);
 				continue;
 			}
@@ -149,7 +147,7 @@ static partial class CommandMethodEmitter
 				p.IsComputed || p.ParameterConversionKind is not EventParameterConversionKind.None
 			)
 		)
-			outputContext.Writer.WriteLine();
+			writer.NewLine();
 
 		var computedParameters = method
 			.Parameters.Where(static parameter => parameter.IsComputed)
@@ -157,39 +155,47 @@ static partial class CommandMethodEmitter
 
 		foreach (var prop in computedParameters)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tif (!global::System.Collections.Generic.EqualityComparer<{prop.PropertyTypeName}>.Default.Equals({prop.ParameterName}, default({prop.PropertyTypeName})))"
+			var ifCondition =
+				$"!global::System.Collections.Generic.EqualityComparer<{prop.PropertyType}>.Default.Equals({prop.ParameterName}, default({prop.PropertyType}))";
+
+			writer.WriteIfBlock(
+				ifCondition,
+				ifBody =>
+					ifBody.WriteLine(
+						$"throw new global::System.ArgumentException(\"Computed parameter '{prop.ParameterName}' cannot be set by callers.\", nameof({prop.ParameterName}));"
+					)
 			);
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\tthrow new global::System.ArgumentException(\"Computed parameter '{prop.ParameterName}' cannot be set by callers.\", nameof({prop.ParameterName}));"
-			);
-			outputContext.Writer.WriteLine($"{indent}\t\t}}");
 		}
 
-		if (computedParameters.Count > 0)
-			outputContext.Writer.WriteLine();
+		EmitValidationGuards(outputContext, method);
 
-		EmitValidationGuards(outputContext, method, indent);
-
-		foreach (var prop in mappedParameters)
+		foreach (var prop in method.Parameters)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOn{prop.AggregatePropertyName}Changing(ref {AggregateSourceEmitter.GetWorkingValueName(prop)});"
-			);
-		}
+			if (!prop.HasAggregateProperty)
+				continue;
 
-		if (mappedParameters.Count > 0)
-			outputContext.Writer.WriteLine();
+			writer
+				.Comment(
+					$"Invoke On{prop.AggregatePropertyName}Changing hook for parameter '{prop.ParameterName}'"
+				)
+				.WriteMethodCall(
+					$"On{prop.AggregatePropertyName}Changing",
+					[
+						new MethodCallArgumentOptions(
+							AggregateSourceEmitter.GetWorkingValueName(prop),
+							ParameterModifier.Ref
+						),
+					]
+				);
+		}
 	}
 
 	static void EmitValidationGuards(
 		AggregateGenerationOutputContext outputContext,
-		AggregateEventMethodInfo method,
-		string indent
+		AggregateEventMethodInfo method
 	)
 	{
-		var emitted = false;
+		var writer = outputContext.Writer;
 		foreach (var prop in method.Parameters)
 		{
 			if (prop.IsComputed)
@@ -203,51 +209,51 @@ static partial class CommandMethodEmitter
 
 			if (prop.IsRequired && prop.IsString)
 			{
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\tif (global::System.String.IsNullOrWhiteSpace({prop.ParameterName}))"
+				writer.WriteIfBlock(
+					$"global::System.String.IsNullOrWhiteSpace({prop.ParameterName})",
+					ifBody =>
+						ifBody.WriteThrow(
+							$"global::System.ArgumentException(\"Parameter '{prop.ParameterName}' cannot be null or empty.\", nameof({prop.ParameterName}));"
+						)
 				);
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\t\tthrow new global::System.ArgumentException(\"Parameter '{prop.ParameterName}' cannot be null or empty.\", nameof({prop.ParameterName}));"
-				);
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 			else if (prop.IsRequired || prop.IsNotNull)
 			{
-				outputContext.Writer.WriteLine($"{indent}\t\tif ({prop.ParameterName} is null)");
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\t\tthrow new global::System.ArgumentNullException(nameof({prop.ParameterName}));"
+				writer.WriteIfBlock(
+					$"({prop.ParameterName} is null)",
+					ifBody =>
+						ifBody.WriteThrow(
+							$"global::System.ArgumentNullException(nameof({prop.ParameterName}));"
+						)
 				);
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tvar {AggregateSourceEmitter.GetLocalValueName(prop)} = {prop.ParameterName}!;"
+			writer.WriteAssignment(
+				"var",
+				AggregateSourceEmitter.GetLocalValueName(prop),
+				prop.ParameterName,
+				forceNotNull: true
 			);
-
-			emitted = true;
 		}
-
-		if (emitted)
-			outputContext.Writer.WriteLine();
 	}
 
 	static void EmitOnComputingBefore(
 		AggregateGenerationOutputContext outputContext,
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> computedParameters,
-		string hookSuffix,
-		string indent
+		string hookSuffix
 	)
 	{
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tOnComputing{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(computedParameters)});"
+		var writer = outputContext.Writer;
+
+		writer.WriteMethodCall(
+			$"OnComputing{hookSuffix}",
+			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(computedParameters)
 		);
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tOnComputing{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)});"
+		writer.WriteMethodCall(
+			$"OnComputing{hookSuffix}",
+			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)
 		);
-		outputContext.Writer.WriteLine();
 	}
 
 	static void EmitEventCreationAndShouldApply(
@@ -255,7 +261,6 @@ static partial class CommandMethodEmitter
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> storedParameters,
 		string hookSuffix,
-		string indent,
 		bool declareVariable
 	)
 	{
@@ -263,7 +268,6 @@ static partial class CommandMethodEmitter
 			outputContext,
 			method,
 			storedParameters,
-			indent,
 			declareVariable
 		);
 
@@ -279,28 +283,35 @@ static partial class CommandMethodEmitter
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> computedParameters,
 		List<EventPropertyInfo> nonComputedParameters,
-		string hookSuffix,
-		string indent
+		string hookSuffix
 	)
 	{
+		var writer = outputContext.Writer;
+		var onRaisingMethodName = $"OnRaising{hookSuffix}";
 		if (method.Parameters.Count == 0)
-			outputContext.Writer.WriteLine($"{indent}\t\tOnRaising{hookSuffix}();");
+			writer.WriteMethodCall(onRaisingMethodName);
 		else if (computedParameters.Count > 0)
 		{
 			if (nonComputedParameters.Count == 0)
-				outputContext.Writer.WriteLine($"{indent}\t\tOnRaising{hookSuffix}();");
+				writer.WriteMethodCall(onRaisingMethodName);
 			else
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\tOnRaising{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(nonComputedParameters)});"
+			{
+				writer.WriteMethodCall(
+					onRaisingMethodName,
+					AggregateSourceEmitter.BuildOnCreatingCallArgumentList(nonComputedParameters)
 				);
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnRaising{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)});"
+			}
+
+			writer.WriteMethodCall(
+				onRaisingMethodName,
+				AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)
 			);
 		}
 		else
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnRaising{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)});"
+			writer.WriteMethodCall(
+				onRaisingMethodName,
+				AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)
 			);
 		}
 	}
@@ -309,44 +320,51 @@ static partial class CommandMethodEmitter
 		AggregateGenerationOutputContext outputContext,
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> computedParameters,
-		string hookSuffix,
-		string indent
+		string hookSuffix
 	)
 	{
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tOnComputing{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(computedParameters)});"
+		var writer = outputContext.Writer;
+		var onComputingMethodName = $"OnComputing{hookSuffix}";
+
+		writer.WriteMethodCall(
+			onComputingMethodName,
+			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(computedParameters)
 		);
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tOnComputing{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)});"
+		writer.WriteMethodCall(
+			onComputingMethodName,
+			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.Parameters)
 		);
 	}
 
 	static void EmitUnchangedCheck(
 		AggregateGenerationOutputContext outputContext,
 		AggregateEventMethodInfo method,
-		List<EventPropertyInfo> mappedParameters,
-		string indent
+		List<EventPropertyInfo> mappedParameters
 	)
 	{
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tif ({AggregateSourceEmitter.BuildUnchangedCondition(mappedParameters)})"
+		var writer = outputContext.Writer;
+		writer.WriteIfBlock(
+			AggregateSourceEmitter.BuildUnchangedCondition(mappedParameters),
+			ifBody =>
+				AggregateSourceEmitter.EmitNoChangeReturn(
+					outputContext.WithWriter(ifBody),
+					method.ReturnKind
+				)
 		);
-		outputContext.Writer.WriteLine($"{indent}\t\t{{");
-		AggregateSourceEmitter.EmitNoChangeReturn(outputContext, method.ReturnKind, indent, 3);
-		outputContext.Writer.WriteLine($"{indent}\t\t}}");
 	}
 
 	static void EmitFinalization(
 		AggregateGenerationOutputContext outputContext,
 		AggregateEventMethodInfo method,
-		string hookSuffix,
-		string indent
+		string hookSuffix
 	)
 	{
-		outputContext.Writer.WriteLine($"{indent}\t\tOnRaised{hookSuffix}(@event);");
-		outputContext.Writer.WriteLine($"{indent}\t\tRecordAndApply(@event);");
-		outputContext.Writer.WriteLine();
-		AggregateSourceEmitter.EmitSuccessReturn(outputContext, method.ReturnKind, indent, 2);
+		var writer = outputContext.Writer;
+
+		writer.WriteMethodCall($"OnRaised{hookSuffix}", ["@event"]);
+		writer.WriteMethodCall($"RecordAndApply", ["@event"]);
+
+		AggregateSourceEmitter.EmitSuccessReturn(outputContext, method.ReturnKind);
 	}
 
 	static void EmitHookDeclarations(
@@ -354,68 +372,123 @@ static partial class CommandMethodEmitter
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> computedParameters,
 		List<EventPropertyInfo> nonComputedParameters,
-		string hookSuffix,
-		string indent
+		string hookSuffix
 	)
 	{
+		var writer = outputContext.Writer;
+		var suppression = AggregateSourceEmitter.CreateCA1822Suppression();
+
 		if (computedParameters.Count > 0)
 		{
-			AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnComputing{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(computedParameters)});"
+			var computingMethodName = $"OnComputing{hookSuffix}";
+			writer.WritePartialMethod(
+				new(computingMethodName)
+				{
+					Attributes = [suppression],
+					Parameters = AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(
+						computedParameters
+					),
+				}
 			);
-			AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnComputing{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(method.Parameters)});"
+
+			writer.WritePartialMethod(
+				new(computingMethodName)
+				{
+					Attributes = [suppression],
+					Parameters = AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(
+						method.Parameters
+					),
+				}
 			);
 		}
 
-		AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
+		var raisingMethodName = $"OnRaising{hookSuffix}";
 		if (method.Parameters.Count == 0)
-			outputContext.Writer.WriteLine($"{indent}\tpartial void OnRaising{hookSuffix}();");
+		{
+			writer.WritePartialMethod(new(raisingMethodName) { Attributes = [suppression] });
+		}
 		else if (computedParameters.Count > 0)
 		{
 			if (nonComputedParameters.Count == 0)
-				outputContext.Writer.WriteLine($"{indent}\tpartial void OnRaising{hookSuffix}();");
+				writer.WritePartialMethod(new(raisingMethodName) { Attributes = [suppression] });
 			else
-				outputContext.Writer.WriteLine(
-					$"{indent}\tpartial void OnRaising{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(nonComputedParameters)});"
+			{
+				writer.WritePartialMethod(
+					new(raisingMethodName)
+					{
+						Attributes = [suppression],
+						Parameters = AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(
+							nonComputedParameters
+						),
+					}
 				);
-			AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnRaising{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(method.Parameters)});"
+			}
+
+			writer.WritePartialMethod(
+				new(raisingMethodName)
+				{
+					Attributes = [suppression],
+					Parameters = AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(
+						method.Parameters
+					),
+				}
 			);
 		}
 		else
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnRaising{hookSuffix}({AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(method.Parameters)});"
+			writer.WritePartialMethod(
+				new(raisingMethodName)
+				{
+					Attributes = [suppression],
+					Parameters = AggregateSourceEmitter.BuildOnCreatingDeclarationParameterList(
+						method.Parameters
+					),
+				}
 			);
 		}
 
-		AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-		outputContext.Writer.WriteLine(
-			$"{indent}\tbool ShouldApply{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event)"
+		writer.WriteMethod(
+			new("ShouldApply", PurviewTypeLibrary.System.Boolean)
+			{
+				Parameters = [new ParameterDeclarationOptions("@event", method.EventType)],
+			},
+			writeBody =>
+			{
+				writeBody.WriteAssignment("var", "shouldApply", "true");
+				writeBody.WriteMethodCall(
+					"OnShouldApply" + hookSuffix,
+					["@event", "ref shouldApply"]
+				);
+				writeBody.WriteReturn("shouldApply");
+			}
 		);
-		outputContext.Writer.WriteLine($"{indent}\t{{");
-		outputContext.Writer.WriteLine($"{indent}\t\tvar shouldApply = true;");
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tOnShouldApply{hookSuffix}(@event, ref shouldApply);"
+
+		writer.WritePartialMethod(
+			new("OnShouldApply" + hookSuffix)
+			{
+				Attributes = [suppression],
+				Parameters =
+				[
+					new("@event", method.EventType),
+					new("shouldApply", PurviewTypeLibrary.System.Boolean, ParameterModifier.Ref),
+				],
+			}
 		);
-		outputContext.Writer.WriteLine($"{indent}\t\treturn shouldApply;");
-		outputContext.Writer.WriteLine($"{indent}\t}}");
-		AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-		outputContext.Writer.WriteLine(
-			$"{indent}\tpartial void OnShouldApply{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event, ref bool shouldApply);"
+
+		writer.WritePartialMethod(
+			new("OnRaised" + hookSuffix)
+			{
+				Attributes = [suppression],
+				Parameters = [new("@event", method.EventType)],
+			}
 		);
-		AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-		outputContext.Writer.WriteLine(
-			$"{indent}\tpartial void OnRaised{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event);"
+
+		writer.WritePartialMethod(
+			new("OnApplied" + hookSuffix)
+			{
+				Attributes = [suppression],
+				Parameters = [new("@event", method.EventType)],
+			}
 		);
-		AggregateSourceEmitter.EmitCa1822Suppression(outputContext, indent);
-		outputContext.Writer.WriteLine(
-			$"{indent}\tpartial void OnApplied{hookSuffix}(global::{method.EventNamespace}.{method.EventName} @event);"
-		);
-		outputContext.Writer.WriteLine();
 	}
 }

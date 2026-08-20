@@ -41,4 +41,10 @@ sealed class AggregateGenerationOutputContext(
 		string message,
 		params object[] args
 	) => Generation.Log(level, indentation, message, args);
+
+	public AggregateGenerationOutputContext WithWriter(CodeWriter writer)
+	{
+		Writer = writer;
+		return this;
+	}
 }

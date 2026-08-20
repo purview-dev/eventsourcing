@@ -33,16 +33,10 @@ static class AggregateEventMethodBuilder
 		methodInfo = default!;
 		var eventSuffix = (aggregateEventSuffixOverride ?? assemblyEventSuffix ?? "Event").Trim();
 
-		var eventAttribute = TypeHelpers.GetAttribute(
-			methodSymbol,
-			TypeLibrary.Attributes.EventAttribute
-		);
-		var collectionEventAttribute = TypeHelpers.GetAttribute(
-			methodSymbol,
-			TypeLibrary.Attributes.CollectionEventAttribute
-		);
+		var eventAttribute = EventAttributeData.FromAttributeData(methodSymbol);
+		var collectionEventAttribute = CollectionEventAttributeData.FromAttributeData(methodSymbol);
 
-		if (eventAttribute is not null && collectionEventAttribute is not null)
+		if (eventAttribute.Exists && collectionEventAttribute.Exists)
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
@@ -72,7 +66,7 @@ static class AggregateEventMethodBuilder
 			!ValidateSignature(
 				classSymbol,
 				methodSymbol,
-				collectionEventAttribute is not null,
+				collectionEventAttribute.Exists,
 				diagnostics,
 				out var returnTypeName,
 				out var returnKind
@@ -80,29 +74,30 @@ static class AggregateEventMethodBuilder
 		)
 			return false;
 
-		if (
-			!ResolveAttributeValues(
-				methodSymbol,
-				eventAttribute,
-				collectionEventAttribute,
-				diagnostics,
-				out var version,
-				out var hasExplicitVersion,
-				out var eventName,
-				out var hasExplicitEventName,
-				out var eventNamespaceOverride,
-				out var manualApply
-			)
-		)
-			return false;
+		if (collectionEventAttribute.Exists)
+		{
+			if (collectionEventAttribute.Version < 1)
+			{
+				diagnostics.Add(
+					DiagnosticInfo.Create(
+						DiagnosticLibrary.EventSchemaVersionMustBePositive,
+						methodSymbol,
+						methodSymbol.Name,
+						methodSymbol.ContainingType.Name,
+						collectionEventAttribute.Version
+					)
+				);
+
+				return false;
+			}
+		}
 
 		if (
 			!BuildParameters(
 				methodSymbol,
 				classSymbol,
-				collectionEventAttribute is not null,
 				collectionEventAttribute,
-				manualApply,
+				collectionEventAttribute.Manual,
 				propertySymbolsByName,
 				compilation,
 				valueObjectContextType,
@@ -118,7 +113,7 @@ static class AggregateEventMethodBuilder
 			!ResolveEventName(
 				methodSymbol,
 				classSymbol,
-				collectionEventAttribute is not null,
+				collectionEventAttribute.Exists,
 				collectionEvent,
 				eventSuffix,
 				hasExplicitEventName,
@@ -137,15 +132,14 @@ static class AggregateEventMethodBuilder
 
 		methodInfo = new(
 			methodSymbol.Name,
-			resolvedEventName,
-			eventNamespace,
+			new(resolvedEventName, eventNamespace),
 			parameters,
-			returnTypeName,
+			returnType,
 			returnKind,
 			methodSymbol.DeclaredAccessibility,
 			version,
 			hasExplicitVersion,
-			manualApply,
+			collectionEventAttribute.Manual,
 			collectionEvent
 		);
 		return true;
@@ -156,11 +150,11 @@ static class AggregateEventMethodBuilder
 		IMethodSymbol methodSymbol,
 		bool isCollectionEvent,
 		List<DiagnosticInfo> diagnostics,
-		out string returnTypeName,
+		out TypeReferenceOptions returnType,
 		out EventMethodReturnKind returnKind
 	)
 	{
-		returnTypeName = "void";
+		returnType = PurviewTypeLibrary.System.Void;
 		returnKind = EventMethodReturnKind.Void;
 		var hasErrors = false;
 
@@ -197,7 +191,7 @@ static class AggregateEventMethodBuilder
 		if (methodSymbol.TypeParameters.Length > 0)
 			ReportUnsupportedSignature("generic methods are not supported");
 
-		if (!TryResolveReturnKind(methodSymbol, classSymbol, out returnTypeName, out returnKind))
+		if (!TryResolveReturnKind(methodSymbol, classSymbol, out returnType, out returnKind))
 		{
 			ReportUnsupportedSignature(
 				"methods must return void, bool, or the containing aggregate type"
@@ -283,8 +277,7 @@ static class AggregateEventMethodBuilder
 	static bool BuildParameters(
 		IMethodSymbol methodSymbol,
 		INamedTypeSymbol classSymbol,
-		bool isCollectionEvent,
-		AttributeData? collectionEventAttribute,
+		CollectionEventAttributeData collectionEventAttribute,
 		bool manualApply,
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
 		Compilation compilation,
@@ -298,12 +291,12 @@ static class AggregateEventMethodBuilder
 		parameters = [];
 		collectionEvent = null;
 
-		if (isCollectionEvent)
+		if (collectionEventAttribute.Exists)
 		{
 			if (
 				!TryCreateCollectionEventInfo(
 					methodSymbol,
-					collectionEventAttribute!,
+					collectionEventAttribute,
 					propertySymbolsByName,
 					diagnostics,
 					out var collectionParameter,
@@ -369,14 +362,11 @@ static class AggregateEventMethodBuilder
 		var isNotNull = HasNotNullAttribute(parameter);
 		var isRequired = HasRequiredAttribute(parameter);
 		var isStringParameter = parameter.Type.SpecialType == SpecialType.System_String;
-		var parameterTypeName = parameter.Type.ToDisplayString(
-			SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
-				SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
-					| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-			)
-		);
+		TypeReferenceOptions parameterType = new(parameter.Type);
 
-		if (TryGetMetadataStoreSetting(parameter, out var storeMetadata))
+		var metadata = MetadataAttributeData.FromAttributeData(parameter);
+
+		if (metadata.Exists)
 		{
 			if (isComputedParameter)
 			{
@@ -395,19 +385,20 @@ static class AggregateEventMethodBuilder
 
 			propertyInfo = new EventPropertyInfo(
 				parameter.Name,
-				parameterTypeName,
-				parameterTypeName,
+				parameterType,
+				parameterType,
 				aggregatePropertyName,
 				false,
-				storeMetadata,
-				parameterTypeName,
-				parameter.Type.SpecialType == SpecialType.System_String,
+				metadata.Store,
+				parameterType,
+				isStringParameter,
 				EventParameterConversionKind.None,
 				IsComputed: false,
 				IsNotNull: isNotNull,
 				IsRequired: isRequired,
 				IsString: isStringParameter
 			);
+
 			return true;
 		}
 
@@ -425,13 +416,13 @@ static class AggregateEventMethodBuilder
 		{
 			propertyInfo = new EventPropertyInfo(
 				parameter.Name,
-				parameterTypeName,
-				parameterTypeName,
+				parameterType,
+				parameterType,
 				aggregatePropertyName,
 				false,
 				true,
-				parameterTypeName,
-				parameter.Type.SpecialType == SpecialType.System_String,
+				parameterType,
+				isStringParameter,
 				EventParameterConversionKind.None,
 				IsComputed: isComputedParameter,
 				IsNotNull: isNotNull,
@@ -486,13 +477,7 @@ static class AggregateEventMethodBuilder
 			return false;
 		}
 
-		var propertyTypeName = propertySymbol.Type.ToDisplayString(
-			SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
-				SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
-					| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-			)
-		);
-
+		TypeReferenceOptions propertyType = new(propertySymbol.Type);
 		var conversionKind = ResolveParameterConversionKind(
 			compilation,
 			classSymbol,
@@ -509,7 +494,7 @@ static class AggregateEventMethodBuilder
 					parameter.Name,
 					methodSymbol.Name,
 					classSymbol.Name,
-					$"parameter type '{parameterTypeName}' cannot be mapped to property '{aggregatePropertyName}' of type '{propertyTypeName}' via implicit conversion or value-object Create(...)"
+					$"parameter type '{parameterType}' cannot be mapped to property '{aggregatePropertyName}' of type '{propertyTypeName}' via implicit conversion or value-object Create(...)"
 				)
 			);
 			return false;
@@ -529,19 +514,19 @@ static class AggregateEventMethodBuilder
 					parameter.Name,
 					methodSymbol.Name,
 					aggregatePropertyName,
-					propertyTypeName
+					propertyType
 				)
 			);
 		}
 
 		propertyInfo = new EventPropertyInfo(
 			parameter.Name,
-			parameterTypeName,
-			propertyTypeName,
+			parameterType,
+			propertyType,
 			propertySymbol.Name,
 			true,
 			true,
-			propertyTypeName,
+			propertyType,
 			parameter.Type.SpecialType == SpecialType.System_String
 				&& propertySymbol.Type.SpecialType == SpecialType.System_String,
 			conversionKind.Value,
@@ -874,34 +859,6 @@ static class AggregateEventMethodBuilder
 		return null;
 	}
 
-	public static bool TryGetMetadataStoreSetting(
-		IParameterSymbol parameterSymbol,
-		out bool storeMetadata
-	)
-	{
-		storeMetadata = true;
-
-		foreach (var attribute in parameterSymbol.GetAttributes())
-		{
-			var attributeClass = attribute.AttributeClass;
-			if (
-				attributeClass is null
-				|| !TypeLibrary.Attributes.MetadataAttribute.Equals(attributeClass)
-			)
-				continue;
-
-			if (
-				attribute.ConstructorArguments.Length == 1
-				&& attribute.ConstructorArguments[0].Value is bool value
-			)
-				storeMetadata = value;
-
-			return true;
-		}
-
-		return false;
-	}
-
 	public static bool HasRegisterEventsMethod(
 		INamedTypeSymbol classSymbol,
 		out IMethodSymbol? registerEventsMethod
@@ -922,11 +879,11 @@ static class AggregateEventMethodBuilder
 	public static bool TryResolveReturnKind(
 		IMethodSymbol methodSymbol,
 		INamedTypeSymbol classSymbol,
-		out string returnTypeName,
+		out TypeReferenceOptions returnType,
 		out EventMethodReturnKind returnKind
 	)
 	{
-		returnTypeName = "void";
+		returnType = PurviewTypeLibrary.System.Void;
 		returnKind = EventMethodReturnKind.Void;
 
 		if (methodSymbol.ReturnsVoid)
@@ -934,14 +891,14 @@ static class AggregateEventMethodBuilder
 
 		if (methodSymbol.ReturnType.SpecialType == SpecialType.System_Boolean)
 		{
-			returnTypeName = "bool";
+			returnType = PurviewTypeLibrary.System.Boolean;
 			returnKind = EventMethodReturnKind.Bool;
 			return true;
 		}
 
 		if (SymbolEqualityComparer.Default.Equals(methodSymbol.ReturnType, classSymbol))
 		{
-			returnTypeName = classSymbol.Name;
+			returnType = new(classSymbol);
 			returnKind = EventMethodReturnKind.Aggregate;
 			return true;
 		}
@@ -1192,7 +1149,7 @@ static class AggregateEventMethodBuilder
 
 	static bool TryCreateCollectionEventInfo(
 		IMethodSymbol methodSymbol,
-		AttributeData collectionEventAttribute,
+		CollectionEventAttributeData collectionEventAttribute,
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
 		List<DiagnosticInfo> diagnostics,
 		out EventPropertyInfo parameterInfo,
@@ -1206,11 +1163,7 @@ static class AggregateEventMethodBuilder
 		if (methodSymbol.Parameters.Length != 1)
 			return false;
 
-		if (
-			collectionEventAttribute.ConstructorArguments.Length != 1
-			|| collectionEventAttribute.ConstructorArguments[0].Value is not string rawPropertyName
-			|| string.IsNullOrWhiteSpace(rawPropertyName)
-		)
+		if (string.IsNullOrWhiteSpace(collectionEventAttribute.PropertyName))
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
@@ -1220,11 +1173,16 @@ static class AggregateEventMethodBuilder
 					"collection property name must be provided via [CollectionEvent(nameof(CollectionProperty))]"
 				)
 			);
+
 			return false;
 		}
 
-		var collectionPropertyName = rawPropertyName.Trim();
-		if (!propertySymbolsByName.TryGetValue(collectionPropertyName, out var collectionProperty))
+		if (
+			!propertySymbolsByName.TryGetValue(
+				collectionEventAttribute.PropertyName,
+				out var collectionProperty
+			)
+		)
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
@@ -1233,9 +1191,10 @@ static class AggregateEventMethodBuilder
 					methodSymbol.Parameters[0].Name,
 					methodSymbol.Name,
 					methodSymbol.ContainingType.Name,
-					$"collection property '{collectionPropertyName}' does not exist"
+					$"collection property '{collectionEventAttribute.PropertyName}' does not exist"
 				)
 			);
+
 			return false;
 		}
 
@@ -1248,43 +1207,23 @@ static class AggregateEventMethodBuilder
 					methodSymbol.Parameters[0].Name,
 					methodSymbol.Name,
 					methodSymbol.ContainingType.Name,
-					$"collection property '{collectionPropertyName}' must use Purview.EventSourcing.EventStoreList<T> or Purview.EventSourcing.EventStoreSet<T>"
+					$"collection property '{collectionEventAttribute.PropertyName}' must use {TypeLibrary.Aggregates.EventStoreList.MakeGeneric("T")} or {TypeLibrary.Aggregates.EventStoreSet.MakeGeneric("T")}"
 				)
 			);
 			return false;
 		}
 
 		var parameter = methodSymbol.Parameters[0];
-		var parameterType = parameter.Type;
-		var parameterTypeName = parameterType.ToDisplayString(
-			SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
-				SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
-					| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-			)
-		);
-		var elementTypeName = elementType.ToDisplayString(
-			SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
-				SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
-					| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-			)
-		);
 
+		TypeReferenceOptions parameterType = new(elementType);
+		TypeReferenceOptions eventPropertyType;
 		CollectionParameterShape parameterShape;
-		string eventPropertyTypeName;
-		if (SymbolEqualityComparer.Default.Equals(parameterType, elementType))
-		{
-			parameterShape = CollectionParameterShape.Single;
-			eventPropertyTypeName = elementTypeName;
-		}
-		else if (
-			parameterType is IArrayTypeSymbol arrayType
-			&& SymbolEqualityComparer.Default.Equals(arrayType.ElementType, elementType)
-		)
+		if (TypeHelpers.IsArray(parameter.Type))
 		{
 			parameterShape = CollectionParameterShape.Array;
-			eventPropertyTypeName = $"{elementTypeName}[]";
+			eventPropertyType = parameterType.MakeArray();
 		}
-		else if (TryGetIEnumerableElementType(parameterType, out var enumerableElementType))
+		else if (TryGetIEnumerableElementType(parameter.Type, out var enumerableElementType))
 		{
 			if (!SymbolEqualityComparer.Default.Equals(enumerableElementType, elementType))
 			{
@@ -1293,14 +1232,14 @@ static class AggregateEventMethodBuilder
 						DiagnosticLibrary.UnsupportedEventMethodSignature,
 						parameter,
 						methodSymbol.Name,
-						$"collection item type '{parameterTypeName}' does not match '{elementTypeName}'"
+						$"collection item type '{parameter.Type}' does not match '{parameterType}'"
 					)
 				);
 				return false;
 			}
 
 			parameterShape = CollectionParameterShape.Enumerable;
-			eventPropertyTypeName = $"{elementTypeName}[]";
+			eventPropertyType = parameterType.MakeArray();
 		}
 		else
 		{
@@ -1309,7 +1248,7 @@ static class AggregateEventMethodBuilder
 					DiagnosticLibrary.UnsupportedEventMethodSignature,
 					parameter.Locations.FirstOrDefault() ?? methodLocation,
 					methodSymbol.Name,
-					$"collection methods only support '{elementTypeName}', '{elementTypeName}[]', or IEnumerable<{elementTypeName}> parameters"
+					$"collection methods only support '{parameterType}', '{parameterType.MakeArray()}', or IEnumerable<{parameterType}> parameters"
 				)
 			);
 			return false;
@@ -1317,128 +1256,29 @@ static class AggregateEventMethodBuilder
 
 		parameterInfo = new EventPropertyInfo(
 			parameter.Name,
-			parameterTypeName,
-			eventPropertyTypeName,
-			collectionPropertyName,
+			parameterType,
+			eventPropertyType,
+			"ON CRAP LOST THIS SOMEWHERE IN THE REFACTOR",
 			HasAggregateProperty: false,
 			IncludeInEvent: true,
-			EqualityComparerTypeName: eventPropertyTypeName,
+			EqualityComparerTypeName: eventPropertyType,
 			UseStringOrdinalComparison: false,
 			ParameterConversionKind: EventParameterConversionKind.None,
 			IsComputed: false,
 			IsParams: parameter.IsParams
 		);
 
-		if (
-			!TryResolveCollectionMutationOperation(
-				methodSymbol,
-				collectionEventAttribute,
-				diagnostics,
-				methodLocation,
-				out var mutationOperation
-			)
-		)
-		{
-			return false;
-		}
-
 		collectionEvent = new CollectionEventInfo(
-			collectionPropertyName,
-			elementTypeName,
-			collectionProperty.Type.ToDisplayString(
-				SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
-					SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
-						| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-				)
-			),
+			collectionProperty.Name,
+			parameterType,
+			new(collectionProperty.Type),
 			isSet,
-			mutationOperation,
+			(CollectionMutationOperation)
+				Enum.Parse(typeof(CollectionMutationOperation), collectionEventAttribute.Operation),
 			parameterShape,
 			methodSymbol.Name
 		);
 
 		return true;
-	}
-
-	static bool TryResolveCollectionMutationOperation(
-		IMethodSymbol methodSymbol,
-		AttributeData collectionEventAttribute,
-		List<DiagnosticInfo> diagnostics,
-		Location? methodLocation,
-		out CollectionMutationOperation operation
-	)
-	{
-		operation = CollectionMutationOperation.Add;
-
-		foreach (var namedArgument in collectionEventAttribute.NamedArguments)
-		{
-			if (namedArgument.Key != "Operation")
-				continue;
-
-			if (namedArgument.Value.Value is int operationValue)
-			{
-				if (operationValue == 1)
-				{
-					operation = CollectionMutationOperation.Add;
-					return true;
-				}
-
-				if (operationValue == 2)
-				{
-					operation = CollectionMutationOperation.Remove;
-					return true;
-				}
-			}
-
-			return TryInferCollectionMutationOperation(
-				methodSymbol,
-				diagnostics,
-				methodLocation,
-				out operation
-			);
-		}
-
-		return TryInferCollectionMutationOperation(
-			methodSymbol,
-			diagnostics,
-			methodLocation,
-			out operation
-		);
-	}
-
-	static bool TryInferCollectionMutationOperation(
-		IMethodSymbol methodSymbol,
-		List<DiagnosticInfo> diagnostics,
-		Location? methodLocation,
-		out CollectionMutationOperation operation
-	)
-	{
-		operation = CollectionMutationOperation.Add;
-
-		if (methodSymbol.Name.StartsWith("Add", StringComparison.Ordinal))
-		{
-			operation = CollectionMutationOperation.Add;
-			return true;
-		}
-
-		if (
-			methodSymbol.Name.StartsWith("Remove", StringComparison.Ordinal)
-			|| methodSymbol.Name.StartsWith("Delete", StringComparison.Ordinal)
-		)
-		{
-			operation = CollectionMutationOperation.Remove;
-			return true;
-		}
-
-		diagnostics.Add(
-			DiagnosticInfo.Create(
-				DiagnosticLibrary.UnsupportedEventMethodSignature,
-				methodLocation,
-				methodSymbol.Name,
-				"collection event methods must begin with 'Add', 'Remove', or 'Delete', or explicitly set Operation = CollectionEventOperation.Add/Remove"
-			)
-		);
-
-		return false;
 	}
 }

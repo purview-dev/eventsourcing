@@ -9,6 +9,11 @@ partial class TypeLibrary
 			AggregateNamespace
 		);
 
+		public static readonly TypeValueObject AggregateDetails = new(
+			nameof(AggregateDetails),
+			AggregateNamespace
+		);
+
 		public static readonly TypeValueObject IAggregate = new(
 			nameof(IAggregate),
 			AggregateNamespace

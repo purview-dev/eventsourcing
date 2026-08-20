@@ -5,7 +5,7 @@
 		<RoslynCompilerVersion>[5.0.0]</RoslynCompilerVersion>
 		<RoslynAnalyzersVersion>5.6.0</RoslynAnalyzersVersion>
 		<TUnitVersion>[1.65.0,)</TUnitVersion>
-		<PurviewSGFrameworkVersion>[1.0.0-prerelease.24,)</PurviewSGFrameworkVersion>
+		<PurviewSGFrameworkVersion>[1.0.0-prerelease.25,)</PurviewSGFrameworkVersion>
 	</PropertyGroup>
 	<ItemGroup Label="Vulnerabilities">
 		<PackageVersion Include="SSH.NET" Version="2026.0.0" />

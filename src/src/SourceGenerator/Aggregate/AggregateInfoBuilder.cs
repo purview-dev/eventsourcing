@@ -58,8 +58,7 @@ static class AggregateInfoBuilder
 
 		var methods = new List<AggregateEventMethodInfo>();
 		var invalidMethods = new List<InvalidAggregateEventMethodInfo>();
-		var methodsByEventType =
-			new Dictionary<(string EventNamespace, string EventName), IMethodSymbol>();
+		var methodsByEventType = new Dictionary<TypeReferenceOptions, IMethodSymbol>();
 		var methodsBySchemaVersion = new Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)>();
 
 		BuildMethods(
@@ -262,17 +261,7 @@ static class AggregateInfoBuilder
 					);
 				}
 
-				properties.Add(
-					new(
-						propertySymbol.Name,
-						propertySymbol.Type.ToDisplayString(
-							SymbolDisplayFormat.FullyQualifiedFormat.WithMiscellaneousOptions(
-								SymbolDisplayFormat.FullyQualifiedFormat.MiscellaneousOptions
-									| SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier
-							)
-						)
-					)
-				);
+				properties.Add(new(propertySymbol.Name, new(propertySymbol.Type)));
 				continue;
 			}
 
@@ -307,7 +296,7 @@ static class AggregateInfoBuilder
 		List<IMethodSymbol> attributedMethods,
 		List<AggregateEventMethodInfo> methods,
 		List<InvalidAggregateEventMethodInfo> invalidMethods,
-		Dictionary<(string EventNamespace, string EventName), IMethodSymbol> methodsByEventType,
+		Dictionary<TypeReferenceOptions, IMethodSymbol> methodsByEventType,
 		Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)> methodsBySchemaVersion,
 		List<DiagnosticInfo> diagnostics,
 		CancellationToken cancellationToken
@@ -356,8 +345,7 @@ static class AggregateInfoBuilder
 				continue;
 			}
 
-			var eventTypeKey = (methodInfo.EventNamespace, methodInfo.EventName);
-			if (methodsByEventType.TryGetValue(eventTypeKey, out var conflictingMethod))
+			if (methodsByEventType.TryGetValue(methodInfo.EventType, out var conflictingMethod))
 			{
 				diagnostics.Add(
 					DiagnosticInfo.Create(
@@ -365,7 +353,7 @@ static class AggregateInfoBuilder
 						methodSymbol,
 						methodSymbol.Name,
 						classSymbol.Name,
-						$"{methodInfo.EventNamespace}.{methodInfo.EventName}"
+						methodInfo.EventType.TypeName
 					)
 				);
 				diagnostics.Add(
@@ -374,7 +362,7 @@ static class AggregateInfoBuilder
 						conflictingMethod,
 						conflictingMethod.Name,
 						classSymbol.Name,
-						$"{methodInfo.EventNamespace}.{methodInfo.EventName}"
+						methodInfo.EventType.TypeName
 					)
 				);
 
@@ -445,7 +433,7 @@ static class AggregateInfoBuilder
 				);
 			}
 
-			methodsByEventType[eventTypeKey] = methodSymbol;
+			methodsByEventType[methodInfo.EventType] = methodSymbol;
 			methods.Add(methodInfo);
 		}
 	}

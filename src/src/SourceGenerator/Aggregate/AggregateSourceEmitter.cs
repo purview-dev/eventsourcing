@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate;
@@ -17,7 +18,7 @@ static partial class AggregateSourceEmitter
 		{
 			foreach (
 				var namespaceMethods in outputContext.Aggregate.Methods.GroupBy(
-					static method => method.EventNamespace,
+					static method => method.EventType.TypeValue.Namespace,
 					StringComparer.Ordinal
 				)
 			)
@@ -35,10 +36,10 @@ static partial class AggregateSourceEmitter
 			// (required because event classes use a different namespace in the same file)
 			var accessModifier = GetAccessModifier(outputContext.Aggregate.Accessibility);
 
-			if (outputContext.Aggregate.AggregateClass.Namespace is not null)
+			if (outputContext.Aggregate.AggregateClass.TypeValue.Namespace is not null)
 			{
 				outputContext.Writer.WriteLine(
-					$"namespace {outputContext.Aggregate.AggregateClass.Namespace}"
+					$"namespace {outputContext.Aggregate.AggregateClass.TypeValue.Namespace}"
 				);
 				outputContext.Writer.WriteLine("{");
 			}
@@ -46,13 +47,6 @@ static partial class AggregateSourceEmitter
 			using var nsBlock = outputContext.Writer.WriteBlockNamespaceScope(
 				outputContext.Aggregate.AggregateClass
 			);
-
-			outputContext.Writer.WriteLine(
-				$"{indent}[global::System.Text.Json.Serialization.JsonConverter(typeof({outputContext.Aggregate.AggregateClass.TypeName}JsonConverter))]"
-			);
-			var aggregateBaseClause = outputContext.Aggregate.ShouldDeclareAggregateBase
-				? " : global::Purview.EventSourcing.Aggregates.AggregateBase"
-				: string.Empty;
 
 			outputContext.Writer.WriteClass(
 				new(outputContext.Aggregate.AggregateClass)
@@ -75,52 +69,38 @@ static partial class AggregateSourceEmitter
 				},
 				bodyWriter =>
 				{
-					//
+					var localOutputContext = outputContext.WithWriter(bodyWriter);
+
+					GenerateJsonSerializationSupport(localOutputContext);
+
+					// Generate RegisterEvents override
+					GenerateRegisterEvents(localOutputContext);
+
+					// Generate Apply methods
+					foreach (var method in outputContext.Aggregate.Methods)
+					{
+						GenerateApplyMethod(localOutputContext, method);
+					}
+
+					// Generate command method implementations
+					foreach (var method in outputContext.Aggregate.Methods)
+					{
+						if (method.IsCollectionEvent)
+							CollectionCommandMethodEmitter.Generate(localOutputContext, method);
+						else
+							CommandMethodEmitter.Generate(localOutputContext, method);
+					}
+
+					GenerateCollectionNormalizationValidationHookDeclarations(localOutputContext);
+					GeneratePropertyHookDeclarations(localOutputContext);
+
+					foreach (var method in outputContext.Aggregate.InvalidMethods)
+						GenerateInvalidCommandMethodStub(localOutputContext, method);
+
+					GenerateJsonConverter(localOutputContext);
+					GenerateJsonModel(localOutputContext);
 				}
 			);
-
-			//outputContext.Writer.WriteLine(
-			//	$"{indent}{accessModifier} partial class {outputContext.Aggregate.AggregateClass.TypeName}{aggregateBaseClause}"
-			//);
-			//outputContext.Writer.WriteLine($"{indent}{{");
-
-			GenerateJsonSerializationSupport(outputContext, indent);
-
-			// Generate RegisterEvents override
-			GenerateRegisterEvents(outputContext, indent);
-
-			// Generate Apply methods
-			foreach (var method in outputContext.Aggregate.Methods)
-			{
-				GenerateApplyMethod(outputContext, method, indent);
-			}
-
-			// Generate command method implementations
-			foreach (var method in outputContext.Aggregate.Methods)
-			{
-				if (method.IsCollectionEvent)
-					CollectionCommandMethodEmitter.Generate(outputContext, method, indent);
-				else
-					CommandMethodEmitter.Generate(outputContext, method, indent);
-			}
-
-			GenerateCollectionNormalizationValidationHookDeclarations(outputContext, indent);
-			GeneratePropertyHookDeclarations(outputContext, indent);
-
-			foreach (var method in outputContext.Aggregate.InvalidMethods)
-			{
-				GenerateInvalidCommandMethodStub(outputContext, method, indent);
-			}
-
-			outputContext.Writer.WriteLine($"{indent}}}");
-
-			GenerateJsonConverter(outputContext, indent);
-			GenerateJsonModel(outputContext, indent);
-
-			if (outputContext.Aggregate.AggregateClass.Namespace is not null)
-			{
-				outputContext.Writer.WriteLine("}");
-			}
 		}
 	}
 
@@ -134,13 +114,13 @@ static partial class AggregateSourceEmitter
 			.ToList();
 
 		outputContext.Debug(
-			$"Generating event class '{method.EventName}' for method '{method.MethodName}' with {storedParameters.Count} stored parameters and version {method.Version}."
+			$"Generating event class '{method.EventType}' for method '{method.MethodName}' with {storedParameters.Count} stored parameters and version {method.Version}."
 		);
 
 		var hashParameterName = storedParameters.Count == 0 ? "_" : "hash";
 
 		outputContext.Writer.WriteClass(
-			new(method.EventName)
+			new(method.EventType)
 			{
 				Accessibility = TypeDeclarationAccessibility.Public,
 				IsSealed = true,
@@ -152,7 +132,7 @@ static partial class AggregateSourceEmitter
 				foreach (var prop in storedParameters)
 				{
 					outputContext.Writer.WriteProperty(
-						new(prop.PropertyName, prop.EventPropertyTypeName)
+						new(prop.PropertyName, prop.PropertyType)
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
 							HasSetter = true,
@@ -199,81 +179,87 @@ static partial class AggregateSourceEmitter
 		);
 	}
 
-	static void GenerateRegisterEvents(
-		AggregateGenerationOutputContext outputContext,
-		string indent
-	)
+	static void GenerateRegisterEvents(AggregateGenerationOutputContext outputContext)
 	{
-		outputContext.Writer.WriteLine($"{indent}\tprotected override void RegisterEvents()");
-		outputContext.Writer.WriteLine($"{indent}\t{{");
-
-		foreach (var method in outputContext.Aggregate.Methods)
-		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tRegister<global::{method.EventNamespace}.{method.EventName}>(Apply);"
-			);
-		}
-
-		outputContext.Writer.WriteLine($"{indent}\t}}");
-		outputContext.Writer.WriteLine();
+		outputContext.Writer.WriteMethod(
+			new("RegisterEvents")
+			{
+				Accessibility = TypeDeclarationAccessibility.Protected,
+				IsOverride = true,
+			},
+			bodyWriter =>
+			{
+				foreach (var method in outputContext.Aggregate.Methods)
+				{
+					bodyWriter.Write($"Register<").Write(method.EventType).WriteLine(">(Apply);");
+				}
+			}
+		);
 	}
 
-	static void GenerateJsonSerializationSupport(
-		AggregateGenerationOutputContext outputContext,
-		string indent
-	)
+	static void GenerateJsonSerializationSupport(AggregateGenerationOutputContext outputContext)
 	{
-		outputContext.Writer.WriteLine(
-			$"{indent}\tinternal static {outputContext.Aggregate.AggregateClass.TypeName} CreateFromJsonModel({outputContext.Aggregate.AggregateClass.TypeName}JsonModel jsonModel) => new()"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t\t{{");
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\t\tDetails = jsonModel.Details ?? new global::Purview.EventSourcing.Aggregates.AggregateDetails(),"
+		TypeValueObject jsonModel = new(
+			$"{outputContext.Aggregate.AggregateClass.TypeName}JsonModel",
+			outputContext.Aggregate.AggregateClass.TypeValue.Namespace
 		);
 
-		foreach (var property in outputContext.Aggregate.Properties)
-		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\t{property.PropertyName} = jsonModel.{property.PropertyName},"
-			);
-		}
+		outputContext.Writer.WriteMethod(
+			new("CreateFromJsonModel", outputContext.Aggregate.AggregateClass)
+			{
+				Accessibility = TypeDeclarationAccessibility.Internal,
+				IsStatic = true,
+				Parameters = [new("jsonModel", jsonModel)],
+			},
+			writeBody =>
+			{
+				writeBody
+					.Write($"tDetails = jsonModel.Details ?? new ")
+					.Write(TypeLibrary.Aggregates.AggregateDetails)
+					.WriteLine("()");
 
-		outputContext.Writer.WriteLine($"{indent}\t\t}};");
-		outputContext.Writer.WriteLine();
-
-		outputContext.Writer.WriteLine(
-			$"{indent}\tinternal {outputContext.Aggregate.AggregateClass.TypeName}JsonModel ToJsonModel() => new()"
+				foreach (var property in outputContext.Aggregate.Properties)
+				{
+					writeBody
+						.Write(property.PropertyName)
+						.Write("= jsonModel.")
+						.Write(property.PropertyName)
+						.WriteLine(";");
+				}
+			}
 		);
-		outputContext.Writer.WriteLine($"{indent}\t\t{{");
-		outputContext.Writer.WriteLine($"{indent}\t\t\tDetails = Details,");
 
-		foreach (var property in outputContext.Aggregate.Properties)
-		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\t{property.PropertyName} = {property.PropertyName},"
-			);
-		}
+		outputContext.Writer.WriteMethod(
+			new("ToJsonModel", jsonModel) { Accessibility = TypeDeclarationAccessibility.Internal },
+			writeBody =>
+				writeBody.OpenBlock(
+					"return new()",
+					returnBlock =>
+					{
+						returnBlock.WriteLine("Details = Details,");
 
-		outputContext.Writer.WriteLine($"{indent}\t\t}};");
-		outputContext.Writer.WriteLine();
+						foreach (var property in outputContext.Aggregate.Properties)
+						{
+							returnBlock
+								.Write(property.PropertyName)
+								.Write(" = ")
+								.Write(property.PropertyName)
+								.WriteLine(",");
+						}
+					}
+				)
+		);
 	}
 
 	static void GenerateApplyMethod(
 		AggregateGenerationOutputContext outputContext,
-		AggregateEventMethodInfo method,
-		string indent
+		AggregateEventMethodInfo method
 	)
 	{
 		if (method.ManualApply)
 		{
 			outputContext.Writer.WritePartialMethod(
-				new($"Apply")
-				{
-					Parameters =
-					[
-						new("@event", $"global::{method.EventNamespace}.{method.EventName}"),
-					],
-				}
+				new($"Apply") { Parameters = [new("@event", method.EventType)] }
 			);
 
 			return;
@@ -281,20 +267,14 @@ static partial class AggregateSourceEmitter
 
 		if (method.IsCollectionEvent)
 		{
-			GenerateCollectionApplyMethod(outputContext, method, indent);
+			GenerateCollectionApplyMethod(outputContext, method);
 			return;
 		}
 
 		if (method.Parameters.Count == 0)
 		{
 			outputContext.Writer.WritePartialMethod(
-				new($"Apply")
-				{
-					Parameters =
-					[
-						new("@event", $"global::{method.EventNamespace}.{method.EventName}"),
-					],
-				}
+				new($"Apply") { Parameters = [new("@event", method.EventType)] }
 			);
 
 			return;
@@ -306,7 +286,7 @@ static partial class AggregateSourceEmitter
 			.ToList();
 
 		outputContext.Writer.WriteLine(
-			$"{indent}\tvoid Apply(global::{method.EventNamespace}.{method.EventName} {eventParameterName})"
+			$"{indent}\tvoid Apply({method.EventType} {eventParameterName})"
 		);
 		outputContext.Writer.WriteLine($"{indent}\t{{");
 
@@ -337,14 +317,15 @@ static partial class AggregateSourceEmitter
 			);
 		}
 
-		var hookSuffix = GetHookName(method.EventName);
+		var hookSuffix = GetHookName(method.EventType);
 		outputContext.Writer.WriteLine($"{indent}\t\tOnApplied{hookSuffix}({eventParameterName});");
 		outputContext.Writer.WriteLine($"{indent}\t}}");
 		outputContext.Writer.WriteLine();
 	}
 
-	internal static string GetHookName(string eventName)
+	internal static string GetHookName(TypeReferenceOptions eventType)
 	{
+		var eventName = eventType.TypeValue.TypeName;
 		if (!eventName.EndsWith("Event", StringComparison.Ordinal))
 			eventName += "Event";
 
@@ -353,60 +334,55 @@ static partial class AggregateSourceEmitter
 
 	static void GenerateCollectionApplyMethod(
 		AggregateGenerationOutputContext outputContext,
-		AggregateEventMethodInfo method,
-		string indent
+		AggregateEventMethodInfo method
 	)
 	{
 		var collectionEvent = method.CollectionEvent!;
 		var parameter = method.Parameters[0];
 		const string eventParameterName = "@event";
-		var hookSuffix = GetHookName(method.EventName);
+		var hookSuffix = GetHookName(method.EventType);
 		var operationMethod =
 			collectionEvent.Operation == CollectionMutationOperation.Add ? "Add" : "Remove";
 
-		outputContext.Writer.WriteLine(
-			$"{indent}\tvoid Apply(global::{method.EventNamespace}.{method.EventName} {eventParameterName})"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t{{");
-		outputContext.Writer.WriteLine($"{indent}\t\tif ({collectionEvent.PropertyName} is null)");
-		outputContext.Writer.WriteLine($"{indent}\t\t{{");
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\t\tthrow new global::System.InvalidOperationException(\"Collection property '{collectionEvent.PropertyName}' cannot be null when applying {method.EventName}.\");"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t\t}}");
-		outputContext.Writer.WriteLine();
+		outputContext.Writer.WriteMethod(
+			new("Apply", method.EventType),
+			writeBody =>
+			{
+				writeBody.WriteBlock(
+					$"if ({collectionEvent.PropertyName} is null)",
+					block =>
+						block.WriteThrow(
+							$"new global::System.InvalidOperationException(\"Collection property '{collectionEvent.PropertyName}' cannot be null when applying {method.EventType}.\");"
+						)
+				);
 
-		if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
-		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t((global::System.Collections.Generic.ICollection<{collectionEvent.ElementTypeName}>)"
-					+ $"{collectionEvent.PropertyName}).{operationMethod}({eventParameterName}.{parameter.PropertyName});"
-			);
-		}
-		else
-		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tforeach (var __item in {eventParameterName}.{parameter.PropertyName})"
-			);
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\t((global::System.Collections.Generic.ICollection<{collectionEvent.ElementTypeName}>)"
-					+ $"{collectionEvent.PropertyName}).{operationMethod}(__item);"
-			);
-			outputContext.Writer.WriteLine($"{indent}\t\t}}");
-		}
+				if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
+				{
+					writeBody.WriteLine(
+						$"(({TypeLibrary.System.Collections.Generic.ICollection.MakeGeneric(collectionEvent.ElementType)})"
+							+ $"{collectionEvent.PropertyName}).{operationMethod}({eventParameterName}.{parameter.PropertyName});"
+					);
+				}
+				else
+				{
+					writeBody.WriteBlock(
+						$"foreach (var __item in {eventParameterName}.{parameter.PropertyName})",
+						block =>
+							block.WriteLine(
+								$"(({TypeLibrary.System.Collections.Generic.ICollection.MakeGeneric(collectionEvent.ElementType)})"
+									+ $"{collectionEvent.PropertyName}).{operationMethod}(__item);"
+							)
+					);
+				}
 
-		outputContext.Writer.WriteLine();
-		outputContext.Writer.WriteLine($"{indent}\t\tOnApplied{hookSuffix}({eventParameterName});");
-		outputContext.Writer.WriteLine($"{indent}\t}}");
-		outputContext.Writer.WriteLine();
+				writeBody.WriteMethodCall($"OnApplied{hookSuffix}", eventParameterName);
+			}
+		);
 	}
 
-	static void GeneratePropertyHookDeclarations(
-		AggregateGenerationOutputContext outputContext,
-		string indent
-	)
+	static void GeneratePropertyHookDeclarations(AggregateGenerationOutputContext outputContext)
 	{
+		var writer = outputContext.Writer;
 		var aggregateProperties = outputContext
 			.Aggregate.Methods.SelectMany(static method => method.Parameters)
 			.Where(static parameter => parameter.HasAggregateProperty)
@@ -414,25 +390,39 @@ static partial class AggregateSourceEmitter
 			.Select(static group => group.First())
 			.ToList();
 
+		var suppression = CreateCA1822Suppression();
 		foreach (var prop in aggregateProperties)
 		{
-			EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void On{prop.AggregatePropertyName}Changing(ref {prop.PropertyTypeName} {prop.ParameterName});"
+			writer.WritePartialMethod(
+				new($"On{prop.AggregatePropertyName}Changing")
+				{
+					Attributes = [suppression],
+					Parameters =
+					[
+						new(prop.ParameterName, prop.PropertyType, ParameterModifier.Ref),
+					],
+				}
 			);
-			EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void On{prop.AggregatePropertyName}Changed({prop.PropertyTypeName} previous, {prop.PropertyTypeName} current);"
+
+			writer.WritePartialMethod(
+				new($"On{prop.AggregatePropertyName}Changed")
+				{
+					Attributes = [suppression],
+					Parameters =
+					[
+						new("previous", prop.PropertyType),
+						new("current", prop.PropertyType),
+					],
+				}
 			);
-			outputContext.Writer.WriteLine();
 		}
 	}
 
 	static void GenerateCollectionNormalizationValidationHookDeclarations(
-		AggregateGenerationOutputContext outputContext,
-		string indent
+		AggregateGenerationOutputContext outputContext
 	)
 	{
+		var writer = outputContext.Writer;
 		var declaredKeys = new HashSet<string>(StringComparer.Ordinal);
 		foreach (
 			var method in outputContext.Aggregate.Methods.Where(static method =>
@@ -444,84 +434,106 @@ static partial class AggregateSourceEmitter
 			var parameter = method.Parameters[0];
 			var declarationType =
 				collectionEvent.ParameterShape == CollectionParameterShape.Single
-					? collectionEvent.ElementTypeName
-					: $"global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementTypeName}>";
+					? collectionEvent.ElementType
+					: TypeLibrary.System.Collections.Generic.IEnumerable.MakeGeneric(
+						collectionEvent.ElementType
+					);
 			var key = $"{collectionEvent.NormalizeValidateHookSuffix}|{declarationType}";
 			if (!declaredKeys.Add(key))
 				continue;
 
-			EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnNormalizing{collectionEvent.NormalizeValidateHookSuffix}(ref {declarationType} {parameter.ParameterName});"
+			var suppression = CreateCA1822Suppression();
+			ParameterDeclarationOptions param = new(parameter.ParameterName, declarationType);
+			writer.WritePartialMethod(
+				new MethodDeclarationOptions(
+					$"OnNormalizing{collectionEvent.NormalizeValidateHookSuffix}"
+				)
+				{
+					Attributes = [suppression],
+					Parameters = [param with { Modifier = ParameterModifier.Ref }],
+				}
 			);
-			EmitCa1822Suppression(outputContext, indent);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnValidating{collectionEvent.NormalizeValidateHookSuffix}({declarationType} {parameter.ParameterName});"
+
+			writer.WritePartialMethod(
+				new MethodDeclarationOptions(
+					$"OnValidating{collectionEvent.NormalizeValidateHookSuffix}"
+				)
+				{
+					Attributes = [suppression],
+					Parameters = [param with { Modifier = ParameterModifier.Ref }],
+				}
 			);
-			outputContext.Writer.WriteLine();
 		}
 	}
 
-	internal static void EmitCa1822Suppression(
-		AggregateGenerationOutputContext outputContext,
-		string indent
-	) =>
-		outputContext.Writer.WriteLine(
-			$"{indent}\t[global::System.Diagnostics.CodeAnalysis.SuppressMessage(\"Performance\", \"CA1822:Mark members as static\", Justification = \"Generated partial hook declaration must match instance signature and cannot be static.\")]"
-		);
+	internal static AttributeDeclarationOptions CreateCA1822Suppression() =>
+		new(TypeLibrary.System.DiagnosticsCodeAnalysis.SuppressMessageAttribute)
+		{
+			Arguments =
+			[
+				new("Performance"),
+				new("CA1822:Mark members as static"),
+				new(
+					"Justification",
+					"Generated partial hook declaration must match instance signature and cannot be static.",
+					true
+				),
+			],
+		};
 
 	internal static string GetLocalValueName(EventPropertyInfo parameter) =>
 		$"__{parameter.ParameterName}Value";
 
-	internal static string BuildOnCreatingCallArgumentList(List<EventPropertyInfo> parameters) =>
-		string.Join(
-			", ",
-			parameters.Select(static parameter => $"ref {GetWorkingValueName(parameter)}")
-		);
-
-	internal static string BuildOnCreatingDeclarationParameterList(
+	internal static ImmutableArray<MethodCallArgumentOptions> BuildOnCreatingCallArgumentList(
 		List<EventPropertyInfo> parameters
 	) =>
-		string.Join(
-			", ",
-			parameters.Select(static parameter =>
-				$"ref {parameter.PropertyTypeName} {parameter.ParameterName}"
-			)
-		);
+		[
+			.. parameters.Select(static parameter => new MethodCallArgumentOptions(
+				GetWorkingValueName(parameter),
+				ParameterModifier.Ref
+			)),
+		];
+
+	internal static ImmutableArray<ParameterDeclarationOptions> BuildOnCreatingDeclarationParameterList(
+		List<EventPropertyInfo> parameters
+	) =>
+		[
+			.. parameters.Select(static parameter => new ParameterDeclarationOptions(
+				parameter.ParameterName,
+				parameter.ParameterType,
+				ParameterModifier.Ref
+			)),
+		];
 
 	internal static void EmitEventCreation(
 		AggregateGenerationOutputContext outputContext,
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> storedParameters,
-		string indent,
 		bool declareVariable
 	)
 	{
-		var declarationPrefix = declareVariable ? "var " : string.Empty;
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\t{declarationPrefix}@event = new global::{method.EventNamespace}.{method.EventName}"
-		);
+		ObjectCreationOptions creation = new(
+			method.EventType,
+			[
+				.. storedParameters.Select(static prop =>
+				{
+					var valueExpression = GetWorkingValueName(prop);
+					if (prop.IsNotNull || prop.IsRequired)
+						valueExpression += "!";
 
-		if (storedParameters.Count > 0)
+					return new MethodCallArgumentOptions(prop.PropertyName, valueExpression);
+				}),
+			]
+		)
 		{
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			foreach (var prop in storedParameters)
-			{
-				var valueExpression = GetWorkingValueName(prop);
-				if (prop.IsNotNull || prop.IsRequired)
-					valueExpression += "!";
+			WriteArgumentsOnSeparateLines = true,
+		};
 
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\t\t{prop.PropertyName} = {valueExpression},"
-				);
-			}
-
-			outputContext.Writer.WriteLine($"{indent}\t\t}};");
-		}
+		var writer = outputContext.Writer;
+		if (declareVariable)
+			writer.WriteAssignment("var", "@event", creation);
 		else
-		{
-			outputContext.Writer.WriteLine($"{indent}\t\t();");
-		}
+			writer.WriteAssignment("@event", creation);
 	}
 
 	internal static string BuildPropertyValueExpression(
@@ -530,25 +542,23 @@ static partial class AggregateSourceEmitter
 		EventPropertyInfo parameter
 	)
 	{
-		var aggregateTypeName = GetAggregateTypeName(outputContext.Aggregate);
-
 		return parameter.ParameterConversionKind switch
 		{
 			EventParameterConversionKind.None => parameter.ParameterName,
 			EventParameterConversionKind.Implicit =>
-				$"({parameter.PropertyTypeName}){parameter.ParameterName}",
+				$"({parameter.PropertyType}){parameter.ParameterName}",
 			EventParameterConversionKind.Create =>
-				$"{parameter.PropertyTypeName}.Create({parameter.ParameterName})",
+				$"{parameter.PropertyType}.Create({parameter.ParameterName})",
 			EventParameterConversionKind.ContextualCreate =>
-				$"{parameter.PropertyTypeName}.Create({parameter.ParameterName}, new global::Purview.EventSourcing.ValueObjects.ValueObjectContext<{aggregateTypeName}>(this, MemberName: nameof({parameter.AggregatePropertyName}), EventName: nameof(global::{method.EventNamespace}.{method.EventName})))",
+				$"{parameter.PropertyType}.Create({parameter.ParameterName}, new global::Purview.EventSourcing.ValueObjects.ValueObjectContext<{outputContext.Aggregate.AggregateClass}>(this, MemberName: nameof({parameter.AggregatePropertyName}), EventName: nameof({method.EventType})))",
 			_ => parameter.ParameterName,
 		};
 	}
 
 	static string GetAggregateTypeName(AggregateInfo info) =>
-		info.AggregateClass.Namespace is null
+		info.AggregateClass.TypeValue.Namespace is null
 			? $"global::{info.AggregateClass.TypeName}"
-			: $"global::{info.AggregateClass.Namespace}.{info.AggregateClass.TypeName}";
+			: $"global::{info.AggregateClass.TypeValue.Namespace}.{info.AggregateClass.TypeName}";
 
 	internal static string BuildUnchangedCondition(List<EventPropertyInfo> parameters)
 	{
@@ -567,60 +577,38 @@ static partial class AggregateSourceEmitter
 	internal static string GetWorkingValueName(EventPropertyInfo parameter) =>
 		parameter.RequiresLocalCopy ? GetLocalValueName(parameter) : parameter.ParameterName;
 
-	internal static void EmitNoChangeReturn(
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0072:Add missing cases")]
+	internal static CodeWriter EmitNoChangeReturn(
 		AggregateGenerationOutputContext outputContext,
-		EventMethodReturnKind returnKind,
-		string indent,
-		int indentDepth
+		EventMethodReturnKind returnKind
 	)
 	{
-		var methodIndent = indent + new string('\t', indentDepth);
-		switch (returnKind)
+		var writer = outputContext.Writer;
+		return returnKind switch
 		{
-			case EventMethodReturnKind.Void:
-				outputContext.Writer.WriteLine($"{methodIndent}return;");
-				break;
-			case EventMethodReturnKind.Aggregate:
-				outputContext.Writer.WriteLine($"{methodIndent}return this;");
-				break;
-			case EventMethodReturnKind.Bool:
-				outputContext.Writer.WriteLine($"{methodIndent}return false;");
-				break;
-			default:
-				outputContext.Writer.WriteLine($"{methodIndent}return;");
-				break;
-		}
+			EventMethodReturnKind.Aggregate => writer.WriteReturn("this"),
+			EventMethodReturnKind.Bool => writer.WriteReturn("false"),
+			_ => writer.WriteReturn(),
+		};
 	}
 
 	internal static void EmitSuccessReturn(
 		AggregateGenerationOutputContext outputContext,
-		EventMethodReturnKind returnKind,
-		string indent,
-		int indentDepth
+		EventMethodReturnKind returnKind
 	)
 	{
-		var methodIndent = indent + new string('\t', indentDepth);
-		switch (returnKind)
-		{
-			case EventMethodReturnKind.Void:
-				outputContext.Writer.WriteLine($"{methodIndent}return;");
-				break;
-			case EventMethodReturnKind.Aggregate:
-				outputContext.Writer.WriteLine($"{methodIndent}return this;");
-				break;
-			case EventMethodReturnKind.Bool:
-				outputContext.Writer.WriteLine($"{methodIndent}return true;");
-				break;
-			default:
-				outputContext.Writer.WriteLine($"{methodIndent}return;");
-				break;
-		}
+		var writer = outputContext.Writer;
+		if (returnKind == EventMethodReturnKind.Aggregate)
+			writer.WriteReturn("this");
+		else if (returnKind == EventMethodReturnKind.Bool)
+			writer.WriteReturn("true");
+		else
+			writer.WriteReturn();
 	}
 
 	static void GenerateInvalidCommandMethodStub(
 		AggregateGenerationOutputContext outputContext,
-		InvalidAggregateEventMethodInfo method,
-		string indent
+		InvalidAggregateEventMethodInfo method
 	)
 	{
 		var diagnosticIds =
@@ -649,73 +637,147 @@ static partial class AggregateSourceEmitter
 			.Replace("\t", "\\t");
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0072:Add missing cases")]
-	internal static string GetAccessModifier(Accessibility accessibility)
+	internal static TypeDeclarationAccessibility GetAccessModifier(Accessibility accessibility)
 	{
 		return accessibility switch
 		{
-			Accessibility.Public => "public",
-			Accessibility.Private => "private",
-			Accessibility.Internal => "internal",
-			Accessibility.Protected => "protected",
-			Accessibility.ProtectedOrInternal => "protected internal",
-			Accessibility.ProtectedAndInternal => "private protected",
-			_ => "internal",
+			Accessibility.Public => TypeDeclarationAccessibility.Public,
+			Accessibility.Private => TypeDeclarationAccessibility.Private,
+			Accessibility.Internal => TypeDeclarationAccessibility.Internal,
+			Accessibility.Protected => TypeDeclarationAccessibility.Protected,
+			Accessibility.ProtectedOrInternal => TypeDeclarationAccessibility.ProtectedInternal,
+			Accessibility.ProtectedAndInternal => TypeDeclarationAccessibility.PrivateProtected,
+			_ => TypeDeclarationAccessibility.Internal,
 		};
 	}
 
-	static void GenerateJsonConverter(AggregateGenerationOutputContext outputContext, string indent)
+	static void GenerateJsonConverter(AggregateGenerationOutputContext outputContext)
 	{
-		outputContext.Writer.WriteLine();
-		outputContext.Writer.WriteLine(
-			$"{indent}sealed class {outputContext.Aggregate.AggregateClass.TypeName}JsonConverter : global::System.Text.Json.Serialization.JsonConverter<{outputContext.Aggregate.AggregateClass.TypeName}>"
+		var writer = outputContext.Writer;
+		TypeValueObject jsonModel = new(
+			$"{outputContext.Aggregate.AggregateClass.TypeValue.TypeName}JsonModel",
+			outputContext.Aggregate.AggregateClass.TypeValue.Namespace
 		);
-		outputContext.Writer.WriteLine($"{indent}{{");
-		outputContext.Writer.WriteLine(
-			$"{indent}\tpublic override {outputContext.Aggregate.AggregateClass.TypeName}? Read(ref global::System.Text.Json.Utf8JsonReader reader, global::System.Type typeToConvert, global::System.Text.Json.JsonSerializerOptions options)"
+
+		writer.WriteClass(
+			new($"{outputContext.Aggregate.AggregateClass.TypeName}JsonConverter")
+			{
+				IsSealed = true,
+				BaseType = TypeLibrary.System.TextJson.JsonConverter.MakeGeneric(
+					outputContext.Aggregate.AggregateClass
+				),
+			},
+			bodyWriter =>
+			{
+				bodyWriter.WriteMethod(
+					new(
+						"Read",
+						outputContext.Aggregate.AggregateClass.Nullable(),
+						TypeDeclarationAccessibility.Public
+					)
+					{
+						IsOverride = true,
+						Parameters =
+						[
+							new(
+								"reader",
+								TypeLibrary.System.TextJson.Utf8JsonReader,
+								ParameterModifier.Ref
+							),
+							new("typeToConvert", PurviewTypeLibrary.System.Type),
+							new("options", TypeLibrary.System.TextJson.JsonSerializerOptions),
+						],
+					},
+					methodWriter =>
+					{
+						methodWriter.WriteAssignment(
+							"var",
+							"jsonModel",
+							writeValue =>
+								writeValue.WriteMethodCall(
+									TypeLibrary.System.TextJson.JsonSerializer.StaticMember(
+										"Deserialize"
+									),
+									[
+										new MethodCallArgumentOptions(
+											"reader",
+											ParameterModifier.Ref
+										),
+										"options",
+									],
+									genericArguments: [jsonModel]
+								)
+						);
+
+						methodWriter.WriteIfBlock(
+							"jsonModel is null",
+							ifBlock =>
+								ifBlock.WriteThrow(
+									TypeLibrary.System.TextJson.JsonException,
+									$"Unable to deserialize {outputContext.Aggregate.AggregateClass}."
+								)
+						);
+
+						methodWriter.WriteReturn(writerExpression =>
+							writerExpression.WriteMethodCall(
+								outputContext.Aggregate.AggregateClass.TypeValue.StaticMember(
+									"CreateFromJsonModel"
+								),
+								["jsonModel"]
+							)
+						);
+					}
+				);
+
+				bodyWriter.WriteMethod(
+					new("Write", TypeDeclarationAccessibility.Public)
+					{
+						IsOverride = true,
+						Parameters =
+						[
+							new("writer", TypeLibrary.System.TextJson.Utf8JsonWriter),
+							new("value", outputContext.Aggregate.AggregateClass),
+							new("options", TypeLibrary.System.TextJson.JsonSerializerOptions),
+						],
+					},
+					bodyWriter =>
+						bodyWriter.WriteMethodCall(
+							TypeLibrary.System.TextJson.JsonSerializer.StaticMember("Serialize"),
+							["writer", "value.ToJsonModel()", "options"]
+						)
+				);
+			}
 		);
-		outputContext.Writer.WriteLine($"{indent}\t{{");
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tvar jsonModel = global::System.Text.Json.JsonSerializer.Deserialize<{outputContext.Aggregate.AggregateClass.TypeName}JsonModel>(ref reader, options);"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t\tif (jsonModel is null)");
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\t\tthrow new global::System.Text.Json.JsonException(\"Unable to deserialize {outputContext.Aggregate.AggregateClass.TypeName}.\");"
-		);
-		outputContext.Writer.WriteLine();
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\treturn {outputContext.Aggregate.AggregateClass.TypeName}.CreateFromJsonModel(jsonModel);"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t}}");
-		outputContext.Writer.WriteLine();
-		outputContext.Writer.WriteLine(
-			$"{indent}\tpublic override void Write(global::System.Text.Json.Utf8JsonWriter writer, {outputContext.Aggregate.AggregateClass.TypeName} value, global::System.Text.Json.JsonSerializerOptions options)"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t{{");
-		outputContext.Writer.WriteLine(
-			$"{indent}\t\tglobal::System.Text.Json.JsonSerializer.Serialize(writer, value.ToJsonModel(), options);"
-		);
-		outputContext.Writer.WriteLine($"{indent}\t}}");
-		outputContext.Writer.WriteLine($"{indent}}}");
 	}
 
-	static void GenerateJsonModel(AggregateGenerationOutputContext outputContext, string indent)
+	static void GenerateJsonModel(AggregateGenerationOutputContext outputContext)
 	{
-		outputContext.Writer.WriteLine();
-		outputContext.Writer.WriteLine(
-			$"{indent}sealed class {outputContext.Aggregate.AggregateClass.TypeName}JsonModel"
-		);
-		outputContext.Writer.WriteLine($"{indent}{{");
-		outputContext.Writer.WriteLine(
-			$"{indent}\tpublic global::Purview.EventSourcing.Aggregates.AggregateDetails? Details {{ get; set; }} = new();"
-		);
+		var writer = outputContext.Writer;
 
-		foreach (var property in outputContext.Aggregate.Properties)
-		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpublic {property.TypeName} {property.PropertyName} {{ get; set; }} = default!;"
-			);
-		}
-
-		outputContext.Writer.WriteLine($"{indent}}}");
+		writer.WriteClass(
+			new($"{outputContext.Aggregate.AggregateClass.TypeName}JsonModel") { IsSealed = true },
+			bodyWriter =>
+			{
+				bodyWriter.WriteProperty(
+					new("Details", TypeLibrary.Aggregates.AggregateDetails.MakeNullable())
+					{
+						Accessibility = TypeDeclarationAccessibility.Public,
+						HasSetter = true,
+						Initializer = "new()",
+					}
+				);
+				foreach (var property in outputContext.Aggregate.Properties)
+				{
+					bodyWriter.WriteProperty(
+						new(property.PropertyName, property.PropertyType)
+						{
+							Accessibility = TypeDeclarationAccessibility.Public,
+							HasSetter = true,
+							Initializer = "default!",
+						}
+					);
+				}
+			}
+		);
 	}
 }
