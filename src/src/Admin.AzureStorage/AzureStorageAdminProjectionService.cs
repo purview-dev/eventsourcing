@@ -9,9 +9,8 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
-public sealed class AzureStorageAdminProjectionService(
-	IOptions<AzureStorageEventStoreOptions> options
-) : IAdminProjectionService
+public sealed class AzureStorageAdminProjectionService(IOptions<AzureStorageEventStoreOptions> options)
+	: IAdminProjectionService
 {
 	public async Task<ProjectionResponse?> ProjectAtVersionAsync(
 		string aggregateType,
@@ -24,10 +23,7 @@ public sealed class AzureStorageAdminProjectionService(
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
 
 		if (targetVersion < 1)
-			throw new ArgumentOutOfRangeException(
-				nameof(targetVersion),
-				"Target version must be >= 1"
-			);
+			throw new ArgumentOutOfRangeException(nameof(targetVersion), "Target version must be >= 1");
 
 		var events = await GetEventsAsync(
 			aggregateType,
@@ -36,12 +32,7 @@ public sealed class AzureStorageAdminProjectionService(
 			cancellationToken
 		);
 
-		return BuildProjection(
-			aggregateType,
-			aggregateId,
-			events,
-			$"Events projected up to version {targetVersion}"
-		);
+		return BuildProjection(aggregateType, aggregateId, events, $"Events projected up to version {targetVersion}");
 	}
 
 	public async Task<ProjectionResponse?> ProjectAtTimeAsync(
@@ -61,12 +52,7 @@ public sealed class AzureStorageAdminProjectionService(
 			cancellationToken
 		);
 
-		return BuildProjection(
-			aggregateType,
-			aggregateId,
-			events,
-			$"Events projected up to timestamp {targetUtc:O}"
-		);
+		return BuildProjection(aggregateType, aggregateId, events, $"Events projected up to timestamp {targetUtc:O}");
 	}
 
 	static ProjectionResponse? BuildProjection(
@@ -109,9 +95,7 @@ public sealed class AzureStorageAdminProjectionService(
 			}
 		}
 
-		var finalState = JsonDocument
-			.Parse(JsonSerializer.Serialize(projectedState))
-			.RootElement.Clone();
+		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
 		var projectedVersion = events.Max(x => x.Version);
 		var projectedAtUtc = events.OrderByDescending(x => x.Version).First().Event.Timestamp;
 
@@ -136,13 +120,7 @@ public sealed class AzureStorageAdminProjectionService(
 		string aggregateId,
 		Func<long, bool> versionPredicate,
 		CancellationToken cancellationToken
-	) =>
-		await GetEventsAsync(
-			aggregateType,
-			aggregateId,
-			(version, _) => versionPredicate(version),
-			cancellationToken
-		);
+	) => await GetEventsAsync(aggregateType, aggregateId, (version, _) => versionPredicate(version), cancellationToken);
 
 	async Task<List<(long Version, EventEntity Event)>> GetEventsAsync(
 		string aggregateType,
@@ -197,8 +175,7 @@ public sealed class AzureStorageAdminProjectionService(
 					rows.Add((version, row));
 				}
 			}
-			catch (RequestFailedException ex)
-				when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
 			{
 				continue;
 			}

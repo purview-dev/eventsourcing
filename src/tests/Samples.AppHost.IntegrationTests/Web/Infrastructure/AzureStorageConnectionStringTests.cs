@@ -9,9 +9,7 @@ namespace Purview.EventSourcing.Samples.Web.Infrastructure;
 public sealed class AzureStorageConnectionStringTests(AppHostFixture fixture)
 {
 	[Test]
-	public async Task AzureTableResourceConnection_ContainsTableEndpoint(
-		CancellationToken cancellationToken
-	)
+	public async Task AzureTableResourceConnection_ContainsTableEndpoint(CancellationToken cancellationToken)
 	{
 		var connectionString = await fixture.GetResourceConnectionStringAsync(
 			Platform.AzureStorageTable,
@@ -23,9 +21,7 @@ public sealed class AzureStorageConnectionStringTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task AzureBlobResourceConnection_ContainsBlobEndpoint(
-		CancellationToken cancellationToken
-	)
+	public async Task AzureBlobResourceConnection_ContainsBlobEndpoint(CancellationToken cancellationToken)
 	{
 		var connectionString = await fixture.GetResourceConnectionStringAsync(
 			Platform.AzureStorageBlob,
@@ -37,9 +33,7 @@ public sealed class AzureStorageConnectionStringTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task AzureBlobResourceConnection_CanCreateBlobServiceClient(
-		CancellationToken cancellationToken
-	)
+	public async Task AzureBlobResourceConnection_CanCreateBlobServiceClient(CancellationToken cancellationToken)
 	{
 		var connectionString = await fixture.GetResourceConnectionStringAsync(
 			Platform.AzureStorageBlob,
@@ -57,9 +51,7 @@ public sealed class AzureStorageConnectionStringTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task AzureMergedEventStoreConnection_CanCreateBlobAndTableClients(
-		CancellationToken cancellationToken
-	)
+	public async Task AzureMergedEventStoreConnection_CanCreateBlobAndTableClients(CancellationToken cancellationToken)
 	{
 		var tableConnectionString = await fixture.GetResourceConnectionStringAsync(
 			Platform.AzureStorageTable,
@@ -73,12 +65,11 @@ public sealed class AzureStorageConnectionStringTests(AppHostFixture fixture)
 		await Assert.That(tableConnectionString).IsNotNull();
 		await Assert.That(blobConnectionString).IsNotNull();
 
-		var mergedConnectionString =
-			AzureStorageConnectionStringComposer.BuildEventStoreConnectionString(
-				tableConnectionString,
-				blobConnectionString,
-				fallbackConnectionString: null
-			);
+		var mergedConnectionString = AzureStorageConnectionStringComposer.BuildEventStoreConnectionString(
+			tableConnectionString,
+			blobConnectionString,
+			fallbackConnectionString: null
+		);
 
 		var blobContainerName = $"startupcheck-{Guid.NewGuid():N}"[..22];
 		var blobClient = new BlobContainerClient(mergedConnectionString, blobContainerName);

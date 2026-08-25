@@ -6,17 +6,12 @@ using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.MongoDB.StorageClient;
 
-sealed class MongoDBAggregateSerializer<TAggregate>
-	: SerializerBase<TAggregate>,
-		IBsonDocumentSerializer
+sealed class MongoDBAggregateSerializer<TAggregate> : SerializerBase<TAggregate>, IBsonDocumentSerializer
 	where TAggregate : class, IAggregate, new()
 {
 	public const string BsonDocuemntIdPropertyName = "_id";
 
-	public override TAggregate Deserialize(
-		BsonDeserializationContext context,
-		BsonDeserializationArgs args
-	)
+	public override TAggregate Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
 	{
 		var serializer = BsonSerializer.LookupSerializer(typeof(BsonDocument));
 		var document = serializer.Deserialize(context, args);
@@ -27,11 +22,7 @@ sealed class MongoDBAggregateSerializer<TAggregate>
 		return EventStoreSerializationHelpers.Deserialize<TAggregate>(result)!;
 	}
 
-	public override void Serialize(
-		BsonSerializationContext context,
-		BsonSerializationArgs args,
-		TAggregate value
-	)
+	public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, TAggregate value)
 	{
 		var jsonDocument = EventStoreSerializationHelpers.Serialize(value, value.GetType());
 		var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(jsonDocument);
@@ -43,10 +34,7 @@ sealed class MongoDBAggregateSerializer<TAggregate>
 		serializer.Serialize(context, doc);
 	}
 
-	public bool TryGetMemberSerializationInfo(
-		string memberName,
-		out BsonSerializationInfo? serializationInfo
-	)
+	public bool TryGetMemberSerializationInfo(string memberName, out BsonSerializationInfo? serializationInfo)
 	{
 		var memberType = ValueType.GetProperty(memberName)?.PropertyType;
 		if (memberType == null)

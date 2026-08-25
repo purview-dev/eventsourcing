@@ -10,10 +10,7 @@ Console.CancelKeyPress += (_, _) => cts.Cancel();
 var services = new ServiceCollection();
 services.AddEventSourcing();
 services.AddSingleton<InMemoryFailurePlan>();
-services.AddSingleton(
-	typeof(IQueryableEventStoreCore<>),
-	typeof(InMemoryTransactionalEventStore<>)
-);
+services.AddSingleton(typeof(IQueryableEventStoreCore<>), typeof(InMemoryTransactionalEventStore<>));
 services.AddTransient<IQueryableEventStore, QueryableEventStoreFacade>();
 
 using var serviceProvider = services.BuildServiceProvider();
@@ -47,13 +44,7 @@ static async Task SeedAsync(IQueryableEventStore store)
 	await store.SaveAsync(customer);
 
 	var keyboard = await store.CreateAsync<InventoryAggregate>("inventory-keyboard");
-	keyboard.Create(
-		"SKU-KEYBOARD",
-		"Wireless Keyboard",
-		"LOC-1",
-		"Main Warehouse",
-		initialQuantity: 25
-	);
+	keyboard.Create("SKU-KEYBOARD", "Wireless Keyboard", "LOC-1", "Main Warehouse", initialQuantity: 25);
 	await store.SaveAsync(keyboard);
 
 	var dock = await store.CreateAsync<InventoryAggregate>("inventory-dock");
@@ -170,9 +161,7 @@ static async Task PrintInventorySnapshotAsync(IQueryableEventStore store, string
 	Console.WriteLine(
 		$"  inventory-keyboard available={keyboard?.AvailableQuantity} reserved={keyboard?.ReservedQuantity}"
 	);
-	Console.WriteLine(
-		$"  inventory-dock     available={dock?.AvailableQuantity} reserved={dock?.ReservedQuantity}"
-	);
+	Console.WriteLine($"  inventory-dock     available={dock?.AvailableQuantity} reserved={dock?.ReservedQuantity}");
 	Console.WriteLine();
 }
 

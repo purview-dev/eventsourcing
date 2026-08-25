@@ -6,8 +6,7 @@ using Purview.EventSourcing.Internal;
 
 namespace Purview.EventSourcing.EventStores.NullQueryable;
 
-sealed class NullQueryableEventStore<T>(INonQueryableEventStore<T> eventStore)
-	: IQueryableEventStoreCore<T>
+sealed class NullQueryableEventStore<T>(INonQueryableEventStore<T> eventStore) : IQueryableEventStoreCore<T>
 	where T : class, IAggregate, new()
 {
 	readonly IEventStoreCore<T> _eventStore = eventStore;
@@ -30,10 +29,8 @@ sealed class NullQueryableEventStore<T>(INonQueryableEventStore<T> eventStore)
 		CancellationToken cancellationToken = default
 	) => _eventStore.DeleteAsync(aggregate, operationContext, cancellationToken);
 
-	public Task<ExistsState> ExistsAsync(
-		string id,
-		CancellationToken cancellationToken = default
-	) => _eventStore.ExistsAsync(id, cancellationToken);
+	public Task<ExistsState> ExistsAsync(string id, CancellationToken cancellationToken = default) =>
+		_eventStore.ExistsAsync(id, cancellationToken);
 
 	public IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
@@ -70,19 +67,13 @@ sealed class NullQueryableEventStore<T>(INonQueryableEventStore<T> eventStore)
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		ContinuationRequest request,
 		CancellationToken cancellationToken = default
-	) =>
-		Task.FromResult(
-			new ContinuationResponse<T>() { Results = [], RequestedCount = request.MaxRecords }
-		);
+	) => Task.FromResult(new ContinuationResponse<T>() { Results = [], RequestedCount = request.MaxRecords });
 
 	public Task<ContinuationResponse<T>> ListAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		ContinuationRequest request,
 		CancellationToken cancellationToken = default
-	) =>
-		Task.FromResult(
-			new ContinuationResponse<T>() { Results = [], RequestedCount = request.MaxRecords }
-		);
+	) => Task.FromResult(new ContinuationResponse<T>() { Results = [], RequestedCount = request.MaxRecords });
 
 	public Task<bool> RestoreAsync(
 		T aggregate,

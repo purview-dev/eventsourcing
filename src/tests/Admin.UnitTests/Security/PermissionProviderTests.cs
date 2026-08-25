@@ -29,10 +29,7 @@ public sealed class PermissionProviderTests
 		// Arrange
 		var provider = new DenyAllPermissionProvider();
 		var user = new ClaimsPrincipal(
-			new ClaimsIdentity([
-				new Claim(ClaimTypes.NameIdentifier, "user123"),
-				new Claim(ClaimTypes.Role, "Admin"),
-			])
+			new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "user123"), new Claim(ClaimTypes.Role, "Admin")])
 		);
 
 		// Act

@@ -17,9 +17,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
-		<ProjectReference
-			Include="..\ImplementationShared\ImplementationShared.csproj"
-			PrivateAssets="All"
-		/>
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" PrivateAssets="All" />
 	</ItemGroup>
 </Project>

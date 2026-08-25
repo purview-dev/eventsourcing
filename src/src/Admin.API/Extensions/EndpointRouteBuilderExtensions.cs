@@ -19,9 +19,7 @@ public static class AdminApiEndpointRouteBuilderExtensions
 		if (!options.Enabled)
 			return;
 
-		var group = app.MapGroup(options.RoutePrefix)
-			.WithName("AdminPortal")
-			.RequireAuthorization();
+		var group = app.MapGroup(options.RoutePrefix).WithName("AdminPortal").RequireAuthorization();
 
 		// Map endpoint groups
 		if (options.Features.SearchAggregates)

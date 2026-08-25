@@ -21,10 +21,8 @@ sealed class PerformanceRun
 		yield return string.Empty;
 
 		var previousScenarios =
-			previousRun?.Scenarios.ToDictionary(
-				static scenario => scenario.Name,
-				StringComparer.Ordinal
-			) ?? [with(StringComparer.Ordinal)];
+			previousRun?.Scenarios.ToDictionary(static scenario => scenario.Name, StringComparer.Ordinal)
+			?? [with(StringComparer.Ordinal)];
 
 		foreach (var scenario in Scenarios)
 		{
@@ -50,13 +48,10 @@ sealed class PerformanceScenarioRun
 
 	public double GeneratorAverageMilliseconds { get; set; }
 
-	public double GeneratorOverheadMilliseconds =>
-		GeneratorAverageMilliseconds - BaselineAverageMilliseconds;
+	public double GeneratorOverheadMilliseconds => GeneratorAverageMilliseconds - BaselineAverageMilliseconds;
 
 	public double GeneratorOverheadPercent =>
-		BaselineAverageMilliseconds <= 0
-			? 0
-			: GeneratorOverheadMilliseconds / BaselineAverageMilliseconds * 100;
+		BaselineAverageMilliseconds <= 0 ? 0 : GeneratorOverheadMilliseconds / BaselineAverageMilliseconds * 100;
 
 	public string FormatCurrent() =>
 		$"{Name} [{GeneratorName}] baseline={BaselineAverageMilliseconds:F2}ms generator={GeneratorAverageMilliseconds:F2}ms overhead={GeneratorOverheadMilliseconds:F2}ms ({GeneratorOverheadPercent:F1}%)";

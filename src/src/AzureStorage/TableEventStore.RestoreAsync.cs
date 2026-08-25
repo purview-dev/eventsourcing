@@ -20,11 +20,7 @@ partial class TableEventStore<T>
 
 		var restoreAggregateEvent = new Restored
 		{
-			Details =
-			{
-				AggregateVersion = aggregate.Details.CurrentVersion + 1,
-				When = DateTimeOffset.UtcNow,
-			},
+			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
 		};
 		aggregate.ApplyEvent(restoreAggregateEvent);
 

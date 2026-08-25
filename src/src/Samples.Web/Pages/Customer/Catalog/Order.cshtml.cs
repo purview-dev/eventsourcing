@@ -37,12 +37,7 @@ sealed class OrderModel(
 
 		if (InventoryItem != null)
 			UnitPrice = Math.Round(
-				9.99m
-					+ (
-						Math.Abs(InventoryItem.ProductId.GetHashCode(StringComparison.Ordinal))
-						% 9000
-						/ 100m
-					),
+				9.99m + (Math.Abs(InventoryItem.ProductId.GetHashCode(StringComparison.Ordinal)) % 9000 / 100m),
 				2
 			);
 
@@ -101,12 +96,7 @@ sealed class OrderModel(
 		InventoryItem = await inventoryStore.GetAsync<InventoryAggregate>(InventoryId, ct);
 		if (InventoryItem != null)
 			UnitPrice = Math.Round(
-				9.99m
-					+ (
-						Math.Abs(InventoryItem.ProductId.GetHashCode(StringComparison.Ordinal))
-						% 9000
-						/ 100m
-					),
+				9.99m + (Math.Abs(InventoryItem.ProductId.GetHashCode(StringComparison.Ordinal)) % 9000 / 100m),
 				2
 			);
 	}

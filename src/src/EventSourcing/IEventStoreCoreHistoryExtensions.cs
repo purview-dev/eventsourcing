@@ -11,9 +11,7 @@ public static class IEventStoreCoreHistoryExtensions
 {
 	const int MaxAllowedPageSize = 1000;
 
-	public static async Task<
-		ContinuationResponse<AggregateEventHistoryItem>
-	> GetEventHistoryAsync<T>(
+	public static async Task<ContinuationResponse<AggregateEventHistoryItem>> GetEventHistoryAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,
 		AggregateEventHistoryRequest? request = null,
@@ -74,9 +72,7 @@ public static class IEventStoreCoreHistoryExtensions
 			matchedCount++;
 		}
 
-		var token = hasMore
-			? (continuationOffset + items.Count).ToString(CultureInfo.InvariantCulture)
-			: null;
+		var token = hasMore ? (continuationOffset + items.Count).ToString(CultureInfo.InvariantCulture) : null;
 
 		return new ContinuationResponse<AggregateEventHistoryItem>
 		{
@@ -86,11 +82,7 @@ public static class IEventStoreCoreHistoryExtensions
 		};
 	}
 
-	static AggregateEventHistoryItem ToHistoryItem<T>(
-		string aggregateId,
-		string eventType,
-		IEvent @event
-	)
+	static AggregateEventHistoryItem ToHistoryItem<T>(string aggregateId, string eventType, IEvent @event)
 		where T : class, IAggregate, new()
 	{
 		var details = @event.Details;
@@ -122,12 +114,7 @@ public static class IEventStoreCoreHistoryExtensions
 
 		// Only process if we have a continuation token to retrieve.
 		return
-			int.TryParse(
-				continuationToken,
-				NumberStyles.None,
-				CultureInfo.InvariantCulture,
-				out var offset
-			)
+			int.TryParse(continuationToken, NumberStyles.None, CultureInfo.InvariantCulture, out var offset)
 			&& offset >= 0
 			? offset
 			: throw new ArgumentOutOfRangeException(
@@ -179,11 +166,7 @@ public static class IEventStoreCoreHistoryExtensions
 			);
 		}
 
-		if (
-			request.FromUtc.HasValue
-			&& request.ToUtc.HasValue
-			&& request.ToUtc.Value < request.FromUtc.Value
-		)
+		if (request.FromUtc.HasValue && request.ToUtc.HasValue && request.ToUtc.Value < request.FromUtc.Value)
 		{
 			throw new ArgumentOutOfRangeException(
 				nameof(request),

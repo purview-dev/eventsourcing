@@ -34,10 +34,7 @@ partial class MongoDBSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await eventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -84,10 +81,7 @@ partial class MongoDBSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await eventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -135,10 +129,7 @@ partial class MongoDBSnapshotEventStoreTests
 
 			aggregate.SetInt32Value(aggregateIndex + 1);
 
-			bool saveResult = await eventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -187,10 +178,7 @@ partial class MongoDBSnapshotEventStoreTests
 
 			aggregate.SetInt32Value(aggregateIndex + 1);
 
-			bool saveResult = await eventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}

@@ -6,16 +6,11 @@ namespace Purview.EventSourcing.Admin.AzureStorage;
 
 public static class AdminAzureStorageServiceCollectionExtensions
 {
-	public static IServiceCollection AddPurviewEventSourcingAdminAzureStorage(
-		this IServiceCollection services
-	)
+	public static IServiceCollection AddPurviewEventSourcingAdminAzureStorage(this IServiceCollection services)
 	{
 		ArgumentNullException.ThrowIfNull(services);
 
-		services.TryAddTransient<
-			IAdminAggregateQueryService,
-			AzureStorageAdminAggregateQueryService
-		>();
+		services.TryAddTransient<IAdminAggregateQueryService, AzureStorageAdminAggregateQueryService>();
 		services.TryAddTransient<IAdminEventQueryService, AzureStorageAdminEventQueryService>();
 		services.TryAddTransient<IAdminProjectionService, AzureStorageAdminProjectionService>();
 

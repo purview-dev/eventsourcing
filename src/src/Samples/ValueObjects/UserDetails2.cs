@@ -11,9 +11,6 @@ public sealed partial record UserDetails2(Guid Id, string DisplayName)
 			throw new ArgumentException("Id must be a valid GUID.", nameof(id));
 
 		if (string.IsNullOrWhiteSpace(displayName))
-			throw new ArgumentException(
-				"DisplayName cannot be null or empty.",
-				nameof(displayName)
-			);
+			throw new ArgumentException("DisplayName cannot be null or empty.", nameof(displayName));
 	}
 }

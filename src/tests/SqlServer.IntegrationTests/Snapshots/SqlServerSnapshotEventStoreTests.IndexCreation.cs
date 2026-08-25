@@ -34,33 +34,16 @@ partial class SqlServerSnapshotEventStoreTests
 				}
 		);
 
-		var aggregate = CreateAggregate(
-			$"agg_{Guid.NewGuid():N}",
-			static x => x.AppendString("snapshot-json-index")
-		);
+		var aggregate = CreateAggregate($"agg_{Guid.NewGuid():N}", static x => x.AppendString("snapshot-json-index"));
 
 		var saved = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		await Assert.That(saved.Saved).IsTrue();
 		await Assert
-			.That(
-				await ColumnExistsAsync(
-					fixture.ConnectionString,
-					tableName,
-					computedColumnName,
-					cancellationToken
-				)
-			)
+			.That(await ColumnExistsAsync(fixture.ConnectionString, tableName, computedColumnName, cancellationToken))
 			.IsTrue();
 		await Assert
-			.That(
-				await IndexExistsAsync(
-					fixture.ConnectionString,
-					tableName,
-					indexName,
-					cancellationToken
-				)
-			)
+			.That(await IndexExistsAsync(fixture.ConnectionString, tableName, indexName, cancellationToken))
 			.IsTrue();
 	}
 
@@ -85,10 +68,7 @@ partial class SqlServerSnapshotEventStoreTests
 		);
 		command.Parameters.AddWithValue("@tableName", tableName);
 		command.Parameters.AddWithValue("@columnName", columnName);
-		return Convert.ToInt32(
-				await command.ExecuteScalarAsync(cancellationToken),
-				CultureInfo.InvariantCulture
-			) > 0;
+		return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
 	}
 
 	static async Task<bool> IndexExistsAsync(
@@ -112,9 +92,6 @@ partial class SqlServerSnapshotEventStoreTests
 		);
 		command.Parameters.AddWithValue("@tableName", tableName);
 		command.Parameters.AddWithValue("@indexName", indexName);
-		return Convert.ToInt32(
-				await command.ExecuteScalarAsync(cancellationToken),
-				CultureInfo.InvariantCulture
-			) > 0;
+		return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
 	}
 }

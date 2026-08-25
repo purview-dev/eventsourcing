@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate;
@@ -16,28 +15,32 @@ static class AggregateInfoBuilder
 		var syntax = (ClassDeclarationSyntax)context.TargetNode;
 
 		var compilation = context.SemanticModel.Compilation;
+		var classMetadataFullName = classSymbol.ContainingNamespace.IsGlobalNamespace
+			? classSymbol.MetadataName
+			: $"{classSymbol.ContainingNamespace}.{classSymbol.MetadataName}";
+		var mergedClassSymbol = compilation.GetTypeByMetadataName(classMetadataFullName);
+		if (mergedClassSymbol is not null)
+			classSymbol = mergedClassSymbol;
 		List<DiagnosticInfo> diagnostics = [];
 
 		var canGenerate = ValidateAggregateClass(
 			classSymbol,
 			syntax,
 			diagnostics,
-			out var shouldDeclareAggregateBase
+			out var shouldDeclareAggregateBase,
+			out var isPartial,
+			out var inheritsAggregateBase
 		);
 
-		TypeValueObject aggregateType = new(classSymbol);
+		var hasManualRegisterEvents = AggregateEventMethodBuilder.HasRegisterEventsMethod(classSymbol, out _);
+
+		TypeIdentity aggregateType = new(classSymbol);
 		var aggregateAttribute = AggregateAttributeData.FromAttributeData(classSymbol);
-		var assemblyDefaults = AggregateDefaultsAttributeData.FromAttributeData(
-			compilation.Assembly
-		);
+		var assemblyDefaults = AggregateDefaultsAttributeData.FromAttributeData(compilation.Assembly);
 
 		var aggregateNamespace = aggregateType.Namespace;
-		var eventNamespaceOverride = aggregateAttribute.Exists
-			? aggregateAttribute.EventNamespace
-			: null;
-		var aggregateEventSuffixOverride = aggregateAttribute.Exists
-			? aggregateAttribute.EventSuffix
-			: null;
+		var eventNamespaceOverride = aggregateAttribute.Exists ? aggregateAttribute.EventNamespace : null;
+		var aggregateEventSuffixOverride = aggregateAttribute.Exists ? aggregateAttribute.EventSuffix : null;
 		var assemblyEventSuffix = assemblyDefaults.Exists ? assemblyDefaults.EventSuffix : null;
 		var valueObjectContextType = compilation.GetTypeByMetadataName(
 			"Purview.EventSourcing.ValueObjects.ValueObjectContext`1"
@@ -58,7 +61,7 @@ static class AggregateInfoBuilder
 
 		var methods = new List<AggregateEventMethodInfo>();
 		var invalidMethods = new List<InvalidAggregateEventMethodInfo>();
-		var methodsByEventType = new Dictionary<TypeReferenceOptions, IMethodSymbol>();
+		var methodsByEventType = new Dictionary<TypeReference, IMethodSymbol>();
 		var methodsBySchemaVersion = new Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)>();
 
 		BuildMethods(
@@ -79,35 +82,69 @@ static class AggregateInfoBuilder
 			cancellationToken
 		);
 
-		ValidateSchemaVersionContiguity(syntax, classSymbol, methods, diagnostics);
+		var containingTypes = new List<AggregateContainingTypeInfo>();
+		var currentContainingType = classSymbol.ContainingType;
+		while (currentContainingType is not null)
+		{
+			var containingTypeParameters = currentContainingType
+				.TypeParameters.Select(static tp => new GenericTypeParameterOptions(tp.Name))
+				.ToImmutableArray();
 
-		return canGenerate
-			? GeneratorResult<AggregateInfo>.Ok(
-				new(
-					aggregateType,
-					classSymbol.DeclaredAccessibility,
-					shouldDeclareAggregateBase,
-					properties,
-					methods,
-					invalidMethods,
-					AggregateEventMethodBuilder.CreateHintName(classSymbol)
-				),
-				[.. diagnostics]
-			)
-			: GeneratorResult<AggregateInfo>.Fail([.. diagnostics]);
+			containingTypes.Insert(
+				0,
+				new AggregateContainingTypeInfo(
+					currentContainingType.Name,
+					currentContainingType.DeclaredAccessibility,
+					currentContainingType.IsStatic,
+					containingTypeParameters
+				)
+			);
+
+			currentContainingType = currentContainingType.ContainingType;
+		}
+
+		var aggregateTypeParameters = classSymbol
+			.TypeParameters.Select(static tp => new GenericTypeParameterOptions(tp.Name))
+			.ToImmutableArray();
+
+		if (!isPartial)
+			return GeneratorResult<AggregateInfo>.Fail([.. diagnostics]);
+
+		// If the aggregate class is not partial, we cannot generate code for it. However, we still want to return the diagnostics collected so far.
+		return GeneratorResult<AggregateInfo>.Ok(
+			new(
+				aggregateType,
+				classSymbol.DeclaredAccessibility,
+				shouldDeclareAggregateBase,
+				properties,
+				methods,
+				invalidMethods,
+				AggregateEventMethodBuilder.CreateHintName(classSymbol),
+				canGenerate,
+				isPartial,
+				inheritsAggregateBase,
+				hasManualRegisterEvents,
+				[.. containingTypes],
+				aggregateTypeParameters
+			),
+			[.. diagnostics]
+		);
 	}
 
 	static bool ValidateAggregateClass(
 		INamedTypeSymbol classSymbol,
 		ClassDeclarationSyntax syntax,
 		List<DiagnosticInfo> diagnostics,
-		out bool shouldDeclareAggregateBase
+		out bool shouldDeclareAggregateBase,
+		out bool isPartial,
+		out bool inheritsAggregateBase
 	)
 	{
 		shouldDeclareAggregateBase = false;
+		isPartial = TypeHelpers.IsPartial(syntax);
+		inheritsAggregateBase = TypeHelpers.InheritsFrom(classSymbol, TypeLibrary.Aggregates.AggregateBase);
 		var canGenerate = true;
 
-		var isPartial = TypeHelpers.IsPartial(syntax);
 		if (!isPartial)
 		{
 			diagnostics.Add(
@@ -144,12 +181,9 @@ static class AggregateInfoBuilder
 			canGenerate = false;
 		}
 
-		if (!TypeHelpers.InheritsFrom(classSymbol, TypeLibrary.Aggregates.AggregateBase))
+		if (!inheritsAggregateBase)
 		{
-			if (
-				classSymbol.BaseType is null
-				|| classSymbol.BaseType.SpecialType == SpecialType.System_Object
-			)
+			if (classSymbol.BaseType is null || classSymbol.BaseType.SpecialType == SpecialType.System_Object)
 			{
 				shouldDeclareAggregateBase = true;
 			}
@@ -166,12 +200,7 @@ static class AggregateInfoBuilder
 			}
 		}
 
-		if (
-			AggregateEventMethodBuilder.HasRegisterEventsMethod(
-				classSymbol,
-				out var registerEventsMethod
-			)
-		)
+		if (AggregateEventMethodBuilder.HasRegisterEventsMethod(classSymbol, out var registerEventsMethod))
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
@@ -201,11 +230,7 @@ static class AggregateInfoBuilder
 
 			if (member is IPropertySymbol propertySymbol)
 			{
-				if (
-					propertySymbol.IsStatic
-					|| propertySymbol.IsIndexer
-					|| propertySymbol.IsImplicitlyDeclared
-				)
+				if (propertySymbol.IsStatic || propertySymbol.IsIndexer || propertySymbol.IsImplicitlyDeclared)
 					continue;
 
 				if (
@@ -261,17 +286,16 @@ static class AggregateInfoBuilder
 					);
 				}
 
-				properties.Add(new(propertySymbol.Name, new(propertySymbol.Type)));
+				properties.Add(
+					new(propertySymbol.Name, AggregateEventMethodBuilder.CreateTypeReference(propertySymbol.Type))
+				);
 				continue;
 			}
 
 			if (
 				member is IMethodSymbol methodSymbol
 				&& (
-					AggregateEventMethodBuilder.HasAttribute(
-						methodSymbol,
-						TypeLibrary.Attributes.EventAttribute
-					)
+					AggregateEventMethodBuilder.HasAttribute(methodSymbol, TypeLibrary.Attributes.EventAttribute)
 					|| AggregateEventMethodBuilder.HasAttribute(
 						methodSymbol,
 						TypeLibrary.Attributes.CollectionEventAttribute
@@ -296,7 +320,7 @@ static class AggregateInfoBuilder
 		List<IMethodSymbol> attributedMethods,
 		List<AggregateEventMethodInfo> methods,
 		List<InvalidAggregateEventMethodInfo> invalidMethods,
-		Dictionary<TypeReferenceOptions, IMethodSymbol> methodsByEventType,
+		Dictionary<TypeReference, IMethodSymbol> methodsByEventType,
 		Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)> methodsBySchemaVersion,
 		List<DiagnosticInfo> diagnostics,
 		CancellationToken cancellationToken
@@ -353,7 +377,7 @@ static class AggregateInfoBuilder
 						methodSymbol,
 						methodSymbol.Name,
 						classSymbol.Name,
-						methodInfo.EventType.TypeName
+						methodInfo.EventType.Identity.Name
 					)
 				);
 				diagnostics.Add(
@@ -362,7 +386,7 @@ static class AggregateInfoBuilder
 						conflictingMethod,
 						conflictingMethod.Name,
 						classSymbol.Name,
-						methodInfo.EventType.TypeName
+						methodInfo.EventType.Identity.Name
 					)
 				);
 
@@ -379,14 +403,9 @@ static class AggregateInfoBuilder
 				continue;
 			}
 
-			if (
-				methodsBySchemaVersion.TryGetValue(
-					methodInfo.Version,
-					out var existingSchemaVersionMethod
-				)
-			)
+			if (methodsBySchemaVersion.TryGetValue(methodInfo.Version, out var existingSchemaVersionMethod))
 			{
-				if (methodInfo.IsSchemaVersionExplicit && existingSchemaVersionMethod.IsExplicit)
+				if (methodInfo.Version > 1 && existingSchemaVersionMethod.IsExplicit)
 				{
 					diagnostics.Add(
 						DiagnosticInfo.Create(
@@ -422,64 +441,16 @@ static class AggregateInfoBuilder
 					continue;
 				}
 
-				if (methodInfo.IsSchemaVersionExplicit && !existingSchemaVersionMethod.IsExplicit)
+				if (methodInfo.Version > 1 && !existingSchemaVersionMethod.IsExplicit)
 					methodsBySchemaVersion[methodInfo.Version] = (methodSymbol, true);
 			}
 			else
 			{
-				methodsBySchemaVersion[methodInfo.Version] = (
-					methodSymbol,
-					methodInfo.IsSchemaVersionExplicit
-				);
+				methodsBySchemaVersion[methodInfo.Version] = (methodSymbol, methodInfo.Version > 1);
 			}
 
 			methodsByEventType[methodInfo.EventType] = methodSymbol;
 			methods.Add(methodInfo);
-		}
-	}
-
-	static void ValidateSchemaVersionContiguity(
-		ClassDeclarationSyntax syntax,
-		INamedTypeSymbol classSymbol,
-		List<AggregateEventMethodInfo> methods,
-		List<DiagnosticInfo> diagnostics
-	)
-	{
-		var explicitSchemaVersions = methods
-			.Where(static method => method.IsSchemaVersionExplicit)
-			.Select(static method => method.Version)
-			.Distinct()
-			.OrderBy(static version => version)
-			.ToArray();
-
-		if (explicitSchemaVersions.Length < 2)
-			return;
-
-		var missingSchemaVersions = new List<int>();
-		for (var index = 1; index < explicitSchemaVersions.Length; index++)
-		{
-			var previousVersion = explicitSchemaVersions[index - 1];
-			var currentVersion = explicitSchemaVersions[index];
-
-			for (
-				var missingVersion = previousVersion + 1;
-				missingVersion < currentVersion;
-				missingVersion++
-			)
-				missingSchemaVersions.Add(missingVersion);
-		}
-
-		if (missingSchemaVersions.Count > 0)
-		{
-			diagnostics.Add(
-				DiagnosticInfo.Create(
-					DiagnosticLibrary.EventSchemaVersionsShouldBeContiguous,
-					syntax.Identifier.GetLocation(),
-					classSymbol.Name,
-					string.Join(", ", explicitSchemaVersions),
-					string.Join(", ", missingSchemaVersions)
-				)
-			);
 		}
 	}
 }

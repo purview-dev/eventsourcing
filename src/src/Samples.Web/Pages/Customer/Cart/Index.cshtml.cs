@@ -21,10 +21,7 @@ sealed class IndexModel(IQueryableEventStore customerStore, ICartCheckoutService
 		if (string.IsNullOrEmpty(customerId))
 			return RedirectToPage("/Customer/Index");
 
-		CurrentCustomer = await customerStore.GetAsync<CustomerAggregate>(
-			customerId,
-			HttpContext.RequestAborted
-		);
+		CurrentCustomer = await customerStore.GetAsync<CustomerAggregate>(customerId, HttpContext.RequestAborted);
 		CartItems = HttpContext.Session.GetCart();
 		return Page();
 	}
@@ -72,12 +69,7 @@ sealed class IndexModel(IQueryableEventStore customerStore, ICartCheckoutService
 			return RedirectToPage();
 		}
 
-		var result = await checkoutService.CheckoutAsync(
-			customerId,
-			cart,
-			ShippingAddress,
-			HttpContext.RequestAborted
-		);
+		var result = await checkoutService.CheckoutAsync(customerId, cart, ShippingAddress, HttpContext.RequestAborted);
 
 		if (!result.Succeeded)
 		{

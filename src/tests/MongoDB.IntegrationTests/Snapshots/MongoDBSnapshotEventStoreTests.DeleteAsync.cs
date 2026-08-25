@@ -18,10 +18,7 @@ partial class MongoDBSnapshotEventStoreTests
 
 		var mongoDbEventStore = context.EventStore;
 
-		bool saveResult = await mongoDbEventStore.SaveAsync(
-			aggregate,
-			cancellationToken: cancellationToken
-		);
+		bool saveResult = await mongoDbEventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 		await Assert.That(saveResult).IsTrue();
 
 		var predicate = PredicateId(aggregateId);
@@ -32,10 +29,7 @@ partial class MongoDBSnapshotEventStoreTests
 		await Assert.That(aggregateFromMongoDB).IsNotNull();
 
 		// Act
-		var deleteResult = await mongoDbEventStore.DeleteAsync(
-			aggregate,
-			cancellationToken: cancellationToken
-		);
+		var deleteResult = await mongoDbEventStore.DeleteAsync(aggregate, cancellationToken: cancellationToken);
 
 		aggregateFromMongoDB = await context.MongoDBClient.GetAsync<PersistenceAggregate>(
 			a => a.Details.Id == aggregateId,

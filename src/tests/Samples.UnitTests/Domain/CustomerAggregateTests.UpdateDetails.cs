@@ -23,11 +23,7 @@ partial class CustomerAggregateTests
 		customer.RegisterCustomer("Jane Smith", "jane@test.com");
 		var countBefore = customer.GetUnsavedEvents().Count();
 
-		customer.UpdateDetails(
-			name: "Jane Doe",
-			email: "janedoe@test.com",
-			phoneNumber: "+44 7700 900123"
-		);
+		customer.UpdateDetails(name: "Jane Doe", email: "janedoe@test.com", phoneNumber: "+44 7700 900123");
 
 		await Assert.That(customer.GetUnsavedEvents().Count()).IsEqualTo(countBefore + 3);
 		await Assert.That(customer.Name).IsEqualTo("Jane Doe");

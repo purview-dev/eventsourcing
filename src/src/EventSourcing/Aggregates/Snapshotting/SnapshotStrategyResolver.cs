@@ -18,8 +18,7 @@ public static class SnapshotStrategyResolver
 		if (context?.TryGetSnapshotStrategy<T>(out var contextStrategy) == true)
 			return contextStrategy!;
 
-		var selectedStrategy =
-			context?.SnapshotStrategySelector?.Resolve<T>() ?? selector?.Resolve<T>();
+		var selectedStrategy = context?.SnapshotStrategySelector?.Resolve<T>() ?? selector?.Resolve<T>();
 
 		return selectedStrategy ?? defaultStrategy;
 	}

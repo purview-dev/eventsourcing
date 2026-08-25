@@ -6,6 +6,5 @@ static class JsonFormatter
 {
 	static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
 
-	public static string PrettyPrint(JsonElement element) =>
-		JsonSerializer.Serialize(element, Indented);
+	public static string PrettyPrint(JsonElement element) => JsonSerializer.Serialize(element, Indented);
 }

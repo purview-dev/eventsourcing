@@ -3,8 +3,4 @@
 namespace Purview.EventSourcing.Samples.ValueObjects;
 
 [ValueObject]
-public sealed partial record StatusHistory(
-	ReportProcessingStatus Status,
-	DateTimeOffset Timestamp,
-	UserCapture User
-);
+public sealed partial record StatusHistory(ReportProcessingStatus Status, DateTimeOffset Timestamp, UserCapture User);

@@ -32,10 +32,7 @@ public sealed class FluentValidationAggregateValidator<TAggregate>(IValidator<TA
 		if (result.IsValid)
 			return ValidationResult.Success;
 
-		var failures = result.Errors.Select(e => new ValidationFailure(
-			e.PropertyName,
-			e.ErrorMessage
-		));
+		var failures = result.Errors.Select(e => new ValidationFailure(e.PropertyName, e.ErrorMessage));
 		return new ValidationResult(failures);
 	}
 }

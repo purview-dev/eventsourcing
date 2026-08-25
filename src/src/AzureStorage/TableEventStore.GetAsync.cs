@@ -27,18 +27,13 @@ partial class TableEventStore<T>
 		var getStopwatch = System.Diagnostics.Stopwatch.StartNew();
 		try
 		{
-			var aggregate = operationContext.SnapshotCacheMode.HasFlag(
-				SnapshotCachingOptions.GetFromCache
-			)
+			var aggregate = operationContext.SnapshotCacheMode.HasFlag(SnapshotCachingOptions.GetFromCache)
 				? await GetFromCacheAsync(aggregateId, cancellationToken)
 				: null;
 
 			if (aggregate != null)
 			{
-				_eventStoreTelemetry.AggregateRetrievedFromCache(
-					aggregateId,
-					_aggregateTypeFullName
-				);
+				_eventStoreTelemetry.AggregateRetrievedFromCache(aggregateId, _aggregateTypeFullName);
 
 				return ReturnAggregate(aggregate.Details.IsDeleted, aggregateId, operationContext)
 					? PrepareAggregateForReturn(aggregate, _aggregateRequirementsManager)
@@ -73,12 +68,7 @@ partial class TableEventStore<T>
 
 			aggregate ??= new T { Details = { Id = aggregateId } };
 
-			await GetAndApplyEventsAsync(
-				aggregate,
-				streamVersion,
-				streamVersionIdentifier,
-				cancellationToken
-			);
+			await GetAndApplyEventsAsync(aggregate, streamVersion, streamVersionIdentifier, cancellationToken);
 			await UpdateCacheAsync(aggregate, operationContext.CacheOptions, cancellationToken);
 
 			return PrepareAggregateForReturn(aggregate, _aggregateRequirementsManager);
@@ -186,10 +176,7 @@ partial class TableEventStore<T>
 
 		try
 		{
-			using var blobStream = await _blobClient.GetStreamAsync(
-				aggregateBlobName,
-				cancellationToken
-			);
+			using var blobStream = await _blobClient.GetStreamAsync(aggregateBlobName, cancellationToken);
 			if (blobStream == null)
 				return null;
 
@@ -202,11 +189,7 @@ partial class TableEventStore<T>
 		catch (Exception ex)
 #pragma warning restore CA1031
 		{
-			_eventStoreTelemetry.SnapshotDeserializationFailed(
-				aggregateId,
-				_aggregateTypeFullName,
-				ex
-			);
+			_eventStoreTelemetry.SnapshotDeserializationFailed(aggregateId, _aggregateTypeFullName, ex);
 
 			return null;
 		}

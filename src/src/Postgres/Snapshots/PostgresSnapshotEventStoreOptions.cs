@@ -81,9 +81,7 @@ public sealed class PostgresSnapshotEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<
-		string,
-		PostgresSnapshotAggregateTableOverride
+	public Dictionary<string, PostgresSnapshotAggregateTableOverride
 #pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 #pragma warning restore format

@@ -29,18 +29,10 @@ public interface IMongoDBEventStoreTelemetry
 	);
 
 	[Debug]
-	void GetAggregateAtSpecificVersionStart(
-		string aggregateId,
-		int specificVersion,
-		string aggregateTypeFullName
-	);
+	void GetAggregateAtSpecificVersionStart(string aggregateId, int specificVersion, string aggregateTypeFullName);
 
 	[Debug]
-	void SaveContainedNoChanges(
-		string aggregateId,
-		string aggregateTypeFullName,
-		string aggregateType
-	);
+	void SaveContainedNoChanges(string aggregateId, string aggregateTypeFullName, string aggregateType);
 
 	[Warning]
 	void SkippedUnknownEvent(
@@ -62,18 +54,10 @@ public interface IMongoDBEventStoreTelemetry
 	);
 
 	[Debug]
-	void GetAggregateComplete(
-		string aggregateId,
-		string aggregateTypeFullName,
-		long elapsedMilliseconds
-	);
+	void GetAggregateComplete(string aggregateId, string aggregateTypeFullName, long elapsedMilliseconds);
 
 	[Error]
-	void SnapshotDeserializationFailed(
-		string aggregateId,
-		string aggregateTypeFullName,
-		Exception exception
-	);
+	void SnapshotDeserializationFailed(string aggregateId, string aggregateTypeFullName, Exception exception);
 
 	[Warning]
 	void CacheGetFailure(string aggregateId, string aggregateTypeFullName, Exception exception);
@@ -114,12 +98,7 @@ public interface IMongoDBEventStoreTelemetry
 	);
 
 	[Warning]
-	void SkippedMissingBlobEvent(
-		string partitionKey,
-		string rowKey,
-		string serializedEventType,
-		string blobName
-	);
+	void SkippedMissingBlobEvent(string partitionKey, string rowKey, string serializedEventType, string blobName);
 
 	[Warning]
 	void MissingBlobEventType(
@@ -133,19 +112,10 @@ public interface IMongoDBEventStoreTelemetry
 	void CacheRemovalFailure(string aggregateId, string aggregateTypeFullName, Exception exception);
 
 	[Warning]
-	void EventDeserializationFailed(
-		string aggregateId,
-		string aggregateTypeFullName,
-		Exception exception
-	);
+	void EventDeserializationFailed(string aggregateId, string aggregateTypeFullName, Exception exception);
 
 	[Debug]
-	void SavedAggregate(
-		string aggregateId,
-		string aggregateTypeFullName,
-		int eventCount,
-		string aggregateType
-	);
+	void SavedAggregate(string aggregateId, string aggregateTypeFullName, int eventCount, string aggregateType);
 
 	[Error]
 	void GetAggregateFailed(string aggregateId, string aggregateTypeFullName, Exception exception);
@@ -161,12 +131,7 @@ public interface IMongoDBEventStoreTelemetry
 	void StreamVersionNotFound(string aggregateId);
 
 	[Debug]
-	void StreamVersionFound(
-		string aggregateId,
-		int streamVersion,
-		string aggregateType,
-		bool isDeleted
-	);
+	void StreamVersionFound(string aggregateId, int streamVersion, string aggregateType, bool isDeleted);
 
 	[Error]
 	void GetStreamVersionFailed(string aggregateId, Exception exception);

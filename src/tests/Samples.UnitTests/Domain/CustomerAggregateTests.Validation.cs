@@ -9,9 +9,7 @@ partial class CustomerAggregateTests
 		var customer = CreateCustomer("cust-1");
 
 		// Act & Assert
-		await Assert
-			.That(() => customer.RegisterCustomer("   ", "valid@test.com"))
-			.Throws<ArgumentException>();
+		await Assert.That(() => customer.RegisterCustomer("   ", "valid@test.com")).Throws<ArgumentException>();
 	}
 
 	[Test]
@@ -21,9 +19,7 @@ partial class CustomerAggregateTests
 		var customer = CreateCustomer("cust-1");
 
 		// Act & Assert
-		await Assert
-			.That(() => customer.RegisterCustomer("Valid Name", "   "))
-			.Throws<ArgumentException>();
+		await Assert.That(() => customer.RegisterCustomer("Valid Name", "   ")).Throws<ArgumentException>();
 	}
 
 	[Test]
@@ -72,9 +68,7 @@ partial class CustomerAggregateTests
 		var countBefore = customer.GetUnsavedEvents().Count();
 
 		// Act & Assert — fails on invalid name, so no events recorded
-		await Assert
-			.That(() => customer.UpdateDetails(name: "  ", email: "new@test.com"))
-			.Throws<ArgumentException>();
+		await Assert.That(() => customer.UpdateDetails(name: "  ", email: "new@test.com")).Throws<ArgumentException>();
 
 		// Verify state unchanged
 		await Assert.That(customer.GetUnsavedEvents().Count()).IsEqualTo(countBefore);

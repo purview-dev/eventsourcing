@@ -6,14 +6,10 @@ using Purview.EventSourcing.Samples.ValueObjects;
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
-public sealed class SqlServerSnapshotQueryTranslationBoundaryTests(
-	SqlServerSnapshotEventStoreFixture fixture
-)
+public sealed class SqlServerSnapshotQueryTranslationBoundaryTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	[Test]
-	public async Task QueryAsync_GivenPrimitiveScalarValueObjectMembers_Translates(
-		CancellationToken cancellationToken
-	)
+	public async Task QueryAsync_GivenPrimitiveScalarValueObjectMembers_Translates(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateSnapshotStore<CustomerAggregate>();
 		var customer = new CustomerAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
@@ -34,31 +30,20 @@ public sealed class SqlServerSnapshotQueryTranslationBoundaryTests(
 	}
 
 	[Test]
-	public async Task QueryAsync_GivenNonScalarValueObjectMembers_Translates(
-		CancellationToken cancellationToken
-	)
+	public async Task QueryAsync_GivenNonScalarValueObjectMembers_Translates(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateSnapshotStore<SnapshotValueObjectsAggregate>();
 		var aggregate = new SnapshotValueObjectsAggregate();
 		aggregate.Details.Id = Guid.NewGuid().ToString("D");
 		aggregate.CaptureUserDetails(
-			UserDetails.Create(
-				Guid.Parse("11111111-1111-1111-1111-111111111111"),
-				"Jane Snapshot",
-				true
-			),
-			UserDetails2.Create(
-				Guid.Parse("22222222-2222-2222-2222-222222222222"),
-				"Jane Snapshot 2"
-			)
+			UserDetails.Create(Guid.Parse("11111111-1111-1111-1111-111111111111"), "Jane Snapshot", true),
+			UserDetails2.Create(Guid.Parse("22222222-2222-2222-2222-222222222222"), "Jane Snapshot 2")
 		);
 
 		await store.SaveAsync(aggregate, operationContext: null, cancellationToken);
 
 		var query = await store.QueryAsync(
-			m =>
-				m.UserDetails.DisplayName == "Jane Snapshot"
-				&& m.UserDetails2.DisplayName == "Jane Snapshot 2",
+			m => m.UserDetails.DisplayName == "Jane Snapshot" && m.UserDetails2.DisplayName == "Jane Snapshot 2",
 			cancellationToken: cancellationToken
 		);
 
@@ -69,15 +54,10 @@ public sealed class SqlServerSnapshotQueryTranslationBoundaryTests(
 	}
 
 	[Test]
-	public async Task QueryAsync_GivenDirectlyMappedComplexNestedMembers_Translates(
-		CancellationToken cancellationToken
-	)
+	public async Task QueryAsync_GivenDirectlyMappedComplexNestedMembers_Translates(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateSnapshotStore<PersistenceAggregate>();
-		var aggregate = new PersistenceAggregate
-		{
-			Details = { Id = Guid.NewGuid().ToString("D") },
-		};
+		var aggregate = new PersistenceAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
 		aggregate.SetComplexProperty(
 			new Aggregates.ComplexTestType
 			{
@@ -102,9 +82,7 @@ public sealed class SqlServerSnapshotQueryTranslationBoundaryTests(
 		await Assert.That(query.Results).Count().IsEqualTo(1);
 		await Assert.That(query.Results[0].Id()).IsEqualTo(aggregate.Id());
 		await Assert.That(query.Results[0].ComplexTestType).IsNotNull();
-		await Assert
-			.That(query.Results[0].ComplexTestType!.StringProperty)
-			.IsEqualTo("complex-test");
+		await Assert.That(query.Results[0].ComplexTestType!.StringProperty).IsEqualTo("complex-test");
 		await Assert.That(query.Results[0].ComplexTestType!.Int32Property).IsEqualTo(32);
 	}
 }

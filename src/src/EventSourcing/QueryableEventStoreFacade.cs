@@ -15,12 +15,8 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 {
 	readonly ConcurrentDictionary<Type, object> _queryableEventStores = new();
 
-	public Task<T> CreateAsync<T>(
-		string? aggregateId = null,
-		CancellationToken cancellationToken = default
-	)
-		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>().CreateAsync(aggregateId, cancellationToken);
+	public Task<T> CreateAsync<T>(string? aggregateId = null, CancellationToken cancellationToken = default)
+		where T : class, IAggregate, new() => GetQueryableEventStore<T>().CreateAsync(aggregateId, cancellationToken);
 
 	public Task<T?> GetOrCreateAsync<T>(
 		string? aggregateId,
@@ -28,8 +24,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>()
-			.GetOrCreateAsync(aggregateId, operationContext, cancellationToken);
+		GetQueryableEventStore<T>().GetOrCreateAsync(aggregateId, operationContext, cancellationToken);
 
 	public Task<T?> GetAsync<T>(
 		string aggregateId,
@@ -46,8 +41,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>()
-			.GetAtAsync(aggregateId, version, operationContext, cancellationToken);
+		GetQueryableEventStore<T>().GetAtAsync(aggregateId, version, operationContext, cancellationToken);
 
 	public Task<SaveResult<T>> SaveAsync<T>(
 		T aggregate,
@@ -57,17 +51,11 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		where T : class, IAggregate, new() =>
 		GetQueryableEventStore<T>().SaveAsync(aggregate, operationContext, cancellationToken);
 
-	public Task<bool> IsDeletedAsync<T>(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	)
+	public Task<bool> IsDeletedAsync<T>(string aggregateId, CancellationToken cancellationToken = default)
 		where T : class, IAggregate, new() =>
 		GetQueryableEventStore<T>().IsDeletedAsync(aggregateId, cancellationToken);
 
-	public Task<T?> GetDeletedAsync<T>(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	)
+	public Task<T?> GetDeletedAsync<T>(string aggregateId, CancellationToken cancellationToken = default)
 		where T : class, IAggregate, new() =>
 		GetQueryableEventStore<T>().GetDeletedAsync(aggregateId, cancellationToken);
 
@@ -94,16 +82,11 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		where T : class, IAggregate, new() =>
 		GetQueryableEventStore<T>().GetAggregateIdsAsync(includeDeleted, cancellationToken);
 
-	public Task<ExistsState> ExistsAsync<T>(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	)
-		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>().ExistsAsync(aggregateId, cancellationToken);
+	public Task<ExistsState> ExistsAsync<T>(string aggregateId, CancellationToken cancellationToken = default)
+		where T : class, IAggregate, new() => GetQueryableEventStore<T>().ExistsAsync(aggregateId, cancellationToken);
 
 	public T FulfilRequirements<T>(T aggregate)
-		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>().FulfilRequirements(aggregate);
+		where T : class, IAggregate, new() => GetQueryableEventStore<T>().FulfilRequirements(aggregate);
 
 	public IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync<T>(
 		string aggregateId,
@@ -112,8 +95,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		CancellationToken cancellationToken
 	)
 		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>()
-			.GetEventRangeAsync(aggregateId, versionFrom, versionTo, cancellationToken);
+		GetQueryableEventStore<T>().GetEventRangeAsync(aggregateId, versionFrom, versionTo, cancellationToken);
 
 	public IAsyncEnumerable<T> GetQueryEnumerableAsync<T>(
 		Expression<Func<T, bool>> whereClause,
@@ -123,12 +105,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 	)
 		where T : class, IAggregate, new() =>
 		GetQueryableEventStore<T>()
-			.GetQueryEnumerableAsync(
-				whereClause,
-				orderByClause,
-				maxRecordsPerIteration,
-				cancellationToken
-			);
+			.GetQueryEnumerableAsync(whereClause, orderByClause, maxRecordsPerIteration, cancellationToken);
 
 	public IAsyncEnumerable<T> GetListEnumerableAsync<T>(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -136,8 +113,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>()
-			.GetListEnumerableAsync(orderByClause, maxRecordsPerIteration, cancellationToken);
+		GetQueryableEventStore<T>().GetListEnumerableAsync(orderByClause, maxRecordsPerIteration, cancellationToken);
 
 	public Task<ContinuationResponse<T>> QueryAsync<T>(
 		Expression<Func<T, bool>> whereClause,
@@ -146,8 +122,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>()
-			.QueryAsync(whereClause, orderByClause, request, cancellationToken);
+		GetQueryableEventStore<T>().QueryAsync(whereClause, orderByClause, request, cancellationToken);
 
 	public Task<ContinuationResponse<T>> ListAsync<T>(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -161,8 +136,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		Expression<Func<T, bool>>? whereClause,
 		CancellationToken cancellationToken = default
 	)
-		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>().CountAsync(whereClause, cancellationToken);
+		where T : class, IAggregate, new() => GetQueryableEventStore<T>().CountAsync(whereClause, cancellationToken);
 
 	public Task<T?> SingleOrDefaultAsync<T>(
 		Expression<Func<T, bool>> whereClause,
@@ -177,8 +151,7 @@ public sealed class QueryableEventStoreFacade(IServiceProvider serviceProvider)
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		GetQueryableEventStore<T>()
-			.FirstOrDefaultAsync(whereClause, orderByClause, cancellationToken);
+		GetQueryableEventStore<T>().FirstOrDefaultAsync(whereClause, orderByClause, cancellationToken);
 
 	public IEventStoreCore<T> GetEventStore<T>()
 		where T : class, IAggregate, new() => GetQueryableEventStore<T>();

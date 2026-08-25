@@ -39,9 +39,7 @@ public sealed class EventHistoryExtensionsTests
 	}
 
 	[Test]
-	public async Task GetEventHistoryAsync_GivenContinuationToken_PaginatesResults(
-		CancellationToken cancellationToken
-	)
+	public async Task GetEventHistoryAsync_GivenContinuationToken_PaginatesResults(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var baseTime = DateTimeOffset.UtcNow.AddMinutes(-5);
@@ -60,11 +58,7 @@ public sealed class EventHistoryExtensionsTests
 		// Act
 		var second = await store.GetEventHistoryAsync(
 			"agg-1",
-			new AggregateEventHistoryRequest
-			{
-				MaxRecords = 2,
-				ContinuationToken = first.ContinuationToken,
-			},
+			new AggregateEventHistoryRequest { MaxRecords = 2, ContinuationToken = first.ContinuationToken },
 			cancellationToken
 		);
 
@@ -84,9 +78,7 @@ public sealed class EventHistoryExtensionsTests
 
 		// Act
 		var exception = (
-			await Assert
-				.That(() => store.GetEventHistoryAsync("agg-1")!)
-				.Throws<NotSupportedException>()
+			await Assert.That(() => store.GetEventHistoryAsync("agg-1")!).Throws<NotSupportedException>()
 		)!;
 
 		// Assert
@@ -102,19 +94,13 @@ public sealed class EventHistoryExtensionsTests
 
 		// Act / Assert
 		var exception = (
-			await Assert
-				.That(() => store.GetEventHistoryAsync("agg-1", request)!)
-				.Throws<ArgumentOutOfRangeException>()
+			await Assert.That(() => store.GetEventHistoryAsync("agg-1", request)!).Throws<ArgumentOutOfRangeException>()
 		)!;
 
 		await Assert.That(exception.ParamName).IsEqualTo("request");
 	}
 
-	static (IEvent @event, string eventType) CreateEvent(
-		string eventType,
-		int version,
-		DateTimeOffset when
-	) =>
+	static (IEvent @event, string eventType) CreateEvent(string eventType, int version, DateTimeOffset when) =>
 		(
 			new TestAuditEvent
 			{
@@ -144,15 +130,13 @@ public sealed class EventHistoryExtensionsTests
 			string aggregateId,
 			int versionFrom,
 			int? versionTo,
-			[System.Runtime.CompilerServices.EnumeratorCancellation]
-				CancellationToken cancellationToken
+			[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken
 		)
 		{
 			var upperBound = versionTo ?? int.MaxValue;
 			foreach (
 				var item in _events.Where(m =>
-					m.@event.Details.AggregateVersion >= versionFrom
-					&& m.@event.Details.AggregateVersion <= upperBound
+					m.@event.Details.AggregateVersion >= versionFrom && m.@event.Details.AggregateVersion <= upperBound
 				)
 			)
 			{
@@ -192,10 +176,8 @@ public sealed class EventHistoryExtensionsTests
 			CancellationToken cancellationToken = default
 		) => throw new NotImplementedException();
 
-		public Task<bool> IsDeletedAsync(
-			string aggregateId,
-			CancellationToken cancellationToken = default
-		) => throw new NotImplementedException();
+		public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+			throw new NotImplementedException();
 
 		public Task<TestAggregate?> GetDeletedAsync(
 			string aggregateId,
@@ -216,8 +198,7 @@ public sealed class EventHistoryExtensionsTests
 
 		public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 			bool includeDeleted,
-			[System.Runtime.CompilerServices.EnumeratorCancellation]
-				CancellationToken cancellationToken = default
+			[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
 		)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
@@ -227,10 +208,8 @@ public sealed class EventHistoryExtensionsTests
 			yield break;
 		}
 
-		public Task<ExistsState> ExistsAsync(
-			string aggregateId,
-			CancellationToken cancellationToken = default
-		) => throw new NotImplementedException();
+		public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+			throw new NotImplementedException();
 
 		public TestAggregate FulfilRequirements(TestAggregate aggregate) => aggregate;
 	}

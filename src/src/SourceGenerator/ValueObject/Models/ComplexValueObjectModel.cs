@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Purview.EventSourcing.SourceGenerator.ValueObject.Models;
 
 sealed record class ComplexValueObjectModel(

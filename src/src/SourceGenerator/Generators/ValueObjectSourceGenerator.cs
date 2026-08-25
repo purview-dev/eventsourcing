@@ -1,6 +1,4 @@
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Purview.SourceGeneratorFramework.Extensions;
 
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
@@ -40,11 +38,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		var model = ScalarValueObjectModelBuilder.Build(
-			context,
-			cancellationToken,
-			out var diagnostics
-		);
+		var model = ScalarValueObjectModelBuilder.Build(context, cancellationToken, out var diagnostics);
 		if (model is null)
 			return new ValueObjectGenerationResult(null, null, diagnostics);
 
@@ -58,11 +52,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		var model = ComplexValueObjectModelBuilder.Build(
-			context,
-			cancellationToken,
-			out var diagnostics
-		);
+		var model = ComplexValueObjectModelBuilder.Build(context, cancellationToken, out var diagnostics);
 		if (model is null)
 			return new ValueObjectGenerationResult(null, null, diagnostics);
 

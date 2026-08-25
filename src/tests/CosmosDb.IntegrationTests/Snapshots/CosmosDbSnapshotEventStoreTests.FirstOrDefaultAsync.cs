@@ -21,10 +21,7 @@ partial class CosmosDbSnapshotEventStoreTests
 
 			aggregate.SetInt32Value(i + 1);
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -60,10 +57,7 @@ partial class CosmosDbSnapshotEventStoreTests
 
 			aggregate.SetInt32Value(i + 1);
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -99,10 +93,7 @@ partial class CosmosDbSnapshotEventStoreTests
 				aggregate.IncrementInt32Value();
 			}
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -134,10 +125,7 @@ partial class CosmosDbSnapshotEventStoreTests
 			for (var x = 0; x < matchingIncrement; x++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -167,10 +155,7 @@ partial class CosmosDbSnapshotEventStoreTests
 		for (var x = 0; x < matchingIncrement; x++)
 			aggregate.IncrementInt32Value();
 
-		bool saveResult = await context.EventStore.SaveAsync(
-			aggregate,
-			cancellationToken: cancellationToken
-		);
+		bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		await Assert.That(saveResult).IsTrue();
 
@@ -186,9 +171,7 @@ partial class CosmosDbSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task FirstOrDefaultAsync_GivenNoMatchingAggregates_ReturnsNull(
-		CancellationToken cancellationToken
-	)
+	public async Task FirstOrDefaultAsync_GivenNoMatchingAggregates_ReturnsNull(CancellationToken cancellationToken)
 	{
 		const int matchingIncrement = 10;
 
@@ -201,10 +184,7 @@ partial class CosmosDbSnapshotEventStoreTests
 			for (var x = 0; x < matchingIncrement; x++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}

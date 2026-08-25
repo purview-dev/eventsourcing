@@ -39,10 +39,7 @@ partial class AggregateEventNameMapperTests
 		"Purview.Services.UserProfile.Aggregates.UserProfile.Events.ClearRolesEvent, EventSourcing.UnitTests",
 		"clear-roles"
 	)]
-	public async Task GetName_GivenEventName_MatchesExpectation(
-		string eventType,
-		string expectation
-	)
+	public async Task GetName_GivenEventName_MatchesExpectation(string eventType, string expectation)
 	{
 		// Arrange
 		var mapper = CreateMapper<CorrectlyNamedAggregate>();

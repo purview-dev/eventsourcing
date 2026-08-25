@@ -18,10 +18,7 @@ public static class AdminSiteServiceCollectionExtensions
 		return mvcBuilder;
 	}
 
-	public static WebApplication MapPurviewEventSourcingAdminSite(
-		this WebApplication app,
-		string pathPrefix = "/admin"
-	)
+	public static WebApplication MapPurviewEventSourcingAdminSite(this WebApplication app, string pathPrefix = "/admin")
 	{
 		ArgumentNullException.ThrowIfNull(app);
 		ArgumentException.ThrowIfNullOrWhiteSpace(pathPrefix);

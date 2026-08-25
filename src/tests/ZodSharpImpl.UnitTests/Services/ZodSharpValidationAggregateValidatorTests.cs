@@ -10,9 +10,7 @@ public sealed class ZodSharpAggregateValidatorTests
 	{
 		TestAggregate aggregate = new() { Name = "valid" };
 		var validator = IZodSchemaValidator<TestAggregate>.Mock();
-		validator
-			.ValidateAsync(Any(), Any())
-			.Returns(ValidationResult<TestAggregate>.Success(aggregate));
+		validator.ValidateAsync(Any(), Any()).Returns(ValidationResult<TestAggregate>.Success(aggregate));
 
 		ZodSharpAggregateValidator<TestAggregate> adapter = new(validator);
 

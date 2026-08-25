@@ -28,9 +28,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(cancellationToken);
 	}
 
 	[Test]
@@ -54,9 +52,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.DeleteAsync_GivenPreviouslySavedAggregate_MarksAsDeleted(cancellationToken);
 	}
 
 	[Test]
@@ -233,9 +229,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(cancellationToken);
 	}
 
 	[Test]
@@ -289,9 +283,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.GetOrCreateAsync_GivenAggregateDoesNotExist_CreatesNewAggregate(cancellationToken);
 	}
 
 	[Test]
@@ -303,9 +295,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.IsDeletedAsync_GivenDeletedAggregates_ReturnsTrue(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.IsDeletedAsync_GivenDeletedAggregates_ReturnsTrue(cancellationToken);
 	}
 
 	[Test]
@@ -317,9 +307,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.IsDeletedAsync_GivenNonDeletedAggregates_ReturnsFalse(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.IsDeletedAsync_GivenNonDeletedAggregates_ReturnsFalse(cancellationToken);
 	}
 
 	[Test]
@@ -375,9 +363,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotNotifyChangeFeed(cancellationToken);
 	}
 
 	[Test]
@@ -389,9 +375,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(cancellationToken);
 	}
 
 	[Test]
@@ -403,9 +387,7 @@ public sealed partial class MongoDBEventStoreTests(MongoDBEventStoreFixture fixt
 	{
 		var mongoDBEventStoreTests = CreateMongoDBStoreTests(aggregateType);
 
-		await mongoDBEventStoreTests.SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
-			cancellationToken
-		);
+		await mongoDBEventStoreTests.SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(cancellationToken);
 	}
 
 	[Test]

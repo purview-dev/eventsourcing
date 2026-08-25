@@ -54,11 +54,8 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 
 		Expression<Func<CustomerAggregate, bool>> where = hasFilter
 			? c =>
-				(
-					string.IsNullOrEmpty(search)
-					|| c.Name.Value.Contains(search)
-					|| c.Email.Value.Contains(search)
-				) && (ShowInactive || c.IsActive)
+				(string.IsNullOrEmpty(search) || c.Name.Value.Contains(search) || c.Email.Value.Contains(search))
+				&& (ShowInactive || c.IsActive)
 			: c => true;
 
 		var result = await store.QueryAsync(where, q => q.OrderBy(c => c.Name), request, ct);
@@ -67,10 +64,7 @@ sealed class IndexModel(IQueryableEventStore store) : PageModel
 		TotalCount = result.TotalCount ?? 0;
 	}
 
-	public async Task<IActionResult> OnPostSelectAsync(
-		string id,
-		CancellationToken cancellationToken
-	)
+	public async Task<IActionResult> OnPostSelectAsync(string id, CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrWhiteSpace(id))
 			return RedirectToPage();

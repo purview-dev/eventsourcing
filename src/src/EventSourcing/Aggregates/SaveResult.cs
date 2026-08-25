@@ -38,9 +38,8 @@ public sealed record class SaveResult<TAggregate>
 	/// </summary>
 	/// <param name="aggregateSaveResult">The save result to convert.</param>
 	/// <seealso cref="ToAggregate"/>
-	public static implicit operator TAggregate(
-		[NotNull] SaveResult<TAggregate> aggregateSaveResult
-	) => aggregateSaveResult.Aggregate;
+	public static implicit operator TAggregate([NotNull] SaveResult<TAggregate> aggregateSaveResult) =>
+		aggregateSaveResult.Aggregate;
 
 	/// <summary>
 	/// Constructs a new <see cref="SaveResult{TAggregate}"/> based on the saved and validation state
@@ -51,12 +50,7 @@ public sealed record class SaveResult<TAggregate>
 	/// <param name="saved">Indicates if the operations resulted in a save operation.</param>
 	/// <param name="skipped">Indicates if, while the result of <paramref name="saved"/> maybe true,
 	/// in-fact the results affected no changes.</param>
-	public SaveResult(
-		TAggregate aggregate,
-		ValidationResult validationResult,
-		bool saved,
-		bool skipped
-	)
+	public SaveResult(TAggregate aggregate, ValidationResult validationResult, bool saved, bool skipped)
 	{
 		Aggregate = aggregate;
 		ValidationResult = validationResult;

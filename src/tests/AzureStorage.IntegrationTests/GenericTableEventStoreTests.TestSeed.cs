@@ -23,17 +23,12 @@ static class GenericTableEventStoreTestSeed
 			Int32Property = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue),
 			Int64Property = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue) * 5L,
 			StringProperty = $"{Guid.NewGuid()}",
-			DateTimeOffsetProperty = DateTimeOffset.UtcNow.AddYears(
-				RandomNumberGenerator.GetInt32(100, 1001)
-			),
+			DateTimeOffsetProperty = DateTimeOffset.UtcNow.AddYears(RandomNumberGenerator.GetInt32(100, 1001)),
 			ComplexNestedTestTypeProperty = new() { Nested = $"Nested_{Guid.NewGuid()}" },
 		};
 	}
 
-	internal static TAggregate BuildAggregateWithIncrementEvents<TAggregate>(
-		string aggregateId,
-		int eventCount
-	)
+	internal static TAggregate BuildAggregateWithIncrementEvents<TAggregate>(string aggregateId, int eventCount)
 		where TAggregate : class, IAggregateTest, new()
 	{
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -107,9 +102,7 @@ static class GenericTableEventStoreTestSeed
 				Any<string>(),
 				Any<string>(),
 				Any<string>(),
-				Is<string>(eventType =>
-					eventType!.Contains(nameof(OldEvent), StringComparison.Ordinal)
-				),
+				Is<string>(eventType => eventType!.Contains(nameof(OldEvent), StringComparison.Ordinal)),
 				Any<int>()
 			)
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
@@ -123,13 +116,7 @@ static class GenericTableEventStoreTestSeed
 	)
 	{
 		telemetry
-			.SkippedUnknownEvent(
-				aggregateId,
-				Any<string>(),
-				Any<string>(),
-				unknownEventType,
-				Any<int>()
-			)
+			.SkippedUnknownEvent(aggregateId, Any<string>(), Any<string>(), unknownEventType, Any<int>())
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
 	}
 
@@ -148,22 +135,15 @@ static class GenericTableEventStoreTestSeed
 		await Assert.That(result.Details.CurrentVersion).IsEqualTo(totalEvents);
 	}
 
-	internal static async Task AssertRecreatedMatchesSource<TAggregate>(
-		TAggregate? result,
-		TAggregate aggregate
-	)
+	internal static async Task AssertRecreatedMatchesSource<TAggregate>(TAggregate? result, TAggregate aggregate)
 		where TAggregate : class, IAggregateTest, new()
 	{
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result.Id()).IsEqualTo(aggregate.Id());
 		await Assert.That(result.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
 		await Assert.That(result.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(result.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert
-			.That(result.Details.SnapshotVersion)
-			.IsEqualTo(aggregate.Details.SnapshotVersion);
+		await Assert.That(result.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert.That(result.Details.SnapshotVersion).IsEqualTo(aggregate.Details.SnapshotVersion);
 	}
 
 	internal static async Task<int?> ReadAndRemoveStreamVersion(
@@ -245,8 +225,7 @@ static class GenericTableEventStoreTestSeed
 	}
 
 	internal static void SetRandomComplexProperty<TAggregate>(TAggregate aggregate)
-		where TAggregate : class, IAggregateTest, new() =>
-		aggregate.SetComplexProperty(CreateComplexTestType());
+		where TAggregate : class, IAggregateTest, new() => aggregate.SetComplexProperty(CreateComplexTestType());
 
 	internal static async Task AssertComplexPropertyMatches<TAggregate>(
 		TAggregate aggregate,
@@ -255,8 +234,6 @@ static class GenericTableEventStoreTestSeed
 		where TAggregate : class, IAggregateTest, new()
 	{
 		await Assert.That(aggregateGetResult).IsNotNull();
-		await Assert
-			.That(aggregate.ComplexTestType)
-			.IsEquivalentTo(aggregateGetResult.ComplexTestType);
+		await Assert.That(aggregate.ComplexTestType).IsEquivalentTo(aggregateGetResult.ComplexTestType);
 	}
 }

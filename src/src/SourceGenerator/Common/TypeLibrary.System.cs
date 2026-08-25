@@ -4,33 +4,30 @@ partial class TypeLibrary
 {
 	public static partial class System
 	{
-		public static readonly TypeValueObject AttributeUsageAttribute =
-			TypeValueObject.Create<AttributeUsageAttribute>();
+		public static readonly TypeIdentity AttributeUsageAttribute = TypeIdentity.Create<AttributeUsageAttribute>();
 
-		public static readonly TypeValueObject AttributeTargets =
-			TypeValueObject.Create<AttributeTargets>();
+		public static readonly TypeIdentity AttributeTargets = TypeIdentity.Create<AttributeTargets>();
 
-		public static readonly TypeValueObject Int32 = TypeValueObject.Create<int>();
+		public static readonly TypeIdentity Int32 = TypeIdentity.Create<int>();
 
-		public static readonly TypeValueObject Boolean = TypeValueObject.Create<bool>();
+		public static readonly TypeIdentity Boolean = TypeIdentity.Create<bool>();
 
-		public static readonly TypeValueObject String = TypeValueObject.Create<string>();
+		public static readonly TypeIdentity String = TypeIdentity.Create<string>();
 
-		public static readonly TypeValueObject Guid = TypeValueObject.Create<Guid>();
+		public static readonly TypeIdentity Guid = TypeIdentity.Create<Guid>();
 
-		public static readonly TypeValueObject Uri = TypeValueObject.Create<Uri>();
+		public static readonly TypeIdentity Uri = TypeIdentity.Create<Uri>();
 
-		public static readonly TypeValueObject DateTime = TypeValueObject.Create<DateTime>();
+		public static readonly TypeIdentity DateTime = TypeIdentity.Create<DateTime>();
 
-		public static readonly TypeValueObject DateTimeOffset =
-			TypeValueObject.Create<DateTimeOffset>();
+		public static readonly TypeIdentity DateTimeOffset = TypeIdentity.Create<DateTimeOffset>();
 
-		public static readonly TypeValueObject TimeSpan = TypeValueObject.Create<TimeSpan>();
+		public static readonly TypeIdentity TimeSpan = TypeIdentity.Create<TimeSpan>();
 
-		public static readonly TypeValueObject DateOnly = new("DateOnly", "System");
+		public static readonly TypeIdentity DateOnly = new("DateOnly", "System");
 
-		public static readonly TypeValueObject TimeOnly = new("TimeOnly", "System");
+		public static readonly TypeIdentity TimeOnly = new("TimeOnly", "System");
 
-		public static readonly TypeValueObject HashCode = new("HashCode", "System");
+		public static readonly TypeIdentity HashCode = new("HashCode", "System");
 	}
 }

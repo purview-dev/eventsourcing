@@ -43,26 +43,18 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 	public string CorrelationId { get; }
 
 	/// <inheritdoc/>
-	public void Enlist<T>(
-		T aggregate,
-		IEventStore eventStore,
-		EventStoreOperationContext? operationContext = null
-	)
+	public void Enlist<T>(T aggregate, IEventStore eventStore, EventStoreOperationContext? operationContext = null)
 		where T : class, IAggregate, new()
 	{
 		ObjectDisposedException.ThrowIf(_disposed, this);
 
 		if (_committed)
-			throw new InvalidOperationException(
-				"Cannot enlist aggregates after the transaction has been committed."
-			);
+			throw new InvalidOperationException("Cannot enlist aggregates after the transaction has been committed.");
 
 		ArgumentNullException.ThrowIfNull(aggregate);
 		ArgumentNullException.ThrowIfNull(eventStore);
 
-		_enlisted.Add(
-			new EnlistedAggregate<T>(aggregate, eventStore, operationContext, _useIdempotencyMarker)
-		);
+		_enlisted.Add(new EnlistedAggregate<T>(aggregate, eventStore, operationContext, _useIdempotencyMarker));
 	}
 
 	/// <inheritdoc/>
@@ -76,16 +68,12 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 		ObjectDisposedException.ThrowIf(_disposed, this);
 
 		if (_committed)
-			throw new InvalidOperationException(
-				"Cannot enlist aggregates after the transaction has been committed."
-			);
+			throw new InvalidOperationException("Cannot enlist aggregates after the transaction has been committed.");
 
 		ArgumentNullException.ThrowIfNull(aggregate);
 		ArgumentNullException.ThrowIfNull(eventStore);
 
-		_enlisted.Add(
-			new EnlistedAggregate<T>(aggregate, eventStore, operationContext, _useIdempotencyMarker)
-		);
+		_enlisted.Add(new EnlistedAggregate<T>(aggregate, eventStore, operationContext, _useIdempotencyMarker));
 	}
 
 	/// <inheritdoc/>
@@ -99,8 +87,7 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 		_committed = true;
 
 		return _enlisted.Count == 0 ? new([])
-			: CanUseNativeTransactionCoordinator()
-				? await CommitWithNativeTransactionAsync(cancellationToken)
+			: CanUseNativeTransactionCoordinator() ? await CommitWithNativeTransactionAsync(cancellationToken)
 			: await CommitSequentiallyAsync(cancellationToken);
 	}
 
@@ -136,12 +123,7 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 			{
 				var (saved, skipped) = await enlisted.SaveAsync(CorrelationId, cancellationToken);
 				results.Add(
-					new TransactionAggregateResult(
-						enlisted.Aggregate,
-						saved: saved,
-						skipped: skipped,
-						error: null
-					)
+					new TransactionAggregateResult(enlisted.Aggregate, saved: saved, skipped: skipped, error: null)
 				);
 
 				// Stop processing remaining aggregates on first failure.
@@ -153,12 +135,7 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 #pragma warning restore CA1031
 			{
 				results.Add(
-					new TransactionAggregateResult(
-						enlisted.Aggregate,
-						saved: false,
-						skipped: false,
-						error: ex
-					)
+					new TransactionAggregateResult(enlisted.Aggregate, saved: false, skipped: false, error: ex)
 				);
 
 				// Stop on first exception — don't persist remaining aggregates.
@@ -169,9 +146,7 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 		return new TransactionResult(results);
 	}
 
-	async Task<TransactionResult> CommitWithNativeTransactionAsync(
-		CancellationToken cancellationToken
-	)
+	async Task<TransactionResult> CommitWithNativeTransactionAsync(CancellationToken cancellationToken)
 	{
 		await using var connection = _enlisted[0].CreateTransactionConnection();
 		await connection.OpenAsync(cancellationToken);
@@ -279,18 +254,11 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 
 		if (
 			failure is not null
-			&& processed.All(operation =>
-				!ReferenceEquals(operation.Aggregate, failedEnlisted.Aggregate)
-			)
+			&& processed.All(operation => !ReferenceEquals(operation.Aggregate, failedEnlisted.Aggregate))
 		)
 		{
 			rollbackResults.Add(
-				new TransactionAggregateResult(
-					failedEnlisted.Aggregate,
-					saved: false,
-					skipped: false,
-					error: failure
-				)
+				new TransactionAggregateResult(failedEnlisted.Aggregate, saved: false, skipped: false, error: failure)
 			);
 		}
 
@@ -313,17 +281,11 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 
 		string? TransactionBoundaryKey { get; }
 
-		Task<(bool saved, bool skipped)> SaveAsync(
-			string correlationId,
-			CancellationToken cancellationToken
-		);
+		Task<(bool saved, bool skipped)> SaveAsync(string correlationId, CancellationToken cancellationToken);
 
 		DbConnection CreateTransactionConnection();
 
-		Task EnsureTransactionConfiguredAsync(
-			DbConnection connection,
-			CancellationToken cancellationToken
-		);
+		Task EnsureTransactionConfiguredAsync(DbConnection connection, CancellationToken cancellationToken);
 
 		Task<IProcessedSaveOperation> SaveInTransactionAsync(
 			string correlationId,
@@ -396,13 +358,10 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 			CancellationToken cancellationToken
 		)
 		{
-			var baseContext =
-				_operationContext ?? EventStoreOperationContext.DefaultContext(correlationId);
+			var baseContext = _operationContext ?? EventStoreOperationContext.DefaultContext(correlationId);
 			var context = baseContext with
 			{
-				CorrelationId = _operationContext is null
-					? correlationId
-					: baseContext.CorrelationId,
+				CorrelationId = _operationContext is null ? correlationId : baseContext.CorrelationId,
 				UseIdempotencyMarker = baseContext.UseIdempotencyMarker || _useIdempotencyMarker,
 			};
 
@@ -418,14 +377,8 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 				$"The enlisted event store '{_eventStoreImpl?.GetType().FullName ?? _eventStore?.GetType().FullName}' does not support native transactions."
 			);
 
-		public Task EnsureTransactionConfiguredAsync(
-			DbConnection connection,
-			CancellationToken cancellationToken
-		) =>
-			_transactionalEventStore?.EnsureTransactionConfiguredAsync(
-				connection,
-				cancellationToken
-			)
+		public Task EnsureTransactionConfiguredAsync(DbConnection connection, CancellationToken cancellationToken) =>
+			_transactionalEventStore?.EnsureTransactionConfiguredAsync(connection, cancellationToken)
 			?? throw new InvalidOperationException(
 				$"The enlisted event store '{_eventStoreImpl?.GetType().FullName ?? _eventStore?.GetType().FullName}' does not support native transactions."
 			);
@@ -444,13 +397,10 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 				);
 			}
 
-			var baseContext =
-				_operationContext ?? EventStoreOperationContext.DefaultContext(correlationId);
+			var baseContext = _operationContext ?? EventStoreOperationContext.DefaultContext(correlationId);
 			var context = baseContext with
 			{
-				CorrelationId = _operationContext is null
-					? correlationId
-					: baseContext.CorrelationId,
+				CorrelationId = _operationContext is null ? correlationId : baseContext.CorrelationId,
 				UseIdempotencyMarker = baseContext.UseIdempotencyMarker || _useIdempotencyMarker,
 			};
 

@@ -37,12 +37,7 @@ partial class MongoDBEventStore<T>
 			);
 
 		var aggregateVersion = versionFrom;
-		var entities = GetEventRangeEntitiesAsync(
-			aggregateId,
-			versionFrom,
-			versionTo,
-			cancellationToken
-		);
+		var entities = GetEventRangeEntitiesAsync(aggregateId, versionFrom, versionTo, cancellationToken);
 		await foreach (var entity in entities)
 		{
 			var item = DeserializeEvent(entity, aggregateVersion);
@@ -97,10 +92,7 @@ partial class MongoDBEventStore<T>
 			var eventType = _eventNameMapper.GetTypeName<T>(eventEntity.EventType);
 			if (eventType == null)
 			{
-				_eventStoreTelemetry.MissingEventType(
-					_aggregateTypeFullName,
-					eventEntity.EventType
-				);
+				_eventStoreTelemetry.MissingEventType(_aggregateTypeFullName, eventEntity.EventType);
 
 				return ReturnUnknownEvent(eventEntity, aggregateVersion);
 			}
@@ -120,11 +112,7 @@ partial class MongoDBEventStore<T>
 		catch (Exception ex)
 #pragma warning restore CA1031
 		{
-			_eventStoreTelemetry.EventDeserializationFailed(
-				eventEntity.AggregateId,
-				_aggregateTypeFullName,
-				ex
-			);
+			_eventStoreTelemetry.EventDeserializationFailed(eventEntity.AggregateId, _aggregateTypeFullName, ex);
 
 			return ReturnUnknownEvent(eventEntity, aggregateVersion);
 		}

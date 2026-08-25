@@ -5,9 +5,7 @@ using Purview.EventSourcing.Samples.ValueObjects;
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
-public sealed class ReportUploadAggregateSnapshotEventStoreTests(
-	SqlServerSnapshotEventStoreFixture fixture
-)
+public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	static readonly Faker Faker = new();
 
@@ -24,18 +22,12 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(
 					}
 				),
 				ParserDetails = new(10, 5, 5, TimeSpan.FromMinutes(1)),
-				Projects = Faker.Make(
-					2,
-					i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")
-				),
+				Projects = Faker.Make(2, i => new Project($"Project {i + 1}", $"{i + 1}", $"Team {i + 1}")),
 				VulnerabilityDetails = new VulnerabilityDetails(100, 10, 10, 20, 30, 40),
 			}
 		);
 
-	static ReportUploadAggregate CreateCompletedAggregate(
-		string id,
-		ReportSummary? reportSummary = null
-	) =>
+	static ReportUploadAggregate CreateCompletedAggregate(string id, ReportSummary? reportSummary = null) =>
 		TestHelpers.Aggregate<ReportUploadAggregate>(
 			id,
 			agg =>
@@ -75,6 +67,7 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(
 		await Assert.That(restored.ReportSummary!.Value.ParserDetails.TotalLines).IsEqualTo(10);
 		await Assert.That(restored.ReportSummary.Value.ParserDetails.FailedLines).IsEqualTo(5);
 		await Assert.That(restored.ReportSummary.Value.Projects.Count()).IsEqualTo(2);
+		await Assert.That(restored.ReportSummary.Value.AssetDetails.OperatingSystemDistribution).Count().IsEqualTo(3);
 		await Assert.That(restored.ReportSummaryScalar!.ParserDetails.TotalLines).IsEqualTo(10);
 		await Assert.That(restored.ReportSummaryScalar.ParserDetails.FailedLines).IsEqualTo(5);
 		await Assert.That(restored.ReportSummaryScalar.Projects.Count()).IsEqualTo(2);
@@ -87,9 +80,7 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(
 		await Assert.That(translatableQuery.Results).Count().IsEqualTo(1);
 		await Assert.That(translatableQuery.Results[0].Id()).IsEqualTo(id);
 		await Assert.That(translatableQuery.Results[0].ReportSummaryScalar).IsNotNull();
-		await Assert
-			.That(translatableQuery.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines)
-			.IsEqualTo(5);
+		await Assert.That(translatableQuery.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines).IsEqualTo(5);
 	}
 
 	[Test]
@@ -111,13 +102,11 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(
 		await Assert.That(query.Results).Count().IsEqualTo(1);
 		await Assert.That(query.Results[0].Id()).IsEqualTo(id);
 		await Assert.That(query.Results[0].ReportSummaryScalar).IsNotNull();
-		await Assert
-			.That(query.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines)
-			.IsEqualTo(5);
+		await Assert.That(query.Results[0].ReportSummaryScalar!.ParserDetails.FailedLines).IsEqualTo(5);
 	}
 
 	[Test]
-	public async Task QueryAsync_GivenFilterOnComplexScalarValueInnerMember_ThrowsButMirrorPropertyTranslates(
+	public async Task QueryAsync_GivenFilterOnComplexValueInnerMember_AndMirrorProperty_Translate(
 		CancellationToken cancellationToken
 	)
 	{
@@ -127,17 +116,12 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(
 
 		await store.SaveAsync(aggregate, cancellationToken);
 
-		async Task<ContinuationResponse<ReportUploadAggregate>?> UnsupportedAct() =>
-			await store.QueryAsync(
-				a => a.ReportSummary!.Value.ParserDetails.FailedLines > 0,
-				cancellationToken: cancellationToken
-			);
+		var canonicalQuery = await store.QueryAsync(
+			a => a.ReportSummary!.Value.ParserDetails.FailedLines > 0,
+			cancellationToken: cancellationToken
+		);
 
-		var unsupportedException = await Assert
-			.That(UnsupportedAct)
-			.Throws<InvalidOperationException>();
-		await Assert.That(unsupportedException).IsNotNull();
-		await Assert.That(unsupportedException!.Message).Contains("could not be translated");
+		await Assert.That(canonicalQuery.Results).Count().IsEqualTo(1);
 
 		var supportedQuery = await store.QueryAsync(
 			a => a.ReportSummaryScalar!.ParserDetails.FailedLines > 0,

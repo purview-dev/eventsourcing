@@ -11,9 +11,8 @@ public sealed class AzureVariantStartupUsageTests(AppHostFixture fixture)
 		AssertVariantDashboardAsync(Platform.AzureSqlWebApp, cancellationToken);
 
 	[Test]
-	public Task AzurePostgresVariant_StartsAndServesDashboard(
-		CancellationToken cancellationToken
-	) => AssertVariantDashboardAsync(Platform.AzurePostgresWebApp, cancellationToken);
+	public Task AzurePostgresVariant_StartsAndServesDashboard(CancellationToken cancellationToken) =>
+		AssertVariantDashboardAsync(Platform.AzurePostgresWebApp, cancellationToken);
 
 	[Test]
 	public Task AzureMongoVariant_StartsAndServesDashboard(CancellationToken cancellationToken) =>

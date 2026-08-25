@@ -44,13 +44,7 @@ public sealed class EventNamingTests
 		foreach (var (methodName, aggregateName, expectedEventName) in cases)
 		{
 			await Assert
-				.That(
-					EventVerbMap.TryCreateGeneratedEventName(
-						methodName,
-						aggregateName,
-						out var eventName
-					)
-				)
+				.That(EventVerbMap.TryCreateGeneratedEventName(methodName, aggregateName, out var eventName))
 				.IsTrue();
 			await Assert.That(eventName).IsEqualTo(expectedEventName);
 		}

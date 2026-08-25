@@ -15,10 +15,7 @@ public class MongoDBSnapshotEventStoreFixture : IAsyncInitializer, IAsyncDisposa
 		_mongoDBContainer = ContainerHelper.CreateMongoDB();
 	}
 
-	public MongoDBSnapshotTestContext CreateContext(
-		int correlationIdsToGenerate = 1,
-		string? collectionName = null
-	) =>
+	public MongoDBSnapshotTestContext CreateContext(int correlationIdsToGenerate = 1, string? collectionName = null) =>
 		new(
 			_mongoDBContainer.GetConnectionString(),
 			_azuriteContainer.GetConnectionString(),

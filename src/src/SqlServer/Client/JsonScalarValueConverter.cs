@@ -6,8 +6,7 @@ using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.SqlServer.Client;
 
-sealed class JsonScalarValueConverter<TScalarObject, TScalar>
-	: ValueConverter<TScalarObject, string>
+sealed class JsonScalarValueConverter<TScalarObject, TScalar> : ValueConverter<TScalarObject, string>
 {
 	static readonly PropertyInfo ScalarProperty = GetScalarProperty();
 	static readonly Func<TScalar, TScalarObject> Creator = BuildCreator();
@@ -60,14 +59,9 @@ sealed class JsonScalarValueConverter<TScalarObject, TScalar>
 		var scalarType = typeof(TScalarObject);
 		var scalarAttribute =
 			scalarType.GetCustomAttribute<ScalarAttribute>()
-			?? throw new InvalidOperationException(
-				$"{scalarType.Name} must be annotated with [Scalar]."
-			);
+			?? throw new InvalidOperationException($"{scalarType.Name} must be annotated with [Scalar].");
 
-		return scalarType.GetProperty(
-				scalarAttribute.PropertyName,
-				BindingFlags.Instance | BindingFlags.Public
-			)
+		return scalarType.GetProperty(scalarAttribute.PropertyName, BindingFlags.Instance | BindingFlags.Public)
 			?? throw new InvalidOperationException(
 				$"'{scalarType.Name}' missing scalar property '{scalarAttribute.PropertyName}'."
 			);
@@ -79,22 +73,14 @@ sealed class JsonScalarValueConverter<TScalarObject, TScalar>
 		var scalarPropertyType = typeof(TScalar);
 		var scalarAttribute =
 			scalarType.GetCustomAttribute<ScalarAttribute>()
-			?? throw new InvalidOperationException(
-				$"{scalarType.Name} must be annotated with [Scalar]."
-			);
+			?? throw new InvalidOperationException($"{scalarType.Name} must be annotated with [Scalar].");
 
 		var preferredFactoryName =
-			scalarAttribute.DeserializationMode == ValueObjectDeserializationMode.Strict
-				? "Create"
-				: "Hydrate";
+			scalarAttribute.DeserializationMode == ValueObjectDeserializationMode.Strict ? "Create" : "Hydrate";
 		var secondaryFactoryName = preferredFactoryName == "Hydrate" ? "Create" : "Hydrate";
 
 		var create =
-			scalarType.GetMethod(
-				preferredFactoryName,
-				BindingFlags.Public | BindingFlags.Static,
-				[scalarPropertyType]
-			)
+			scalarType.GetMethod(preferredFactoryName, BindingFlags.Public | BindingFlags.Static, [scalarPropertyType])
 			?? scalarType.GetMethod(
 				secondaryFactoryName,
 				BindingFlags.Public | BindingFlags.Static,

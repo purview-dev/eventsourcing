@@ -31,11 +31,7 @@ public sealed class SqlServerAdminTableResolverTests
 			TableName = "EventStoreEvents",
 			AggregateTableOverrides =
 			{
-				["Order"] = new SqlServerAggregateTableOverride
-				{
-					SchemaName = "orders",
-					TableName = "OrderEvents",
-				},
+				["Order"] = new SqlServerAggregateTableOverride { SchemaName = "orders", TableName = "OrderEvents" },
 			},
 		};
 

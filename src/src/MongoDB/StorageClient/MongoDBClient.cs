@@ -27,9 +27,7 @@ sealed partial class MongoDBClient : IDisposable
 	{
 		try
 		{
-			BsonSerializer.RegisterSerializationProvider(
-				new MongoDBAggregateSerializationProvider()
-			);
+			BsonSerializer.RegisterSerializationProvider(new MongoDBAggregateSerializationProvider());
 
 			var iEntityType = typeof(IEntity);
 
@@ -59,9 +57,7 @@ sealed partial class MongoDBClient : IDisposable
 				typeof(StreamVersionEntity),
 			];
 
-			BsonSerializer.RegisterSerializer(
-				new ObjectSerializer(t => Array.IndexOf(entityType, t) > -1)
-			);
+			BsonSerializer.RegisterSerializer(new ObjectSerializer(t => Array.IndexOf(entityType, t) > -1));
 		}
 #pragma warning disable CA1031
 		catch
@@ -107,15 +103,10 @@ sealed partial class MongoDBClient : IDisposable
 
 		return entityType == null
 			? builder.Eq("_id", id)
-			: builder.And(
-				builder.Eq("_id", id),
-				builder.Eq(nameof(IEntity.EntityType), entityType)
-			);
+			: builder.And(builder.Eq("_id", id), builder.Eq(nameof(IEntity.EntityType), entityType));
 	}
 
-	sealed class StringObjectIdIdGeneratorConventionThatWorks
-		: ConventionBase,
-			IPostProcessingConvention
+	sealed class StringObjectIdIdGeneratorConventionThatWorks : ConventionBase, IPostProcessingConvention
 	{
 		public void PostProcess(BsonClassMap classMap)
 		{

@@ -15,16 +15,8 @@ partial class SqlServerEventStore<T>
 
 		operationContext ??= EventStoreOperationContext.DefaultContext();
 
-		_eventStoreTelemetry.GetAggregateAtSpecificVersionStart(
-			aggregateId,
-			version,
-			_aggregateTypeFullName
-		);
-		using var activity = _eventStoreTelemetry.GetAggregateAtVersion(
-			aggregateId,
-			version,
-			_aggregateTypeFullName
-		);
+		_eventStoreTelemetry.GetAggregateAtSpecificVersionStart(aggregateId, version, _aggregateTypeFullName);
+		using var activity = _eventStoreTelemetry.GetAggregateAtVersion(aggregateId, version, _aggregateTypeFullName);
 		var getStopwatch = Stopwatch.StartNew();
 		try
 		{
@@ -46,12 +38,7 @@ partial class SqlServerEventStore<T>
 		}
 		catch (Exception ex)
 		{
-			_eventStoreTelemetry.GetAggregateAtSpecificVersionFailed(
-				aggregateId,
-				_aggregateTypeFullName,
-				version,
-				ex
-			);
+			_eventStoreTelemetry.GetAggregateAtSpecificVersionFailed(aggregateId, _aggregateTypeFullName, version, ex);
 			throw;
 		}
 		finally

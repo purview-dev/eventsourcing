@@ -28,10 +28,15 @@ vs:
 vs-sg:
     open "{{ sg_solution_file }}"
 
-# Build the solution
+# Build the solution for the specified configuration (default: Release)
 build *args:
     echo "==> Building {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }}"
     dotnet build {{ solution_file }} --configuration {{ build_configuration }} {{ args }}
+
+# Cleans the solution for the specified configuration (default: Release)
+clean *args:
+    echo "==> Cleaning {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ current_version }}{{ NORMAL }}) with configuration {{ YELLOW }}{{ build_configuration }}{{ NORMAL }}"
+    dotnet clean {{ solution_file }} --configuration {{ build_configuration }} {{ args }}
 
 # Restore local .NET tools
 tools:
@@ -53,7 +58,7 @@ perf-source-generator *args:
 perf-sql-server *args:
     dotnet run --project {{ sql_perf_tests }} --configuration {{ build_configuration }} -- {{ args }}
 
-# Run tests for a specific project with a filter (e.g., "/*/*/*/*/") and configuration (e.g., "Release")
+# Run tests for a specific project with a filter (e.g., "/*/*/*/*/", or "/*/*/*/*[Category=Unit]" to run just unit tests) and configuration (e.g., "Release")
 test filter="/*/*/*/*/" *args:
     echo "==> Testing {{ BLUE }}{{ solution_file }}{{ NORMAL }} ({{ GREEN }}{{ build_configuration }}{{ NORMAL }}) with filter {{ YELLOW }}{{ filter }}{{ NORMAL }}"
     dotnet test --project {{ solution_file }} --configuration {{ build_configuration }} --treenode-filter "{{ filter }}" --ignore-exit-code 8 {{ args }}

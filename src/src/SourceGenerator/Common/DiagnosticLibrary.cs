@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Purview.EventSourcing.SourceGenerator.Common;
 
 static class DiagnosticLibrary
@@ -115,35 +113,32 @@ static class DiagnosticLibrary
 		isEnabledByDefault: true
 	);
 
-	public static readonly DiagnosticDescriptor AggregatePropertyCollectionTypeMustUseEventStoreCollections =
-		new(
-			id: "EVENTSTORE018",
-			title: "Aggregate collection properties must use EventStore collections",
-			messageFormat: "Aggregate property '{0}' on '{1}' has unsupported collection type '{2}'. Collection and array properties must use Purview.EventSourcing.EventStoreList<T> or Purview.EventSourcing.EventStoreSet<T>.",
-			category: AggregateCategory,
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true
-		);
+	public static readonly DiagnosticDescriptor AggregatePropertyCollectionTypeMustUseEventStoreCollections = new(
+		id: "EVENTSTORE018",
+		title: "Aggregate collection properties must use EventStore collections",
+		messageFormat: "Aggregate property '{0}' on '{1}' has unsupported collection type '{2}'. Collection and array properties must use Purview.EventSourcing.EventStoreList<T> or Purview.EventSourcing.EventStoreSet<T>.",
+		category: AggregateCategory,
+		defaultSeverity: DiagnosticSeverity.Error,
+		isEnabledByDefault: true
+	);
 
-	public static readonly DiagnosticDescriptor NullableScalarEqualityNullComparisonShouldUsePatternMatching =
-		new(
-			id: "EVENTSTORE019",
-			title: "Use pattern matching for nullable scalar null checks",
-			messageFormat: "Nullable scalar value object comparison '{0}' can trigger CS9342 due to overloaded equality operators. Use '{1}' instead.",
-			category: AggregateCategory,
-			defaultSeverity: DiagnosticSeverity.Warning,
-			isEnabledByDefault: true
-		);
+	public static readonly DiagnosticDescriptor NullableScalarEqualityNullComparisonShouldUsePatternMatching = new(
+		id: "EVENTSTORE019",
+		title: "Use pattern matching for nullable scalar null checks",
+		messageFormat: "Nullable scalar value object comparison '{0}' can trigger CS9342 due to overloaded equality operators. Use '{1}' instead.",
+		category: AggregateCategory,
+		defaultSeverity: DiagnosticSeverity.Warning,
+		isEnabledByDefault: true
+	);
 
-	public static readonly DiagnosticDescriptor ScalarComplexValueMayNotTranslateInSqlSnapshots =
-		new(
-			id: "EVENTSTORE020",
-			title: "Complex scalar Value paths may not translate in SQL snapshot queries",
-			messageFormat: "Aggregate property '{0}' on '{1}' is a [Scalar] whose Value type '{2}' is complex. Deep SQL predicates through '.Value' are typically non-translatable; prefer a computed mirror property for query scenarios.",
-			category: AggregateCategory,
-			defaultSeverity: DiagnosticSeverity.Warning,
-			isEnabledByDefault: true
-		);
+	public static readonly DiagnosticDescriptor ScalarComplexValueMayNotTranslateInSqlSnapshots = new(
+		id: "EVENTSTORE020",
+		title: "Complex scalar Value paths may not translate in SQL snapshot queries",
+		messageFormat: "Aggregate property '{0}' on '{1}' is a [Scalar] whose Value type '{2}' is complex. Deep SQL predicates through '.Value' are typically non-translatable; prefer a computed mirror property for query scenarios.",
+		category: AggregateCategory,
+		defaultSeverity: DiagnosticSeverity.Warning,
+		isEnabledByDefault: true
+	);
 
 	public static readonly DiagnosticDescriptor EventSchemaVersionMustBePositive = new(
 		id: "EVENTSTORE021",
@@ -160,15 +155,6 @@ static class DiagnosticLibrary
 		messageFormat: "Method '{0}' on aggregate '{1}' reuses schema version '{2}', which is already used by method '{3}'. Event schema versions on a single aggregate must be unique.",
 		category: AggregateCategory,
 		defaultSeverity: DiagnosticSeverity.Error,
-		isEnabledByDefault: true
-	);
-
-	public static readonly DiagnosticDescriptor EventSchemaVersionsShouldBeContiguous = new(
-		id: "EVENTSTORE023",
-		title: "Explicit event schema versions should be contiguous",
-		messageFormat: "Aggregate '{0}' declares explicit event schema versions [{1}] with missing versions [{2}]. Explicit schema versions should be contiguous.",
-		category: AggregateCategory,
-		defaultSeverity: DiagnosticSeverity.Warning,
 		isEnabledByDefault: true
 	);
 

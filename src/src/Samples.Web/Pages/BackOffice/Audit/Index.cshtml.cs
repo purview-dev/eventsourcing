@@ -38,15 +38,11 @@ sealed class IndexModel(IAggregateAuditService auditService) : PageModel
 
 	public string? NextContinuationToken { get; private set; }
 
-	public bool HasQuery =>
-		!string.IsNullOrWhiteSpace(AggregateId) || FromUtc.HasValue || ToUtc.HasValue;
+	public bool HasQuery => !string.IsNullOrWhiteSpace(AggregateId) || FromUtc.HasValue || ToUtc.HasValue;
 
 	public bool IsRecentMode { get; private set; }
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Performance",
-		"CA1822:Mark members as static"
-	)]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static")]
 	public IReadOnlyList<string> SupportedTypes => AggregateAuditService.SupportedAggregateTypes;
 
 	public async Task<IActionResult> OnGetAsync()
@@ -101,14 +97,7 @@ sealed class IndexModel(IAggregateAuditService auditService) : PageModel
 
 		static bool TryParseDateTimeLocal(string? value, out DateTimeOffset parsed)
 		{
-			if (
-				DateTimeOffset.TryParse(
-					value,
-					CultureInfo.InvariantCulture,
-					DateTimeStyles.AssumeLocal,
-					out parsed
-				)
-			)
+			if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out parsed))
 				return true;
 
 			if (
@@ -133,9 +122,7 @@ sealed class IndexModel(IAggregateAuditService auditService) : PageModel
 		return Page();
 	}
 
-	async Task<IReadOnlyList<AggregateEventHistoryItem>> LoadRecentEventsAsync(
-		CancellationToken cancellationToken
-	)
+	async Task<IReadOnlyList<AggregateEventHistoryItem>> LoadRecentEventsAsync(CancellationToken cancellationToken)
 	{
 		var request = new AggregateEventHistoryRequest
 		{
@@ -147,22 +134,12 @@ sealed class IndexModel(IAggregateAuditService auditService) : PageModel
 		List<AggregateEventHistoryItem> merged = [];
 		foreach (var aggregateType in SupportedTypes)
 		{
-			var results = await auditService.GetLatestHistoryAsync(
-				aggregateType,
-				request,
-				cancellationToken
-			);
+			var results = await auditService.GetLatestHistoryAsync(aggregateType, request, cancellationToken);
 			if (results.Count > 0)
 				merged.AddRange(results);
 		}
 
-		return
-		[
-			.. merged
-				.OrderByDescending(m => m.When)
-				.ThenByDescending(m => m.AggregateVersion)
-				.Take(PageSize),
-		];
+		return [.. merged.OrderByDescending(m => m.When).ThenByDescending(m => m.AggregateVersion).Take(PageSize)];
 	}
 
 	public string BuildContinuationLink(string continuationToken)

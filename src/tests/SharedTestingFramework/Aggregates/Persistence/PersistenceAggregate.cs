@@ -61,8 +61,7 @@ public sealed class PersistenceAggregate : AggregateBase, IAggregateTest
 
 	void Apply(OldEvent @event) => OldEventValue = @event.Value;
 
-	public void SetValidatedProperty(int value) =>
-		RecordAndApply(new IncrementValueSetEvent { Value = value });
+	public void SetValidatedProperty(int value) => RecordAndApply(new IncrementValueSetEvent { Value = value });
 
 	public void IncrementInt32Value() => RecordAndApply(new Int32ValueIncrementedEvent());
 

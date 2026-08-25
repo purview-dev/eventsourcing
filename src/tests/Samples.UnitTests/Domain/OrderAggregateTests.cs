@@ -63,9 +63,7 @@ public class OrderAggregateTests
 	[Arguments("")]
 	[Arguments(" ")]
 	[Arguments("     ")]
-	public void CreateOrder_GivenNullEmptyOrWhitespaceCustomerId_ThrowsArgumentException(
-		string? customerId
-	)
+	public void CreateOrder_GivenNullEmptyOrWhitespaceCustomerId_ThrowsArgumentException(string? customerId)
 	{
 		var order = new OrderAggregate();
 		Assert.Throws<ArgumentException>(() => order.CreateOrder(customerId!));
@@ -284,9 +282,7 @@ public class OrderAggregateTests
 	[Arguments("")]
 	[Arguments(" ")]
 	[Arguments("     ")]
-	public async Task UpdateDetails_GivenNullOrWhitespaceAddress_RaisesNoEvents(
-		string? shippingAddress
-	)
+	public async Task UpdateDetails_GivenNullOrWhitespaceAddress_RaisesNoEvents(string? shippingAddress)
 	{
 		var order = CreateOrder("order-1");
 		var countBefore = order.GetUnsavedEvents().Count();

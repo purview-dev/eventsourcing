@@ -8,9 +8,9 @@ static partial class TypeLibrary
 		{
 			public static class Generic
 			{
-				public static readonly TypeValueObject IEnumerable = new(typeof(IEnumerable<>));
+				public static readonly TypeIdentity IEnumerable = new(typeof(IEnumerable<>));
 
-				public static readonly TypeValueObject ICollection = new(typeof(ICollection<>));
+				public static readonly TypeIdentity ICollection = new(typeof(ICollection<>));
 			}
 		}
 	}

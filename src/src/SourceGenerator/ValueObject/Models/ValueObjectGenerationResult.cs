@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-
 namespace Purview.EventSourcing.SourceGenerator.ValueObject.Models;
 
 readonly record struct ValueObjectGenerationResult(
@@ -8,5 +6,5 @@ readonly record struct ValueObjectGenerationResult(
 	ImmutableArray<DiagnosticInfo> Diagnostics
 )
 {
-	public static ValueObjectGenerationResult Empty { get; } = new(null, null, []);
+	public static readonly ValueObjectGenerationResult Empty;
 }

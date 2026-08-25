@@ -40,8 +40,7 @@ public sealed class SqlServerEventStoreTransactionTests
 		await Assert.That(transaction.CorrelationId).IsEqualTo("sql");
 	}
 
-	sealed class FakeTransactionalStore(string boundaryKey)
-		: ITransactionalEventStore<TestAggregate>
+	sealed class FakeTransactionalStore(string boundaryKey) : ITransactionalEventStore<TestAggregate>
 	{
 		public string TransactionBoundaryKey => boundaryKey;
 
@@ -75,10 +74,8 @@ public sealed class SqlServerEventStoreTransactionTests
 			CancellationToken cancellationToken = default
 		) => throw new NotSupportedException();
 
-		public Task<bool> IsDeletedAsync(
-			string aggregateId,
-			CancellationToken cancellationToken = default
-		) => throw new NotSupportedException();
+		public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+			throw new NotSupportedException();
 
 		public Task<TestAggregate?> GetDeletedAsync(
 			string aggregateId,
@@ -99,18 +96,15 @@ public sealed class SqlServerEventStoreTransactionTests
 
 		public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 			bool includeDeleted,
-			[System.Runtime.CompilerServices.EnumeratorCancellation]
-				CancellationToken cancellationToken = default
+			[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
 		)
 		{
 			await Task.CompletedTask;
 			yield break;
 		}
 
-		public Task<ExistsState> ExistsAsync(
-			string aggregateId,
-			CancellationToken cancellationToken = default
-		) => throw new NotSupportedException();
+		public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+			throw new NotSupportedException();
 
 		public TestAggregate FulfilRequirements(TestAggregate aggregate) => aggregate;
 
@@ -121,8 +115,7 @@ public sealed class SqlServerEventStoreTransactionTests
 			CancellationToken cancellationToken = default
 		) => throw new NotSupportedException();
 
-		public System.Data.Common.DbConnection CreateTransactionConnection() =>
-			throw new NotSupportedException();
+		public System.Data.Common.DbConnection CreateTransactionConnection() => throw new NotSupportedException();
 
 		public Task EnsureTransactionConfiguredAsync(
 			System.Data.Common.DbConnection connection,

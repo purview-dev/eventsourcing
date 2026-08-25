@@ -11,10 +11,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(
-			aggregateId: aggregateId,
-			a => a.SetValidatedProperty(-1)
-		);
+		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId, a => a.SetValidatedProperty(-1));
 
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
@@ -46,21 +43,13 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(result.Saved).IsTrue();
 
 		// Act
-		var aggregateGetResult = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateGetResult = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		// Assert
-		await GenericTableEventStoreTestSeed.AssertComplexPropertyMatches(
-			aggregate,
-			aggregateGetResult
-		);
+		await GenericTableEventStoreTestSeed.AssertComplexPropertyMatches(aggregate, aggregateGetResult);
 	}
 
-	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -76,14 +65,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 		// Assert
 		await Assert.That(result).IsFalse();
 
-		telemetry
-			.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>())
-			.WasCalled(Times.Once);
+		telemetry.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>()).WasCalled(Times.Once);
 	}
 
-	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -100,25 +85,14 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert.That(aggregateFromEventStore).IsNotNull();
 		await Assert.That(aggregateFromEventStore.Id()).IsEqualTo(aggregate.Id());
-		await Assert
-			.That(aggregateFromEventStore.IncrementInt32)
-			.IsEqualTo(aggregate.IncrementInt32);
-		await Assert
-			.That(aggregateFromEventStore.Details.SavedVersion)
-			.IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.SnapshotVersion)
-			.IsEqualTo(aggregate.Details.SnapshotVersion);
+		await Assert.That(aggregateFromEventStore.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
+		await Assert.That(aggregateFromEventStore.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
+		await Assert.That(aggregateFromEventStore.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert.That(aggregateFromEventStore.Details.SnapshotVersion).IsEqualTo(aggregate.Details.SnapshotVersion);
 		await Assert.That(aggregateFromEventStore.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 	}
 
@@ -129,11 +103,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate =
-			GenericTableEventStoreTestSeed.BuildAggregateWithIncrementEvents<TAggregate>(
-				aggregateId,
-				eventsToGenerate
-			);
+		var aggregate = GenericTableEventStoreTestSeed.BuildAggregateWithIncrementEvents<TAggregate>(
+			aggregateId,
+			eventsToGenerate
+		);
 
 		var ctx = fixture.CreateEventStoreContext<TAggregate>();
 		var eventStore = ctx.EventStore;
@@ -154,15 +127,9 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
-		await GenericTableEventStoreTestSeed.AssertRecreatedMatchesSource(
-			aggregateFromEventStore,
-			aggregate
-		);
+		await GenericTableEventStoreTestSeed.AssertRecreatedMatchesSource(aggregateFromEventStore, aggregate);
 
 		await Assert.That(streamVersionVersion).IsEqualTo(eventsToGenerate);
 	}
@@ -198,22 +165,16 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert
 			.That((aggregateFromEventStore?.StringProperty ?? string.Empty).Length)
 			.IsEqualTo(aggregate.StringProperty.Length);
 
-		await Assert
-			.That(aggregateFromEventStore?.StringProperty)
-			.IsEqualTo(aggregate.StringProperty);
+		await Assert.That(aggregateFromEventStore?.StringProperty).IsEqualTo(aggregate.StringProperty);
 
 		sizeIsLessThan32K =
-			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty)
-			< short.MaxValue;
+			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty) < short.MaxValue;
 		await Assert.That(sizeIsLessThan32K).IsFalse();
 	}
 
@@ -251,30 +212,21 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Delete the snapshot to ensure the events are replayed.
 		var blobName = eventStore.GenerateSnapshotBlobName(aggregateId);
-		var deleteResult = await blobClient.DeleteBlobIfExistsAsync(
-			blobName,
-			cancellationToken: cancellationToken
-		);
+		var deleteResult = await blobClient.DeleteBlobIfExistsAsync(blobName, cancellationToken: cancellationToken);
 
 		await Assert.That(deleteResult).IsTrue();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert
 			.That((aggregateFromEventStore?.StringProperty ?? string.Empty).Length)
 			.IsEqualTo(aggregate.StringProperty.Length);
 
-		await Assert
-			.That(aggregateFromEventStore?.StringProperty)
-			.IsEqualTo(aggregate.StringProperty);
+		await Assert.That(aggregateFromEventStore?.StringProperty).IsEqualTo(aggregate.StringProperty);
 
 		sizeIsLessThan32K =
-			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty)
-			< short.MaxValue;
+			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty) < short.MaxValue;
 		await Assert.That(sizeIsLessThan32K).IsFalse();
 	}
 
@@ -293,11 +245,10 @@ partial class GenericTableEventStoreTests<TAggregate>
 
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate =
-			GenericTableEventStoreTestSeed.BuildAggregateWithIncrementEvents<TAggregate>(
-				aggregateId,
-				eventsToGenerate
-			);
+		var aggregate = GenericTableEventStoreTestSeed.BuildAggregateWithIncrementEvents<TAggregate>(
+			aggregateId,
+			eventsToGenerate
+		);
 
 		var ctx3 = fixture.CreateEventStoreContext<TAggregate>();
 		var eventStore = ctx3.EventStore;
@@ -307,27 +258,20 @@ partial class GenericTableEventStoreTests<TAggregate>
 		bool result = await eventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Get and update stream version to remove the Version property.
-		var streamVersionVersion =
-			await GenericTableEventStoreTestSeed.GetStreamVersionNumberAndAssertNotNull(
-				tableClient,
-				aggregateId,
-				cancellationToken
-			);
+		var streamVersionVersion = await GenericTableEventStoreTestSeed.GetStreamVersionNumberAndAssertNotNull(
+			tableClient,
+			aggregateId,
+			cancellationToken
+		);
 
 		// Assert
 		await Assert.That(result).IsTrue();
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
-		await GenericTableEventStoreTestSeed.AssertRecreatedMatchesSource(
-			aggregateFromEventStore,
-			aggregate
-		);
+		await GenericTableEventStoreTestSeed.AssertRecreatedMatchesSource(aggregateFromEventStore, aggregate);
 
 		await Assert.That(streamVersionVersion).IsEqualTo(eventsToGenerate);
 	}

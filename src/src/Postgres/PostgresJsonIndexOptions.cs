@@ -11,11 +11,7 @@ public sealed class PostgresJsonIndexOptions
 
 	public string? GinIndexName { get; set; }
 
-	[SuppressMessage(
-		"Performance",
-		"CA1819:Properties should not return arrays",
-		Justification = "DTO"
-	)]
+	[SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "DTO")]
 	public PostgresJsonPathIndexDefinition[] PathIndexes { get; set; } = [];
 }
 

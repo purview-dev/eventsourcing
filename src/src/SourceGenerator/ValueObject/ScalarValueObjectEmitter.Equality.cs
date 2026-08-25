@@ -103,11 +103,7 @@ static partial class ScalarValueObjectEmitter
 	{
 		if (
 			model.Options.GenerateImplicitToPrimitive
-			&& !ValueObjectSymbolInspector.HasConversionOperator(
-				model.TypeSymbol,
-				model.ScalarProperty.Type,
-				false
-			)
+			&& !ValueObjectSymbolInspector.HasConversionOperator(model.TypeSymbol, model.ScalarProperty.Type, false)
 		)
 		{
 			sb.AppendLine(
@@ -117,15 +113,8 @@ static partial class ScalarValueObjectEmitter
 
 		if (
 			model.Options.GenerateImplicitFromPrimitive
-			&& !ValueObjectSymbolInspector.HasContextualCreateOverload(
-				model.TypeSymbol,
-				model.ScalarProperty.Type
-			)
-			&& !ValueObjectSymbolInspector.HasConversionOperator(
-				model.TypeSymbol,
-				model.ScalarProperty.Type,
-				true
-			)
+			&& !ValueObjectSymbolInspector.HasContextualCreateOverload(model.TypeSymbol, model.ScalarProperty.Type)
+			&& !ValueObjectSymbolInspector.HasConversionOperator(model.TypeSymbol, model.ScalarProperty.Type, true)
 		)
 		{
 			sb.AppendLine(

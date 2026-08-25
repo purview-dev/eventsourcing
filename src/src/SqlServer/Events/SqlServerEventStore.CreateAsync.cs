@@ -4,10 +4,7 @@ namespace Purview.EventSourcing.SqlServer.Events;
 
 partial class SqlServerEventStore<T>
 {
-	public async Task<T> CreateAsync(
-		string? aggregateId = null,
-		CancellationToken cancellationToken = default
-	)
+	public async Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))
 		{

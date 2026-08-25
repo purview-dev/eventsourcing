@@ -1,6 +1,5 @@
 #pragma warning disable IDE0370 // Suppression operator is required to change the element type of the incremental provider
 
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Operations;
@@ -9,9 +8,7 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 
 static partial class SourceGenLibrary
 {
-	public static void RegisterAdditionalDiagnostics(
-		IncrementalGeneratorInitializationContext context
-	)
+	public static void RegisterAdditionalDiagnostics(IncrementalGeneratorInitializationContext context)
 	{
 		RegisterOrphanEventMethodDiagnostics(context);
 		RegisterManualEventTypeDiagnostics(context);
@@ -19,16 +16,13 @@ static partial class SourceGenLibrary
 		RegisterComputedParameterInvocationDiagnostics(context);
 	}
 
-	static void RegisterOrphanEventMethodDiagnostics(
-		IncrementalGeneratorInitializationContext context
-	)
+	static void RegisterOrphanEventMethodDiagnostics(IncrementalGeneratorInitializationContext context)
 	{
 		var eventDiagnostics = context
 			.SyntaxProvider.ForAttributeWithMetadataName(
 				TypeLibrary.Attributes.EventAttribute.MetadataFullName,
 				static (node, _) => node is MethodDeclarationSyntax,
-				static (ctx, ct) =>
-					CreateOrphanEventMethodDiagnostic(ctx.TargetSymbol as IMethodSymbol)
+				static (ctx, ct) => CreateOrphanEventMethodDiagnostic(ctx.TargetSymbol as IMethodSymbol)
 			)
 			.Where(static d => d is not null)
 			.Select(static (d, _) => d!)
@@ -38,8 +32,7 @@ static partial class SourceGenLibrary
 			.SyntaxProvider.ForAttributeWithMetadataName(
 				TypeLibrary.Attributes.CollectionEventAttribute.MetadataFullName,
 				static (node, _) => node is MethodDeclarationSyntax,
-				static (ctx, ct) =>
-					CreateOrphanEventMethodDiagnostic(ctx.TargetSymbol as IMethodSymbol)
+				static (ctx, ct) => CreateOrphanEventMethodDiagnostic(ctx.TargetSymbol as IMethodSymbol)
 			)
 			.Where(static d => d is not null)
 			.Select(static (d, _) => d!)
@@ -49,10 +42,7 @@ static partial class SourceGenLibrary
 			.Combine(collectionEventDiagnostics)
 			.Select(static (pair, _) => pair.Left.AddRange(pair.Right));
 
-		context.RegisterSourceOutput(
-			all,
-			static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics)
-		);
+		context.RegisterSourceOutput(all, static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics));
 	}
 
 	static DiagnosticInfo? CreateOrphanEventMethodDiagnostic(IMethodSymbol? method)
@@ -60,57 +50,33 @@ static partial class SourceGenLibrary
 		if (method is null)
 			return null;
 
-		if (
-			TypeHelpers.HasAttribute(
-				method.ContainingType,
-				TypeLibrary.Attributes.AggregateAttribute
-			)
-		)
+		if (TypeHelpers.HasAttribute(method.ContainingType, TypeLibrary.Attributes.AggregateAttribute))
 		{
 			return null;
 		}
 
 		// If the method is not contained within an aggregate, report a diagnostic
-		return DiagnosticInfo.Create(
-			DiagnosticLibrary.EventMethodRequiresAggregateAttribute,
-			method,
-			method.Name
-		);
+		return DiagnosticInfo.Create(DiagnosticLibrary.EventMethodRequiresAggregateAttribute, method, method.Name);
 	}
 
-	static void RegisterManualEventTypeDiagnostics(
-		IncrementalGeneratorInitializationContext context
-	)
+	static void RegisterManualEventTypeDiagnostics(IncrementalGeneratorInitializationContext context)
 	{
 		var diagnostics = context
 			.SyntaxProvider.CreateSyntaxProvider(
 				static (node, _) => node is TypeDeclarationSyntax,
 				static (ctx, ct) =>
 				{
-					if (
-						ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct)
-						is not INamedTypeSymbol typeSymbol
-					)
+					if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol typeSymbol)
 						return null;
 
 					if (!TypeHelpers.InheritsFrom(typeSymbol, TypeLibrary.Aggregates.EventBase))
 						return null;
 
 					var location = typeSymbol.Locations.FirstOrDefault();
-					if (
-						location?.SourceTree?.FilePath.EndsWith(
-							".g.cs",
-							StringComparison.OrdinalIgnoreCase
-						) == true
-					)
+					if (location?.SourceTree?.FilePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase) == true)
 						return null;
 
-					if (
-						TypeHelpers.HasAttribute(
-							typeSymbol,
-							TypeLibrary.Attributes.SentinelEventAttribute
-						)
-					)
+					if (TypeHelpers.HasAttribute(typeSymbol, TypeLibrary.Attributes.SentinelEventAttribute))
 					{
 						return null;
 					}
@@ -130,15 +96,10 @@ static partial class SourceGenLibrary
 			.Select(static (d, _) => d!)
 			.Collect();
 
-		context.RegisterSourceOutput(
-			diagnostics,
-			static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics)
-		);
+		context.RegisterSourceOutput(diagnostics, static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics));
 	}
 
-	static void RegisterNullableScalarComparisonDiagnostics(
-		IncrementalGeneratorInitializationContext context
-	)
+	static void RegisterNullableScalarComparisonDiagnostics(IncrementalGeneratorInitializationContext context)
 	{
 		var diagnostics = context
 			.SyntaxProvider.CreateSyntaxProvider(
@@ -168,9 +129,7 @@ static partial class SourceGenLibrary
 					if (!IsScalarValueObject(otherType))
 						return null;
 
-					var replacement = be.OperatorToken.IsKind(SyntaxKind.EqualsEqualsToken)
-						? "is null"
-						: "is not null";
+					var replacement = be.OperatorToken.IsKind(SyntaxKind.EqualsEqualsToken) ? "is null" : "is not null";
 
 					return DiagnosticInfo.Create(
 						DiagnosticLibrary.NullableScalarEqualityNullComparisonShouldUsePatternMatching,
@@ -184,10 +143,7 @@ static partial class SourceGenLibrary
 			.Select(static (d, _) => d!)
 			.Collect();
 
-		context.RegisterSourceOutput(
-			diagnostics,
-			static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics)
-		);
+		context.RegisterSourceOutput(diagnostics, static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics));
 	}
 
 	static bool IsScalarValueObject(ITypeSymbol type)
@@ -204,9 +160,7 @@ static partial class SourceGenLibrary
 		return TypeHelpers.HasAttribute(type, TypeLibrary.Attributes.ScalarAttribute);
 	}
 
-	static void RegisterComputedParameterInvocationDiagnostics(
-		IncrementalGeneratorInitializationContext context
-	)
+	static void RegisterComputedParameterInvocationDiagnostics(IncrementalGeneratorInitializationContext context)
 	{
 		var diagnostics = context
 			.SyntaxProvider.CreateSyntaxProvider(
@@ -214,20 +168,13 @@ static partial class SourceGenLibrary
 				static (ctx, ct) =>
 				{
 					var invocation = (InvocationExpressionSyntax)ctx.Node;
-					var operation =
-						ctx.SemanticModel.GetOperation(invocation, ct) as IInvocationOperation;
+					var operation = ctx.SemanticModel.GetOperation(invocation, ct) as IInvocationOperation;
 					if (operation?.TargetMethod is not IMethodSymbol targetMethod)
 						return null;
 
 					if (
-						!TypeHelpers.HasAttribute(
-							targetMethod,
-							TypeLibrary.Attributes.EventAttribute
-						)
-						&& !TypeHelpers.HasAttribute(
-							targetMethod,
-							TypeLibrary.Attributes.CollectionEventAttribute
-						)
+						!TypeHelpers.HasAttribute(targetMethod, TypeLibrary.Attributes.EventAttribute)
+						&& !TypeHelpers.HasAttribute(targetMethod, TypeLibrary.Attributes.CollectionEventAttribute)
 					)
 						return null;
 
@@ -238,8 +185,7 @@ static partial class SourceGenLibrary
 						return null;
 
 					var passedArgument = operation.Arguments.FirstOrDefault(a =>
-						!a.IsImplicit
-						&& SymbolEqualityComparer.Default.Equals(a.Parameter, computedParameter)
+						!a.IsImplicit && SymbolEqualityComparer.Default.Equals(a.Parameter, computedParameter)
 					);
 					if (passedArgument is null)
 						return null;
@@ -257,10 +203,7 @@ static partial class SourceGenLibrary
 			.Select(static (d, _) => d!)
 			.Collect();
 
-		context.RegisterSourceOutput(
-			diagnostics,
-			static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics)
-		);
+		context.RegisterSourceOutput(diagnostics, static (spc, diagnostics) => spc.ReportDiagnostics(diagnostics));
 	}
 }
 

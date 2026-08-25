@@ -10,10 +10,8 @@ namespace Purview.EventSourcing.Admin.MongoDB;
 public sealed class MongoDbAdminEventQueryService(IMongoClient mongoClient, string databaseName)
 	: IAdminEventQueryService
 {
-	readonly IMongoClient _mongoClient =
-		mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
-	readonly string _databaseName =
-		databaseName ?? throw new ArgumentNullException(nameof(databaseName));
+	readonly IMongoClient _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
+	readonly string _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
 
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
@@ -58,10 +56,7 @@ public sealed class MongoDbAdminEventQueryService(IMongoClient mongoClient, stri
 		var pageSize = Math.Max(1, Math.Min(query.PageSize, 500));
 		var skip = (query.Page - 1) * pageSize;
 
-		var total = await collection.CountDocumentsAsync(
-			filter,
-			cancellationToken: cancellationToken
-		);
+		var total = await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
 		if (total == 0)
 		{
 			return new PagedResult<EventEnvelopeResponse>([], query.Page, pageSize, 0);

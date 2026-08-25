@@ -81,9 +81,7 @@ public sealed class SqlServerSnapshotEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<
-		string,
-		SqlServerSnapshotAggregateTableOverride
+	public Dictionary<string, SqlServerSnapshotAggregateTableOverride
 #pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 #pragma warning restore format

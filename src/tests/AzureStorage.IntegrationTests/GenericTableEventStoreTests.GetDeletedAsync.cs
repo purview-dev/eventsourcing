@@ -2,9 +2,7 @@
 
 partial class GenericTableEventStoreTests<TAggregate>
 {
-	public async Task GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(
-		CancellationToken cancellationToken
-	)
+	public async Task GetDeletedAsync_GivenDeletedAggregate_ReturnsAggregate(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -17,10 +15,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await eventStore.DeleteAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Act
-		var aggregateResult = await eventStore.GetDeletedAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateResult = await eventStore.GetDeletedAsync(aggregateId, cancellationToken: cancellationToken);
 
 		// Assert
 		await Assert.That(aggregateResult).IsNotNull();

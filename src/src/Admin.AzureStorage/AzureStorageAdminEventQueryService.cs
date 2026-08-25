@@ -10,9 +10,8 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
-public sealed class AzureStorageAdminEventQueryService(
-	IOptions<AzureStorageEventStoreOptions> options
-) : IAdminEventQueryService
+public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEventStoreOptions> options)
+	: IAdminEventQueryService
 {
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
@@ -73,8 +72,7 @@ public sealed class AzureStorageAdminEventQueryService(
 					rows.Add((aggregateType, version, row));
 				}
 			}
-			catch (RequestFailedException ex)
-				when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
 			{
 				continue;
 			}

@@ -7,8 +7,7 @@ namespace Purview.EventSourcing.SqlServer.Events.EntityFramework;
 /// Design-time factory for <see cref="EventStoreDbContext"/>.
 /// Used by EF Core tools to generate migrations.
 /// </summary>
-public sealed class EventStoreDbContextDesignTimeFactory
-	: IDesignTimeDbContextFactory<EventStoreDbContext>
+public sealed class EventStoreDbContextDesignTimeFactory : IDesignTimeDbContextFactory<EventStoreDbContext>
 {
 	public EventStoreDbContext CreateDbContext(string[] args)
 	{

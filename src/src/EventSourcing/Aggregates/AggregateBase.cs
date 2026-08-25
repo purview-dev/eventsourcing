@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Aggregates.Exceptions;
@@ -54,10 +54,7 @@ public abstract class AggregateBase : IAggregate
 	{
 		var unsavedEventCount = _unsavedEvents.Count;
 		if (upToVersion.HasValue)
-			_unsavedEvents =
-			[
-				.. _unsavedEvents.Where(m => m.Details.AggregateVersion > upToVersion),
-			];
+			_unsavedEvents = [.. _unsavedEvents.Where(m => m.Details.AggregateVersion > upToVersion)];
 		else
 			_unsavedEvents.Clear();
 

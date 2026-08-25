@@ -4,9 +4,7 @@ using Purview.EventSourcing.Samples.Domain;
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
-public sealed class CustomerAggregateSnapshotEventStoreTests(
-	SqlServerSnapshotEventStoreFixture fixture
-)
+public sealed class CustomerAggregateSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	[Test]
 	public async Task SnapshotAsync_GivenCustomerAggregateWithEmailAddress_QueriesByEmail(
@@ -23,10 +21,7 @@ public sealed class CustomerAggregateSnapshotEventStoreTests(
 		await store.SnapshotAsync(aggregate, cancellationToken);
 
 		var count = await store.CountAsync(m => m.Email == email, cancellationToken);
-		var query = await store.QueryAsync(
-			m => m.Email == email,
-			cancellationToken: cancellationToken
-		);
+		var query = await store.QueryAsync(m => m.Email == email, cancellationToken: cancellationToken);
 		var result = query.Results.SingleOrDefault();
 
 		await Assert.That(count).IsEqualTo(1);
@@ -36,9 +31,7 @@ public sealed class CustomerAggregateSnapshotEventStoreTests(
 	}
 
 	[Test]
-	public async Task QueryAsync_GivenOrderByScalarValueObject_TranslatesAndOrders(
-		CancellationToken cancellationToken
-	)
+	public async Task QueryAsync_GivenOrderByScalarValueObject_TranslatesAndOrders(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateSnapshotStore<CustomerAggregate>();
 		var charlie = new CustomerAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
@@ -62,9 +55,7 @@ public sealed class CustomerAggregateSnapshotEventStoreTests(
 	}
 
 	[Test]
-	public async Task QueryAsync_GivenOrderByScalarInnerValue_FailsWithClearMessage(
-		CancellationToken cancellationToken
-	)
+	public async Task QueryAsync_GivenOrderByScalarInnerValue_FailsWithClearMessage(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateSnapshotStore<CustomerAggregate>();
 		var customer = new CustomerAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };

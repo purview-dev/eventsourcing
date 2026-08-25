@@ -13,9 +13,7 @@ sealed partial class AzureStorageKit
 
 	public IResourceBuilder<AzureBlobStorageContainerResource> SnapshotBlob { get; set; }
 
-	protected override IResourceBuilder<AzureStorageResource> BuildResource(
-		IDistributedApplicationBuilder builder
-	)
+	protected override IResourceBuilder<AzureStorageResource> BuildResource(IDistributedApplicationBuilder builder)
 	{
 		Storage = builder.AddAzureStorage(Name);
 		var storage = Storage;

@@ -6,10 +6,7 @@ namespace Purview.EventSourcing.SqlServer.Snapshots;
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public partial class SqlServerSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {
-	static PersistenceAggregate CreateAggregate(
-		string? id = null,
-		Action<PersistenceAggregate>? action = null
-	)
+	static PersistenceAggregate CreateAggregate(string? id = null, Action<PersistenceAggregate>? action = null)
 	{
 		PersistenceAggregate aggregate = new() { Details = { Id = id ?? $"{Guid.NewGuid():D}" } };
 

@@ -30,10 +30,7 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -41,10 +38,7 @@ partial class SqlServerSnapshotEventStoreTests
 		// Act
 		List<PersistenceAggregate> aggregates = [];
 
-		var aggregateResponse = await store.ListAsync(
-			maxRecordCount: pageCount,
-			cancellationToken: cancellationToken
-		);
+		var aggregateResponse = await store.ListAsync(maxRecordCount: pageCount, cancellationToken: cancellationToken);
 		aggregates.AddRange(aggregateResponse.Results);
 
 		while (aggregateResponse.ContinuationToken != null)
@@ -86,10 +80,7 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -103,10 +94,7 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < (numberOfEvents * 2); eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -114,8 +102,7 @@ partial class SqlServerSnapshotEventStoreTests
 		// Act
 		List<PersistenceAggregate> aggregates = [];
 
-		Expression<Func<PersistenceAggregate, bool>> query = a =>
-			a.IncrementInt32 == numberOfEvents;
+		Expression<Func<PersistenceAggregate, bool>> query = a => a.IncrementInt32 == numberOfEvents;
 
 		var aggregateResponse = await store.QueryAsync(
 			query,

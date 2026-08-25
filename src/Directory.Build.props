@@ -54,11 +54,7 @@
 	<ItemGroup Label="NuGet package assets" Condition="'$(IsPackable)' == 'true'">
 		<None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" />
 		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Pack="true" PackagePath="/" />
-		<None
-			Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg"
-			Pack="true"
-			PackagePath="/"
-		/>
+		<None Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg" Pack="true" PackagePath="/" />
 	</ItemGroup>
 
 	<PropertyGroup Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'">

@@ -137,9 +137,7 @@ public sealed class PostgresEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<
-		string,
-		PostgresAggregateTableOverride
+	public Dictionary<string, PostgresAggregateTableOverride
 #pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 #pragma warning restore format

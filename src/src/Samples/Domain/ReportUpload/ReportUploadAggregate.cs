@@ -31,8 +31,7 @@ public sealed partial class ReportUploadAggregate
 
 	public ParserReportSummary? ReportSummaryScalar { get; private set; }
 
-	public ReportUploadAggregate MarkAsProcessing() =>
-		SetReportProcessingStatus(ReportProcessingStatus.Processing);
+	public ReportUploadAggregate MarkAsProcessing() => SetReportProcessingStatus(ReportProcessingStatus.Processing);
 
 	public ReportUploadAggregate AddExcelReport(GuidObjectId projectId, BlobUri excelReportBlob) =>
 		AddExcelReport(new ProjectBlobs(projectId, excelReportBlob));

@@ -19,8 +19,7 @@ public static class GuardAggregates
 		where T : class, IAggregate =>
 		value.Details.SavedVersion > 0
 			? throw new ArgumentException(
-				errorMessage
-					?? $"The aggregate '{typeof(T).Name}' existing and cannot be modified in this way.",
+				errorMessage ?? $"The aggregate '{typeof(T).Name}' existing and cannot be modified in this way.",
 				paramName
 			)
 			: value;

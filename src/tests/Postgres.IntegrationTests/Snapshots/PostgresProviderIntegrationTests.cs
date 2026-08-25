@@ -3,15 +3,13 @@ using Npgsql;
 using Purview.EventSourcing.Aggregates.Persistence;
 using Purview.EventSourcing.Fixtures.Postgres;
 
-namespace Purview.EventSourcing.Postgres;
+namespace Purview.EventSourcing.Postgres.Snapshots;
 
 [ClassDataSource<PostgresSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreFixture fixture)
 {
 	[Test]
-	public async Task EventStore_SaveAndReplay_RestoresAggregateState(
-		CancellationToken cancellationToken
-	)
+	public async Task EventStore_SaveAndReplay_RestoresAggregateState(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateEventStore<PersistenceAggregate>();
 		var aggregate = await store.CreateAsync(cancellationToken: cancellationToken);
@@ -20,25 +18,17 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 
 		await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
-		var rehydrated = await store.GetAsync(
-			aggregate.Details.Id,
-			cancellationToken: cancellationToken
-		);
+		var rehydrated = await store.GetAsync(aggregate.Details.Id, cancellationToken: cancellationToken);
 		await Assert.That(rehydrated).IsNotNull();
 		await Assert.That(rehydrated!.Int32Value).IsEqualTo(123);
 		await Assert.That(rehydrated.StringProperty).Contains("hello");
 	}
 
 	[Test]
-	public async Task SnapshotStore_UpsertAndLinqQuery_WorksWithNestedPayload(
-		CancellationToken cancellationToken
-	)
+	public async Task SnapshotStore_UpsertAndLinqQuery_WorksWithNestedPayload(CancellationToken cancellationToken)
 	{
 		var store = fixture.CreateSnapshotStore<PersistenceAggregate>();
-		var aggregate = new PersistenceAggregate
-		{
-			Details = { Id = Guid.NewGuid().ToString("D") },
-		};
+		var aggregate = new PersistenceAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
 		aggregate.SetComplexProperty(new() { Int32Property = 42, StringProperty = "active" });
 
 		await store.SnapshotAsync(aggregate, cancellationToken);
@@ -58,10 +48,7 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 	)
 	{
 		var store = fixture.CreateSnapshotStore<PersistenceAggregate>();
-		var aggregate = new PersistenceAggregate
-		{
-			Details = { Id = Guid.NewGuid().ToString("D") },
-		};
+		var aggregate = new PersistenceAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
 		aggregate.AddKVPs(new KeyValuePair<string, string>("status", "active"));
 		aggregate.SetComplexProperty(new() { StringProperty = "active" });
 
@@ -84,14 +71,10 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 	}
 
 	[Test]
-	public async Task ExecuteUpdate_PartialJsonUpdate_UpdatesSingleField(
-		CancellationToken cancellationToken
-	)
+	public async Task ExecuteUpdate_PartialJsonUpdate_UpdatesSingleField(CancellationToken cancellationToken)
 	{
 		var tableName = $"exec_update_{Guid.NewGuid():N}";
-		var options = new DbContextOptionsBuilder<ExecuteUpdateDbContext>()
-			.UseNpgsql(fixture.ConnectionString)
-			.Options;
+		var options = new DbContextOptionsBuilder<ExecuteUpdateDbContext>().UseNpgsql(fixture.ConnectionString).Options;
 
 		await using (var setupContext = new ExecuteUpdateDbContext(options, tableName))
 		{
@@ -111,8 +94,7 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 			await updateContext
 				.Rows.Where(static r => r.State.Status == "pending")
 				.ExecuteUpdateAsync(
-					s =>
-						s.SetProperty(static r => r.State.Version, static r => r.State.Version + 1),
+					s => s.SetProperty(static r => r.State.Version, static r => r.State.Version + 1),
 					cancellationToken
 				);
 		}
@@ -138,10 +120,7 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 					PathIndexes = [new() { Path = "ComplexTestType.StringProperty" }],
 				}
 		);
-		var aggregate = new PersistenceAggregate
-		{
-			Details = { Id = Guid.NewGuid().ToString("D") },
-		};
+		var aggregate = new PersistenceAggregate { Details = { Id = Guid.NewGuid().ToString("D") } };
 		aggregate.SetComplexProperty(new() { StringProperty = "indexed" });
 		await store.SnapshotAsync(aggregate, cancellationToken);
 
@@ -163,21 +142,13 @@ public sealed class PostgresProviderIntegrationTests(PostgresSnapshotEventStoreF
 			indexDefinitions.Add(reader.GetString(0));
 
 		await Assert
-			.That(
-				indexDefinitions.Any(def =>
-					def.Contains("USING gin", StringComparison.OrdinalIgnoreCase)
-				)
-			)
+			.That(indexDefinitions.Any(def => def.Contains("USING gin", StringComparison.OrdinalIgnoreCase)))
 			.IsTrue();
-		await Assert
-			.That(indexDefinitions.Any(def => def.Contains("#>>", StringComparison.Ordinal)))
-			.IsTrue();
+		await Assert.That(indexDefinitions.Any(def => def.Contains("#>>", StringComparison.Ordinal))).IsTrue();
 	}
 
-	sealed class ExecuteUpdateDbContext(
-		DbContextOptions<ExecuteUpdateDbContext> options,
-		string tableName
-	) : DbContext(options)
+	sealed class ExecuteUpdateDbContext(DbContextOptions<ExecuteUpdateDbContext> options, string tableName)
+		: DbContext(options)
 	{
 		readonly string _tableName = tableName;
 

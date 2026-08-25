@@ -26,11 +26,7 @@ partial class PostgresEventStore<T>
 
 		Deleted deleteAggregateEvent = new()
 		{
-			Details =
-			{
-				AggregateVersion = aggregate.Details.CurrentVersion + 1,
-				When = DateTimeOffset.UtcNow,
-			},
+			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
@@ -62,17 +58,10 @@ partial class PostgresEventStore<T>
 			return false;
 
 		_eventStoreTelemetry.PermanentDeleteRequested(aggregateId);
-		using var activity = _eventStoreTelemetry.DeleteAggregate(
-			aggregateId,
-			_aggregateTypeFullName
-		);
+		using var activity = _eventStoreTelemetry.DeleteAggregate(aggregateId, _aggregateTypeFullName);
 		try
 		{
-			await _client.DeleteByAggregateIdAsync(
-				aggregateId,
-				_aggregateTypeShortName,
-				cancellationToken
-			);
+			await _client.DeleteByAggregateIdAsync(aggregateId, _aggregateTypeShortName, cancellationToken);
 
 			_eventStoreTelemetry.PermanentDeleteComplete(aggregateId);
 			_eventStoreTelemetry.AggregateDeletedCounter(aggregate.AggregateType);

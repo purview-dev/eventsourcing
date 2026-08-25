@@ -27,6 +27,5 @@ public sealed class StockTransferResult
 			Quantity = quantity,
 		};
 
-	public static StockTransferResult Fail(string message) =>
-		new() { Succeeded = false, ErrorMessage = message };
+	public static StockTransferResult Fail(string message) => new() { Succeeded = false, ErrorMessage = message };
 }

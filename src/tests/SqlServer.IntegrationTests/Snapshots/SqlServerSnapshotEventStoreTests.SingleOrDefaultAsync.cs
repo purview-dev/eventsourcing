@@ -69,9 +69,7 @@ partial class SqlServerSnapshotEventStoreTests
 	}
 
 	[Test]
-	public async Task SingleOrDefaultAsync_GivenNoMatchingAggregates_ReturnsNull(
-		CancellationToken cancellationToken
-	)
+	public async Task SingleOrDefaultAsync_GivenNoMatchingAggregates_ReturnsNull(CancellationToken cancellationToken)
 	{
 		const int aggregatesToCreate = 10;
 		const int eventsToCreate = 10;
@@ -84,10 +82,7 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var x = 0; x < eventsToCreate; x++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 			await Assert.That(saveResult).IsTrue();
 		}
 

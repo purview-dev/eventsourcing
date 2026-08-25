@@ -6,9 +6,7 @@ namespace Purview.EventSourcing.Admin.Postgres;
 
 public static class AdminPostgresServiceCollectionExtensions
 {
-	public static IServiceCollection AddPurviewEventSourcingAdminPostgres(
-		this IServiceCollection services
-	)
+	public static IServiceCollection AddPurviewEventSourcingAdminPostgres(this IServiceCollection services)
 	{
 		ArgumentNullException.ThrowIfNull(services);
 

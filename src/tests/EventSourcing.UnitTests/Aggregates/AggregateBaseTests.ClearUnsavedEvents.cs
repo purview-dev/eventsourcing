@@ -22,9 +22,7 @@ partial class AggregateBaseTests
 		for (var i = 0; i < unSavedEventCount; i++)
 			testAggregate.Increment();
 
-		await Assert
-			.That(testAggregate.Details.CurrentVersion)
-			.IsEqualTo(savedEventCount + unSavedEventCount);
+		await Assert.That(testAggregate.Details.CurrentVersion).IsEqualTo(savedEventCount + unSavedEventCount);
 
 		// Act
 		testAggregate.ClearUnsavedEvents(upToVersion: null);
@@ -57,8 +55,6 @@ partial class AggregateBaseTests
 		testAggregate.ClearUnsavedEvents(upToVersion: eventsToRemove);
 
 		// Assert
-		await Assert
-			.That(testAggregate.Details.CurrentVersion)
-			.IsEqualTo(unSavedEventCount - eventsToRemove);
+		await Assert.That(testAggregate.Details.CurrentVersion).IsEqualTo(unSavedEventCount - eventsToRemove);
 	}
 }

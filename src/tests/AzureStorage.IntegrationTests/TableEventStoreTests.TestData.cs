@@ -36,11 +36,7 @@ partial class TableEventStoreTests
 		return data;
 	}
 
-	public static IEnumerable<(
-		Type,
-		int,
-		int
-	)> SteppedAggregateCountWithDeletedAggregateIdCountTestData()
+	public static IEnumerable<(Type, int, int)> SteppedAggregateCountWithDeletedAggregateIdCountTestData()
 	{
 		List<(Type, int, int)> data = [];
 		foreach (var aggregateType in GetAggregateTestTypes())
@@ -91,13 +87,7 @@ partial class TableEventStoreTests
 		return data;
 	}
 
-	public static IEnumerable<(
-		Type,
-		int,
-		int,
-		int?,
-		int
-	)> RequestedRangeOfEventsWithExpectedEventCountTestData()
+	public static IEnumerable<(Type, int, int, int?, int)> RequestedRangeOfEventsWithExpectedEventCountTestData()
 	{
 		List<(Type, int, int, int?, int)> data = [];
 		foreach (var aggregateType in GetAggregateTestTypes())

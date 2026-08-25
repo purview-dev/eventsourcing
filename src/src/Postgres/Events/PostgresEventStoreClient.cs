@@ -10,9 +10,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 sealed partial class PostgresEventStoreClient
 {
-	static readonly ConcurrentDictionary<string, SemaphoreSlim> EnsureTableLocks = new(
-		StringComparer.Ordinal
-	);
+	static readonly ConcurrentDictionary<string, SemaphoreSlim> EnsureTableLocks = new(StringComparer.Ordinal);
 	static readonly ConcurrentDictionary<string, byte> EnsuredTables = new(StringComparer.Ordinal);
 	static readonly HashSet<string> SupportedEventIncludeColumns =
 	[
@@ -49,10 +47,7 @@ sealed partial class PostgresEventStoreClient
 	public Task EnsureTableExistsAsync(CancellationToken cancellationToken = default) =>
 		EnsureTableIfEnabledAsync(cancellationToken);
 
-	public Task EnsureTableExistsAsync(
-		NpgsqlConnection connection,
-		CancellationToken cancellationToken = default
-	)
+	public Task EnsureTableExistsAsync(NpgsqlConnection connection, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(connection);
 		return EnsureTableIfEnabledAsync(connection, transaction: null, cancellationToken);
@@ -91,10 +86,7 @@ sealed partial class PostgresEventStoreClient
 		await context.SaveChangesAsync(cancellationToken);
 	}
 
-	public async Task InsertBatchAsync(
-		List<RowData> rows,
-		CancellationToken cancellationToken = default
-	)
+	public async Task InsertBatchAsync(List<RowData> rows, CancellationToken cancellationToken = default)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
@@ -187,9 +179,7 @@ sealed partial class PostgresEventStoreClient
 	{
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
-		await using var transaction = await context.Database.BeginTransactionAsync(
-			cancellationToken
-		);
+		await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 		await UpsertCoreAsync(
 			context,
 			id,
@@ -250,17 +240,11 @@ sealed partial class PostgresEventStoreClient
 		await context.SaveChangesAsync(cancellationToken);
 	}
 
-	public async Task<bool> DeleteByIdAsync(
-		string id,
-		CancellationToken cancellationToken = default
-	)
+	public async Task<bool> DeleteByIdAsync(string id, CancellationToken cancellationToken = default)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
-		var entity = await context.EventStoreEntities.SingleOrDefaultAsync(
-			x => x.Id == id,
-			cancellationToken
-		);
+		var entity = await context.EventStoreEntities.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 		if (entity is null)
 			return false;
 
@@ -277,16 +261,11 @@ sealed partial class PostgresEventStoreClient
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
 		return await context
-			.EventStoreEntities.Where(x =>
-				x.AggregateId == aggregateId && x.AggregateType == aggregateType
-			)
+			.EventStoreEntities.Where(x => x.AggregateId == aggregateId && x.AggregateType == aggregateType)
 			.ExecuteDeleteAsync(cancellationToken);
 	}
 
-	public async Task<RowData?> GetByIdAsync(
-		string id,
-		CancellationToken cancellationToken = default
-	)
+	public async Task<RowData?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
@@ -324,10 +303,7 @@ sealed partial class PostgresEventStoreClient
 		var entity = await context
 			.EventStoreEntities.AsNoTracking()
 			.SingleOrDefaultAsync(
-				x =>
-					x.AggregateId == aggregateId
-					&& x.AggregateType == aggregateType
-					&& x.EntityType == entityType,
+				x => x.AggregateId == aggregateId && x.AggregateType == aggregateType && x.EntityType == entityType,
 				cancellationToken
 			);
 		return entity is null ? null : ToRow(entity);
@@ -348,10 +324,7 @@ sealed partial class PostgresEventStoreClient
 		var entity = await context
 			.EventStoreEntities.AsNoTracking()
 			.SingleOrDefaultAsync(
-				x =>
-					x.AggregateId == aggregateId
-					&& x.AggregateType == aggregateType
-					&& x.EntityType == entityType,
+				x => x.AggregateId == aggregateId && x.AggregateType == aggregateType && x.EntityType == entityType,
 				cancellationToken
 			);
 		return entity is null ? null : ToRow(entity);
@@ -362,8 +335,7 @@ sealed partial class PostgresEventStoreClient
 		string aggregateType,
 		int versionFrom,
 		int versionTo,
-		[System.Runtime.CompilerServices.EnumeratorCancellation]
-			CancellationToken cancellationToken = default
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
 	)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
@@ -407,11 +379,7 @@ sealed partial class PostgresEventStoreClient
 		await using var context = CreateContext();
 		return await context
 			.EventStoreEntities.AsNoTracking()
-			.Where(x =>
-				x.AggregateId == aggregateId
-				&& x.AggregateType == aggregateType
-				&& x.EntityType == 2
-			)
+			.Where(x => x.AggregateId == aggregateId && x.AggregateType == aggregateType && x.EntityType == 2)
 			.Select(x => x.Id)
 			.ToListAsync(cancellationToken);
 	}
@@ -419,19 +387,14 @@ sealed partial class PostgresEventStoreClient
 	public async IAsyncEnumerable<string> GetAggregateIdsByTypeAsync(
 		string aggregateType,
 		bool includeDeleted,
-		[System.Runtime.CompilerServices.EnumeratorCancellation]
-			CancellationToken cancellationToken = default
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
 	)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
 		await using var context = CreateContext();
 		var aggregateIds = context
 			.EventStoreEntities.AsNoTracking()
-			.Where(x =>
-				x.AggregateType == aggregateType
-				&& x.EntityType == 0
-				&& (includeDeleted || !x.IsDeleted)
-			)
+			.Where(x => x.AggregateType == aggregateType && x.EntityType == 0 && (includeDeleted || !x.IsDeleted))
 			.Select(x => x.AggregateId)
 			.AsAsyncEnumerable();
 
@@ -450,10 +413,7 @@ sealed partial class PostgresEventStoreClient
 		if (!_options.AutoCreateTable || IsTableEnsured())
 			return;
 
-		var tableLock = EnsureTableLocks.GetOrAdd(
-			_tableEnsureKey,
-			static _ => new SemaphoreSlim(1, 1)
-		);
+		var tableLock = EnsureTableLocks.GetOrAdd(_tableEnsureKey, static _ => new SemaphoreSlim(1, 1));
 		await tableLock.WaitAsync(cancellationToken);
 		try
 		{
@@ -498,10 +458,7 @@ sealed partial class PostgresEventStoreClient
 		if (!_options.AutoCreateTable || IsTableEnsured())
 			return;
 
-		var tableLock = EnsureTableLocks.GetOrAdd(
-			_tableEnsureKey,
-			static _ => new SemaphoreSlim(1, 1)
-		);
+		var tableLock = EnsureTableLocks.GetOrAdd(_tableEnsureKey, static _ => new SemaphoreSlim(1, 1));
 		await tableLock.WaitAsync(cancellationToken);
 		try
 		{
@@ -539,10 +496,7 @@ sealed partial class PostgresEventStoreClient
 	{
 		DbContextOptionsBuilder<EventStoreDbContext> optionsBuilder = new();
 		var commandTimeout = Math.Max(1, _options.TimeoutInSeconds ?? 60);
-		optionsBuilder.UseNpgsql(
-			_options.ConnectionString,
-			sql => sql.CommandTimeout(commandTimeout)
-		);
+		optionsBuilder.UseNpgsql(_options.ConnectionString, sql => sql.CommandTimeout(commandTimeout));
 		return new(optionsBuilder.Options, _options.SchemaName, _options.TableName);
 	}
 
@@ -551,11 +505,7 @@ sealed partial class PostgresEventStoreClient
 		DbContextOptionsBuilder<EventStoreDbContext> optionsBuilder = new();
 		var commandTimeout = Math.Max(1, _options.TimeoutInSeconds ?? 60);
 		optionsBuilder.UseNpgsql(connection, sql => sql.CommandTimeout(commandTimeout));
-		var context = new EventStoreDbContext(
-			optionsBuilder.Options,
-			_options.SchemaName,
-			_options.TableName
-		);
+		var context = new EventStoreDbContext(optionsBuilder.Options, _options.SchemaName, _options.TableName);
 		if (transaction is not null)
 			context.Database.UseTransaction(transaction);
 		return context;
@@ -576,10 +526,7 @@ sealed partial class PostgresEventStoreClient
 		CancellationToken cancellationToken
 	)
 	{
-		var entity = await context.EventStoreEntities.SingleOrDefaultAsync(
-			x => x.Id == id,
-			cancellationToken
-		);
+		var entity = await context.EventStoreEntities.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 		if (entity is null)
 		{
 			context.EventStoreEntities.Add(
@@ -673,10 +620,7 @@ sealed partial class PostgresEventStoreClient
 
 	void MarkTableEnsured() => EnsuredTables.TryAdd(_tableEnsureKey, 0);
 
-	static async Task CreateStorageTablesWithEfAsync(
-		DbContext context,
-		CancellationToken cancellationToken
-	)
+	static async Task CreateStorageTablesWithEfAsync(DbContext context, CancellationToken cancellationToken)
 	{
 		var creator = context.GetService<IRelationalDatabaseCreator>();
 		if (!await creator.ExistsAsync(cancellationToken))
@@ -689,12 +633,7 @@ sealed partial class PostgresEventStoreClient
 	{
 		for (var current = exception; current is not null; current = current.InnerException)
 		{
-			if (
-				current.Message.Contains(
-					"already an object named",
-					StringComparison.OrdinalIgnoreCase
-				)
-			)
+			if (current.Message.Contains("already an object named", StringComparison.OrdinalIgnoreCase))
 				return true;
 		}
 
@@ -707,10 +646,7 @@ sealed partial class PostgresEventStoreClient
 			throw new ArgumentException("Identifier cannot be null or empty.", nameof(identifier));
 
 		if (!IdentifierRegex().IsMatch(identifier))
-			throw new ArgumentException(
-				$"Identifier '{identifier}' contains invalid characters.",
-				nameof(identifier)
-			);
+			throw new ArgumentException($"Identifier '{identifier}' contains invalid characters.", nameof(identifier));
 	}
 
 	[GeneratedRegex(@"^[\w\-\.]+$")]

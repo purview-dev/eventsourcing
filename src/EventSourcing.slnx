@@ -9,6 +9,7 @@
 		<File Path="Directory.Build.targets" />
 	</Folder>
 	<Folder Name="/src/">
+		<Project Path="src/EntityFrameworkCore.SourceGenerator/EntityFrameworkCore.SourceGenerator.csproj" />
 		<Project Path="src/EventSourcing/EventSourcing.csproj" />
 		<Project Path="src/SourceGenerator/SourceGenerator.csproj" />
 	</Folder>
@@ -44,6 +45,7 @@
 		<Project Path="src/ZodSharpImpl/ZodSharpImpl.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
+		<Project Path="tests/EntityFrameworkCore.SourceGenerator.UnitTests/EntityFrameworkCore.SourceGenerator.UnitTests.csproj" />
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
 		<Project Path="tests/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj" />

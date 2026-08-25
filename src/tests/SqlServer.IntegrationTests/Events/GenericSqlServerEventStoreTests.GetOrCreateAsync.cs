@@ -8,11 +8,7 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 	{
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
-		var result = await eventStore.GetOrCreateAsync(
-			null,
-			null,
-			cancellationToken: cancellationToken
-		);
+		var result = await eventStore.GetOrCreateAsync(null, null, cancellationToken: cancellationToken);
 
 		await Assert.That(result).IsNotNull();
 		await Assert.That(result.IsNew()).IsTrue();

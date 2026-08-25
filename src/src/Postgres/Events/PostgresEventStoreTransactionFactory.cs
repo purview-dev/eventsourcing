@@ -16,15 +16,12 @@ public interface IPostgresEventStoreTransactionFactory
 	IPostgresEventStoreTransaction CreatePostgresTransaction(string? correlationId = null);
 }
 
-public sealed class PostgresEventStoreTransactionFactory(
-	IEventStoreCorrelationIdProvider correlationIdProvider
-) : IEventStoreTransactionFactory, IPostgresEventStoreTransactionFactory
+public sealed class PostgresEventStoreTransactionFactory(IEventStoreCorrelationIdProvider correlationIdProvider)
+	: IEventStoreTransactionFactory,
+		IPostgresEventStoreTransactionFactory
 {
-	public IEventStoreTransaction Create(string? correlationId = null) =>
-		CreatePostgresTransaction(correlationId);
+	public IEventStoreTransaction Create(string? correlationId = null) => CreatePostgresTransaction(correlationId);
 
 	public IPostgresEventStoreTransaction CreatePostgresTransaction(string? correlationId = null) =>
-		new PostgresEventStoreTransaction(
-			correlationId ?? correlationIdProvider.GetCorrelationId()
-		);
+		new PostgresEventStoreTransaction(correlationId ?? correlationIdProvider.GetCorrelationId());
 }

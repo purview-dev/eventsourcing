@@ -12,10 +12,7 @@ public interface ITransactionalEventStore<T> : IEventStoreCore<T>
 
 	DbConnection CreateTransactionConnection();
 
-	Task EnsureTransactionConfiguredAsync(
-		DbConnection connection,
-		CancellationToken cancellationToken = default
-	);
+	Task EnsureTransactionConfiguredAsync(DbConnection connection, CancellationToken cancellationToken = default);
 
 	Task<TransactionalSaveOperation<T>> SaveInTransactionAsync(
 		T aggregate,

@@ -38,12 +38,7 @@ partial class TableEventStore<T>
 			);
 
 		var aggregateVersion = versionFrom;
-		var entities = GetEventRangeEntitiesAsync(
-			aggregateId,
-			versionFrom,
-			versionTo,
-			cancellationToken
-		);
+		var entities = GetEventRangeEntitiesAsync(aggregateId, versionFrom, versionTo, cancellationToken);
 		await foreach (var entity in entities)
 		{
 			var item = await DeserializeEventAsync(entity, aggregateVersion, cancellationToken);
@@ -64,10 +59,7 @@ partial class TableEventStore<T>
 		// This query can't be done with LINQ, so don't try.
 		var filter =
 			$"({nameof(ITableEntity.PartitionKey)} eq '{aggregateId}') and (({nameof(ITableEntity.RowKey)} ge '{CreateEventRowKey(versionFrom)}') and ({nameof(ITableEntity.RowKey)} le '{CreateEventRowKey(versionTo ?? int.MaxValue)}'))";
-		var query = _tableClient.QueryEnumerableAsync<EventEntity>(
-			filter,
-			cancellationToken: cancellationToken
-		);
+		var query = _tableClient.QueryEnumerableAsync<EventEntity>(filter, cancellationToken: cancellationToken);
 		await foreach (var eventEntity in query)
 			yield return eventEntity;
 	}
@@ -97,10 +89,7 @@ partial class TableEventStore<T>
 			var eventType = _eventNameMapper.GetTypeName<T>(eventEntity.EventType);
 			if (eventType == null)
 			{
-				_eventStoreTelemetry.MissingEventType(
-					_aggregateTypeFullName,
-					eventEntity.EventType
-				);
+				_eventStoreTelemetry.MissingEventType(_aggregateTypeFullName, eventEntity.EventType);
 
 				return ReturnUnknownEvent(eventEntity, aggregateVersion);
 			}
@@ -129,9 +118,7 @@ partial class TableEventStore<T>
 					return null;
 				}
 
-				var blobEventTypeName = _eventNameMapper.GetTypeName<T>(
-					blobPointer.SerializedEventType
-				);
+				var blobEventTypeName = _eventNameMapper.GetTypeName<T>(blobPointer.SerializedEventType);
 				if (string.IsNullOrWhiteSpace(blobEventTypeName))
 				{
 					_eventStoreTelemetry.SkippedMissingBlobEventName(
@@ -174,11 +161,7 @@ partial class TableEventStore<T>
 		catch (Exception ex)
 #pragma warning restore CA1031
 		{
-			_eventStoreTelemetry.EventDeserializationFailed(
-				eventEntity.PartitionKey,
-				_aggregateTypeFullName,
-				ex
-			);
+			_eventStoreTelemetry.EventDeserializationFailed(eventEntity.PartitionKey, _aggregateTypeFullName, ex);
 
 			return ReturnUnknownEvent(eventEntity, aggregateVersion);
 		}

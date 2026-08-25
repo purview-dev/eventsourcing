@@ -12,8 +12,7 @@ namespace Purview.EventSourcing.Fixtures.AzureStorage;
 
 public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 {
-	readonly Testcontainers.Azurite.AzuriteContainer _azuriteContainer =
-		ContainerHelper.CreateAzurite();
+	readonly Testcontainers.Azurite.AzuriteContainer _azuriteContainer = ContainerHelper.CreateAzurite();
 
 	IAggregateEventNameMapper _eventNameMapper = default!;
 	IDisposable? _eventStoreAsDisposable;
@@ -83,13 +82,10 @@ public sealed class TableEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			eventNameMapper: _eventNameMapper,
 			azureStorageOptions: Microsoft.Extensions.Options.Options.Create(azureStorageOptions),
 			distributedCache: cache,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			eventStoreTelemetry: telemetry,
 			aggregateRequirementsManager: aggregateRequirementsManager,
-			snapshotStrategy: new IntervalSnapshotStrategy<TAggregate>(
-				snapshotRecalculationInterval
-			)
+			snapshotStrategy: new IntervalSnapshotStrategy<TAggregate>(snapshotRecalculationInterval)
 		);
 
 		var tableClient = new AzureTableClient(azureStorageOptions, eventStore.TableName);

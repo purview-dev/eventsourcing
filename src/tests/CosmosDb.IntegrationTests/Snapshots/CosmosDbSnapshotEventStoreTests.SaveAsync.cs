@@ -6,9 +6,7 @@ namespace Purview.EventSourcing.CosmosDb.Snapshots;
 partial class CosmosDbSnapshotEventStoreTests
 {
 	[Test]
-	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(CancellationToken cancellationToken)
 	{
 		// Arrange
 		await using var context = fixture.CreateContext();
@@ -20,10 +18,7 @@ partial class CosmosDbSnapshotEventStoreTests
 		PartitionKey partitionKey = new(aggregate.AggregateType);
 
 		// Act
-		bool result = await context.EventStore.SaveAsync(
-			aggregate,
-			cancellationToken: cancellationToken
-		);
+		bool result = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 		// Assert
 		await Assert.That(result).IsTrue();
@@ -39,15 +34,9 @@ partial class CosmosDbSnapshotEventStoreTests
 		await Assert.That(aggregateFromCosmosDb).IsNotNull();
 		await Assert.That(aggregateFromCosmosDb.Id()).IsEqualTo(aggregate.Id());
 		await Assert.That(aggregateFromCosmosDb.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
-		await Assert
-			.That(aggregateFromCosmosDb.Details.SavedVersion)
-			.IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(aggregateFromCosmosDb.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert
-			.That(aggregateFromCosmosDb.Details.SnapshotVersion)
-			.IsEqualTo(aggregate.Details.SnapshotVersion);
+		await Assert.That(aggregateFromCosmosDb.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
+		await Assert.That(aggregateFromCosmosDb.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert.That(aggregateFromCosmosDb.Details.SnapshotVersion).IsEqualTo(aggregate.Details.SnapshotVersion);
 		await Assert.That(aggregateFromCosmosDb.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 	}
 }

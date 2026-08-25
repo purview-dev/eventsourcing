@@ -4,269 +4,295 @@ static partial class AggregateSourceEmitter
 {
 	static class CollectionCommandMethodEmitter
 	{
-		public static void Generate(
-			AggregateGenerationOutputContext outputContext,
-			AggregateEventMethodInfo method
-		)
+		public static void Generate(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
 		{
-			const string indent = "";
 			var collectionEvent = method.CollectionEvent!;
-			var parameter = method.Parameters[0];
+			var parameter = method.AllParameters[0];
 			var hookSuffix = GetHookName(method.EventType);
 			var normalizeValidateSuffix = collectionEvent.NormalizeValidateHookSuffix;
-			var methodAccessModifier = GetAccessModifier(method.MethodAccessibility);
+			var methodAccessModifier = GetAccessModifierString(method.MethodAccessibility);
+			var parameterList = BuildParameterList(method.AllParameters);
 
 			outputContext.Writer.WriteLine(
-				$"{indent}\t{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({(parameter.IsParams ? "params " : string.Empty)}{parameter.ParameterType} {parameter.ParameterName})"
+				$"{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({parameterList})"
 			);
-			outputContext.Writer.WriteLine($"{indent}\t{{");
 
-			EmitCollectionGuard(outputContext, collectionEvent, indent);
+			using (outputContext.Writer.OpenBlockScope())
+			{
+				EmitCollectionGuard(outputContext, collectionEvent);
 
-			if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
-				EmitSingleItemBody(
-					outputContext,
-					method,
-					collectionEvent,
-					parameter,
-					hookSuffix,
-					normalizeValidateSuffix,
-					indent
-				);
-			else
-				EmitEnumerableBody(
-					outputContext,
-					method,
-					collectionEvent,
-					parameter,
-					hookSuffix,
-					normalizeValidateSuffix,
-					indent
-				);
+				if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
+					EmitSingleItemBody(
+						outputContext,
+						method,
+						collectionEvent,
+						parameter,
+						hookSuffix,
+						normalizeValidateSuffix
+					);
+				else
+					EmitEnumerableBody(
+						outputContext,
+						method,
+						collectionEvent,
+						parameter,
+						hookSuffix,
+						normalizeValidateSuffix
+					);
 
-			EmitCollectionFinalization(outputContext, method, hookSuffix, indent);
+				EmitCollectionFinalization(outputContext, method, hookSuffix);
+			}
 
-			outputContext.Writer.WriteLine($"{indent}\t}}");
-			outputContext.Writer.WriteLine();
+			outputContext.Writer.NewLine();
 
-			EmitCollectionTrailingHookDeclarations(
-				outputContext,
-				method,
-				collectionEvent,
-				parameter,
-				hookSuffix,
-				indent
-			);
+			EmitCollectionTrailingHookDeclarations(outputContext, method, collectionEvent, parameter, hookSuffix);
 		}
 
-		static void EmitCollectionGuard(
-			AggregateGenerationOutputContext outputContext,
-			CollectionEventInfo collectionEvent,
-			string indent
-		)
+		static void EmitCollectionGuard(AggregateEmitContext outputContext, CollectionEventInfo collectionEvent)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tif ({collectionEvent.PropertyName} is null)"
+			outputContext.Writer.WriteBlock(
+				$"if ({collectionEvent.PropertyName} is null)",
+				block =>
+					block.WriteThrow(
+						$"new global::System.InvalidOperationException(\"Collection property '{collectionEvent.PropertyName}' cannot be null.\")"
+					)
 			);
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\tthrow new global::System.InvalidOperationException(\"Collection property '{collectionEvent.PropertyName}' cannot be null.\");"
-			);
-			outputContext.Writer.WriteLine($"{indent}\t\t}}");
-			outputContext.Writer.WriteLine();
+			outputContext.Writer.NewLine();
 		}
 
 		static void EmitSingleItemBody(
-			AggregateGenerationOutputContext outputContext,
+			AggregateEmitContext outputContext,
 			AggregateEventMethodInfo method,
 			CollectionEventInfo collectionEvent,
 			EventPropertyInfo parameter,
 			string hookSuffix,
-			string normalizeValidateSuffix,
-			string indent
+			string normalizeValidateSuffix
 		)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tvar __itemValue = {parameter.ParameterName};"
+			var writer = outputContext.Writer;
+
+			writer.WriteAssignment("var", "__itemValue", parameter.ParameterName);
+			writer.WriteMethodCall(
+				$"OnNormalizing{normalizeValidateSuffix}",
+				[new MethodCallArgumentOptions("__itemValue", ParameterModifier.Ref)]
 			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnNormalizing{normalizeValidateSuffix}(ref __itemValue);"
-			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnValidating{normalizeValidateSuffix}(__itemValue);"
+			writer.WriteMethodCall(
+				$"OnValidating{normalizeValidateSuffix}",
+				[new MethodCallArgumentOptions("__itemValue", ParameterModifier.Ref)]
 			);
 
 			var isAddOperation = collectionEvent.Operation == CollectionMutationOperation.Add;
 			if (isAddOperation && collectionEvent.IsSet)
 			{
-				outputContext.Writer.WriteLine();
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\tif ({collectionEvent.PropertyName}.Contains(__itemValue))"
+				writer.WriteIfBlock(
+					$"{collectionEvent.PropertyName}.Contains(__itemValue)",
+					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
 				);
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind);
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 			else if (!isAddOperation)
 			{
-				outputContext.Writer.WriteLine();
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\tif (!{collectionEvent.PropertyName}.Contains(__itemValue))"
+				writer.WriteIfBlock(
+					$"!{collectionEvent.PropertyName}.Contains(__itemValue)",
+					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
 				);
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind);
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
 			}
 
-			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine($"{indent}\t\tvar @event = new {method.EventType}");
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\t{parameter.PropertyName} = __itemValue,"
+			writer.Write("var @event = new ").Write(method.EventType);
+			using (writer.OpenBlockScope())
+			{
+				writer.WriteLine($"{parameter.PropertyName} = __itemValue,");
+			}
+			writer.Write(";").NewLine();
+
+			writer.WriteIfBlock(
+				$"!ShouldApply{hookSuffix}(@event)",
+				ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
 			);
-			outputContext.Writer.WriteLine($"{indent}\t\t}};");
-			outputContext.Writer.WriteLine($"{indent}\t\tif (!ShouldApply{hookSuffix}(@event))");
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			EmitNoChangeReturn(outputContext, method.ReturnKind);
-			outputContext.Writer.WriteLine($"{indent}\t\t}}");
-			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine($"{indent}\t\tOnRaising{hookSuffix}(ref __itemValue);");
+
+			writer.WriteMethodCall(
+				$"OnRaising{hookSuffix}",
+				[new MethodCallArgumentOptions("__itemValue", ParameterModifier.Ref)]
+			);
 		}
 
 		static void EmitEnumerableBody(
-			AggregateGenerationOutputContext outputContext,
+			AggregateEmitContext outputContext,
 			AggregateEventMethodInfo method,
 			CollectionEventInfo collectionEvent,
 			EventPropertyInfo parameter,
 			string hookSuffix,
-			string normalizeValidateSuffix,
-			string indent
+			string normalizeValidateSuffix
 		)
 		{
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tglobal::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}> __itemsValue = {parameter.ParameterName};"
+			var writer = outputContext.Writer;
+			var enumerableType = TypeLibrary.System.Collections.Generic.IEnumerable.MakeGeneric(
+				collectionEvent.ElementType
 			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnNormalizing{normalizeValidateSuffix}(ref __itemsValue);"
+
+			writer.WriteAssignment(
+				$"global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}>",
+				"__itemsValue",
+				parameter.ParameterName
 			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnValidating{normalizeValidateSuffix}(__itemsValue);"
+			writer.WriteMethodCall(
+				$"OnNormalizing{normalizeValidateSuffix}",
+				[new MethodCallArgumentOptions("__itemsValue", ParameterModifier.Ref)]
 			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tvar __eventItems = __itemsValue as {collectionEvent.ElementType}[] ?? [.. __itemsValue];"
+			writer.WriteMethodCall(
+				$"OnValidating{normalizeValidateSuffix}",
+				[new MethodCallArgumentOptions("__itemsValue", ParameterModifier.Ref)]
 			);
-			outputContext.Writer.WriteLine($"{indent}\t\tif (__eventItems.Length == 0)");
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			EmitNoChangeReturn(outputContext, method.ReturnKind);
-			outputContext.Writer.WriteLine($"{indent}\t\t}}");
+			writer.WriteAssignment(
+				"var",
+				"__eventItems",
+				$"__itemsValue as {collectionEvent.ElementType}[] ?? [.. __itemsValue]"
+			);
+			writer.WriteIfBlock(
+				"__eventItems.Length == 0",
+				ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+			);
 
 			var isAddOperation = collectionEvent.Operation == CollectionMutationOperation.Add;
 			if (isAddOperation && collectionEvent.IsSet)
 			{
-				outputContext.Writer.WriteLine();
-				outputContext.Writer.WriteLine($"{indent}\t\tvar __hasNewValues = false;");
-				outputContext.Writer.WriteLine($"{indent}\t\tforeach (var __item in __eventItems)");
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\t\tif (!{collectionEvent.PropertyName}.Contains(__item))"
+				writer.WriteAssignment("var", "__hasNewValues", "false");
+				writer.WriteBlock(
+					"foreach (var __item in __eventItems)",
+					block =>
+						block.WriteIfBlock(
+							$"!{collectionEvent.PropertyName}.Contains(__item)",
+							ifBody =>
+							{
+								ifBody.WriteAssignment("__hasNewValues", "true");
+								ifBody.WriteLine("break;");
+							}
+						)
 				);
-				outputContext.Writer.WriteLine($"{indent}\t\t\t{{");
-				outputContext.Writer.WriteLine($"{indent}\t\t\t\t__hasNewValues = true;");
-				outputContext.Writer.WriteLine($"{indent}\t\t\t\tbreak;");
-				outputContext.Writer.WriteLine($"{indent}\t\t\t}}");
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
-				outputContext.Writer.WriteLine($"{indent}\t\tif (!__hasNewValues)");
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind);
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
+				writer.WriteIfBlock(
+					"!__hasNewValues",
+					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+				);
 			}
 			else if (!isAddOperation)
 			{
-				outputContext.Writer.WriteLine();
-				outputContext.Writer.WriteLine($"{indent}\t\tvar __hasExistingValues = false;");
-				outputContext.Writer.WriteLine($"{indent}\t\tforeach (var __item in __eventItems)");
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				outputContext.Writer.WriteLine(
-					$"{indent}\t\t\tif ({collectionEvent.PropertyName}.Contains(__item))"
+				writer.WriteAssignment("var", "__hasExistingValues", "false");
+				writer.WriteBlock(
+					"foreach (var __item in __eventItems)",
+					block =>
+						block.WriteIfBlock(
+							$"{collectionEvent.PropertyName}.Contains(__item)",
+							ifBody =>
+							{
+								ifBody.WriteAssignment("__hasExistingValues", "true");
+								ifBody.WriteLine("break;");
+							}
+						)
 				);
-				outputContext.Writer.WriteLine($"{indent}\t\t\t{{");
-				outputContext.Writer.WriteLine($"{indent}\t\t\t\t__hasExistingValues = true;");
-				outputContext.Writer.WriteLine($"{indent}\t\t\t\tbreak;");
-				outputContext.Writer.WriteLine($"{indent}\t\t\t}}");
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
-				outputContext.Writer.WriteLine($"{indent}\t\tif (!__hasExistingValues)");
-				outputContext.Writer.WriteLine($"{indent}\t\t{{");
-				EmitNoChangeReturn(outputContext, method.ReturnKind);
-				outputContext.Writer.WriteLine($"{indent}\t\t}}");
+				writer.WriteIfBlock(
+					"!__hasExistingValues",
+					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+				);
 			}
 
-			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine($"{indent}\t\tvar @event = new {method.EventType}");
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\t\t{parameter.PropertyName} = __eventItems,"
+			writer.Write("var @event = new ").Write(method.EventType);
+			using (writer.OpenBlockScope())
+			{
+				writer.WriteLine($"{parameter.PropertyName} = __eventItems,");
+			}
+			writer.Write(";").NewLine();
+
+			writer.WriteIfBlock(
+				$"!ShouldApply{hookSuffix}(@event)",
+				ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
 			);
-			outputContext.Writer.WriteLine($"{indent}\t\t}};");
-			outputContext.Writer.WriteLine($"{indent}\t\tif (!ShouldApply{hookSuffix}(@event))");
-			outputContext.Writer.WriteLine($"{indent}\t\t{{");
-			EmitNoChangeReturn(outputContext, method.ReturnKind);
-			outputContext.Writer.WriteLine($"{indent}\t\t}}");
-			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine($"{indent}\t\tOnRaising{hookSuffix}(ref __itemsValue);");
+
+			writer.WriteMethodCall(
+				$"OnRaising{hookSuffix}",
+				[new MethodCallArgumentOptions("__itemsValue", ParameterModifier.Ref)]
+			);
 		}
 
 		static void EmitCollectionFinalization(
-			AggregateGenerationOutputContext outputContext,
+			AggregateEmitContext outputContext,
 			AggregateEventMethodInfo method,
-			string hookSuffix,
-			string indent
+			string hookSuffix
 		)
 		{
-			outputContext.Writer.WriteLine();
-			outputContext.Writer.WriteLine($"{indent}\t\tOnRaised{hookSuffix}(@event);");
-			outputContext.Writer.WriteLine($"{indent}\t\tRecordAndApply(@event);");
-			outputContext.Writer.WriteLine();
+			var writer = outputContext.Writer;
+			writer.NewLine();
+			writer.WriteMethodCall($"OnRaised{hookSuffix}", ["@event"]);
+			writer.WriteMethodCall("RecordAndApply", ["@event"]);
 			EmitSuccessReturn(outputContext, method.ReturnKind);
 		}
 
 		static void EmitCollectionTrailingHookDeclarations(
-			AggregateGenerationOutputContext outputContext,
+			AggregateEmitContext outputContext,
 			AggregateEventMethodInfo method,
 			CollectionEventInfo collectionEvent,
 			EventPropertyInfo parameter,
-			string hookSuffix,
-			string indent
+			string hookSuffix
 		)
 		{
-			if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
-				outputContext.Writer.WriteLine(
-					$"{indent}\tpartial void OnRaising{hookSuffix}(ref {collectionEvent.ElementType} {parameter.ParameterName});"
-				);
-			else
-				outputContext.Writer.WriteLine(
-					$"{indent}\tpartial void OnRaising{hookSuffix}(ref global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}> {parameter.ParameterName});"
-				);
+			var writer = outputContext.Writer;
+			var suppression = CreateCA1822Suppression();
 
-			outputContext.Writer.WriteLine(
-				$"{indent}\tbool ShouldApply{hookSuffix}({method.EventType} @event)"
+			var normalizeValidateType =
+				collectionEvent.ParameterShape == CollectionParameterShape.Single
+					? collectionEvent.ElementType
+					: TypeLibrary
+						.System.Collections.Generic.IEnumerable.MakeGeneric(collectionEvent.ElementType)
+						.AsTypeReference();
+			var normalizingParam = new ParameterDeclarationOptions(parameter.ParameterName, normalizeValidateType)
+			{
+				Modifier = ParameterModifier.Ref,
+			};
+
+			writer.WritePartialMethod(
+				new($"OnRaising{hookSuffix}") { Attributes = [suppression], Parameters = [normalizingParam] }
 			);
-			outputContext.Writer.WriteLine($"{indent}\t{{");
-			outputContext.Writer.WriteLine($"{indent}\t\tvar shouldApply = true;");
-			outputContext.Writer.WriteLine(
-				$"{indent}\t\tOnShouldApply{hookSuffix}(@event, ref shouldApply);"
+
+			writer.WritePartialMethod(
+				new($"OnRaised{hookSuffix}")
+				{
+					Attributes = [suppression],
+					Parameters = [new("@event", method.EventType)],
+				}
 			);
-			outputContext.Writer.WriteLine($"{indent}\t\treturn shouldApply;");
-			outputContext.Writer.WriteLine($"{indent}\t}}");
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnShouldApply{hookSuffix}({method.EventType} @event, ref bool shouldApply);"
+
+			writer.WriteMethod(
+				new($"ShouldApply{hookSuffix}", PurviewTypeLibrary.System.Boolean)
+				{
+					Parameters = [new("@event", method.EventType)],
+				},
+				writeBody =>
+				{
+					writeBody.WriteAssignment("var", "shouldApply", "true");
+					writeBody.WriteMethodCall($"OnShouldApply{hookSuffix}", ["@event", "ref shouldApply"]);
+					writeBody.WriteReturn("shouldApply");
+				}
 			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnRaised{hookSuffix}({method.EventType} @event);"
+
+			writer.WritePartialMethod(
+				new($"OnShouldApply{hookSuffix}")
+				{
+					Attributes = [suppression],
+					Parameters =
+					[
+						new("@event", method.EventType),
+						new("shouldApply", PurviewTypeLibrary.System.Boolean) { Modifier = ParameterModifier.Ref },
+					],
+				}
 			);
-			outputContext.Writer.WriteLine(
-				$"{indent}\tpartial void OnApplied{hookSuffix}({method.EventType} @event);"
+
+			writer.WritePartialMethod(
+				new($"OnApplied{hookSuffix}")
+				{
+					Attributes = [suppression],
+					Parameters = [new("@event", method.EventType)],
+				}
 			);
-			outputContext.Writer.WriteLine();
+
+			writer.NewLine();
 		}
 	}
 }

@@ -7,9 +7,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class GenericTableEventStoreTests<TAggregate>
 {
-	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(
-		CancellationToken cancellationToken
-	)
+	public async Task DeleteAsync_GivenAggregateExists_PermanentlyDeletesAllData(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -38,13 +36,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(aggregate.Details.IsDeleted).IsTrue();
 		await Assert.That(aggregate.Details.Locked).IsTrue();
 
-		await ValidateEntitiesDeletedAsync(
-			aggregate,
-			eventStore,
-			tableClient,
-			blobClient,
-			cancellationToken
-		);
+		await ValidateEntitiesDeletedAsync(aggregate, eventStore, tableClient, blobClient, cancellationToken);
 	}
 
 	public async Task DeleteAsync_GivenAggregateExistsWithLargeEvent_PermanentlyDeletesAllData(
@@ -90,13 +82,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(aggregate.Details.IsDeleted).IsTrue();
 		await Assert.That(aggregate.Details.Locked).IsTrue();
 
-		await ValidateEntitiesDeletedAsync(
-			aggregate,
-			eventStore,
-			tableClient,
-			blobClient,
-			cancellationToken
-		);
+		await ValidateEntitiesDeletedAsync(aggregate, eventStore, tableClient, blobClient, cancellationToken);
 	}
 
 	async Task ValidateEntitiesDeletedAsync(
@@ -115,10 +101,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(results.Results).IsEmpty();
 
 		var prefix = eventStore.GenerateSnapshotBlobPath(aggregate.Id());
-		var blobResults = await blobClient.GetBlobsAsync(
-			prefix,
-			cancellationToken: cancellationToken
-		);
+		var blobResults = await blobClient.GetBlobsAsync(prefix, cancellationToken: cancellationToken);
 		var blobsToDelete = blobResults.ToBlockingEnumerable(cancellationToken: cancellationToken);
 
 		await Assert.That(blobsToDelete).IsEmpty();

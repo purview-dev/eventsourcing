@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 
 sealed record AggregateGenerationModel(
@@ -14,18 +12,14 @@ sealed class AggregateGenerationContext(
 	ISourceGenLogger? logger
 ) : GenerationContext(compilation, generationSettings, logger)
 {
-	public INamedTypeSymbol? AggregateBase { get; } =
-		compilation.GetTypeByMetadataName(TypeLibrary.Aggregates.AggregateBase.MetadataFullName);
-
-	public CodeWriter Writer { get; private set; }
+	public bool HasAggregateBase { get; } =
+		compilation.GetTypeByMetadataName(TypeLibrary.Aggregates.AggregateBase.MetadataFullName) is not null;
 }
 
 // This is recreated outside of the pipeline to avoid the state
 // of the CodeWriter being shared across multiple source outputs.
-sealed class AggregateGenerationOutputContext(
-	AggregateGenerationContext generationContext,
-	AggregateInfo aggregate
-) : ISourceGenLogger
+sealed class AggregateEmitContext(AggregateGenerationContext generationContext, AggregateInfo aggregate)
+	: ISourceGenLogger
 {
 	public AggregateGenerationContext Generation { get; } = generationContext;
 
@@ -35,14 +29,10 @@ sealed class AggregateGenerationOutputContext(
 
 	public CodeWriter CreateCodeWriter() => Writer = Generation.CreateCodeWriter();
 
-	public void Log(
-		SourceGenLogLevel level,
-		int indentation,
-		string message,
-		params object[] args
-	) => Generation.Log(level, indentation, message, args);
+	public void Log(SourceGenLogLevel level, int indentation, string message, params object[] args) =>
+		Generation.Log(level, indentation, message, args);
 
-	public AggregateGenerationOutputContext WithWriter(CodeWriter writer)
+	public AggregateEmitContext WithWriter(CodeWriter writer)
 	{
 		Writer = writer;
 		return this;

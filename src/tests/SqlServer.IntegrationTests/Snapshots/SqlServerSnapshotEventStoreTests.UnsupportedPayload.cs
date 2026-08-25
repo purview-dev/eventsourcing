@@ -17,8 +17,7 @@ partial class SqlServerSnapshotEventStoreTests
 			}
 		);
 
-		Task<UnsupportedPayloadAggregate?> Act() =>
-			client.GetByIdAsync<UnsupportedPayloadAggregate>("id");
+		Task<UnsupportedPayloadAggregate?> Act() => client.GetByIdAsync<UnsupportedPayloadAggregate>("id");
 
 		var ex = await Assert.That(Act).Throws<InvalidOperationException>();
 		await Assert.That(ex).IsNotNull();

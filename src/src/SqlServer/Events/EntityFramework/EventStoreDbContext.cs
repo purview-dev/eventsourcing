@@ -11,11 +11,8 @@ namespace Purview.EventSourcing.SqlServer.Events.EntityFramework;
 /// <remarks>
 /// Creates a new <see cref="EventStoreDbContext"/> with explicit schema and table names.
 /// </remarks>
-public class EventStoreDbContext(
-	DbContextOptions<EventStoreDbContext> options,
-	string schemaName,
-	string tableName
-) : DbContext(options)
+public class EventStoreDbContext(DbContextOptions<EventStoreDbContext> options, string schemaName, string tableName)
+	: DbContext(options)
 {
 	readonly string _schemaName = schemaName;
 	readonly string _tableName = tableName;
@@ -105,12 +102,7 @@ public class EventStoreDbContext(
 		public object Create(DbContext context, bool designTime)
 		{
 			if (context is EventStoreDbContext eventStoreContext)
-				return (
-					context.GetType(),
-					eventStoreContext._schemaName,
-					eventStoreContext._tableName,
-					designTime
-				);
+				return (context.GetType(), eventStoreContext._schemaName, eventStoreContext._tableName, designTime);
 
 			return (context.GetType(), designTime);
 		}

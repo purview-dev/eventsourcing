@@ -198,11 +198,7 @@ public sealed class SqlServerEventStoreClientTests
 	public async Task SqlServerAggregateTableOverride_GivenBothOverrides_BothAreStored()
 	{
 		// Arrange & Act
-		var ovr = new SqlServerAggregateTableOverride
-		{
-			SchemaName = "orders",
-			TableName = "Events",
-		};
+		var ovr = new SqlServerAggregateTableOverride { SchemaName = "orders", TableName = "Events" };
 
 		// Assert
 		await Assert.That(ovr.SchemaName).IsEqualTo("orders");
@@ -268,10 +264,7 @@ public sealed class SqlServerEventStoreClientTests
 						JsonIndexOptions = new SqlServerJsonIndexOptions
 						{
 							Enabled = true,
-							Indexes =
-							[
-								new SqlServerJsonIndexDefinition { JsonPath = "StringProperty" },
-							],
+							Indexes = [new SqlServerJsonIndexDefinition { JsonPath = "StringProperty" }],
 						},
 					}
 				);
@@ -297,11 +290,7 @@ public sealed class SqlServerEventStoreClientTests
 							Enabled = true,
 							Indexes =
 							[
-								new SqlServerJsonIndexDefinition
-								{
-									JsonPath = "$.Value",
-									IndexName = "IX_Duplicate",
-								},
+								new SqlServerJsonIndexDefinition { JsonPath = "$.Value", IndexName = "IX_Duplicate" },
 								new SqlServerJsonIndexDefinition
 								{
 									JsonPath = "$.OtherValue",

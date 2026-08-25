@@ -35,9 +35,7 @@ public sealed class SqlServerSnapshotClientTests
 	[Test]
 	public async Task ValidateAggregatePayloadShape_GivenEventStoreCollections_DoesNotThrow()
 	{
-		await Assert
-			.That(() => ValidateAggregatePayloadShape(typeof(SupportedCollectionAggregate)))
-			.ThrowsNothing();
+		await Assert.That(() => ValidateAggregatePayloadShape(typeof(SupportedCollectionAggregate))).ThrowsNothing();
 	}
 
 	[Test]
@@ -65,16 +63,13 @@ public sealed class SqlServerSnapshotClientTests
 	[Test]
 	public async Task ValidateAggregatePayloadShape_GivenUriProperty_DoesNotThrow()
 	{
-		await Assert
-			.That(() => ValidateAggregatePayloadShape(typeof(UriAggregate)))
-			.ThrowsNothing();
+		await Assert.That(() => ValidateAggregatePayloadShape(typeof(UriAggregate))).ThrowsNothing();
 	}
 
 	[Test]
 	public async Task RewriteAggregateTypePredicate_GivenScalarEqualsPrimitive_RewritesToPrimitiveComparison()
 	{
-		Expression<Func<ScalarHolder, bool>> whereClause = model =>
-			model.Email == "updated@test.com";
+		Expression<Func<ScalarHolder, bool>> whereClause = model => model.Email == "updated@test.com";
 		var method = typeof(SqlServerClient).GetMethod(
 			"RewriteAggregateTypePredicate",
 			BindingFlags.Static | BindingFlags.NonPublic
@@ -83,8 +78,7 @@ public sealed class SqlServerSnapshotClientTests
 
 		var genericMethod = method!.MakeGenericMethod(typeof(ScalarHolder));
 		var rewritten =
-			(Expression<Func<ScalarHolder, bool>>)
-				genericMethod.Invoke(null, [whereClause, nameof(ScalarHolder)])!;
+			(Expression<Func<ScalarHolder, bool>>)genericMethod.Invoke(null, [whereClause, nameof(ScalarHolder)])!;
 
 		var binaryExpression = rewritten.Body as BinaryExpression;
 		await Assert.That(binaryExpression).IsNotNull();
@@ -204,10 +198,7 @@ public sealed class SqlServerSnapshotClientTests
 			typeof(SqlServerClient).GetMethod(
 				"ValidateAggregatePayloadShape",
 				BindingFlags.Static | BindingFlags.NonPublic
-			)
-			?? throw new InvalidOperationException(
-				"Unable to locate ValidateAggregatePayloadShape via reflection."
-			);
+			) ?? throw new InvalidOperationException("Unable to locate ValidateAggregatePayloadShape via reflection.");
 
 		try
 		{

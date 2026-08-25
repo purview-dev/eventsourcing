@@ -15,8 +15,7 @@ public sealed class SampleStoreOptions
 	public string CurrentDisplayName { get; set; } = "SQL Server";
 
 	[Required(AllowEmptyStrings = false)]
-	public string CurrentDescription { get; set; } =
-		"SQL Server event streams with SQL Server query snapshots.";
+	public string CurrentDescription { get; set; } = "SQL Server event streams with SQL Server query snapshots.";
 
 	[Required(AllowEmptyStrings = false)]
 	public string DataIsolationWarning { get; set; } =

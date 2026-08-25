@@ -4,13 +4,10 @@ using Purview.EventSourcing.SourceGenerator.Generators;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
-public sealed class ValueObjectSourceGeneratorTests
-	: EventSourcingSourceGeneratorTestBase<ValueObjectSourceGenerator>
+public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGeneratorTestBase<ValueObjectSourceGenerator>
 {
 	[Test]
-	public async Task ScalarGeneration_UsesStrictCreateAndHydrateCorrectly(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarGeneration_UsesStrictCreateAndHydrateCorrectly(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -85,22 +82,18 @@ public sealed class ValueObjectSourceGeneratorTests
 		var harnessType = assembly.GetType("Testing.ValueObjectHarness")!;
 
 		var strictCreate = (string)harnessType.GetMethod("StrictCreate")!.Invoke(null, null)!;
-		var hydratePreserves = (string)
-			harnessType.GetMethod("HydratePreserves")!.Invoke(null, null)!;
+		var hydratePreserves = (string)harnessType.GetMethod("HydratePreserves")!.Invoke(null, null)!;
 		var hydrateInvalid = (string)harnessType.GetMethod("HydrateInvalid")!.Invoke(null, null)!;
 		var tryCreateInvalid = (bool)harnessType.GetMethod("TryCreateInvalid")!.Invoke(null, null)!;
 		var serialized = (string)harnessType.GetMethod("SerializeEmail")!.Invoke(null, null)!;
 		var deserialized = (string)harnessType.GetMethod("DeserializeEmail")!.Invoke(null, null)!;
-		var implicitFrom = (string)
-			harnessType.GetMethod("ImplicitFromPrimitive")!.Invoke(null, null)!;
+		var implicitFrom = (string)harnessType.GetMethod("ImplicitFromPrimitive")!.Invoke(null, null)!;
 		var implicitTo = (string)harnessType.GetMethod("ImplicitToPrimitive")!.Invoke(null, null)!;
 		var equalsPrimitive = (bool)harnessType.GetMethod("EqualsPrimitive")!.Invoke(null, null)!;
-		var operatorEqualsPrimitive = (bool)
-			harnessType.GetMethod("OperatorEqualsPrimitive")!.Invoke(null, null)!;
+		var operatorEqualsPrimitive = (bool)harnessType.GetMethod("OperatorEqualsPrimitive")!.Invoke(null, null)!;
 		var operatorEqualsPrimitiveReverse = (bool)
 			harnessType.GetMethod("OperatorEqualsPrimitiveReverse")!.Invoke(null, null)!;
-		var comparePrimitive = (int)
-			harnessType.GetMethod("CompareWithPrimitive")!.Invoke(null, null)!;
+		var comparePrimitive = (int)harnessType.GetMethod("CompareWithPrimitive")!.Invoke(null, null)!;
 		var compareObject = (int)harnessType.GetMethod("CompareWithObject")!.Invoke(null, null)!;
 
 		await Assert.That(strictCreate).IsEqualTo("test@example.com");
@@ -144,9 +137,7 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("public int CompareTo(global::Testing.BlobUri? other)");
+		await Assert.That(generatedSource).Contains("public int CompareTo(global::Testing.BlobUri? other)");
 
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
@@ -156,9 +147,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ScalarGeneration_GeneratesPrivateConstructorWhenMissing(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarGeneration_GeneratesPrivateConstructorWhenMissing(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -182,9 +171,7 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("private PhoneNumber(string value) => Value = value;");
+		await Assert.That(generatedSource).Contains("private PhoneNumber(string value) => Value = value;");
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.ScalarConstructorMissing);
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
@@ -215,15 +202,11 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("public static global::Testing.BlobUri Empty => Hydrate(null!);");
+		await Assert.That(generatedSource).Contains("public static global::Testing.BlobUri Empty => Hydrate(null!);");
 	}
 
 	[Test]
-	public async Task ScalarRecordStruct_GeneratesToStringOverride(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarRecordStruct_GeneratesToStringOverride(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -275,9 +258,7 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.DoesNotContain("public static global::Testing.BlobUri Empty =>");
+		await Assert.That(generatedSource).DoesNotContain("public static global::Testing.BlobUri Empty =>");
 	}
 
 	[Test]
@@ -326,9 +307,7 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("private ProjectId(string value) => Value = value;");
+		await Assert.That(generatedSource).Contains("private ProjectId(string value) => Value = value;");
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 		var harnessType = assembly.GetType("Testing.ProjectHarness")!;
@@ -341,9 +320,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ScalarGeneration_WarnsWhenScalarStructIsNotRecordStruct(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarGeneration_WarnsWhenScalarStructIsNotRecordStruct(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -364,9 +341,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ScalarGeneration_GeneratesEnumConvenienceProperties(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarGeneration_GeneratesEnumConvenienceProperties(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -428,9 +403,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ScalarGeneration_CanDisableEnumConvenienceProperties(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarGeneration_CanDisableEnumConvenienceProperties(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -479,9 +452,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ComplexValueObjectGeneration_UsesObjectShapedJson(
-		CancellationToken cancellationToken
-	)
+	public async Task ComplexValueObjectGeneration_UsesObjectShapedJson(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -593,14 +564,10 @@ public sealed class ValueObjectSourceGeneratorTests
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("private Address(string line1, string city)");
+		await Assert.That(generatedSource).Contains("public bool Equals(global::Testing.Address other)");
 		await Assert
 			.That(generatedSource)
-			.Contains("public bool Equals(global::Testing.Address other)");
-		await Assert
-			.That(generatedSource)
-			.Contains(
-				"public static bool operator ==(global::Testing.Address left, global::Testing.Address right)"
-			);
+			.Contains("public static bool operator ==(global::Testing.Address left, global::Testing.Address right)");
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 		var harnessType = assembly.GetType("Testing.AddressHarness")!;
@@ -613,9 +580,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ComplexValueObjectGeneration_GeneratesEmptyByDefault(
-		CancellationToken cancellationToken
-	)
+	public async Task ComplexValueObjectGeneration_GeneratesEmptyByDefault(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -666,19 +631,13 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("global::System.IEquatable<global::Testing.UserCaptureStruct>");
+		await Assert.That(generatedSource).Contains("global::System.IEquatable<global::Testing.UserCaptureStruct>");
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var generatedType = assembly.GetType("Testing.UserCaptureStruct")!;
 
-		await Assert
-			.That(
-				typeof(IEquatable<>).MakeGenericType(generatedType).IsAssignableFrom(generatedType)
-			)
-			.IsTrue();
+		await Assert.That(typeof(IEquatable<>).MakeGenericType(generatedType).IsAssignableFrom(generatedType)).IsTrue();
 	}
 
 	[Test]
@@ -710,25 +669,20 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("public static global::Testing.EmptyValueObject Create()");
+		await Assert.That(generatedSource).Contains("public static global::Testing.EmptyValueObject Create()");
 		await Assert.That(generatedSource).Contains("OnNormalize();");
 		await Assert.That(generatedSource).DoesNotContain("OnNormalize(ref );");
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var harnessType = assembly.GetType("Testing.EmptyValueObjectHarness")!;
-		var roundTripsAsEmptyJson = (bool)
-			harnessType.GetMethod("RoundTripsAsEmptyJson")!.Invoke(null, null)!;
+		var roundTripsAsEmptyJson = (bool)harnessType.GetMethod("RoundTripsAsEmptyJson")!.Invoke(null, null)!;
 
 		await Assert.That(roundTripsAsEmptyJson).IsTrue();
 	}
 
 	[Test]
-	public async Task ComplexValueObjectGeneration_CanDisableEmpty(
-		CancellationToken cancellationToken
-	)
+	public async Task ComplexValueObjectGeneration_CanDisableEmpty(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -748,15 +702,11 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.DoesNotContain("public static global::Testing.UserDetails Empty =>");
+		await Assert.That(generatedSource).DoesNotContain("public static global::Testing.UserDetails Empty =>");
 	}
 
 	[Test]
-	public async Task ScalarJsonStrictMode_UsesCreateOnDeserialization(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarJsonStrictMode_UsesCreateOnDeserialization(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -844,31 +794,15 @@ public sealed class ValueObjectSourceGeneratorTests
 		await Assert.That(generatedSource).Contains("return left.CompareTo(right) > 0;");
 		await Assert.That(generatedSource).Contains("return left.CompareTo(right) <= 0;");
 		await Assert.That(generatedSource).Contains("return left.CompareTo(right) >= 0;");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator <(global::Testing.Name left, string right)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator >(global::Testing.Name left, string right)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator <=(global::Testing.Name left, string right)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator >=(global::Testing.Name left, string right)");
+		await Assert.That(generatedSource).Contains("operator <(global::Testing.Name left, string right)");
+		await Assert.That(generatedSource).Contains("operator >(global::Testing.Name left, string right)");
+		await Assert.That(generatedSource).Contains("operator <=(global::Testing.Name left, string right)");
+		await Assert.That(generatedSource).Contains("operator >=(global::Testing.Name left, string right)");
 		await Assert.That(generatedSource).Contains("public bool Equals(string other)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator ==(global::Testing.Name left, string right)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator !=(global::Testing.Name left, string right)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator ==(string left, global::Testing.Name right)");
-		await Assert
-			.That(generatedSource)
-			.Contains("operator !=(string left, global::Testing.Name right)");
+		await Assert.That(generatedSource).Contains("operator ==(global::Testing.Name left, string right)");
+		await Assert.That(generatedSource).Contains("operator !=(global::Testing.Name left, string right)");
+		await Assert.That(generatedSource).Contains("operator ==(string left, global::Testing.Name right)");
+		await Assert.That(generatedSource).Contains("operator !=(string left, global::Testing.Name right)");
 		await Assert
 			.That(generatedSource)
 			.DoesNotContain("operator <(global::System.String left, global::Testing.Name right)");
@@ -884,9 +818,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ScalarGeneration_GeneratesSelfEqualityOperatorsForPlainStruct(
-		CancellationToken cancellationToken
-	)
+	public async Task ScalarGeneration_GeneratesSelfEqualityOperatorsForPlainStruct(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -966,9 +898,7 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("public int CompareTo(global::Testing.Name other)");
+		await Assert.That(generatedSource).Contains("public int CompareTo(global::Testing.Name other)");
 		await Assert.That(generatedSource).Contains("public int CompareTo(string? other)");
 		await Assert.That(generatedSource).DoesNotContain("public static bool operator <(");
 		await Assert.That(generatedSource).DoesNotContain("public static bool operator >(");
@@ -977,9 +907,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task Scalar_GenerateComparableFalse_SuppressesCompareToAndOperators(
-		CancellationToken cancellationToken
-	)
+	public async Task Scalar_GenerateComparableFalse_SuppressesComparisonOperators(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -997,7 +925,8 @@ public sealed class ValueObjectSourceGeneratorTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).DoesNotContain("public int CompareTo(");
+		await Assert.That(generatedSource).Contains("public int CompareTo(global::Testing.Name other)");
+		await Assert.That(generatedSource).Contains("public int CompareTo(string? other)");
 		await Assert.That(generatedSource).DoesNotContain("public static bool operator <(");
 		await Assert.That(generatedSource).DoesNotContain("public static bool operator >(");
 		await Assert.That(generatedSource).DoesNotContain("public static bool operator <=(");
@@ -1005,9 +934,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ValueObjectComparable_GeneratesSelfRelationalOperators(
-		CancellationToken cancellationToken
-	)
+	public async Task ValueObjectComparable_GeneratesSelfRelationalOperators(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -1152,14 +1079,10 @@ public sealed class ValueObjectSourceGeneratorTests
 			harnessType.GetMethod("UserDetailsValidationThrows")!.Invoke(null, null)!;
 		var userDetails2ValidationThrows = (bool)
 			harnessType.GetMethod("UserDetails2ValidationThrows")!.Invoke(null, null)!;
-		var userDetailsHashSetCount = (int)
-			harnessType.GetMethod("UserDetailsHashSetCount")!.Invoke(null, null)!;
-		var userDetails2HashSetCount = (int)
-			harnessType.GetMethod("UserDetails2HashSetCount")!.Invoke(null, null)!;
-		var compareUserDetails = (int)
-			harnessType.GetMethod("CompareUserDetails")!.Invoke(null, null)!;
-		var compareUserDetails2 = (int)
-			harnessType.GetMethod("CompareUserDetails2")!.Invoke(null, null)!;
+		var userDetailsHashSetCount = (int)harnessType.GetMethod("UserDetailsHashSetCount")!.Invoke(null, null)!;
+		var userDetails2HashSetCount = (int)harnessType.GetMethod("UserDetails2HashSetCount")!.Invoke(null, null)!;
+		var compareUserDetails = (int)harnessType.GetMethod("CompareUserDetails")!.Invoke(null, null)!;
+		var compareUserDetails2 = (int)harnessType.GetMethod("CompareUserDetails2")!.Invoke(null, null)!;
 
 		await Assert.That(userDetailsValidationThrows).IsTrue();
 		await Assert.That(userDetails2ValidationThrows).IsTrue();
@@ -1227,40 +1150,49 @@ public sealed class ValueObjectSourceGeneratorTests
 			""";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
+
+		var recordSource = GetSourceForType(result, "UserCaptureRecord");
+		var recordStructSource = GetSourceForType(result, "UserCaptureRecordStruct");
+		var recordStruct1Source = GetSourceForType(result, "UserCaptureRecordStruct1");
+		var recordClassSource = GetSourceForType(result, "UserCaptureRecordClass");
+		var classSource = GetSourceForType(result, "UserCaptureClass");
+		var structSource = GetSourceForType(result, "UserCaptureStruct");
+
+		await Assert.That(recordSource).IsNotNull();
+		await Assert.That(recordStructSource).IsNotNull();
+		await Assert.That(recordStruct1Source).IsNotNull();
+		await Assert.That(recordClassSource).IsNotNull();
+		await Assert.That(classSource).IsNotNull();
+		await Assert.That(structSource).IsNotNull();
 
 		await Assert
-			.That(generatedSource)
-			.Contains(
-				"private UserCaptureRecord() : this((global::Testing.UserDetails)null!, default)"
-			);
+			.That(recordSource)
+			.Contains("private UserCaptureRecord() : this((global::Testing.UserDetails)null!, default)");
 		await Assert
-			.That(generatedSource)
-			.Contains(
-				"public UserCaptureRecordStruct() : this((global::Testing.UserDetails)null!, default)"
-			);
+			.That(recordStructSource)
+			.Contains("public UserCaptureRecordStruct() : this((global::Testing.UserDetails)null!, default)");
 		await Assert
-			.That(generatedSource)
-			.Contains(
-				"public UserCaptureRecordStruct1() : this((global::Testing.UserDetails)null!, default)"
-			);
+			.That(recordStruct1Source)
+			.Contains("public UserCaptureRecordStruct1() : this((global::Testing.UserDetails)null!, default)");
 		await Assert
-			.That(generatedSource)
-			.Contains(
-				"private UserCaptureRecordClass() : this((global::Testing.UserDetails)null!, default)"
-			);
+			.That(recordClassSource)
+			.Contains("private UserCaptureRecordClass() : this((global::Testing.UserDetails)null!, default)");
 		await Assert
-			.That(generatedSource)
-			.Contains(
-				"private UserCaptureClass() : this((global::Testing.UserDetails)null!, default)"
-			);
+			.That(classSource)
+			.Contains("private UserCaptureClass() : this((global::Testing.UserDetails)null!, default)");
 		await Assert
-			.That(generatedSource)
-			.Contains(
-				"public UserCaptureStruct() : this((global::Testing.UserDetails)null!, default)"
-			);
+			.That(structSource)
+			.Contains("public UserCaptureStruct() : this((global::Testing.UserDetails)null!, default)");
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
+
+		static string? GetSourceForType(DriverRunResult result, string typeName)
+		{
+			var candidate = result.PrimarySyntaxTrees.SingleOrDefault(tree =>
+				tree.GetText(CancellationToken.None).ToString().Contains($"{typeName} :", StringComparison.Ordinal)
+			);
+			return candidate?.GetText(CancellationToken.None).ToString();
+		}
 
 		var harnessType = assembly.GetType("Testing.UserCaptureHarness")!;
 		var created = (object[])harnessType.GetMethod("CreateAll")!.Invoke(null, null)!;
@@ -1269,9 +1201,7 @@ public sealed class ValueObjectSourceGeneratorTests
 	}
 
 	[Test]
-	public async Task ComplexValueObjectGeneration_SupportsNormalizeHook(
-		CancellationToken cancellationToken
-	)
+	public async Task ComplexValueObjectGeneration_SupportsNormalizeHook(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -1332,10 +1262,8 @@ public sealed class ValueObjectSourceGeneratorTests
 
 		var harnessType = assembly.GetType("Testing.UserDetailsNormalizeHarness")!;
 
-		var activeDisplayName = (string)
-			harnessType.GetMethod("ActiveDisplayName")!.Invoke(null, null)!;
-		var inactiveDisplayNameIsNull = (bool)
-			harnessType.GetMethod("InactiveDisplayNameIsNull")!.Invoke(null, null)!;
+		var activeDisplayName = (string)harnessType.GetMethod("ActiveDisplayName")!.Invoke(null, null)!;
+		var inactiveDisplayNameIsNull = (bool)harnessType.GetMethod("InactiveDisplayNameIsNull")!.Invoke(null, null)!;
 		var activeBlankDisplayNameThrows = (bool)
 			harnessType.GetMethod("ActiveBlankDisplayNameThrows")!.Invoke(null, null)!;
 
@@ -1391,9 +1319,7 @@ public sealed class ValueObjectSourceGeneratorTests
 
 		await Assert
 			.That(generatedSource)
-			.Contains(
-				"readonly partial void OnValidate(global::System.Guid id, string? displayName, bool isActive)"
-			);
+			.Contains("readonly partial void OnValidate(global::System.Guid id, string? displayName, bool isActive)");
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 		var harnessType = assembly.GetType("Testing.UserDetailsReadOnlyHarness")!;

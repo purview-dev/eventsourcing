@@ -11,8 +11,7 @@ partial class SqlServerEventStore<T>
 	static string SerializeSnapshot(T aggregate) =>
 		EventStoreSerializationHelpers.Serialize(aggregate, aggregate.GetType());
 
-	static string SerializeEvent(IEvent @event) =>
-		EventStoreSerializationHelpers.Serialize(@event, @event.GetType());
+	static string SerializeEvent(IEvent @event) => EventStoreSerializationHelpers.Serialize(@event, @event.GetType());
 
 	static T DeserializeSnapshot(string aggregateContent) =>
 		EventStoreSerializationHelpers.Deserialize<T>(aggregateContent)!;

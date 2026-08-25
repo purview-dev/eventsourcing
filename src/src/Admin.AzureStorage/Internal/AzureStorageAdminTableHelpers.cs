@@ -14,17 +14,12 @@ static class AzureStorageAdminTableHelpers
 
 		var tableOptions = new TableClientOptions();
 		if (options.TimeoutInSeconds is > 0)
-			tableOptions.Retry.NetworkTimeout = TimeSpan.FromSeconds(
-				options.TimeoutInSeconds.Value
-			);
+			tableOptions.Retry.NetworkTimeout = TimeSpan.FromSeconds(options.TimeoutInSeconds.Value);
 
 		return new TableServiceClient(options.ConnectionString, tableOptions);
 	}
 
-	public static TableClient CreateTableClient(
-		TableServiceClient tableServiceClient,
-		string tableName
-	)
+	public static TableClient CreateTableClient(TableServiceClient tableServiceClient, string tableName)
 	{
 		ArgumentNullException.ThrowIfNull(tableServiceClient);
 		ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
@@ -44,20 +39,12 @@ static class AzureStorageAdminTableHelpers
 		if (!string.IsNullOrWhiteSpace(aggregateType))
 		{
 			var normalized = aggregateType.Trim();
-			var directCandidates = new[]
-			{
-				$"{options.Table}{normalized}",
-				$"{options.Table}{normalized}Aggregate",
-			};
+			var directCandidates = new[] { $"{options.Table}{normalized}", $"{options.Table}{normalized}Aggregate" };
 
 			var matched = new List<string>();
 			foreach (var candidate in directCandidates.Distinct(StringComparer.OrdinalIgnoreCase))
 			{
-				var exists = await TableExistsAsync(
-					tableServiceClient,
-					candidate,
-					cancellationToken
-				);
+				var exists = await TableExistsAsync(tableServiceClient, candidate, cancellationToken);
 				if (exists)
 					matched.Add(candidate);
 			}
@@ -68,11 +55,7 @@ static class AzureStorageAdminTableHelpers
 
 		var names = new List<string>();
 		await foreach (
-			var table in tableServiceClient.QueryAsync(
-				filter: (string?)null,
-				maxPerPage: 100,
-				cancellationToken
-			)
+			var table in tableServiceClient.QueryAsync(filter: (string?)null, maxPerPage: 100, cancellationToken)
 		)
 		{
 			if (table.Name.StartsWith(options.Table, StringComparison.OrdinalIgnoreCase))
@@ -125,10 +108,7 @@ static class AzureStorageAdminTableHelpers
 			&& int.TryParse(rowKey[prefix.Length..], out version);
 	}
 
-	public static bool MatchesAggregateType(
-		string persistedAggregateType,
-		string requestedAggregateType
-	) =>
+	public static bool MatchesAggregateType(string persistedAggregateType, string requestedAggregateType) =>
 		string.Equals(
 			persistedAggregateType?.Trim(),
 			requestedAggregateType?.Trim(),

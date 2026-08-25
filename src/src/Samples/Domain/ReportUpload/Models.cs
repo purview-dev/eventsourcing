@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.Samples.Domain.ReportUpload;
+namespace Purview.EventSourcing.Samples.Domain.ReportUpload;
 
 public sealed class ParserReportSummary
 {
@@ -11,12 +11,7 @@ public sealed class ParserReportSummary
 	public required IEnumerable<Project> Projects { get; init; } = [];
 }
 
-public sealed record ParserDetails(
-	int TotalLines,
-	int SuccessfulLines,
-	int FailedLines,
-	TimeSpan ProcessingTime
-)
+public sealed record ParserDetails(int TotalLines, int SuccessfulLines, int FailedLines, TimeSpan ProcessingTime)
 {
 	public bool HasFailures => FailedLines > 0;
 
@@ -38,7 +33,7 @@ public sealed record VulnerabilityDetails(
 	int LowVulnerabilities
 );
 
-public sealed record AssetDetails(Dictionary<PlatformID, int> OperatingSystemDistribution)
+public sealed record AssetDetails([property: EFOpaque] Dictionary<PlatformID, int> OperatingSystemDistribution)
 {
 	public int TotalAssets => OperatingSystemDistribution.Values.Sum();
 }

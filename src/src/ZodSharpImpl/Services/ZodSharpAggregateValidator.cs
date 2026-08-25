@@ -5,13 +5,11 @@ using ZodSharp.Core;
 
 namespace Purview.EventSourcing.ZodSharp.Services;
 
-public sealed class ZodSharpAggregateValidator<TAggregate>(
-	IZodSchemaValidator<TAggregate> validator
-) : IAggregateValidator<TAggregate>
+public sealed class ZodSharpAggregateValidator<TAggregate>(IZodSchemaValidator<TAggregate> validator)
+	: IAggregateValidator<TAggregate>
 	where TAggregate : IAggregate
 {
-	public ValidationResult Validate(TAggregate aggregate) =>
-		Convert(validator.Validate(aggregate));
+	public ValidationResult Validate(TAggregate aggregate) => Convert(validator.Validate(aggregate));
 
 	public async Task<ValidationResult> ValidateAsync(
 		TAggregate aggregate,
@@ -27,9 +25,6 @@ public sealed class ZodSharpAggregateValidator<TAggregate>(
 		validationResult.IsSuccess
 			? ValidationResult.Success
 			: new ValidationResult(
-				validationResult.Errors.Select(e => new ValidationFailure(
-					string.Join('.', e.Path),
-					e.Message
-				))
+				validationResult.Errors.Select(e => new ValidationFailure(string.Join('.', e.Path), e.Message))
 			);
 }

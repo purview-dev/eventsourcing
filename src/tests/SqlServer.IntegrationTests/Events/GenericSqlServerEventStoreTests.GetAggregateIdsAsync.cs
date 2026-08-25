@@ -20,9 +20,7 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		}
 
 		var ids = new List<string>();
-		await foreach (
-			var id in eventStore.GetAggregateIdsAsync(false, cancellationToken: cancellationToken)
-		)
+		await foreach (var id in eventStore.GetAggregateIdsAsync(false, cancellationToken: cancellationToken))
 			ids.Add(id);
 
 		await Assert.That(ids.Count).IsEqualTo(aggregateCount);
@@ -54,14 +52,10 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		}
 
 		var ids = new List<string>();
-		await foreach (
-			var id in eventStore.GetAggregateIdsAsync(true, cancellationToken: cancellationToken)
-		)
+		await foreach (var id in eventStore.GetAggregateIdsAsync(true, cancellationToken: cancellationToken))
 			ids.Add(id);
 
-		await Assert
-			.That(ids.Count)
-			.IsEqualTo(nonDeletedAggregateIdCount + deletedAggregateIdCount);
+		await Assert.That(ids.Count).IsEqualTo(nonDeletedAggregateIdCount + deletedAggregateIdCount);
 	}
 
 	public async Task GetAggregateIdsAsync_GivenNonDeletedAggregatesAndDeletedAggregatesInTheStoreAndRequestingOnlyNonDeleted_CorrectlyReturnsNonDeletedIdsOnly(
@@ -88,9 +82,7 @@ partial class GenericSqlServerEventStoreTests<TAggregate>
 		}
 
 		var ids = new List<string>();
-		await foreach (
-			var id in eventStore.GetAggregateIdsAsync(false, cancellationToken: cancellationToken)
-		)
+		await foreach (var id in eventStore.GetAggregateIdsAsync(false, cancellationToken: cancellationToken))
 			ids.Add(id);
 
 		await Assert.That(ids.Count).IsEqualTo(nonDeletedAggregateIdCount);

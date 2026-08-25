@@ -10,14 +10,12 @@ static class CodeGenHelpers
 
 	const string EmbedAttributesHashDefineName = "PURVIEW_EVENTSOURCING_ATTRIBUTES";
 
-	const string GeneratedCodeConstant =
-		"System.CodeDom.Compiler.GeneratedCodeAttribute(\"{0}\", \"{1}\")";
+	const string GeneratedCodeConstant = "System.CodeDom.Compiler.GeneratedCodeAttribute(\"{0}\", \"{1}\")";
 	const string ConditionalConstant = "System.Diagnostics.ConditionalAttribute(\"{0}\")";
 	const string CompilerGeneratedConstant = "System.Runtime.CompilerServices.CompilerGenerated";
 
 	const string EmbeddedConstant = "Microsoft.CodeAnalysis.EmbeddedAttribute";
-	const string ExcludeFromCodeCoverageConstant =
-		"System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute";
+	const string ExcludeFromCodeCoverageConstant = "System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute";
 
 	static readonly Lazy<string> GeneratedCodeAttribute = new(() =>
 		string.Format(
@@ -29,11 +27,7 @@ static class CodeGenHelpers
 	);
 
 	static readonly Lazy<string> ConditionalAttribute = new(() =>
-		string.Format(
-			CultureInfo.InvariantCulture,
-			ConditionalConstant,
-			EmbedAttributesHashDefineName
-		)
+		string.Format(CultureInfo.InvariantCulture, ConditionalConstant, EmbedAttributesHashDefineName)
 	);
 
 	static readonly Lazy<string[]> GenAttributes = new(() =>

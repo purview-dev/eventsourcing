@@ -43,11 +43,7 @@ static partial class EventVerbMap
 	/// Modifier prefix: "ForceSave"      -> "ForceSaved"
 	/// Irregular whole: "Rollback"       -> "RolledBack"
 	/// </summary>
-	public static bool TryCreateGeneratedEventName(
-		string methodName,
-		string aggregateClassName,
-		out string eventName
-	)
+	public static bool TryCreateGeneratedEventName(string methodName, string aggregateClassName, out string eventName)
 	{
 		if (!TryResolve(methodName, out var modifier, out var objectPart, out var pastTense))
 		{
@@ -62,8 +58,7 @@ static partial class EventVerbMap
 		return true;
 	}
 
-	public static bool IsVerbPhrase(string methodName) =>
-		TryResolve(methodName, out _, out _, out _);
+	public static bool IsVerbPhrase(string methodName) => TryResolve(methodName, out _, out _, out _);
 
 	public static bool IsPastTenseEventName(string eventName)
 	{
@@ -100,12 +95,7 @@ static partial class EventVerbMap
 	/// ("Sign"), and sub-word matches ("Set" inside "Settle") are impossible
 	/// because spans always land on PascalCase boundaries.
 	/// </summary>
-	static bool TryResolve(
-		string identifier,
-		out string modifier,
-		out string objectPart,
-		out string pastTense
-	)
+	static bool TryResolve(string identifier, out string modifier, out string objectPart, out string pastTense)
 	{
 		modifier = string.Empty;
 		objectPart = string.Empty;
@@ -117,8 +107,7 @@ static partial class EventVerbMap
 		var wordCount = CountWords(identifier);
 
 		// starts[i] = start index of word i; starts[wordCount] = identifier.Length.
-		var starts =
-			wordCount <= MaxStackWords ? stackalloc int[MaxStackWords + 1] : new int[wordCount + 1];
+		var starts = wordCount <= MaxStackWords ? stackalloc int[MaxStackWords + 1] : new int[wordCount + 1];
 		FillWordStarts(identifier, starts);
 
 		// A modifier can only occupy the FIRST word; the verb search starts after it.
@@ -247,9 +236,7 @@ static partial class EventVerbMap
 		QualifyBareVerbWithAggregate ? TrimAggregateSuffix(aggregateClassName) : string.Empty;
 
 	static string TrimEventSuffix(string name) =>
-		name.EndsWith("Event", StringComparison.Ordinal)
-			? name.Substring(0, name.Length - "Event".Length)
-			: name;
+		name.EndsWith("Event", StringComparison.Ordinal) ? name.Substring(0, name.Length - "Event".Length) : name;
 
 	static string TrimAggregateSuffix(string aggregateClassName) =>
 		aggregateClassName.EndsWith("Aggregate", StringComparison.Ordinal)

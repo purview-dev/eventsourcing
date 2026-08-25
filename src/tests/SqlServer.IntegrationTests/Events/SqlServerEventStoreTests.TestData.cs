@@ -12,9 +12,7 @@ partial class SqlServerEventStoreTests
 		}
 	}
 
-	public static IEnumerable<
-		Func<(Type, int, int)>
-	> SteppedAggregateCountWithDeletedAggregateIdCountTestData()
+	public static IEnumerable<Func<(Type, int, int)>> SteppedAggregateCountWithDeletedAggregateIdCountTestData()
 	{
 		foreach (var aggregateType in GetAggregateTypes())
 		{
@@ -44,9 +42,7 @@ partial class SqlServerEventStoreTests
 		}
 	}
 
-	public static IEnumerable<
-		Func<(Type, int, int, int?, int)>
-	> RequestedRangeOfEventsWithExpectedEventCountTestData()
+	public static IEnumerable<Func<(Type, int, int, int?, int)>> RequestedRangeOfEventsWithExpectedEventCountTestData()
 	{
 		foreach (var aggregateType in GetAggregateTypes())
 		{
@@ -95,10 +91,7 @@ partial class SqlServerEventStoreTests
 		}
 	}
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Design",
-		"CA1024:Use properties where appropriate"
-	)]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1024:Use properties where appropriate")]
 	public static IEnumerable<Type> GetAggregateTypes()
 	{
 		yield return typeof(Aggregates.Persistence.PersistenceAggregate);

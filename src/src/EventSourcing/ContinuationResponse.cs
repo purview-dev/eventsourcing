@@ -14,9 +14,8 @@ public class ContinuationResponse<T>
 	/// Implicit conversion to <see cref="ContinuationRequest"/>.
 	/// </summary>
 	/// <param name="response"></param>
-	public static implicit operator ContinuationRequest(
-		[NotNull] ContinuationResponse<T> response
-	) => response.ToRequest();
+	public static implicit operator ContinuationRequest([NotNull] ContinuationResponse<T> response) =>
+		response.ToRequest();
 
 	/// <summary>
 	/// If there are more records, use this token to provide access to the next set.

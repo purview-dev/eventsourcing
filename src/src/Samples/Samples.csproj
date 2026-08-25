@@ -15,5 +15,11 @@
 			ReferenceOutputAssembly="false"
 			PrivateAssets="all"
 		/>
+		<ProjectReference
+			Include="..\EntityFrameworkCore.SourceGenerator\EntityFrameworkCore.SourceGenerator.csproj"
+			OutputItemType="Analyzer"
+			ReferenceOutputAssembly="false"
+			PrivateAssets="all"
+		/>
 	</ItemGroup>
 </Project>

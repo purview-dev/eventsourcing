@@ -6,10 +6,8 @@ namespace Purview.EventSourcing.CosmosDb.Snapshot;
 
 partial class CosmosDbSnapshotEventStore<T>
 {
-	public Task<T> CreateAsync(
-		string? aggregateId = null,
-		CancellationToken cancellationToken = default
-	) => _eventStore.CreateAsync(aggregateId, cancellationToken);
+	public Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default) =>
+		_eventStore.CreateAsync(aggregateId, cancellationToken);
 
 	public Task<T?> GetOrCreateAsync(
 		string? aggregateId,
@@ -56,15 +54,11 @@ partial class CosmosDbSnapshotEventStore<T>
 		return result;
 	}
 
-	public Task<bool> IsDeletedAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	) => _eventStore.IsDeletedAsync(aggregateId, cancellationToken);
+	public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+		_eventStore.IsDeletedAsync(aggregateId, cancellationToken);
 
-	public Task<T?> GetDeletedAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	) => _eventStore.GetDeletedAsync(aggregateId, cancellationToken);
+	public Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+		_eventStore.GetDeletedAsync(aggregateId, cancellationToken);
 
 	public async Task<bool> DeleteAsync(
 		T aggregate,
@@ -76,11 +70,7 @@ partial class CosmosDbSnapshotEventStore<T>
 
 		var result = await _eventStore.DeleteAsync(aggregate, operationContext, cancellationToken);
 		if (result)
-			await _cosmosDbClient.DeleteAsync(
-				aggregate.Details.Id,
-				_partitionKey,
-				cancellationToken
-			);
+			await _cosmosDbClient.DeleteAsync(aggregate.Details.Id, _partitionKey, cancellationToken);
 
 		return result;
 	}
@@ -105,10 +95,8 @@ partial class CosmosDbSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetAggregateIdsAsync(includeDeleted, cancellationToken);
 
-	public Task<ExistsState> ExistsAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	) => _eventStore.ExistsAsync(aggregateId, cancellationToken);
+	public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+		_eventStore.ExistsAsync(aggregateId, cancellationToken);
 
 	public T FulfilRequirements(T aggregate) => _eventStore.FulfilRequirements(aggregate);
 

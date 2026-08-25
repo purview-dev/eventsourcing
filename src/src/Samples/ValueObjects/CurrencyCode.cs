@@ -12,9 +12,6 @@ public readonly partial record struct CurrencyCode
 	static partial void OnValidate(string value)
 	{
 		if (string.IsNullOrWhiteSpace(value) || value.Length != 3)
-			throw new ArgumentException(
-				"Currency code must be a 3-letter ISO code.",
-				nameof(value)
-			);
+			throw new ArgumentException("Currency code must be a 3-letter ISO code.", nameof(value));
 	}
 }

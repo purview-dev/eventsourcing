@@ -79,10 +79,7 @@ public sealed class OptionsValidationTests
 	public async Task AdminProjectionOptions_Validate_ThrowsIfMaxTimeRangePerQueryIsNegative()
 	{
 		// Arrange
-		var options = new AdminProjectionOptions
-		{
-			MaxTimeRangePerQuery = TimeSpan.FromSeconds(-1),
-		};
+		var options = new AdminProjectionOptions { MaxTimeRangePerQuery = TimeSpan.FromSeconds(-1) };
 
 		// Act & Assert
 		await Assert.That(options.Validate).Throws<InvalidOperationException>();
@@ -96,8 +93,7 @@ public sealed class OptionsValidationTests
 		services.AddPurviewEventSourcingAdminApi(opts => opts.RoutePrefix = "");
 
 		var provider = services.BuildServiceProvider();
-		AdminPortalOptions ResolveInvalidOptions() =>
-			provider.GetRequiredService<IOptions<AdminPortalOptions>>().Value;
+		AdminPortalOptions ResolveInvalidOptions() => provider.GetRequiredService<IOptions<AdminPortalOptions>>().Value;
 
 		// Act & Assert
 		await Assert.That(ResolveInvalidOptions).Throws<OptionsValidationException>();

@@ -18,12 +18,7 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.GetQueryEnumerableAsync(
-			whereClause,
-			null,
-			maxRecordsPerOperation,
-			cancellationToken
-		);
+		eventStore.GetQueryEnumerableAsync(whereClause, null, maxRecordsPerOperation, cancellationToken);
 
 	public static IAsyncEnumerable<T> GetQueryEnumerableAsync<T, TOrderBy>(
 		[NotNull] this IQueryableEventStore eventStore,
@@ -115,12 +110,7 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.QueryAsync(
-			whereClause,
-			m => m.OrderBy(orderByClause),
-			continuationRequest,
-			cancellationToken
-		);
+		eventStore.QueryAsync(whereClause, m => m.OrderBy(orderByClause), continuationRequest, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> QueryAsync<T>(
 		[NotNull] this IQueryableEventStore eventStore,
@@ -130,12 +120,7 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.QueryAsync(
-			whereClause,
-			m => m.OrderBy(orderByClause),
-			maxRecordCount,
-			cancellationToken
-		);
+		eventStore.QueryAsync(whereClause, m => m.OrderBy(orderByClause), maxRecordCount, cancellationToken);
 
 	#endregion QueryAsync
 
@@ -148,19 +133,14 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.ListAsync(
-			orderByClause,
-			new ContinuationRequest { MaxRecords = maxRecordCount },
-			cancellationToken
-		);
+		eventStore.ListAsync(orderByClause, new ContinuationRequest { MaxRecords = maxRecordCount }, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T>(
 		[NotNull] this IQueryableEventStore eventStore,
 		ContinuationRequest continuationRequest,
 		CancellationToken cancellationToken = default
 	)
-		where T : class, IAggregate, new() =>
-		eventStore.ListAsync<T>(null, continuationRequest, cancellationToken);
+		where T : class, IAggregate, new() => eventStore.ListAsync<T>(null, continuationRequest, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T>(
 		[NotNull] this IQueryableEventStore eventStore,
@@ -168,11 +148,7 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.ListAsync<T>(
-			null,
-			new ContinuationRequest { MaxRecords = maxRecordCount },
-			cancellationToken
-		);
+		eventStore.ListAsync<T>(null, new ContinuationRequest { MaxRecords = maxRecordCount }, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T>(
 		[NotNull] this IQueryableEventStore eventStore,
@@ -181,11 +157,7 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.ListAsync<T>(
-			m => m.OrderBy(orderByClause),
-			continuationRequest,
-			cancellationToken
-		);
+		eventStore.ListAsync<T>(m => m.OrderBy(orderByClause), continuationRequest, cancellationToken);
 
 	public static Task<ContinuationResponse<T>> ListAsync<T>(
 		[NotNull] this IQueryableEventStore eventStore,
@@ -215,8 +187,7 @@ public static class IQueryableEventStoreExtensions
 		Expression<Func<T, bool>> whereClause,
 		CancellationToken cancellationToken = default
 	)
-		where T : class, IAggregate, new() =>
-		eventStore.FirstOrDefaultAsync(whereClause, null, cancellationToken);
+		where T : class, IAggregate, new() => eventStore.FirstOrDefaultAsync(whereClause, null, cancellationToken);
 
 	public static Task<T?> FirstOrDefaultAsync<T>(
 		[NotNull] this IQueryableEventStore eventStore,
@@ -225,11 +196,7 @@ public static class IQueryableEventStoreExtensions
 		CancellationToken cancellationToken = default
 	)
 		where T : class, IAggregate, new() =>
-		eventStore.FirstOrDefaultAsync(
-			whereClause,
-			m => m.OrderBy(orderByClause),
-			cancellationToken
-		);
+		eventStore.FirstOrDefaultAsync(whereClause, m => m.OrderBy(orderByClause), cancellationToken);
 
 	#endregion FirstOrDefaultAsync
 }

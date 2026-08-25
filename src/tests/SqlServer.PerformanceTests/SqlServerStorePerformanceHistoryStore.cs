@@ -9,32 +9,21 @@ sealed class SqlServerStorePerformanceHistoryStore
 
 	readonly string _repositoryRoot = FindRepositoryRoot();
 
-	string HistoryDirectory =>
-		Path.Combine(_repositoryRoot, "artifacts", "sqlserver-performance", "history");
+	string HistoryDirectory => Path.Combine(_repositoryRoot, "artifacts", "sqlserver-performance", "history");
 
-	string LatestPath =>
-		Path.Combine(_repositoryRoot, "artifacts", "sqlserver-performance", "latest.json");
+	string LatestPath => Path.Combine(_repositoryRoot, "artifacts", "sqlserver-performance", "latest.json");
 
 	public SqlServerStorePerformanceRun? TryLoadLatest() =>
 		File.Exists(LatestPath)
-			? JsonSerializer.Deserialize<SqlServerStorePerformanceRun>(
-				File.ReadAllText(LatestPath),
-				SerializerOptions
-			)
+			? JsonSerializer.Deserialize<SqlServerStorePerformanceRun>(File.ReadAllText(LatestPath), SerializerOptions)
 			: null;
 
-	public async Task<string> SaveAsync(
-		SqlServerStorePerformanceRun run,
-		CancellationToken cancellationToken
-	)
+	public async Task<string> SaveAsync(SqlServerStorePerformanceRun run, CancellationToken cancellationToken)
 	{
 		Directory.CreateDirectory(HistoryDirectory);
 
 		var timestamp = run.TimestampUtc.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-		var historyPath = Path.Combine(
-			HistoryDirectory,
-			$"{timestamp}-{run.Mode.ToUpperInvariant()}.json"
-		);
+		var historyPath = Path.Combine(HistoryDirectory, $"{timestamp}-{run.Mode.ToUpperInvariant()}.json");
 		var json = JsonSerializer.Serialize(run, SerializerOptions);
 
 		await File.WriteAllTextAsync(historyPath, json, cancellationToken);

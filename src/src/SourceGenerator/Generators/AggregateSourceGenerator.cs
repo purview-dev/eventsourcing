@@ -1,6 +1,3 @@
-using Microsoft.CodeAnalysis;
-using Purview.SourceGeneratorFramework.Extensions;
-
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
 [Generator]
@@ -8,10 +5,7 @@ public sealed partial class AggregateSourceGenerator : IIncrementalGenerator
 {
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
-		context.RegisterEmbeddedAttribute(
-			typeof(AggregateSourceGenerator).FullName,
-			AssemblyInfo.Version
-		);
+		context.RegisterEmbeddedAttribute(typeof(AggregateSourceGenerator).FullName, AssemblyInfo.Version);
 		context.RegisterPostInitializationOutput(ctx =>
 		{
 			foreach (var (HintName, Source) in AggregateAttributeEmitter.Emit())
@@ -39,10 +33,7 @@ public sealed partial class AggregateSourceGenerator : IIncrementalGenerator
 
 					var info = aggregateResult.Value;
 
-					AggregateGenerationOutputContext outputContext = new(
-						model.GenerationContext,
-						info
-					);
+					AggregateEmitContext outputContext = new(model.GenerationContext, info);
 
 					AggregateSourceEmitter.GenerateAggregateSource(outputContext);
 

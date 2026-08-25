@@ -6,10 +6,8 @@ namespace Purview.EventSourcing.MongoDB.Snapshots;
 
 partial class MongoDBSnapshotEventStore<T>
 {
-	public Task<T> CreateAsync(
-		string? aggregateId = null,
-		CancellationToken cancellationToken = default
-	) => _eventStore.CreateAsync(aggregateId, cancellationToken);
+	public Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default) =>
+		_eventStore.CreateAsync(aggregateId, cancellationToken);
 
 	public Task<T?> GetOrCreateAsync(
 		string? aggregateId,
@@ -56,15 +54,11 @@ partial class MongoDBSnapshotEventStore<T>
 		return result;
 	}
 
-	public Task<bool> IsDeletedAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	) => _eventStore.IsDeletedAsync(aggregateId, cancellationToken);
+	public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+		_eventStore.IsDeletedAsync(aggregateId, cancellationToken);
 
-	public Task<T?> GetDeletedAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	) => _eventStore.GetDeletedAsync(aggregateId, cancellationToken);
+	public Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+		_eventStore.GetDeletedAsync(aggregateId, cancellationToken);
 
 	public async Task<bool> DeleteAsync(
 		T aggregate,
@@ -87,11 +81,7 @@ partial class MongoDBSnapshotEventStore<T>
 	{
 		var result = await _eventStore.RestoreAsync(aggregate, operationContext, cancellationToken);
 		if (result)
-			await _mongoDbClient.UpsertAsync(
-				aggregate,
-				BuildPredicate(aggregate),
-				cancellationToken
-			);
+			await _mongoDbClient.UpsertAsync(aggregate, BuildPredicate(aggregate), cancellationToken);
 
 		return result;
 	}
@@ -101,10 +91,8 @@ partial class MongoDBSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetAggregateIdsAsync(includeDeleted, cancellationToken);
 
-	public Task<ExistsState> ExistsAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	) => _eventStore.ExistsAsync(aggregateId, cancellationToken);
+	public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default) =>
+		_eventStore.ExistsAsync(aggregateId, cancellationToken);
 
 	public T FulfilRequirements(T aggregate) => _eventStore.FulfilRequirements(aggregate);
 

@@ -25,9 +25,7 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 		correlationIdProvider.GetCorrelationId().Returns("ambient-sql-correlation");
 		var factory = new SqlServerEventStoreTransactionFactory(correlationIdProvider);
 
-		await using var transaction = factory.CreateSqlServerTransaction(
-			"explicit-sql-correlation"
-		);
+		await using var transaction = factory.CreateSqlServerTransaction("explicit-sql-correlation");
 
 		await Assert.That(transaction.CorrelationId).IsEqualTo("explicit-sql-correlation");
 		correlationIdProvider.GetCorrelationId().WasNeverCalled();
@@ -77,8 +75,7 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 		services.AddSqlServerEventStore();
 
 		using var serviceProvider = services.BuildServiceProvider();
-		var sqlFactory =
-			serviceProvider.GetRequiredService<ISqlServerEventStoreTransactionFactory>();
+		var sqlFactory = serviceProvider.GetRequiredService<ISqlServerEventStoreTransactionFactory>();
 		var defaultFactory = serviceProvider.GetRequiredService<IEventStoreTransactionFactory>();
 
 		await Assert.That(sqlFactory).IsTypeOf<SqlServerEventStoreTransactionFactory>();
@@ -104,18 +101,13 @@ public sealed class SqlServerEventStoreTransactionFactoryTests
 		services.Configure<SqlServerEventStoreOptions>(options =>
 		{
 			options.JsonIndexOptions.Enabled = true;
-			options.JsonIndexOptions.Indexes =
-			[
-				new SqlServerJsonIndexDefinition { JsonPath = "invalid-path" },
-			];
+			options.JsonIndexOptions.Indexes = [new SqlServerJsonIndexDefinition { JsonPath = "invalid-path" }];
 		});
 
 		using var serviceProvider = services.BuildServiceProvider();
 
 		var exception = await Assert
-			.That(() =>
-				serviceProvider.GetRequiredService<IOptions<SqlServerEventStoreOptions>>().Value
-			)
+			.That(() => serviceProvider.GetRequiredService<IOptions<SqlServerEventStoreOptions>>().Value)
 			.Throws<OptionsValidationException>();
 
 		await Assert.That(exception).IsNotNull();

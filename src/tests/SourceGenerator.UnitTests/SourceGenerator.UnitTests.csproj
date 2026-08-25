@@ -3,10 +3,12 @@
 	<ItemGroup>
 		<ProjectReference Remove="../SharedTestingFramework/SharedTestingFramework.csproj" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
 		<PackageReference Include="Purview.SourceGeneratorFramework.Testing.TUnit" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\EventSourcing\EventSourcing.csproj" />
 	</ItemGroup>

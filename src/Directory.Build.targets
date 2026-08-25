@@ -1,10 +1,7 @@
 <Project>
 	<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.targets" />
 
-	<Target
-		Name="CopyProjectReferencesToPackage"
-		DependsOnTargets="BuildOnlySettings;ResolveReferences"
-	>
+	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="BuildOnlySettings;ResolveReferences">
 		<ItemGroup>
 			<!-- This filter is the key - only PrivateAssets=All references are bundled -->
 			<_ReferenceCopyLocalPaths Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('PrivateAssets', 'All'))" />

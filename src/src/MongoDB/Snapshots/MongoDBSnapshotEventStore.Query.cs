@@ -11,12 +11,7 @@ partial class MongoDBSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	) =>
 		_mongoDbClient
-			.GetQueryEnumerableAsync(
-				whereClause,
-				orderByClause,
-				maxRecordsPerIteration,
-				cancellationToken
-			)
+			.GetQueryEnumerableAsync(whereClause, orderByClause, maxRecordsPerIteration, cancellationToken)
 			.SelectAsync(FulfilRequirements);
 
 	public IAsyncEnumerable<T> GetListEnumerableAsync(
@@ -34,12 +29,7 @@ partial class MongoDBSnapshotEventStore<T>
 	)
 	{
 		// Two so SingleOrDefault throws if it's greater than 1.
-		var query = await QueryAsync(
-			whereClause,
-			null,
-			new ContinuationRequest { MaxRecords = 2 },
-			cancellationToken
-		);
+		var query = await QueryAsync(whereClause, null, new ContinuationRequest { MaxRecords = 2 }, cancellationToken);
 
 		var result = query.Results.SingleOrDefault();
 		if (result != null)
@@ -78,12 +68,7 @@ partial class MongoDBSnapshotEventStore<T>
 		ArgumentNullException.ThrowIfNull(whereClause, nameof(whereClause));
 		ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-		var result = await _mongoDbClient.QueryAsync(
-			whereClause,
-			orderByClause,
-			request,
-			cancellationToken
-		);
+		var result = await _mongoDbClient.QueryAsync(whereClause, orderByClause, request, cancellationToken);
 
 		result.Results = [.. result.Results.Select(FulfilRequirements)];
 		if (request.IncludeTotalCount)

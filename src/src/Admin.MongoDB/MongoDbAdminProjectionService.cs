@@ -9,10 +9,8 @@ namespace Purview.EventSourcing.Admin.MongoDB;
 public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, string databaseName)
 	: IAdminProjectionService
 {
-	readonly IMongoClient _mongoClient =
-		mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
-	readonly string _databaseName =
-		databaseName ?? throw new ArgumentNullException(nameof(databaseName));
+	readonly IMongoClient _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
+	readonly string _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
 
 	public async Task<ProjectionResponse?> ProjectAtVersionAsync(
 		string aggregateType,
@@ -24,10 +22,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
 		if (targetVersion < 1)
-			throw new ArgumentOutOfRangeException(
-				nameof(targetVersion),
-				"Target version must be >= 1"
-			);
+			throw new ArgumentOutOfRangeException(nameof(targetVersion), "Target version must be >= 1");
 
 		var database = _mongoClient.GetDatabase(_databaseName);
 		var collectionName = $"es-{aggregateType}-events";
@@ -39,10 +34,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 			Builders<EventEntity>.Filter.Lte(x => x.Version, targetVersion)
 		);
 
-		var events = await collection
-			.Find(filter)
-			.SortBy(x => x.Version)
-			.ToListAsync(cancellationToken);
+		var events = await collection.Find(filter).SortBy(x => x.Version).ToListAsync(cancellationToken);
 
 		if (events.Count == 0)
 		{
@@ -59,11 +51,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 			{
 				if (!string.IsNullOrEmpty(evt.EventType) && !string.IsNullOrEmpty(evt.Payload))
 				{
-					projectedState[$"event_{evt.Version}"] = new
-					{
-						eventType = evt.EventType,
-						version = evt.Version,
-					};
+					projectedState[$"event_{evt.Version}"] = new { eventType = evt.EventType, version = evt.Version };
 					appliedVersions.Add(evt.Version);
 				}
 				else
@@ -84,9 +72,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 				? $"Events projected up to available version {lastEvent.Version} (target was {targetVersion})"
 				: $"Events projected up to version {targetVersion}";
 
-		var finalState = JsonDocument
-			.Parse(JsonSerializer.Serialize(projectedState))
-			.RootElement.Clone();
+		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
 
 		return new ProjectionResponse(
 			aggregateType,
@@ -124,10 +110,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 			Builders<EventEntity>.Filter.Lte(x => x.Timestamp, targetUtc)
 		);
 
-		var events = await collection
-			.Find(filter)
-			.SortBy(x => x.Version)
-			.ToListAsync(cancellationToken);
+		var events = await collection.Find(filter).SortBy(x => x.Version).ToListAsync(cancellationToken);
 
 		if (events.Count == 0)
 		{
@@ -170,9 +153,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 				? $"Events projected up to available timestamp {lastEvent.Timestamp:O} (target was {targetUtc:O})"
 				: $"Events projected up to timestamp {targetUtc:O}";
 
-		var finalState = JsonDocument
-			.Parse(JsonSerializer.Serialize(projectedState))
-			.RootElement.Clone();
+		var finalState = JsonDocument.Parse(JsonSerializer.Serialize(projectedState)).RootElement.Clone();
 
 		return new ProjectionResponse(
 			aggregateType,

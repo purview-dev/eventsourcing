@@ -137,9 +137,7 @@ public sealed class SqlServerEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<
-		string,
-		SqlServerAggregateTableOverride
+	public Dictionary<string, SqlServerAggregateTableOverride
 #pragma warning disable format
 	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
 #pragma warning restore format

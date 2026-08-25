@@ -9,9 +9,7 @@ partial class OrderAggregate
 		shippingAddress = shippingAddress.OrNull();
 
 		if (Status.Value is not OrderStatusCode.Draft)
-			throw new InvalidOperationException(
-				"Shipping address can only be set while order is in draft status."
-			);
+			throw new InvalidOperationException("Shipping address can only be set while order is in draft status.");
 	}
 
 	partial void OnStatusChanging(ref OrderStatus status)
@@ -23,31 +21,22 @@ partial class OrderAggregate
 			case OrderStatusCode.Shipped when Status != OrderStatus.Confirmed:
 			case OrderStatusCode.Completed when Status != OrderStatus.Shipped:
 			case OrderStatusCode.Cancelled when Status == OrderStatus.Shipped:
-				throw new InvalidOperationException(
-					$"Invalid status transition from {Status} to {status}."
-				);
+				throw new InvalidOperationException($"Invalid status transition from {Status} to {status}.");
 		}
 #pragma warning restore IDE0010 // Add missing cases
 	}
 
-	partial void OnRaisingLineItemAddedEvent(
-		ref EventStoreList<OrderLineItem> lineItems,
-		ref decimal totalAmount
-	)
+	partial void OnRaisingLineItemAddedEvent(ref EventStoreList<OrderLineItem> lineItems, ref decimal totalAmount)
 	{
 		if (Status != OrderStatus.Draft)
 			throw new InvalidOperationException("Can only add items to draft orders.");
 	}
 
-	partial void OnRaisingLineItemRemovedEvent(
-		ref EventStoreList<OrderLineItem> lineItems,
-		ref decimal totalAmount
-	)
+	partial void OnRaisingLineItemRemovedEvent(ref EventStoreList<OrderLineItem> lineItems, ref decimal totalAmount)
 	{
 		if (Status != OrderStatus.Draft)
 			throw new InvalidOperationException("Can only remove items from draft orders.");
 	}
 
-	partial void OnCustomerIdChanging(ref string customerId) =>
-		ArgumentException.ThrowIfNullOrWhiteSpace(customerId);
+	partial void OnCustomerIdChanging(ref string customerId) => ArgumentException.ThrowIfNullOrWhiteSpace(customerId);
 }

@@ -29,11 +29,7 @@ partial class TableEventStore<T>
 
 		Deleted deleteAggregateEvent = new()
 		{
-			Details =
-			{
-				AggregateVersion = aggregate.Details.CurrentVersion + 1,
-				When = DateTimeOffset.UtcNow,
-			},
+			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
@@ -47,10 +43,7 @@ partial class TableEventStore<T>
 		return result.Saved;
 	}
 
-	async Task<bool> PermanentlyDeleteAsync(
-		T aggregate,
-		CancellationToken cancellationToken = default
-	)
+	async Task<bool> PermanentlyDeleteAsync(T aggregate, CancellationToken cancellationToken = default)
 	{
 		if (aggregate == null)
 			throw NullAggregate(aggregate);

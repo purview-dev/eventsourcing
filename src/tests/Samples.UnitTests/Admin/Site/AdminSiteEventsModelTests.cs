@@ -51,11 +51,7 @@ public sealed class AdminSiteEventsModelTests
 			}
 		);
 
-		var model = new EventsModel(mockService)
-		{
-			AggregateType = "CustomerAggregate",
-			AggregateId = "customer-1",
-		};
+		var model = new EventsModel(mockService) { AggregateType = "CustomerAggregate", AggregateId = "customer-1" };
 
 		var result = await model.OnGetAsync(cancellationToken);
 
@@ -69,9 +65,7 @@ public sealed class AdminSiteEventsModelTests
 	}
 
 	[Test]
-	public async Task OnGetAsync_WithEmptyEventStream_ReturnsPageAndEmptyResult(
-		CancellationToken cancellationToken
-	)
+	public async Task OnGetAsync_WithEmptyEventStream_ReturnsPageAndEmptyResult(CancellationToken cancellationToken)
 	{
 		var expected = new PagedResult<EventEnvelopeResponse>([], 1, 25, 0);
 
@@ -79,11 +73,7 @@ public sealed class AdminSiteEventsModelTests
 			(_, _, _, _) => Task.FromResult<PagedResult<EventEnvelopeResponse>?>(expected)
 		);
 
-		var model = new EventsModel(mockService)
-		{
-			AggregateType = "CustomerAggregate",
-			AggregateId = "customer-1",
-		};
+		var model = new EventsModel(mockService) { AggregateType = "CustomerAggregate", AggregateId = "customer-1" };
 
 		var result = await model.OnGetAsync(cancellationToken);
 
@@ -93,13 +83,7 @@ public sealed class AdminSiteEventsModelTests
 	}
 
 	sealed class MockAdminEventQueryService(
-		Func<
-			string,
-			string,
-			EventRangeQuery,
-			CancellationToken,
-			Task<PagedResult<EventEnvelopeResponse>?>
-		> handler
+		Func<string, string, EventRangeQuery, CancellationToken, Task<PagedResult<EventEnvelopeResponse>?>> handler
 	) : IAdminEventQueryService
 	{
 		public Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(

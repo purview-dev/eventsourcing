@@ -36,9 +36,7 @@ sealed class SqlServerStorePerformanceRunner
 			cancellationToken
 		);
 
-	public Task<SqlServerStorePerformanceRun> RunBenchmarkAsync(
-		CancellationToken cancellationToken
-	) =>
+	public Task<SqlServerStorePerformanceRun> RunBenchmarkAsync(CancellationToken cancellationToken) =>
 		RunAsync(
 			mode: "Benchmark",
 			workload: new SqlServerPerformanceWorkload
@@ -63,8 +61,7 @@ sealed class SqlServerStorePerformanceRunner
 		CancellationToken cancellationToken
 	)
 	{
-		var previousRequiresPrincipal =
-			EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault;
+		var previousRequiresPrincipal = EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault;
 		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
 
 		await using var msSqlContainer = ContainerHelper.CreateMsSql();
@@ -80,11 +77,7 @@ sealed class SqlServerStorePerformanceRunner
 
 			var runId = Guid.NewGuid().ToString("N");
 			var eventStore = CreateEventStore(connectionString, $"PerfEvents_{runId}");
-			var snapshotStore = CreateSnapshotStore(
-				eventStore,
-				connectionString,
-				$"PerfSnapshots_{runId}"
-			);
+			var snapshotStore = CreateSnapshotStore(eventStore, connectionString, $"PerfSnapshots_{runId}");
 
 			var saveScenario = await MeasureAsync(
 				"EventStore.Save",
@@ -94,21 +87,12 @@ sealed class SqlServerStorePerformanceRunner
 				{
 					for (var i = 0; i < aggregateIds.Length; i++)
 					{
-						var aggregate = await eventStore.CreateAsync(
-							aggregateIds[i],
-							cancellationToken
-						);
+						var aggregate = await eventStore.CreateAsync(aggregateIds[i], cancellationToken);
 						PopulateAggregate(aggregate, i, workload.EventsPerAggregate);
 
-						var result = await eventStore.SaveAsync(
-							aggregate,
-							operationContext: null,
-							cancellationToken
-						);
+						var result = await eventStore.SaveAsync(aggregate, operationContext: null, cancellationToken);
 						if (!result.Saved || !result.IsValid)
-							throw new InvalidOperationException(
-								$"Save failed for aggregate '{aggregateIds[i]}'."
-							);
+							throw new InvalidOperationException($"Save failed for aggregate '{aggregateIds[i]}'.");
 					}
 				},
 				cancellationToken
@@ -125,14 +109,8 @@ sealed class SqlServerStorePerformanceRunner
 					for (var i = 0; i < aggregateIds.Length; i++)
 					{
 						var aggregate =
-							await eventStore.GetAsync(
-								aggregateIds[i],
-								operationContext: null,
-								cancellationToken
-							)
-							?? throw new InvalidOperationException(
-								$"Aggregate '{aggregateIds[i]}' was not found."
-							);
+							await eventStore.GetAsync(aggregateIds[i], operationContext: null, cancellationToken)
+							?? throw new InvalidOperationException($"Aggregate '{aggregateIds[i]}' was not found.");
 
 						ValidateAggregate(aggregate, i, workload.EventsPerAggregate);
 						loadedAggregates.Add(aggregate);
@@ -216,8 +194,7 @@ sealed class SqlServerStorePerformanceRunner
 		}
 		finally
 		{
-			EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault =
-				previousRequiresPrincipal;
+			EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = previousRequiresPrincipal;
 		}
 	}
 
@@ -290,27 +267,16 @@ sealed class SqlServerStorePerformanceRunner
 				var customerResult = await customerStore.QueryAsync(
 					aggregate =>
 						aggregate.IsActive
-						&& (
-							aggregate.Name == matchingCustomerName
-							|| aggregate.Email == matchingCustomerEmail
-						),
-					queryable =>
-						queryable
-							.OrderBy(aggregate => aggregate.Name)
-							.ThenBy(aggregate => aggregate.Email),
+						&& (aggregate.Name == matchingCustomerName || aggregate.Email == matchingCustomerEmail),
+					queryable => queryable.OrderBy(aggregate => aggregate.Name).ThenBy(aggregate => aggregate.Email),
 					new ContinuationRequest { MaxRecords = 20, IncludeTotalCount = true },
 					token
 				);
 
 				if (customerResult.Results.Length == 0)
-					throw new InvalidOperationException(
-						"Complex scalar snapshot query returned no results."
-					);
+					throw new InvalidOperationException("Complex scalar snapshot query returned no results.");
 
-				if (
-					customerResult.TotalCount is not null
-					&& customerResult.TotalCount != expectedCustomerMatches
-				)
+				if (customerResult.TotalCount is not null && customerResult.TotalCount != expectedCustomerMatches)
 				{
 					throw new InvalidOperationException(
 						$"Complex scalar snapshot query total mismatch. Expected {expectedCustomerMatches}, got {customerResult.TotalCount}."
@@ -322,9 +288,7 @@ sealed class SqlServerStorePerformanceRunner
 						aggregate.UserDetails.Id == matchingUserId
 						&& aggregate.UserDetails.IsActive
 						&& aggregate.UserDetails.DisplayName == matchingDisplayName
-						&& aggregate.UserDetails2.DisplayName.StartsWith(
-							matchingDisplayName2Prefix
-						),
+						&& aggregate.UserDetails2.DisplayName.StartsWith(matchingDisplayName2Prefix),
 					queryable =>
 						queryable
 							.OrderBy(aggregate => aggregate.UserDetails.DisplayName)
@@ -334,9 +298,7 @@ sealed class SqlServerStorePerformanceRunner
 				);
 
 				if (valueObjectResult.Results.Length == 0)
-					throw new InvalidOperationException(
-						"Complex value-object snapshot query returned no results."
-					);
+					throw new InvalidOperationException("Complex value-object snapshot query returned no results.");
 
 				if (
 					valueObjectResult.TotalCount is not null
@@ -397,10 +359,7 @@ sealed class SqlServerStorePerformanceRunner
 		var customerMatchCount = await customerStore.CountAsync(
 			aggregate =>
 				aggregate.IsActive
-				&& (
-					aggregate.Name == matchingCustomerName
-					|| aggregate.Email == matchingCustomerEmail
-				),
+				&& (aggregate.Name == matchingCustomerName || aggregate.Email == matchingCustomerEmail),
 			cancellationToken
 		);
 		if (customerMatchCount != expectedCustomerMatches)
@@ -428,20 +387,12 @@ sealed class SqlServerStorePerformanceRunner
 			if (matches)
 				expectedValueObjectMatches++;
 
-			var aggregate = new SnapshotValueObjectsAggregate
-			{
-				Details = { Id = $"{Guid.NewGuid():D}" },
-			};
-			var userId = matches
-				? matchingUserId
-				: Guid.Parse("44444444-4444-4444-4444-444444444444");
+			var aggregate = new SnapshotValueObjectsAggregate { Details = { Id = $"{Guid.NewGuid():D}" } };
+			var userId = matches ? matchingUserId : Guid.Parse("44444444-4444-4444-4444-444444444444");
 
 			aggregate.CaptureUserDetails(
 				UserDetails.Create(userId, matches ? matchingDisplayName : $"other-user-{i}", true),
-				UserDetails2.Create(
-					userId,
-					matches ? $"{matchingDisplayName2Prefix}{i}" : $"other-v2-{i}"
-				)
+				UserDetails2.Create(userId, matches ? $"{matchingDisplayName2Prefix}{i}" : $"other-v2-{i}")
 			);
 
 			await valueObjectStore.SnapshotAsync(aggregate, cancellationToken);
@@ -504,10 +455,7 @@ sealed class SqlServerStorePerformanceRunner
 		string tableName
 	)
 	{
-		var eventStore = CreateEventStore<SnapshotValueObjectsAggregate>(
-			connectionString,
-			eventTableName
-		);
+		var eventStore = CreateEventStore<SnapshotValueObjectsAggregate>(connectionString, eventTableName);
 
 		return new SqlServerSnapshotEventStore<SnapshotValueObjectsAggregate>(
 			eventStore,
@@ -524,18 +472,12 @@ sealed class SqlServerStorePerformanceRunner
 		);
 	}
 
-	static SqlServerEventStore<PersistenceAggregate> CreateEventStore(
-		string connectionString,
-		string tableName
-	)
+	static SqlServerEventStore<PersistenceAggregate> CreateEventStore(string connectionString, string tableName)
 	{
 		return CreateEventStore<PersistenceAggregate>(connectionString, tableName);
 	}
 
-	static SqlServerEventStore<TAggregate> CreateEventStore<TAggregate>(
-		string connectionString,
-		string tableName
-	)
+	static SqlServerEventStore<TAggregate> CreateEventStore<TAggregate>(string connectionString, string tableName)
 		where TAggregate : class, IAggregate, new()
 	{
 		var options = new SqlServerEventStoreOptions
@@ -580,11 +522,7 @@ sealed class SqlServerStorePerformanceRunner
 		);
 	}
 
-	static void PopulateAggregate(
-		PersistenceAggregate aggregate,
-		int sequence,
-		int eventsPerAggregate
-	)
+	static void PopulateAggregate(PersistenceAggregate aggregate, int sequence, int eventsPerAggregate)
 	{
 		aggregate.SetInt32Value(sequence);
 		for (var i = 0; i < eventsPerAggregate; i++)
@@ -594,21 +532,13 @@ sealed class SqlServerStorePerformanceRunner
 		}
 	}
 
-	static void ValidateAggregate(
-		PersistenceAggregate aggregate,
-		int sequence,
-		int eventsPerAggregate
-	)
+	static void ValidateAggregate(PersistenceAggregate aggregate, int sequence, int eventsPerAggregate)
 	{
 		if (aggregate.Int32Value != sequence)
-			throw new InvalidOperationException(
-				$"Int32Value mismatch for aggregate '{aggregate.Id()}'."
-			);
+			throw new InvalidOperationException($"Int32Value mismatch for aggregate '{aggregate.Id()}'.");
 
 		if (aggregate.IncrementInt32 != eventsPerAggregate)
-			throw new InvalidOperationException(
-				$"IncrementInt32 mismatch for aggregate '{aggregate.Id()}'."
-			);
+			throw new InvalidOperationException($"IncrementInt32 mismatch for aggregate '{aggregate.Id()}'.");
 
 		if (string.IsNullOrWhiteSpace(aggregate.StringProperty))
 			throw new InvalidOperationException(
@@ -629,10 +559,8 @@ sealed class SqlServerStorePerformanceRunner
 		stopwatch.Stop();
 
 		var totalMilliseconds = stopwatch.Elapsed.TotalMilliseconds;
-		var averageMilliseconds =
-			operationCount <= 0 ? totalMilliseconds : totalMilliseconds / operationCount;
-		var operationsPerSecond =
-			totalMilliseconds <= 0 ? 0 : operationCount / (totalMilliseconds / 1000d);
+		var averageMilliseconds = operationCount <= 0 ? totalMilliseconds : totalMilliseconds / operationCount;
+		var operationsPerSecond = totalMilliseconds <= 0 ? 0 : operationCount / (totalMilliseconds / 1000d);
 
 		return new SqlServerStorePerformanceScenarioRun
 		{
@@ -660,9 +588,7 @@ sealed class SqlServerStorePerformanceRunner
 
 		public string GetName<T>(Type aggregateEventType)
 			where T : IAggregate =>
-			aggregateEventType.AssemblyQualifiedName
-			?? aggregateEventType.FullName
-			?? aggregateEventType.Name;
+			aggregateEventType.AssemblyQualifiedName ?? aggregateEventType.FullName ?? aggregateEventType.Name;
 
 		public string? GetTypeName<T>(string eventTypeName)
 			where T : IAggregate => string.IsNullOrWhiteSpace(eventTypeName) ? null : eventTypeName;
@@ -676,20 +602,14 @@ sealed class SqlServerStorePerformanceRunner
 		public void Fulfil(IAggregate aggregate) { }
 	}
 
-	sealed class NoOpAggregateChangeFeedNotifier<TAggregate>
-		: IAggregateChangeFeedNotifier<TAggregate>
+	sealed class NoOpAggregateChangeFeedNotifier<TAggregate> : IAggregateChangeFeedNotifier<TAggregate>
 		where TAggregate : class, IAggregate, new()
 	{
-		public Task BeforeSaveAsync(
-			TAggregate aggregate,
-			bool isNew,
-			CancellationToken cancellationToken = default
-		) => Task.CompletedTask;
+		public Task BeforeSaveAsync(TAggregate aggregate, bool isNew, CancellationToken cancellationToken = default) =>
+			Task.CompletedTask;
 
-		public Task BeforeDeleteAsync(
-			TAggregate aggregate,
-			CancellationToken cancellationToken = default
-		) => Task.CompletedTask;
+		public Task BeforeDeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default) =>
+			Task.CompletedTask;
 
 		public Task AfterSaveAsync(
 			TAggregate aggregate,
@@ -699,10 +619,8 @@ sealed class SqlServerStorePerformanceRunner
 			CancellationToken cancellationToken = default
 		) => Task.CompletedTask;
 
-		public Task AfterDeleteAsync(
-			TAggregate aggregate,
-			CancellationToken cancellationToken = default
-		) => Task.CompletedTask;
+		public Task AfterDeleteAsync(TAggregate aggregate, CancellationToken cancellationToken = default) =>
+			Task.CompletedTask;
 
 		public Task FailureAsync(
 			TAggregate aggregate,
@@ -716,8 +634,7 @@ sealed class SqlServerStorePerformanceRunner
 	{
 		public byte[]? Get(string key) => null;
 
-		public Task<byte[]?> GetAsync(string key, CancellationToken token = default) =>
-			Task.FromResult<byte[]?>(null);
+		public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => Task.FromResult<byte[]?>(null);
 
 		public void Set(string key, byte[] value, DistributedCacheEntryOptions options) { }
 
@@ -730,13 +647,11 @@ sealed class SqlServerStorePerformanceRunner
 
 		public void Refresh(string key) { }
 
-		public Task RefreshAsync(string key, CancellationToken token = default) =>
-			Task.CompletedTask;
+		public Task RefreshAsync(string key, CancellationToken token = default) => Task.CompletedTask;
 
 		public void Remove(string key) { }
 
-		public Task RemoveAsync(string key, CancellationToken token = default) =>
-			Task.CompletedTask;
+		public Task RemoveAsync(string key, CancellationToken token = default) => Task.CompletedTask;
 	}
 
 	static class NoOpProxyFactory
@@ -764,9 +679,7 @@ sealed class SqlServerStorePerformanceRunner
 			{
 				var genericType = returnType.GetGenericArguments()[0];
 				var value = genericType.IsValueType ? Activator.CreateInstance(genericType) : null;
-				var method = typeof(Task)
-					.GetMethod(nameof(Task.FromResult))!
-					.MakeGenericMethod(genericType);
+				var method = typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(genericType);
 				return method.Invoke(null, [value]);
 			}
 

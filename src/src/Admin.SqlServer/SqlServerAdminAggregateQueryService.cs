@@ -9,9 +9,8 @@ using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 
-public sealed class SqlServerAdminAggregateQueryService(
-	IOptions<SqlServerEventStoreOptions> options
-) : IAdminAggregateQueryService
+public sealed class SqlServerAdminAggregateQueryService(IOptions<SqlServerEventStoreOptions> options)
+	: IAdminAggregateQueryService
 {
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
@@ -24,12 +23,7 @@ public sealed class SqlServerAdminAggregateQueryService(
 		var pageSize = Math.Max(1, query.PageSize);
 
 		var candidates = new List<AggregateSummaryResponse>();
-		foreach (
-			var table in SqlServerAdminTableResolver.ResolveTables(
-				options.Value,
-				query.AggregateType
-			)
-		)
+		foreach (var table in SqlServerAdminTableResolver.ResolveTables(options.Value, query.AggregateType))
 		{
 			await using var context = CreateContext(options.Value, table);
 			var rows = await BuildAggregateRowsAsync(context, table, query, cancellationToken);
@@ -52,16 +46,7 @@ public sealed class SqlServerAdminAggregateQueryService(
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId);
 
-		var query = new AggregateSearchQuery(
-			aggregateType,
-			aggregateId,
-			null,
-			null,
-			null,
-			null,
-			1,
-			1
-		);
+		var query = new AggregateSearchQuery(aggregateType, aggregateId, null, null, null, null, 1, 1);
 		var result = await SearchAsync(query, cancellationToken);
 		return result.Items.Count == 0 ? null : result.Items[0];
 	}
@@ -76,10 +61,7 @@ public sealed class SqlServerAdminAggregateQueryService(
 		var aggregateTypeFilter = table.AggregateTypeFilter;
 		var rows = context
 			.EventStoreEntities.AsNoTracking()
-			.Where(x =>
-				x.EntityType == 0
-				&& (aggregateTypeFilter == null || x.AggregateType == aggregateTypeFilter)
-			);
+			.Where(x => x.EntityType == 0 && (aggregateTypeFilter == null || x.AggregateType == aggregateTypeFilter));
 
 		if (!string.IsNullOrWhiteSpace(query.AggregateId))
 			rows = rows.Where(x => x.AggregateId == query.AggregateId);
@@ -108,10 +90,7 @@ public sealed class SqlServerAdminAggregateQueryService(
 			.ToListAsync(cancellationToken);
 	}
 
-	static IEnumerable<AggregateSummaryResponse> ApplySort(
-		IEnumerable<AggregateSummaryResponse> rows,
-		string sort
-	)
+	static IEnumerable<AggregateSummaryResponse> ApplySort(IEnumerable<AggregateSummaryResponse> rows, string sort)
 	{
 		var descending = sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
 
@@ -131,10 +110,7 @@ public sealed class SqlServerAdminAggregateQueryService(
 		};
 	}
 
-	static EventStoreDbContext CreateContext(
-		SqlServerEventStoreOptions options,
-		SqlServerAdminTableDescriptor table
-	)
+	static EventStoreDbContext CreateContext(SqlServerEventStoreOptions options, SqlServerAdminTableDescriptor table)
 	{
 		var builder = new DbContextOptionsBuilder<EventStoreDbContext>();
 		builder.UseSqlServer(options.ConnectionString);

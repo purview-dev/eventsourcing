@@ -8,8 +8,7 @@ partial class PostgresSnapshotEventStore<T>
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = ContinuationRequest.DefaultMaxRecords,
-		[System.Runtime.CompilerServices.EnumeratorCancellation]
-			CancellationToken cancellationToken = default
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
 	)
 	{
 		var request = new ContinuationRequest { MaxRecords = maxRecordsPerIteration };
@@ -27,8 +26,7 @@ partial class PostgresSnapshotEventStore<T>
 	public async IAsyncEnumerable<T> GetListEnumerableAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = ContinuationRequest.DefaultMaxRecords,
-		[System.Runtime.CompilerServices.EnumeratorCancellation]
-			CancellationToken cancellationToken = default
+		[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default
 	)
 	{
 		var request = new ContinuationRequest { MaxRecords = maxRecordsPerIteration };
@@ -72,12 +70,7 @@ partial class PostgresSnapshotEventStore<T>
 	)
 	{
 		// Leave as 2 as it'll throw when expected.
-		var query = await GetSpecificNumberAsync(
-			whereClause,
-			null,
-			2,
-			cancellationToken: cancellationToken
-		);
+		var query = await GetSpecificNumberAsync(whereClause, null, 2, cancellationToken: cancellationToken);
 		return query.SingleOrDefault();
 	}
 
@@ -87,12 +80,7 @@ partial class PostgresSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	)
 	{
-		var query = await GetSpecificNumberAsync(
-			whereClause,
-			orderByClause,
-			1,
-			cancellationToken: cancellationToken
-		);
+		var query = await GetSpecificNumberAsync(whereClause, orderByClause, 1, cancellationToken: cancellationToken);
 		return query.FirstOrDefault();
 	}
 
@@ -101,11 +89,7 @@ partial class PostgresSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	)
 	{
-		return await _sqlServerClient.CountByAggregateTypeAsync(
-			GetAggregateTypeName(),
-			whereClause,
-			cancellationToken
-		);
+		return await _sqlServerClient.CountByAggregateTypeAsync(GetAggregateTypeName(), whereClause, cancellationToken);
 	}
 
 	async Task<IEnumerable<T>> GetSpecificNumberAsync(
@@ -151,8 +135,7 @@ partial class PostgresSnapshotEventStore<T>
 		{
 			Results = fulfilledResults,
 			RequestedCount = request.MaxRecords,
-			ContinuationToken =
-				fulfilledResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
+			ContinuationToken = fulfilledResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
 			TotalCount = null,
 		};
 	}
@@ -183,8 +166,7 @@ partial class PostgresSnapshotEventStore<T>
 		{
 			Results = fulfilledResults,
 			RequestedCount = request.MaxRecords,
-			ContinuationToken =
-				fulfilledResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
+			ContinuationToken = fulfilledResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
 			TotalCount = null,
 		};
 	}
@@ -207,11 +189,7 @@ partial class PostgresSnapshotEventStore<T>
 				skipCount = 0;
 
 			long? totalCount = request.IncludeTotalCount
-				? await _sqlServerClient.CountByAggregateTypeAsync<T>(
-					aggregateTypeName,
-					whereClause,
-					cancellationToken
-				)
+				? await _sqlServerClient.CountByAggregateTypeAsync<T>(aggregateTypeName, whereClause, cancellationToken)
 				: null;
 
 			var results = await _sqlServerClient.QueryByAggregateTypeAsync(
@@ -226,19 +204,13 @@ partial class PostgresSnapshotEventStore<T>
 			var fulfilledResults = results.Select(FulfilRequirements).ToArray();
 
 			sw.Stop();
-			_telemetry.QueryCompleted(
-				activity,
-				aggregateTypeName,
-				fulfilledResults.Length,
-				sw.ElapsedMilliseconds
-			);
+			_telemetry.QueryCompleted(activity, aggregateTypeName, fulfilledResults.Length, sw.ElapsedMilliseconds);
 
 			return new ContinuationResponse<T>
 			{
 				Results = fulfilledResults,
 				RequestedCount = request.MaxRecords,
-				ContinuationToken =
-					fulfilledResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
+				ContinuationToken = fulfilledResults.Length == 0 ? null : $"{skipCount + request.MaxRecords}",
 				TotalCount = totalCount,
 			};
 		}

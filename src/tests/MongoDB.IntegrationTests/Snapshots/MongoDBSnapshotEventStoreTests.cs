@@ -7,15 +7,9 @@ namespace Purview.EventSourcing.MongoDB.Snapshots;
 [ClassDataSource<MongoDBSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public partial class MongoDBSnapshotEventStoreTests(MongoDBSnapshotEventStoreFixture fixture)
 {
-	static PersistenceAggregate CreateAggregate(
-		string? id = null,
-		Action<PersistenceAggregate>? action = null
-	)
+	static PersistenceAggregate CreateAggregate(string? id = null, Action<PersistenceAggregate>? action = null)
 	{
-		PersistenceAggregate aggregate = new()
-		{
-			Details = { Id = id ?? Guid.NewGuid().ToString() },
-		};
+		PersistenceAggregate aggregate = new() { Details = { Id = id ?? Guid.NewGuid().ToString() } };
 
 		action?.Invoke(aggregate);
 

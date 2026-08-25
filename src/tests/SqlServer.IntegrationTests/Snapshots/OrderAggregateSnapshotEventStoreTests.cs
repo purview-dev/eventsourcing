@@ -4,9 +4,7 @@ using Purview.EventSourcing.Samples.Domain;
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
-public sealed class OrderAggregateSnapshotEventStoreTests(
-	SqlServerSnapshotEventStoreFixture fixture
-)
+public sealed class OrderAggregateSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	[Test]
 	public async Task SnapshotAsync_GivenOrderAggregateWithLineItems_QueriesByLineItemCount(
@@ -60,10 +58,7 @@ public sealed class OrderAggregateSnapshotEventStoreTests(
 		await store.SnapshotAsync(aggregate, cancellationToken);
 
 		var count = await store.CountAsync(m => m.CustomerId == "customer-1", cancellationToken);
-		var query = await store.QueryAsync(
-			m => m.CustomerId == "customer-1",
-			cancellationToken: cancellationToken
-		);
+		var query = await store.QueryAsync(m => m.CustomerId == "customer-1", cancellationToken: cancellationToken);
 		var result = query.Results.SingleOrDefault();
 
 		await Assert.That(count).IsEqualTo(1);

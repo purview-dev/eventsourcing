@@ -19,10 +19,7 @@ partial class CosmosDbSnapshotEventStoreTests
 
 		PartitionKey partitionKey = new(aggregate.AggregateType);
 
-		bool saveResult = await context.EventStore.SaveAsync(
-			aggregate,
-			cancellationToken: cancellationToken
-		);
+		bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 		await Assert.That(saveResult).IsTrue();
 
 		var aggregateFromCosmosDb = await context.CosmosDbClient.GetAsync<PersistenceAggregate>(
@@ -33,10 +30,7 @@ partial class CosmosDbSnapshotEventStoreTests
 		await Assert.That(aggregateFromCosmosDb).IsNotNull();
 
 		// Act
-		var deleteResult = await context.EventStore.DeleteAsync(
-			aggregate,
-			cancellationToken: cancellationToken
-		);
+		var deleteResult = await context.EventStore.DeleteAsync(aggregate, cancellationToken: cancellationToken);
 
 		aggregateFromCosmosDb = await context.CosmosDbClient.GetAsync<PersistenceAggregate>(
 			aggregateId,

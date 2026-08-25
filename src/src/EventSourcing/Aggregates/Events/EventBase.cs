@@ -71,9 +71,6 @@ public abstract class EventBase : IEvent
 	///		}
 	/// }
 	/// </example>
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Design",
-		"CA1045:Do not pass types by reference"
-	)]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1045:Do not pass types by reference")]
 	protected abstract void BuildEventHash(ref HashCode hash);
 }

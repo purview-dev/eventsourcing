@@ -1,50 +1,66 @@
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
-
 namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 
 sealed record class AggregateInfo(
-	TypeReferenceOptions AggregateClass,
+	TypeReference AggregateClass,
 	Accessibility Accessibility,
 	bool ShouldDeclareAggregateBase,
 	List<AggregateStatePropertyInfo> Properties,
 	List<AggregateEventMethodInfo> Methods,
 	List<InvalidAggregateEventMethodInfo> InvalidMethods,
-	string HintName
+	string HintName,
+	bool IsValid = true,
+	bool IsPartial = true,
+	bool InheritsAggregateBase = false,
+	bool HasManualRegisterEvents = false,
+	ImmutableArray<AggregateContainingTypeInfo> ContainingTypes = default,
+	ImmutableArray<GenericTypeParameterOptions> TypeParameters = default
 );
 
-sealed record class AggregateStatePropertyInfo(
-	string PropertyName,
-	TypeReferenceOptions PropertyType
+sealed record class AggregateContainingTypeInfo(
+	string Name,
+	Accessibility Accessibility,
+	bool IsStatic,
+	ImmutableArray<GenericTypeParameterOptions> TypeParameters = default
 );
 
-/// <summary>
-///
-/// </summary>
-/// <param name="MethodName"></param>
-/// <param name="EventType"></param>
-/// <param name="Parameters"></param>
-/// <param name="ReturnType"></param>
-/// <param name="ReturnKind"></param>
-/// <param name="MethodAccessibility"></param>
+sealed record class AggregateStatePropertyInfo(string PropertyName, TypeReference PropertyType);
+
+/// <param name="MethodName">The name of the method.</param>
+/// <param name="EventType">The type of the event.</param>
+/// <param name="AllParameters">All parameters of the event method.</param>
+/// <param name="EventParameters">The parameters that are included in the event, i.e. get stored.</param>
+/// <param name="ComputedParameters">The parameters that are computed.</param>
+/// <param name="NonComputedParameters">The parameters that are not computed.</param>
+/// <param name="AggregateProperties">The properties that have a type of aggregate.</param>
+/// <param name="ReturnType">The return type of the method.</param>
+/// <param name="ReturnKind">The kind of the return value.</param>
+/// <param name="MethodAccessibility">The accessibility of the method.</param>
 /// <param name="Version">
 /// The schema version declared via <c>[Event(Version = N)]</c>.
 /// Defaults to 1.
 /// </param>
-/// <param name="IsSchemaVersionExplicit">Indicates whether <see cref="Version"/> was explicitly configured on the event attribute.</param>
-/// <param name="ManualApply">Indicates whether Apply(...) implementation is user-supplied and should not be auto-generated.</param>
+/// <param name="ManualApply">Indicates whether Apply(...) implementation is user-supplied via the [Manual] attribute and should not be auto-generated.</param>
+/// <param name="UserApplyMethodKind">Indicates whether the user has defined a manual Apply method for this event.</param>
+/// <param name="UserApplyMethodAccessibility">The accessibility of the user-defined Apply method.</param>
 /// <param name="CollectionEvent">Collection-event metadata when the method is decorated with [CollectionEvent].</param>
+/// <param name="Signature">Original method signature text, used for invalid-aggregate stubs.</param>
 sealed record class AggregateEventMethodInfo(
 	string MethodName,
-	TypeReferenceOptions EventType,
-	List<EventPropertyInfo> Parameters,
-	TypeReferenceOptions ReturnType,
+	TypeReference EventType,
+	ImmutableArray<EventPropertyInfo> AllParameters,
+	ImmutableArray<EventPropertyInfo> EventParameters,
+	ImmutableArray<EventPropertyInfo> ComputedParameters,
+	ImmutableArray<EventPropertyInfo> NonComputedParameters,
+	ImmutableArray<EventPropertyInfo> AggregateProperties,
+	TypeReference ReturnType,
 	EventMethodReturnKind ReturnKind,
 	Accessibility MethodAccessibility,
-	int Version = 1,
-	bool IsSchemaVersionExplicit = false,
-	bool ManualApply = false,
-	CollectionEventInfo? CollectionEvent = null
+	int Version,
+	bool ManualApply,
+	UserApplyMethodKind UserApplyMethodKind,
+	TypeDeclarationAccessibility? UserApplyMethodAccessibility,
+	CollectionEventInfo? CollectionEvent,
+	string Signature
 )
 {
 	public bool IsCollectionEvent => CollectionEvent is not null;
@@ -52,8 +68,8 @@ sealed record class AggregateEventMethodInfo(
 
 sealed record class CollectionEventInfo(
 	string PropertyName,
-	TypeReferenceOptions ElementType,
-	TypeReferenceOptions PropertyType,
+	TypeReference ElementType,
+	TypeReference PropertyType,
 	bool IsSet,
 	CollectionMutationOperation Operation,
 	CollectionParameterShape ParameterShape,
@@ -63,7 +79,9 @@ sealed record class CollectionEventInfo(
 enum CollectionParameterShape
 {
 	Single = 0,
+
 	Enumerable = 1,
+
 	Array = 2,
 }
 
@@ -72,6 +90,15 @@ enum CollectionMutationOperation
 	Add = 0,
 
 	Remove = 1,
+}
+
+enum UserApplyMethodKind
+{
+	None = 0,
+
+	PartialImplementation = 1,
+
+	NonPartial = 2,
 }
 
 sealed record class InvalidAggregateEventMethodInfo(string Signature, string[] DiagnosticIds);
@@ -96,8 +123,8 @@ sealed record class InvalidAggregateEventMethodInfo(string Signature, string[] D
 /// <param name="IsString"></param>
 sealed record class EventPropertyInfo(
 	string ParameterName,
-	TypeReferenceOptions ParameterType,
-	TypeReferenceOptions PropertyType,
+	TypeReference ParameterType,
+	TypeReference PropertyType,
 	string AggregatePropertyName,
 	bool HasAggregateProperty,
 	bool IncludeInEvent,

@@ -23,10 +23,7 @@ public sealed partial class SqlServerSnapshotEventStore<T>
 	readonly Type _aggregateType = typeof(T);
 	readonly string _aggregateName;
 
-	static readonly System.Collections.Concurrent.ConcurrentDictionary<
-		Type,
-		string
-	> AggregateTypeNames = new();
+	static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, string> AggregateTypeNames = new();
 
 	public SqlServerSnapshotEventStore(
 		// Explicitly request a non-queryable event store.
@@ -52,18 +49,12 @@ public sealed partial class SqlServerSnapshotEventStore<T>
 	/// <summary>
 	/// Merges global options with any per-aggregate-type table override.
 	/// </summary>
-	static SqlServerClientOptions ResolveClientOptions(
-		SqlServerSnapshotEventStoreOptions options,
-		string aggregateName
-	)
+	static SqlServerClientOptions ResolveClientOptions(SqlServerSnapshotEventStoreOptions options, string aggregateName)
 	{
 		var schema = options.SchemaName;
 		var table = options.TableName;
 
-		if (
-			options.AggregateTableOverrides.TryGetValue(aggregateName, out var ovr)
-			&& ovr is not null
-		)
+		if (options.AggregateTableOverrides.TryGetValue(aggregateName, out var ovr) && ovr is not null)
 		{
 			schema = ovr.SchemaName ?? schema;
 			table = ovr.TableName ?? table;
@@ -115,6 +106,5 @@ public sealed partial class SqlServerSnapshotEventStore<T>
 		}
 	}
 
-	string GetAggregateTypeName() =>
-		AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
+	string GetAggregateTypeName() => AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
 }

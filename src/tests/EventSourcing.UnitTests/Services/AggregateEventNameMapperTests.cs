@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Services;
 

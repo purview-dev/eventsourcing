@@ -52,12 +52,7 @@ sealed class TableSaveOperation<T>(
 	)
 	{
 		var (Terminal, Aggregate, OperationContext, IdempotencyId, ChangeEvents, IsNew, Marker) =
-			await PrepareSaveAsync(
-				aggregate,
-				operationContext,
-				additionalEvents,
-				cancellationToken
-			);
+			await PrepareSaveAsync(aggregate, operationContext, additionalEvents, cancellationToken);
 
 		return Terminal
 			?? await PersistAndNotifyAsync(
@@ -90,8 +85,7 @@ sealed class TableSaveOperation<T>(
 
 		store.FulfilRequirements(aggregate);
 
-		var idempotencyId =
-			operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
+		var idempotencyId = operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
 		if (!validationResult.IsValid)
@@ -123,18 +117,10 @@ sealed class TableSaveOperation<T>(
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
 			throw new Exceptions.MissingAggregateIdException(idempotencyId);
 
-		eventStoreTelemetry.SaveCalled(
-			aggregate.Id(),
-			aggregateTypeFullName,
-			aggregate.AggregateType
-		);
+		eventStoreTelemetry.SaveCalled(aggregate.Id(), aggregateTypeFullName, aggregate.AggregateType);
 		if (!aggregate.HasUnsavedEvents() && (additionalEvents?.Length ?? 0) == 0)
 		{
-			eventStoreTelemetry.SaveContainedNoChanges(
-				aggregate.Id(),
-				aggregateTypeFullName,
-				aggregate.AggregateType
-			);
+			eventStoreTelemetry.SaveContainedNoChanges(aggregate.Id(), aggregateTypeFullName, aggregate.AggregateType);
 
 			return (
 				SaveResultBuilder.Create(aggregate, false, true),
@@ -148,15 +134,8 @@ sealed class TableSaveOperation<T>(
 		}
 
 		var isNew = aggregate.IsNew();
-		var changeEvents = aggregate
-			.GetUnsavedEvents()
-			.Concat((additionalEvents ?? []).AsEnumerable())
-			.ToArray();
-		var idempotencyMarkerOperation = CreateIdempotencyMarkerOperation(
-			aggregate,
-			idempotencyId,
-			changeEvents
-		);
+		var changeEvents = aggregate.GetUnsavedEvents().Concat((additionalEvents ?? []).AsEnumerable()).ToArray();
+		var idempotencyMarkerOperation = CreateIdempotencyMarkerOperation(aggregate, idempotencyId, changeEvents);
 
 		if (changeEvents.Length > eventStoreOptions.Value.MaxEventCountOnSave)
 			throw new ArgumentOutOfRangeException(
@@ -185,15 +164,7 @@ sealed class TableSaveOperation<T>(
 			}
 		}
 
-		return (
-			null,
-			aggregate,
-			operationContext,
-			idempotencyId,
-			changeEvents,
-			isNew,
-			idempotencyMarkerOperation
-		);
+		return (null, aggregate, operationContext, idempotencyId, changeEvents, isNew, idempotencyMarkerOperation);
 	}
 
 	async Task<SaveResult<T>> PersistAndNotifyAsync(
@@ -214,11 +185,7 @@ sealed class TableSaveOperation<T>(
 		else if (operationContext.NotificationMode.HasFlag(NotificationModes.BeforeSave))
 			await aggregateChangeNotifier.BeforeSaveAsync(aggregate, isNew, cancellationToken);
 
-		var streamEntity = await store.GetStreamVersionAsync(
-			aggregate.Id(),
-			!isNew,
-			cancellationToken
-		);
+		var streamEntity = await store.GetStreamVersionAsync(aggregate.Id(), !isNew, cancellationToken);
 		var hasStreamEntity = streamEntity != null;
 		if (streamEntity?.IsDeleted == true)
 		{
@@ -247,13 +214,8 @@ sealed class TableSaveOperation<T>(
 			else
 				batchOperation.Update(streamEntity, merge: false);
 
-			var userId = ClaimsPrincipal
-				.Current?.FindFirst(operationContext.ClaimIdentifier)
-				?.Value;
-			if (
-				operationContext.RequiresValidPrincipalIdentifier
-				&& string.IsNullOrWhiteSpace(userId)
-			)
+			var userId = ClaimsPrincipal.Current?.FindFirst(operationContext.ClaimIdentifier)?.Value;
+			if (operationContext.RequiresValidPrincipalIdentifier && string.IsNullOrWhiteSpace(userId))
 				throw new NullReferenceException(
 					$"Missing ClaimsPrincipal identifier '{operationContext.ClaimIdentifier}'. Unable to save aggregate."
 				);
@@ -302,17 +264,9 @@ sealed class TableSaveOperation<T>(
 				await CreateSnapshotAsync(aggregate, cancellationToken);
 
 			if (changeEvents.OfType<Deleted>().Any())
-				eventStoreTelemetry.AggregateDeleted(
-					aggregate.Id(),
-					aggregateTypeFullName,
-					aggregate.AggregateType
-				);
+				eventStoreTelemetry.AggregateDeleted(aggregate.Id(), aggregateTypeFullName, aggregate.AggregateType);
 			else if (changeEvents.OfType<Restored>().Any())
-				eventStoreTelemetry.AggregateRestored(
-					aggregate.Id(),
-					aggregateTypeFullName,
-					aggregate.AggregateType
-				);
+				eventStoreTelemetry.AggregateRestored(aggregate.Id(), aggregateTypeFullName, aggregate.AggregateType);
 
 			eventStoreTelemetry.SavedAggregate(
 				aggregate.Id(),
@@ -322,17 +276,10 @@ sealed class TableSaveOperation<T>(
 			);
 
 			// Do not pass in the cancellation token. We want this to carry on as long as possible.
-			await store.UpdateCacheAsync(
-				aggregate,
-				operationContext.CacheOptions,
-				cancellationToken
-			);
+			await store.UpdateCacheAsync(aggregate, operationContext.CacheOptions, cancellationToken);
 
 			// ...or here.
-			if (
-				aggregate.Details.IsDeleted
-				&& operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete)
-			)
+			if (aggregate.Details.IsDeleted && operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete))
 				await aggregateChangeNotifier.AfterDeleteAsync(aggregate, cancellationToken);
 			else if (operationContext.NotificationMode.HasFlag(NotificationModes.AfterSave))
 				await aggregateChangeNotifier.AfterSaveAsync(
@@ -350,12 +297,7 @@ sealed class TableSaveOperation<T>(
 			if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
 			{
 				var deleteRequested = changeEvents.OfType<Deleted>().Any();
-				await aggregateChangeNotifier.FailureAsync(
-					aggregate,
-					deleteRequested,
-					ex,
-					cancellationToken
-				);
+				await aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, ex, cancellationToken);
 			}
 
 			throw;
@@ -422,14 +364,9 @@ sealed class TableSaveOperation<T>(
 			// idx 1: StreamEntity - Add or Update (merge: false)
 			// idx x: Events - Add
 
-			var batchResults = await tableClient.SubmitBatchAsync(
-				batchOperation,
-				cancellationToken
-			);
+			var batchResults = await tableClient.SubmitBatchAsync(batchOperation, cancellationToken);
 
-			aggregate.Details.Etag = batchResults
-				.Responses[useIdempotencyMarker ? 1 : 0]
-				.Headers.ETag?.ToString();
+			aggregate.Details.Etag = batchResults.Responses[useIdempotencyMarker ? 1 : 0].Headers.ETag?.ToString();
 
 			var currentVersion = aggregate.Details.CurrentVersion;
 
@@ -439,12 +376,7 @@ sealed class TableSaveOperation<T>(
 		}
 		catch (RequestFailedException ex)
 		{
-			eventStoreTelemetry.SaveFailedAtStorage(
-				aggregate.Id(),
-				aggregateTypeFullName,
-				ex.Status,
-				ex
-			);
+			eventStoreTelemetry.SaveFailedAtStorage(aggregate.Id(), aggregateTypeFullName, ex.Status, ex);
 
 			var statusCode = (HttpStatusCode)ex.Status;
 
@@ -516,24 +448,12 @@ sealed class TableSaveOperation<T>(
 		var snapshotName = store.GenerateSnapshotBlobName(aggregate.Id());
 
 		using MemoryStream content = new();
-		using (
-			StreamWriter writer = new(
-				content,
-				Encoding.UTF8,
-				SerializationBufferSize,
-				leaveOpen: true
-			)
-		)
+		using (StreamWriter writer = new(content, Encoding.UTF8, SerializationBufferSize, leaveOpen: true))
 			await writer.WriteAsync(snapshot);
 
 		content.Position = 0;
 
-		await blobClient.UploadAsync(
-			snapshotName,
-			content,
-			overwrite: true,
-			cancellationToken: cancellationToken
-		);
+		await blobClient.UploadAsync(snapshotName, content, overwrite: true, cancellationToken: cancellationToken);
 	}
 
 	EventEntity CreateSerializedEvent(
@@ -641,18 +561,12 @@ sealed class TableSaveOperation<T>(
 		);
 	}
 
-	async Task<ValidationResult> GuardAsync(
-		T aggregate,
-		CancellationToken cancellationToken = default
-	)
+	async Task<ValidationResult> GuardAsync(T aggregate, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
 		return validator == null
-			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(
-				aggregate,
-				cancellationToken
-			)
+			? await DefaultAggregateValidator<T>.Instance.ValidateAsync(aggregate, cancellationToken)
 			: await validator.ValidateAsync(aggregate, cancellationToken);
 	}
 }

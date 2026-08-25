@@ -20,11 +20,7 @@ partial class PostgresEventStore<T>
 
 		Restored restoreAggregateEvent = new()
 		{
-			Details =
-			{
-				AggregateVersion = aggregate.Details.CurrentVersion + 1,
-				When = DateTimeOffset.UtcNow,
-			},
+			Details = { AggregateVersion = aggregate.Details.CurrentVersion + 1, When = DateTimeOffset.UtcNow },
 		};
 		aggregate.ApplyEvent(restoreAggregateEvent);
 

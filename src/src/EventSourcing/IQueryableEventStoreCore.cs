@@ -38,15 +38,9 @@ public interface IQueryableEventStoreCore<T> : IEventStoreCore<T>
 		CancellationToken cancellationToken = default
 	);
 
-	Task<long> CountAsync(
-		Expression<Func<T, bool>>? whereClause,
-		CancellationToken cancellationToken = default
-	);
+	Task<long> CountAsync(Expression<Func<T, bool>>? whereClause, CancellationToken cancellationToken = default);
 
-	Task<T?> SingleOrDefaultAsync(
-		Expression<Func<T, bool>> whereClause,
-		CancellationToken cancellationToken = default
-	);
+	Task<T?> SingleOrDefaultAsync(Expression<Func<T, bool>> whereClause, CancellationToken cancellationToken = default);
 
 	Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,

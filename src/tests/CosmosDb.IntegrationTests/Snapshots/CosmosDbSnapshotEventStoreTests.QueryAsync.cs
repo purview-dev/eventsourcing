@@ -19,9 +19,7 @@ partial class CosmosDbSnapshotEventStoreTests
 	)
 	{
 		// Arrange
-		await using var context = fixture.CreateContext(
-			correlationIdsToGenerate: numberOfAggregates
-		);
+		await using var context = fixture.CreateContext(correlationIdsToGenerate: numberOfAggregates);
 
 		for (var aggregateIndex = 0; aggregateIndex < numberOfAggregates; aggregateIndex++)
 		{
@@ -32,10 +30,7 @@ partial class CosmosDbSnapshotEventStoreTests
 				aggregate.IncrementInt32Value();
 			}
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
@@ -63,9 +58,7 @@ partial class CosmosDbSnapshotEventStoreTests
 	)
 	{
 		// Arrange
-		await using var context = fixture.CreateContext(
-			correlationIdsToGenerate: numberOfAggregates
-		);
+		await using var context = fixture.CreateContext(correlationIdsToGenerate: numberOfAggregates);
 
 		var aggregateType = CreateAggregate().AggregateType;
 
@@ -74,10 +67,7 @@ partial class CosmosDbSnapshotEventStoreTests
 			var aggregate = CreateAggregate($"{aggregateIndex}_{context.RunId}");
 			aggregate.IncrementInt32Value();
 
-			bool saveResult = await context.EventStore.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await context.EventStore.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}

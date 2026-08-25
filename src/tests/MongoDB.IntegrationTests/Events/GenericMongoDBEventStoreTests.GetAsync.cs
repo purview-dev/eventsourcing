@@ -56,9 +56,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(result.Id()).IsEqualTo(aggregate.Id());
 		await Assert.That(result.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
 		await Assert.That(result.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(result.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert.That(result.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
 		await Assert.That(result.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 		await Assert
 			.That(result.Details.SnapshotVersion)
@@ -144,11 +142,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 			numberOfOldEventsToCreate
 		);
 
-		await GenericMongoDBEventStoreTestSeed.AssertRecreatedWithTotals(
-			result,
-			aggregate,
-			totalEvents
-		);
+		await GenericMongoDBEventStoreTestSeed.AssertRecreatedWithTotals(result, aggregate, totalEvents);
 	}
 
 	// This is testing that the aggregate is still correct after an event type cannot be found - removed
@@ -207,10 +201,6 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 			numberOfOldEventsToCreate
 		);
 
-		await GenericMongoDBEventStoreTestSeed.AssertRecreatedWithTotals(
-			result,
-			aggregate,
-			totalEvents
-		);
+		await GenericMongoDBEventStoreTestSeed.AssertRecreatedWithTotals(result, aggregate, totalEvents);
 	}
 }

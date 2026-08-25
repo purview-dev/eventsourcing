@@ -22,9 +22,7 @@ static class GenericMongoDBEventStoreTestSeed
 			Int32Property = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue),
 			Int64Property = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue) * 5L,
 			StringProperty = $"{Guid.NewGuid()}",
-			DateTimeOffsetProperty = DateTimeOffset.UtcNow.AddYears(
-				RandomNumberGenerator.GetInt32(100, 1001)
-			),
+			DateTimeOffsetProperty = DateTimeOffset.UtcNow.AddYears(RandomNumberGenerator.GetInt32(100, 1001)),
 			ComplexNestedTestTypeProperty = new() { Nested = $"Nested_{Guid.NewGuid()}" },
 		};
 	}
@@ -92,9 +90,7 @@ static class GenericMongoDBEventStoreTestSeed
 				Any<string>(),
 				Any<string>(),
 				Any<string>(),
-				Is<string>(eventType =>
-					eventType!.Contains(nameof(OldEvent), StringComparison.Ordinal)
-				),
+				Is<string>(eventType => eventType!.Contains(nameof(OldEvent), StringComparison.Ordinal)),
 				Any<int>()
 			)
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
@@ -108,13 +104,7 @@ static class GenericMongoDBEventStoreTestSeed
 	)
 	{
 		telemetry
-			.SkippedUnknownEvent(
-				aggregateId,
-				Any<string>(),
-				Any<string>(),
-				unknownEventType,
-				Any<int>()
-			)
+			.SkippedUnknownEvent(aggregateId, Any<string>(), Any<string>(), unknownEventType, Any<int>())
 			.WasCalled(Times.Exactly(numberOfOldEventsToCreate));
 	}
 
@@ -168,8 +158,7 @@ static class GenericMongoDBEventStoreTestSeed
 	}
 
 	internal static void SetRandomComplexProperty<TAggregate>(TAggregate aggregate)
-		where TAggregate : class, IAggregateTest, new() =>
-		aggregate.SetComplexProperty(CreateComplexTestType());
+		where TAggregate : class, IAggregateTest, new() => aggregate.SetComplexProperty(CreateComplexTestType());
 
 	internal static async Task AssertComplexPropertyMatches<TAggregate>(
 		TAggregate aggregate,
@@ -178,9 +167,7 @@ static class GenericMongoDBEventStoreTestSeed
 		where TAggregate : class, IAggregateTest, new()
 	{
 		await Assert.That(aggregateGetResult).IsNotNull();
-		await Assert
-			.That(aggregate.ComplexTestType)
-			.IsEquivalentTo(aggregateGetResult.ComplexTestType);
+		await Assert.That(aggregate.ComplexTestType).IsEquivalentTo(aggregateGetResult.ComplexTestType);
 	}
 
 	internal static async Task DeleteSnapshotAndAssertRemoved(

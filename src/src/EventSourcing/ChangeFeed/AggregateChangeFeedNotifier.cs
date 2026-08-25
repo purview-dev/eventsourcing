@@ -12,10 +12,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 	where T : class, IAggregate, new()
 {
 	readonly IAggregateChangeFeedProcessor[] _changeFeedProcessors = [.. changeFeedProcessors];
-	readonly IAggregateChangeFeedProcessor<T>[] _typedChangeFeedProcessors =
-	[
-		.. typedChangeFeedProcessors,
-	];
+	readonly IAggregateChangeFeedProcessor<T>[] _typedChangeFeedProcessors = [.. typedChangeFeedProcessors];
 
 	public async Task BeforeDeleteAsync(T aggregate, CancellationToken cancellationToken = default)
 	{
@@ -46,18 +43,10 @@ sealed class AggregateChangeFeedNotifier<T>(
 
 		sw.Stop();
 
-		logs.BeforeDeleteNotificationComplete(
-			aggregate.Id(),
-			aggregate.AggregateType,
-			sw.ElapsedMilliseconds
-		);
+		logs.BeforeDeleteNotificationComplete(aggregate.Id(), aggregate.AggregateType, sw.ElapsedMilliseconds);
 	}
 
-	public async Task BeforeSaveAsync(
-		T aggregate,
-		bool isNew,
-		CancellationToken cancellationToken = default
-	)
+	public async Task BeforeSaveAsync(T aggregate, bool isNew, CancellationToken cancellationToken = default)
 	{
 		logs.BeforeSaveNotificationStart(aggregate.Id(), aggregate.AggregateType, isNew);
 
@@ -86,12 +75,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 
 		sw.Stop();
 
-		logs.BeforeSaveNotificationComplete(
-			aggregate.Id(),
-			aggregate.AggregateType,
-			isNew,
-			sw.ElapsedMilliseconds
-		);
+		logs.BeforeSaveNotificationComplete(aggregate.Id(), aggregate.AggregateType, isNew, sw.ElapsedMilliseconds);
 	}
 
 	public async Task AfterSaveAsync(
@@ -102,12 +86,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 		CancellationToken cancellationToken = default
 	)
 	{
-		logs.AfterSaveNotificationStart(
-			aggregate.Id(),
-			aggregate.AggregateType,
-			isNew,
-			events.Length
-		);
+		logs.AfterSaveNotificationStart(aggregate.Id(), aggregate.AggregateType, isNew, events.Length);
 
 		var sw = Stopwatch.StartNew();
 
@@ -116,14 +95,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 			var processor = _changeFeedProcessors[i];
 			if (processor.CanProcess(aggregate))
 				await ProcessTimedNotifyAsync(
-					() =>
-						processor.AfterSaveAsync(
-							aggregate,
-							previousSavedVersion,
-							isNew,
-							events,
-							cancellationToken
-						),
+					() => processor.AfterSaveAsync(aggregate, previousSavedVersion, isNew, events, cancellationToken),
 					aggregate,
 					processor.GetType().FullName.OrDefault(() => processor.GetType().Name)
 				);
@@ -133,14 +105,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 		{
 			var processor = _typedChangeFeedProcessors[i];
 			await ProcessTimedNotifyAsync(
-				() =>
-					processor.AfterSaveAsync(
-						aggregate,
-						previousSavedVersion,
-						isNew,
-						events,
-						cancellationToken
-					),
+				() => processor.AfterSaveAsync(aggregate, previousSavedVersion, isNew, events, cancellationToken),
 				aggregate,
 				processor.GetType().FullName.OrDefault(() => processor.GetType().Name)
 			);
@@ -186,11 +151,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 
 		sw.Stop();
 
-		logs.AfterDeleteNotificationComplete(
-			aggregate.Id(),
-			aggregate.AggregateType,
-			sw.ElapsedMilliseconds
-		);
+		logs.AfterDeleteNotificationComplete(aggregate.Id(), aggregate.AggregateType, sw.ElapsedMilliseconds);
 	}
 
 	public async Task FailureAsync(
@@ -229,11 +190,7 @@ sealed class AggregateChangeFeedNotifier<T>(
 
 		sw.Stop();
 
-		logs.FailureNotificationComplete(
-			aggregate.Id(),
-			aggregate.AggregateType,
-			sw.ElapsedMilliseconds
-		);
+		logs.FailureNotificationComplete(aggregate.Id(), aggregate.AggregateType, sw.ElapsedMilliseconds);
 	}
 
 	async Task ProcessTimedNotifyAsync(Func<Task> process, T aggregate, string processorType)

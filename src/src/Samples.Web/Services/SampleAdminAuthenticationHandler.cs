@@ -16,10 +16,7 @@ sealed class SampleAdminAuthenticationHandler(
 	protected override Task<AuthenticateResult> HandleAuthenticateAsync()
 	{
 		var identity = new ClaimsIdentity(
-			[
-				new Claim(ClaimTypes.NameIdentifier, "sample-admin"),
-				new Claim(ClaimTypes.Name, "Sample Admin"),
-			],
+			[new Claim(ClaimTypes.NameIdentifier, "sample-admin"), new Claim(ClaimTypes.Name, "Sample Admin")],
 			SchemeName
 		);
 

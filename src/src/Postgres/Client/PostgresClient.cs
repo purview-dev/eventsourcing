@@ -14,16 +14,9 @@ namespace Purview.EventSourcing.Postgres.Client;
 
 sealed partial class PostgresClient
 {
-	static readonly ConcurrentDictionary<string, SemaphoreSlim> EnsureTableLocks = new(
-		StringComparer.Ordinal
-	);
+	static readonly ConcurrentDictionary<string, SemaphoreSlim> EnsureTableLocks = new(StringComparer.Ordinal);
 	static readonly ConcurrentDictionary<string, byte> EnsuredTables = new(StringComparer.Ordinal);
-	static readonly HashSet<string> SupportedSnapshotIncludeColumns =
-	[
-		"Id",
-		"AggregateType",
-		"Payload",
-	];
+	static readonly HashSet<string> SupportedSnapshotIncludeColumns = ["Id", "AggregateType", "Payload"];
 
 	readonly PostgresClientOptions _options;
 	readonly string _tableEnsureKey;
@@ -52,10 +45,7 @@ sealed partial class PostgresClient
 		await EnsureTableIfEnabledAsync(cancellationToken);
 	}
 
-	public async Task EnsureTableExistsAsync(
-		NpgsqlConnection connection,
-		CancellationToken cancellationToken = default
-	)
+	public async Task EnsureTableExistsAsync(NpgsqlConnection connection, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(connection);
 
@@ -102,10 +92,7 @@ sealed partial class PostgresClient
 	{
 		await EnsureTableIfEnabledAsync(cancellationToken);
 		await using var context = CreateStorageContext();
-		var existing = await context.Snapshots.SingleOrDefaultAsync(
-			s => s.Id == id,
-			cancellationToken
-		);
+		var existing = await context.Snapshots.SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
 		if (existing is null)
 			return false;
 
@@ -154,10 +141,7 @@ sealed partial class PostgresClient
 			? null
 			: RewriteAggregateTypePredicate(whereClause, aggregateType);
 
-		var rowQuery = context
-			.Snapshots.AsNoTracking()
-			.AsSplitQuery()
-			.Where(s => s.AggregateType == aggregateType);
+		var rowQuery = context.Snapshots.AsNoTracking().AsSplitQuery().Where(s => s.AggregateType == aggregateType);
 
 		var aggregateQuery = rowQuery.OrderBy(s => s.Id).Select(s => s.Payload);
 		if (normalizedWhereClause != null)
@@ -242,11 +226,7 @@ sealed partial class PostgresClient
 	{
 		await using var context = CreateQueryContext<T>();
 		await EnsureTableIfEnabledAsync(cancellationToken);
-		var query = context
-			.Snapshots.AsNoTracking()
-			.AsSplitQuery()
-			.Where(s => s.Id == id)
-			.Select(s => s.Payload);
+		var query = context.Snapshots.AsNoTracking().AsSplitQuery().Where(s => s.Id == id).Select(s => s.Payload);
 		return await query.SingleOrDefaultAsync(cancellationToken);
 	}
 
@@ -262,9 +242,7 @@ sealed partial class PostgresClient
 			.Where(s => s.AggregateType == aggregateType)
 			.Select(s => s.Payload);
 
-		return whereClause is null
-			? query
-			: query.Where(RewriteAggregateTypePredicate(whereClause, aggregateType));
+		return whereClause is null ? query : query.Where(RewriteAggregateTypePredicate(whereClause, aggregateType));
 	}
 
 	static async Task<bool> UpsertAsync<T>(
@@ -277,9 +255,7 @@ sealed partial class PostgresClient
 		where T : class
 	{
 		ArgumentNullException.ThrowIfNull(aggregate);
-		var exists = await context
-			.Snapshots.AsNoTracking()
-			.AnyAsync(s => s.Id == id, cancellationToken);
+		var exists = await context.Snapshots.AsNoTracking().AnyAsync(s => s.Id == id, cancellationToken);
 		var entity = new SnapshotQueryRow<T>
 		{
 			Id = id,
@@ -297,8 +273,7 @@ sealed partial class PostgresClient
 
 	SnapshotStorageDbContext CreateStorageContext() => new(_options);
 
-	SnapshotStorageDbContext CreateStorageContext(NpgsqlConnection connection) =>
-		new(_options, connection);
+	SnapshotStorageDbContext CreateStorageContext(NpgsqlConnection connection) => new(_options, connection);
 
 	SnapshotQueryDbContext<T> CreateQueryContext<T>()
 		where T : class => new(_options);
@@ -312,10 +287,7 @@ sealed partial class PostgresClient
 			throw new ArgumentException("Identifier cannot be null or empty.", nameof(identifier));
 
 		if (!IdentifierRegex().IsMatch(identifier))
-			throw new ArgumentException(
-				$"Identifier '{identifier}' contains invalid characters.",
-				nameof(identifier)
-			);
+			throw new ArgumentException($"Identifier '{identifier}' contains invalid characters.", nameof(identifier));
 	}
 
 	static string QuoteIdentifier(string identifier) => $"\"{identifier}\"";
@@ -417,10 +389,7 @@ sealed partial class PostgresClient
 		}
 	}
 
-	static void RegisterScalarValueObjectConversions(
-		ModelConfigurationBuilder configurationBuilder,
-		Type rootType
-	)
+	static void RegisterScalarValueObjectConversions(ModelConfigurationBuilder configurationBuilder, Type rootType)
 	{
 		var visited = new HashSet<Type>();
 		RegisterScalarValueObjectConversionsRecursive(configurationBuilder, rootType, visited);
@@ -448,27 +417,18 @@ sealed partial class PostgresClient
 
 		foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
-			var propertyType =
-				Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
 			if (propertyType == typeof(string) || propertyType == typeof(byte[]))
 				continue;
 
 			if (TryGetEnumerableElementType(propertyType, out var elementType))
 			{
-				RegisterScalarValueObjectConversionsRecursive(
-					configurationBuilder,
-					elementType,
-					visited
-				);
+				RegisterScalarValueObjectConversionsRecursive(configurationBuilder, elementType, visited);
 				continue;
 			}
 
-			RegisterScalarValueObjectConversionsRecursive(
-				configurationBuilder,
-				propertyType,
-				visited
-			);
+			RegisterScalarValueObjectConversionsRecursive(configurationBuilder, propertyType, visited);
 		}
 	}
 
@@ -479,10 +439,7 @@ sealed partial class PostgresClient
 	)
 	{
 		var scalarProperty =
-			scalarType.GetProperty(
-				scalarAttribute.PropertyName,
-				BindingFlags.Instance | BindingFlags.Public
-			)
+			scalarType.GetProperty(scalarAttribute.PropertyName, BindingFlags.Instance | BindingFlags.Public)
 			?? throw new InvalidOperationException(
 				$"'{scalarType.Name}' missing scalar property '{scalarAttribute.PropertyName}'."
 			);
@@ -491,10 +448,7 @@ sealed partial class PostgresClient
 		var converterType = IsPrimitiveLike(scalarPropertyType)
 			? typeof(ScalarValueConverter<,>).MakeGenericType(scalarType, scalarPropertyType)
 			: typeof(JsonScalarValueConverter<,>).MakeGenericType(scalarType, scalarPropertyType);
-		configurationBuilder.Properties(
-			scalarType,
-			builder => builder.HaveConversion(converterType)
-		);
+		configurationBuilder.Properties(scalarType, builder => builder.HaveConversion(converterType));
 	}
 
 	static void ConfigureComplexGraph(ComplexPropertyBuilder builder, Type type)
@@ -503,11 +457,7 @@ sealed partial class PostgresClient
 		ConfigureComplexGraphRecursive(builder, type, visited);
 	}
 
-	static void ConfigureComplexGraphRecursive(
-		ComplexPropertyBuilder builder,
-		Type type,
-		HashSet<Type> visited
-	)
+	static void ConfigureComplexGraphRecursive(ComplexPropertyBuilder builder, Type type, HashSet<Type> visited)
 	{
 		type = Nullable.GetUnderlyingType(type) ?? type;
 		if (!ShouldInspectType(type) || !visited.Add(type))
@@ -518,8 +468,7 @@ sealed partial class PostgresClient
 			if (ShouldSkipJsonProperty(type, property))
 				continue;
 
-			var propertyType =
-				Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
 			if (propertyType == typeof(string) || propertyType == typeof(byte[]))
 			{
@@ -530,6 +479,12 @@ sealed partial class PostgresClient
 			if (propertyType.GetCustomAttribute<ScalarAttribute>() is not null)
 			{
 				MapReadOnlyConstructorBoundProperty(builder, type, property, propertyType);
+				continue;
+			}
+
+			if (HasEfOpaqueAttribute(property))
+			{
+				MapOpaqueJsonProperty(builder, propertyType, property.Name);
 				continue;
 			}
 
@@ -544,16 +499,13 @@ sealed partial class PostgresClient
 					continue;
 				}
 
-				if (
-					IsPrimitiveLike(elementType)
-					|| elementType.GetCustomAttribute<ScalarAttribute>() is not null
-				)
+				if (IsPrimitiveLike(elementType) || elementType.GetCustomAttribute<ScalarAttribute>() is not null)
 					builder.PrimitiveCollection(propertyType, property.Name);
 				else if (ShouldInspectType(elementType))
 					builder.ComplexCollection(
 						propertyType,
 						property.Name,
-						nested => ConfigureComplexGraphRecursive(nested, elementType, visited)
+						nested => ConfigureComplexGraphRecursive(nested, elementType, [.. visited])
 					);
 				else
 					throw CreateUnsupportedShapeException(type, property);
@@ -575,7 +527,7 @@ sealed partial class PostgresClient
 				builder.ComplexProperty(
 					propertyType,
 					property.Name,
-					nested => ConfigureComplexGraphRecursive(nested, propertyType, visited)
+					nested => ConfigureComplexGraphRecursive(nested, propertyType, [.. visited])
 				);
 				continue;
 			}
@@ -590,11 +542,7 @@ sealed partial class PostgresClient
 		}
 	}
 
-	static void ConfigureComplexGraphRecursive(
-		ComplexCollectionBuilder builder,
-		Type type,
-		HashSet<Type> visited
-	)
+	static void ConfigureComplexGraphRecursive(ComplexCollectionBuilder builder, Type type, HashSet<Type> visited)
 	{
 		type = Nullable.GetUnderlyingType(type) ?? type;
 		if (!ShouldInspectType(type) || !visited.Add(type))
@@ -605,8 +553,7 @@ sealed partial class PostgresClient
 			if (ShouldSkipJsonProperty(type, property))
 				continue;
 
-			var propertyType =
-				Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
 			if (propertyType == typeof(string) || propertyType == typeof(byte[]))
 			{
@@ -617,6 +564,12 @@ sealed partial class PostgresClient
 			if (propertyType.GetCustomAttribute<ScalarAttribute>() is not null)
 			{
 				MapReadOnlyConstructorBoundProperty(builder, type, property, propertyType);
+				continue;
+			}
+
+			if (HasEfOpaqueAttribute(property))
+			{
+				MapOpaqueJsonProperty(builder, propertyType, property.Name);
 				continue;
 			}
 
@@ -631,16 +584,13 @@ sealed partial class PostgresClient
 					continue;
 				}
 
-				if (
-					IsPrimitiveLike(elementType)
-					|| elementType.GetCustomAttribute<ScalarAttribute>() is not null
-				)
+				if (IsPrimitiveLike(elementType) || elementType.GetCustomAttribute<ScalarAttribute>() is not null)
 					builder.PrimitiveCollection(propertyType, property.Name);
 				else if (ShouldInspectType(elementType))
 					builder.ComplexCollection(
 						propertyType,
 						property.Name,
-						nested => ConfigureComplexGraphRecursive(nested, elementType, visited)
+						nested => ConfigureComplexGraphRecursive(nested, elementType, [.. visited])
 					);
 				else
 					throw CreateUnsupportedShapeException(type, property);
@@ -662,7 +612,7 @@ sealed partial class PostgresClient
 				builder.ComplexProperty(
 					propertyType,
 					property.Name,
-					nested => ConfigureComplexGraphRecursive(nested, propertyType, visited)
+					nested => ConfigureComplexGraphRecursive(nested, propertyType, [.. visited])
 				);
 				continue;
 			}
@@ -684,10 +634,7 @@ sealed partial class PostgresClient
 		Type propertyType
 	)
 	{
-		if (
-			property.GetSetMethod(true) is null
-			&& HasBindableConstructorParameter(containingType, property)
-		)
+		if (property.GetSetMethod(true) is null && HasBindableConstructorParameter(containingType, property))
 			builder.Property(propertyType, property.Name);
 	}
 
@@ -698,10 +645,7 @@ sealed partial class PostgresClient
 		Type propertyType
 	)
 	{
-		if (
-			property.GetSetMethod(true) is null
-			&& HasBindableConstructorParameter(containingType, property)
-		)
+		if (property.GetSetMethod(true) is null && HasBindableConstructorParameter(containingType, property))
 			builder.Property(propertyType, property.Name);
 	}
 
@@ -722,13 +666,15 @@ sealed partial class PostgresClient
 			if (ShouldSkipJsonProperty(type, property))
 				continue;
 
-			var propertyType =
-				Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
 			if (propertyType == typeof(string) || propertyType == typeof(byte[]))
 				continue;
 
 			if (propertyType.GetCustomAttribute<ScalarAttribute>() is not null)
+				continue;
+
+			if (HasEfOpaqueAttribute(property))
 				continue;
 
 			if (TryGetEnumerableElementType(propertyType, out var elementType))
@@ -774,55 +720,48 @@ sealed partial class PostgresClient
 	static bool IsStructValueObjectType(Type type) =>
 		type.IsValueType && type.GetCustomAttribute<ValueObjectAttribute>() is not null;
 
-	static void MapCollectionAsJsonProperty(
-		ComplexPropertyBuilder builder,
-		Type propertyType,
-		string propertyName
-	)
+	static bool HasEfOpaqueAttribute(MemberInfo member) =>
+		member.CustomAttributes.Any(attribute =>
+			attribute.AttributeType.FullName == "Purview.EventSourcing.EntityFrameworkCore.EfOpaqueAttribute"
+		);
+
+	static void MapOpaqueJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
 	{
 		var propertyBuilder = builder.Property(propertyType, propertyName);
-		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(
-			propertyType
-		);
+		propertyBuilder.HasConversion(typeof(OpaqueJsonValueConverter<>).MakeGenericType(propertyType));
+	}
+
+	static void MapOpaqueJsonProperty(ComplexCollectionBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		propertyBuilder.HasConversion(typeof(OpaqueJsonValueConverter<>).MakeGenericType(propertyType));
+	}
+
+	static void MapCollectionAsJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
 		propertyBuilder.HasConversion(converterType);
 	}
 
-	static void MapCollectionAsJsonProperty(
-		ComplexCollectionBuilder builder,
-		Type propertyType,
-		string propertyName
-	)
+	static void MapCollectionAsJsonProperty(ComplexCollectionBuilder builder, Type propertyType, string propertyName)
 	{
 		var propertyBuilder = builder.Property(propertyType, propertyName);
-		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(
-			propertyType
-		);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
 		propertyBuilder.HasConversion(converterType);
 	}
 
-	static void MapJsonProperty(
-		ComplexPropertyBuilder builder,
-		Type propertyType,
-		string propertyName
-	)
+	static void MapJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
 	{
 		var propertyBuilder = builder.Property(propertyType, propertyName);
-		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(
-			propertyType
-		);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
 		propertyBuilder.HasConversion(converterType);
 	}
 
-	static void MapJsonProperty(
-		ComplexCollectionBuilder builder,
-		Type propertyType,
-		string propertyName
-	)
+	static void MapJsonProperty(ComplexCollectionBuilder builder, Type propertyType, string propertyName)
 	{
 		var propertyBuilder = builder.Property(propertyType, propertyName);
-		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(
-			propertyType
-		);
+		var converterType = typeof(JsonValueObjectCollectionConverter<>).MakeGenericType(propertyType);
 		propertyBuilder.HasConversion(converterType);
 	}
 
@@ -837,9 +776,7 @@ sealed partial class PostgresClient
 		&& type != typeof(DateOnly)
 		&& type != typeof(TimeOnly)
 		&& type != typeof(TimeSpan)
-		&& (
-			type.Namespace is null || !type.Namespace.StartsWith("System", StringComparison.Ordinal)
-		)
+		&& (type.Namespace is null || !type.Namespace.StartsWith("System", StringComparison.Ordinal))
 		&& (type.IsClass || (type.IsValueType && !type.IsPrimitive && !type.IsEnum));
 
 	static bool ShouldInspectType(Type type) =>
@@ -853,18 +790,12 @@ sealed partial class PostgresClient
 		&& type != typeof(DateOnly)
 		&& type != typeof(TimeOnly)
 		&& type != typeof(TimeSpan)
-		&& (
-			type.Namespace is null || !type.Namespace.StartsWith("System", StringComparison.Ordinal)
-		);
+		&& (type.Namespace is null || !type.Namespace.StartsWith("System", StringComparison.Ordinal));
 
 	static bool ShouldSkipJsonProperty(Type containingType, PropertyInfo property) =>
-		property.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>()
-			is not null
+		property.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>() is not null
 		|| property.GetGetMethod(true) is null
-		|| (
-			property.GetSetMethod(true) is null
-			&& !HasBindableConstructorParameter(containingType, property)
-		);
+		|| (property.GetSetMethod(true) is null && !HasBindableConstructorParameter(containingType, property));
 
 	static bool HasBindableConstructorParameter(Type containingType, PropertyInfo property)
 	{
@@ -917,10 +848,7 @@ sealed partial class PostgresClient
 	static bool IsEventStoreCollectionType(Type type) =>
 		type.IsGenericType
 		&& type.GetGenericTypeDefinition() is var genericDefinition
-		&& (
-			genericDefinition == typeof(EventStoreList<>)
-			|| genericDefinition == typeof(EventStoreSet<>)
-		);
+		&& (genericDefinition == typeof(EventStoreList<>) || genericDefinition == typeof(EventStoreSet<>));
 
 	static bool IsCollectionLikeType(Type type)
 	{
@@ -935,8 +863,7 @@ sealed partial class PostgresClient
 
 		// Test for our own collection types or if the type implements IEnumerable<T> somewhere...
 		return IsEventStoreCollectionType(type)
-			|| type.GetInterfaces()
-				.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+			|| type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 	}
 
 	static bool IsReadOnlyCollectionType(Type type)
@@ -964,9 +891,7 @@ sealed partial class PostgresClient
 
 		// Check if the type implements IDictionary<TKey, TValue> or IReadOnlyDictionary<TKey, TValue> somewhere...
 		return type.GetInterfaces()
-			.Any(i =>
-				i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>)
-			);
+			.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
 	}
 
 	static bool IsJsonConvertibleCollectionType(Type type)
@@ -981,14 +906,10 @@ sealed partial class PostgresClient
 			return true;
 
 		// Check if the type implements IEnumerable<T> somewhere...
-		return type.GetInterfaces()
-			.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+		return type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 	}
 
-	static InvalidOperationException CreateUnsupportedShapeException(
-		Type containingType,
-		MemberInfo member
-	) =>
+	static InvalidOperationException CreateUnsupportedShapeException(Type containingType, MemberInfo member) =>
 		new(
 			$"{containingType.Name}.{member.Name} cannot be mapped into the snapshot JSON payload. "
 				+ "Supported members are primitive types, [Scalar] value objects, complex types, and EventStoreList<T>/EventStoreSet<T> collections of those shapes."
@@ -1023,10 +944,7 @@ sealed partial class PostgresClient
 
 	sealed class AggregateTypeExpressionVisitor(string aggregateType) : ExpressionVisitor
 	{
-		readonly ConstantExpression _aggregateType = Expression.Constant(
-			aggregateType,
-			typeof(string)
-		);
+		readonly ConstantExpression _aggregateType = Expression.Constant(aggregateType, typeof(string));
 
 		protected override Expression VisitMember(MemberExpression node) =>
 			node.Member.Name == nameof(IAggregate.AggregateType)
@@ -1168,11 +1086,7 @@ sealed partial class PostgresClient
 			var visitedObject = Visit(node.Object);
 			var visitedArguments = Visit(node.Arguments);
 
-			if (
-				node.Method.DeclaringType == typeof(string)
-				&& node.Arguments.Count == 0
-				&& visitedObject is not null
-			)
+			if (node.Method.DeclaringType == typeof(string) && node.Arguments.Count == 0 && visitedObject is not null)
 			{
 				if (node.Method.Name == nameof(string.ToLowerInvariant))
 					return Expression.Call(visitedObject, nameof(string.ToLower), Type.EmptyTypes);
@@ -1207,25 +1121,16 @@ sealed partial class PostgresClient
 	{
 		public object Create(DbContext context, bool designTime)
 		{
-			var optionsField = context
-				.GetType()
-				.GetField("_options", BindingFlags.Instance | BindingFlags.NonPublic);
+			var optionsField = context.GetType().GetField("_options", BindingFlags.Instance | BindingFlags.NonPublic);
 			if (optionsField?.GetValue(context) is PostgresClientOptions options)
 			{
 				if (
 					context.GetType().IsGenericType
-					&& context.GetType().GetGenericTypeDefinition()
-						== typeof(SnapshotQueryDbContext<>)
+					&& context.GetType().GetGenericTypeDefinition() == typeof(SnapshotQueryDbContext<>)
 				)
 				{
 					var aggregateType = context.GetType().GenericTypeArguments[0];
-					return (
-						context.GetType(),
-						aggregateType,
-						options.SchemaName,
-						options.TableName,
-						designTime
-					);
+					return (context.GetType(), aggregateType, options.SchemaName, options.TableName, designTime);
 				}
 
 				return (context.GetType(), options.SchemaName, options.TableName, designTime);
@@ -1240,10 +1145,7 @@ sealed partial class PostgresClient
 		if (!_options.AutoCreateTable || IsTableEnsured())
 			return;
 
-		var tableLock = EnsureTableLocks.GetOrAdd(
-			_tableEnsureKey,
-			static _ => new SemaphoreSlim(1, 1)
-		);
+		var tableLock = EnsureTableLocks.GetOrAdd(_tableEnsureKey, static _ => new SemaphoreSlim(1, 1));
 		await tableLock.WaitAsync(cancellationToken);
 		try
 		{
@@ -1288,10 +1190,7 @@ sealed partial class PostgresClient
 		if (!_options.AutoCreateTable || IsTableEnsured())
 			return;
 
-		var tableLock = EnsureTableLocks.GetOrAdd(
-			_tableEnsureKey,
-			static _ => new SemaphoreSlim(1, 1)
-		);
+		var tableLock = EnsureTableLocks.GetOrAdd(_tableEnsureKey, static _ => new SemaphoreSlim(1, 1));
 		await tableLock.WaitAsync(cancellationToken);
 		try
 		{
@@ -1331,10 +1230,7 @@ sealed partial class PostgresClient
 
 	void MarkTableEnsured() => EnsuredTables.TryAdd(_tableEnsureKey, 0);
 
-	static async Task CreateStorageTablesWithEfAsync(
-		DbContext context,
-		CancellationToken cancellationToken
-	)
+	static async Task CreateStorageTablesWithEfAsync(DbContext context, CancellationToken cancellationToken)
 	{
 		var creator = context.GetService<IRelationalDatabaseCreator>();
 		if (!await creator.ExistsAsync(cancellationToken))
@@ -1347,12 +1243,7 @@ sealed partial class PostgresClient
 	{
 		for (var current = exception; current is not null; current = current.InnerException)
 		{
-			if (
-				current.Message.Contains(
-					"already an object named",
-					StringComparison.OrdinalIgnoreCase
-				)
-			)
+			if (current.Message.Contains("already an object named", StringComparison.OrdinalIgnoreCase))
 				return true;
 		}
 

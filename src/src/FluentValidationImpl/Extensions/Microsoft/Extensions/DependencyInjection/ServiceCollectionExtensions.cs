@@ -27,10 +27,7 @@ public static class ServiceCollectionExtensions
 		where TValidator : class, IValidator<TAggregate>
 	{
 		services.Add(new(typeof(IValidator<TAggregate>), typeof(TValidator), lifetime));
-		services.AddSingleton<
-			IAggregateValidator<TAggregate>,
-			FluentValidationAggregateValidator<TAggregate>
-		>();
+		services.AddSingleton<IAggregateValidator<TAggregate>, FluentValidationAggregateValidator<TAggregate>>();
 
 		return services;
 	}
@@ -56,9 +53,7 @@ public static class ServiceCollectionExtensions
 				sp =>
 				{
 					var validator = sp.GetService<IValidator<TAggregate>>();
-					return validator is null
-						? null!
-						: new FluentValidationAggregateValidator<TAggregate>(validator);
+					return validator is null ? null! : new FluentValidationAggregateValidator<TAggregate>(validator);
 				},
 				lifetime
 			)

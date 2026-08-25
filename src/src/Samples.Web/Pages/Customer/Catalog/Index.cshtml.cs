@@ -76,9 +76,7 @@ sealed class IndexModel(
 			.ToList();
 
 		// Resolve image URLs in parallel
-		var imageUrlTasks = grouped
-			.Select(p => imageService.GetImageUrlAsync(p.ProductId, ct))
-			.ToList();
+		var imageUrlTasks = grouped.Select(p => imageService.GetImageUrlAsync(p.ProductId, ct)).ToList();
 		var imageUrls = await Task.WhenAll(imageUrlTasks);
 
 		Products =

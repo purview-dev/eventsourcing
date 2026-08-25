@@ -27,11 +27,7 @@ public sealed partial class CustomerAggregate : AggregateBase
 	/// for each field that has actually changed. Pass <see langword="null"/> for any field
 	/// that should remain unchanged. To clear the phone number, use <see cref="ChangePhoneNumber"/> directly.
 	/// </summary>
-	public CustomerAggregate UpdateDetails(
-		string? name = null,
-		string? email = null,
-		string? phoneNumber = null
-	)
+	public CustomerAggregate UpdateDetails(string? name = null, string? email = null, string? phoneNumber = null)
 	{
 		if (name is not null)
 			ChangeName(name);
@@ -54,11 +50,7 @@ public sealed partial class CustomerAggregate : AggregateBase
 	public partial CustomerAggregate Reactivate();
 
 	[Event]
-	public partial CustomerAggregate RegisterCustomer(
-		string name,
-		string email,
-		bool isActive = true
-	);
+	public partial CustomerAggregate RegisterCustomer(string name, string email, bool isActive = true);
 
 	[Event]
 	public partial CustomerAggregate ChangeName(string name);

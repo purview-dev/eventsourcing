@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -8,10 +6,8 @@ namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 static class ValueObjectSymbolInspector
 {
 	public const string ScalarAttributeName = "Purview.EventSourcing.Serialization.ScalarAttribute";
-	public const string ValueObjectAttributeName =
-		"Purview.EventSourcing.Serialization.ValueObjectAttribute";
-	public const string JsonConverterAttributeName =
-		"System.Text.Json.Serialization.JsonConverterAttribute";
+	public const string ValueObjectAttributeName = "Purview.EventSourcing.Serialization.ValueObjectAttribute";
+	public const string JsonConverterAttributeName = "System.Text.Json.Serialization.JsonConverterAttribute";
 	public const string StrictModeName =
 		"global::Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Strict";
 	public const string HydrateModeName =
@@ -32,9 +28,7 @@ static class ValueObjectSymbolInspector
 		var isPartial = typeSymbol
 			.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax())
 			.OfType<TypeDeclarationSyntax>()
-			.Any(syntax =>
-				syntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PartialKeyword))
-			);
+			.Any(syntax => syntax.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.PartialKeyword)));
 		if (!isPartial)
 		{
 			diagnostics.Add(
@@ -75,20 +69,12 @@ static class ValueObjectSymbolInspector
 	}
 
 	public static bool HasAttribute(INamedTypeSymbol typeSymbol, string metadataName) =>
-		typeSymbol
-			.GetAttributes()
-			.Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
+		typeSymbol.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
 
-	public static bool HasAttribute(
-		ImmutableArray<AttributeData> attributes,
-		string metadataName
-	) => attributes.Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
+	public static bool HasAttribute(ImmutableArray<AttributeData> attributes, string metadataName) =>
+		attributes.Any(attribute => attribute.AttributeClass?.ToDisplayString() == metadataName);
 
-	public static bool HasStaticFactory(
-		INamedTypeSymbol typeSymbol,
-		string name,
-		ITypeSymbol[] parameterTypes
-	)
+	public static bool HasStaticFactory(INamedTypeSymbol typeSymbol, string name, ITypeSymbol[] parameterTypes)
 	{
 		return typeSymbol
 			.GetMembers(name)
@@ -174,14 +160,9 @@ static class ValueObjectSymbolInspector
 		typeSymbol
 			.GetMembers(name)
 			.OfType<IMethodSymbol>()
-			.Any(method =>
-				!method.IsStatic && !method.IsImplicitlyDeclared && method.Parameters.Length == 0
-			);
+			.Any(method => !method.IsStatic && !method.IsImplicitlyDeclared && method.Parameters.Length == 0);
 
-	public static bool ParametersMatch(
-		ImmutableArray<IParameterSymbol> parameters,
-		IReadOnlyList<ITypeSymbol> expected
-	)
+	public static bool ParametersMatch(ImmutableArray<IParameterSymbol> parameters, IReadOnlyList<ITypeSymbol> expected)
 	{
 		for (var i = 0; i < expected.Count; i++)
 		{
@@ -192,11 +173,7 @@ static class ValueObjectSymbolInspector
 		return true;
 	}
 
-	public static bool HasConversionOperator(
-		INamedTypeSymbol typeSymbol,
-		ITypeSymbol primitiveType,
-		bool fromPrimitive
-	)
+	public static bool HasConversionOperator(INamedTypeSymbol typeSymbol, ITypeSymbol primitiveType, bool fromPrimitive)
 	{
 		return typeSymbol
 			.GetMembers()
@@ -207,20 +184,11 @@ static class ValueObjectSymbolInspector
 				&& (
 					fromPrimitive
 						? method.Parameters.Length == 1
-							&& SymbolEqualityComparer.Default.Equals(
-								method.Parameters[0].Type,
-								primitiveType
-							)
+							&& SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, primitiveType)
 							&& SymbolEqualityComparer.Default.Equals(method.ReturnType, typeSymbol)
 						: method.Parameters.Length == 1
-							&& SymbolEqualityComparer.Default.Equals(
-								method.Parameters[0].Type,
-								typeSymbol
-							)
-							&& SymbolEqualityComparer.Default.Equals(
-								method.ReturnType,
-								primitiveType
-							)
+							&& SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, typeSymbol)
+							&& SymbolEqualityComparer.Default.Equals(method.ReturnType, primitiveType)
 				)
 			);
 	}
@@ -258,10 +226,7 @@ static class ValueObjectSymbolInspector
 			);
 	}
 
-	public static bool HasContextualCreateOverload(
-		INamedTypeSymbol typeSymbol,
-		ITypeSymbol primitiveType
-	)
+	public static bool HasContextualCreateOverload(INamedTypeSymbol typeSymbol, ITypeSymbol primitiveType)
 	{
 		return typeSymbol
 			.GetMembers("Create")
@@ -287,14 +252,11 @@ static class ValueObjectSymbolInspector
 			.OfType<TypeDeclarationSyntax>()
 			.SelectMany(declaration => declaration.Members.OfType<MethodDeclarationSyntax>())
 			.Where(method =>
-				method.Identifier.Text == methodName
-				&& method.ParameterList.Parameters.Count == parameterCount
+				method.Identifier.Text == methodName && method.ParameterList.Parameters.Count == parameterCount
 			)
 			.ToArray();
 
-		var hasDefinition = declarations.Any(method =>
-			method.Body is null && method.ExpressionBody is null
-		);
+		var hasDefinition = declarations.Any(method => method.Body is null && method.ExpressionBody is null);
 		if (hasDefinition)
 			return false;
 
@@ -302,9 +264,7 @@ static class ValueObjectSymbolInspector
 			return true;
 
 		var hasRefImplementation = declarations.Any(method =>
-			method
-				.ParameterList.Parameters[0]
-				.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.RefKeyword))
+			method.ParameterList.Parameters[0].Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.RefKeyword))
 		);
 		return hasRefImplementation || declarations.Length == 0;
 	}
@@ -322,9 +282,7 @@ static class ValueObjectSymbolInspector
 			(
 				!includeRef
 				|| method.ParameterList.Parameters.All(static parameter =>
-					parameter.Modifiers.Any(static modifier =>
-						modifier.IsKind(SyntaxKind.RefKeyword)
-					)
+					parameter.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.RefKeyword))
 				)
 			)
 			&& method.Body is null
@@ -344,18 +302,12 @@ static class ValueObjectSymbolInspector
 		return hasRefImplementation || declarations.Length == 0;
 	}
 
-	public static bool IsComplexHookReadOnly(
-		INamedTypeSymbol typeSymbol,
-		string methodName,
-		int parameterCount
-	)
+	public static bool IsComplexHookReadOnly(INamedTypeSymbol typeSymbol, string methodName, int parameterCount)
 	{
 		return GetComplexHookDeclarations(typeSymbol, methodName, parameterCount)
 			.Any(method =>
 				(method.Body is not null || method.ExpressionBody is not null)
-				&& method.Modifiers.Any(static modifier =>
-					modifier.IsKind(SyntaxKind.ReadOnlyKeyword)
-				)
+				&& method.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.ReadOnlyKeyword))
 			);
 	}
 
@@ -372,8 +324,7 @@ static class ValueObjectSymbolInspector
 				.OfType<TypeDeclarationSyntax>()
 				.SelectMany(declaration => declaration.Members.OfType<MethodDeclarationSyntax>())
 				.Where(method =>
-					method.Identifier.Text == methodName
-					&& method.ParameterList.Parameters.Count == parameterCount
+					method.Identifier.Text == methodName && method.ParameterList.Parameters.Count == parameterCount
 				),
 		];
 	}
@@ -385,12 +336,7 @@ static class ValueObjectSymbolInspector
 
 		for (var i = 0; i < properties.Length; i++)
 		{
-			if (
-				!SymbolEqualityComparer.Default.Equals(
-					constructor.Parameters[i].Type,
-					properties[i].Type
-				)
-			)
+			if (!SymbolEqualityComparer.Default.Equals(constructor.Parameters[i].Type, properties[i].Type))
 				return false;
 		}
 
@@ -407,9 +353,7 @@ static class ValueObjectSymbolInspector
 		{
 			arguments = string.Join(
 				", ",
-				properties.Select(static property =>
-					GetConstructorArgumentExpression(property.Type)
-				)
+				properties.Select(static property => GetConstructorArgumentExpression(property.Type))
 			);
 			return true;
 		}
@@ -423,9 +367,7 @@ static class ValueObjectSymbolInspector
 			arguments = string.Join(
 				", ",
 				parameterizedConstructors[0]
-					.Parameters.Select(static parameter =>
-						GetConstructorArgumentExpression(parameter.Type)
-					)
+					.Parameters.Select(static parameter => GetConstructorArgumentExpression(parameter.Type))
 			);
 			return true;
 		}
@@ -434,10 +376,7 @@ static class ValueObjectSymbolInspector
 		return false;
 	}
 
-	public static bool IsValueObjectPropertyCandidate(
-		INamedTypeSymbol typeSymbol,
-		IPropertySymbol property
-	) =>
+	public static bool IsValueObjectPropertyCandidate(INamedTypeSymbol typeSymbol, IPropertySymbol property) =>
 		!property.IsImplicitlyDeclared
 		|| (
 			typeSymbol.IsRecord
@@ -446,11 +385,7 @@ static class ValueObjectSymbolInspector
 				.SelectMany(static ctor => ctor.Parameters)
 				.Any(parameter =>
 					SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)
-					&& string.Equals(
-						parameter.Name,
-						property.Name,
-						StringComparison.OrdinalIgnoreCase
-					)
+					&& string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)
 				)
 		);
 
@@ -571,9 +506,7 @@ static class ValueObjectSymbolInspector
 		}
 
 		// For value types, we can use the default literal, but for Guid, we want to use Guid.Empty
-		return TypeLibrary.System.Guid.Equals(typeSymbol)
-			? $"{TypeLibrary.System.Guid}.Empty"
-			: "default";
+		return TypeLibrary.System.Guid.Equals(typeSymbol) ? $"{TypeLibrary.System.Guid}.Empty" : "default";
 	}
 
 	public static IFieldSymbol[] GetEnumFields(ITypeSymbol enumTypeSymbol) =>
@@ -581,12 +514,8 @@ static class ValueObjectSymbolInspector
 			.. enumTypeSymbol
 				.GetMembers()
 				.OfType<IFieldSymbol>()
-				.Where(field =>
-					field.HasConstantValue && field.DeclaredAccessibility == Accessibility.Public
-				)
-				.OrderBy(field =>
-					field.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue
-				),
+				.Where(field => field.HasConstantValue && field.DeclaredAccessibility == Accessibility.Public)
+				.OrderBy(field => field.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue),
 		];
 
 	public static bool HasMemberWithName(INamedTypeSymbol typeSymbol, string name) =>

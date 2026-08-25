@@ -12,10 +12,7 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
-		var aggregate = TestHelpers.Aggregate<TAggregate>(
-			aggregateId: aggregateId,
-			a => a.SetValidatedProperty(-1)
-		);
+		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId, a => a.SetValidatedProperty(-1));
 
 		var eventStore = fixture.CreateEventStore<TAggregate>();
 
@@ -48,21 +45,13 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(result.Saved).IsTrue();
 
 		// Act
-		var aggregateGetResult = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateGetResult = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		// Assert
-		await GenericMongoDBEventStoreTestSeed.AssertComplexPropertyMatches(
-			aggregate,
-			aggregateGetResult
-		);
+		await GenericMongoDBEventStoreTestSeed.AssertComplexPropertyMatches(aggregate, aggregateGetResult);
 	}
 
-	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenAggregateWithNoChanges_DoesNotSave(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -78,14 +67,10 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		// Assert
 		await Assert.That(result).IsFalse();
 
-		telemetry
-			.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>())
-			.WasCalled(Times.Once);
+		telemetry.SaveContainedNoChanges(aggregateId, Any<string>(), Any<string>()).WasCalled(Times.Once);
 	}
 
-	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenNewAggregateWithChanges_SavesAggregate(CancellationToken cancellationToken)
 	{
 		// Arrange
 		var aggregateId = $"{Guid.NewGuid()}";
@@ -104,25 +89,14 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert.That(aggregateFromEventStore).IsNotNull();
 		await Assert.That(aggregateFromEventStore.Id()).IsEqualTo(aggregate.Id());
-		await Assert
-			.That(aggregateFromEventStore.IncrementInt32)
-			.IsEqualTo(aggregate.IncrementInt32);
-		await Assert
-			.That(aggregateFromEventStore.Details.SavedVersion)
-			.IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
-		await Assert
-			.That(aggregateFromEventStore.Details.SnapshotVersion)
-			.IsEqualTo(aggregate.Details.SnapshotVersion);
+		await Assert.That(aggregateFromEventStore.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
+		await Assert.That(aggregateFromEventStore.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
+		await Assert.That(aggregateFromEventStore.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert.That(aggregateFromEventStore.Details.SnapshotVersion).IsEqualTo(aggregate.Details.SnapshotVersion);
 		await Assert.That(aggregateFromEventStore.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 	}
 
@@ -157,22 +131,16 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		await Assert.That(aggregate.IsNew()).IsFalse();
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert
 			.That((aggregateFromEventStore?.StringProperty ?? string.Empty).Length)
 			.IsEqualTo(aggregate.StringProperty.Length);
 
-		await Assert
-			.That(aggregateFromEventStore?.StringProperty)
-			.IsEqualTo(aggregate.StringProperty);
+		await Assert.That(aggregateFromEventStore?.StringProperty).IsEqualTo(aggregate.StringProperty);
 
 		sizeIsLessThan32K =
-			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty)
-			< short.MaxValue;
+			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty) < short.MaxValue;
 		await Assert.That(sizeIsLessThan32K).IsFalse();
 	}
 
@@ -214,22 +182,16 @@ partial class GenericMongoDBEventStoreTests<TAggregate>
 		);
 
 		// Verify by re-getting the aggregate, knowing that the cache is disabled.
-		var aggregateFromEventStore = await eventStore.GetAsync(
-			aggregateId,
-			cancellationToken: cancellationToken
-		);
+		var aggregateFromEventStore = await eventStore.GetAsync(aggregateId, cancellationToken: cancellationToken);
 
 		await Assert
 			.That((aggregateFromEventStore?.StringProperty ?? string.Empty).Length)
 			.IsEqualTo(aggregate.StringProperty.Length);
 
-		await Assert
-			.That(aggregateFromEventStore?.StringProperty)
-			.IsEqualTo(aggregate.StringProperty);
+		await Assert.That(aggregateFromEventStore?.StringProperty).IsEqualTo(aggregate.StringProperty);
 
 		sizeIsLessThan32K =
-			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty)
-			< short.MaxValue;
+			Encoding.UTF8.GetByteCount(aggregateFromEventStore?.StringProperty ?? string.Empty) < short.MaxValue;
 		await Assert.That(sizeIsLessThan32K).IsFalse();
 	}
 

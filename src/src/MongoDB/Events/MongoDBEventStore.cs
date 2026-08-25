@@ -67,8 +67,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 			new MongoDBConfiguration
 			{
 				ApplicationName = mongoDbOptions.Value.ApplicationName,
-				Database =
-					storageNameBuilder?.GetDatabaseName<T>() ?? mongoDbOptions.Value.Database,
+				Database = storageNameBuilder?.GetDatabaseName<T>() ?? mongoDbOptions.Value.Database,
 				Collection =
 					storageNameBuilder?.GetEventsCollectionName<T>()
 					?? mongoDbOptions.Value.EventCollection
@@ -83,8 +82,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 			new MongoDBConfiguration
 			{
 				ApplicationName = mongoDbOptions.Value.ApplicationName,
-				Database =
-					storageNameBuilder?.GetDatabaseName<T>() ?? mongoDbOptions.Value.Database,
+				Database = storageNameBuilder?.GetDatabaseName<T>() ?? mongoDbOptions.Value.Database,
 				Collection =
 					storageNameBuilder?.GetSnapshotCollectionName<T>()
 					?? mongoDbOptions.Value.SnapshotCollection
@@ -120,18 +118,11 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 				await _distributedCache.RemoveAsync(cacheKey, cancellationToken);
 			else
 			{
-				if (
-					!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache)
-				)
+				if (!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache))
 					return;
 
 				var data = SerializeSnapshot(aggregate);
-				await _distributedCache.SetStringAsync(
-					cacheKey,
-					data,
-					cacheEntryOptions,
-					cancellationToken
-				);
+				await _distributedCache.SetStringAsync(cacheKey, data, cacheEntryOptions, cancellationToken);
 			}
 		}
 #pragma warning disable CA1031
@@ -142,11 +133,8 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		}
 	}
 
-	DistributedCacheEntryOptions GetCacheEntryOptions(
-		DistributedCacheEntryOptions? cacheEntryOptions
-	) =>
-		cacheEntryOptions
-		?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
+	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
+		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
@@ -154,18 +142,13 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 	)
 	{
 		Expression<Func<StreamVersionEntity, bool>> whereClause = includeDeleted
-			? m =>
-				m.AggregateType == _aggregateTypeShortName
-				&& m.EntityType == EntityTypes.StreamVersionType
+			? m => m.AggregateType == _aggregateTypeShortName && m.EntityType == EntityTypes.StreamVersionType
 			: m =>
 				m.AggregateType == _aggregateTypeShortName
 				&& m.EntityType == EntityTypes.StreamVersionType
 				&& !m.IsDeleted;
 
-		var query = _eventClient.GetQueryEnumerableAsync(
-			whereClause,
-			cancellationToken: cancellationToken
-		);
+		var query = _eventClient.GetQueryEnumerableAsync(whereClause, cancellationToken: cancellationToken);
 		await foreach (var entity in query)
 		{
 			if (includeDeleted || !entity.IsDeleted)
@@ -188,9 +171,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 			var sw = System.Diagnostics.Stopwatch.StartNew();
 
 			result = await _eventClient.GetAsync<StreamVersionEntity>(
-				m =>
-					m.Id == CreateStreamVersionId(aggregateId)
-					&& m.EntityType == EntityTypes.StreamVersionType,
+				m => m.Id == CreateStreamVersionId(aggregateId) && m.EntityType == EntityTypes.StreamVersionType,
 				cancellationToken
 			);
 			sw.Stop();
@@ -228,11 +209,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		return result;
 	}
 
-	static bool ReturnAggregate(
-		bool isDeleted,
-		string aggregateId,
-		EventStoreOperationContext context
-	)
+	static bool ReturnAggregate(bool isDeleted, string aggregateId, EventStoreOperationContext context)
 	{
 		if (isDeleted)
 		{
@@ -250,8 +227,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		return true;
 	}
 
-	string CreateStreamVersionId(string aggregateId) =>
-		$"s_{_aggregateTypeShortName}_{aggregateId}";
+	string CreateStreamVersionId(string aggregateId) => $"s_{_aggregateTypeShortName}_{aggregateId}";
 
 	string CreateEventId(string aggregateId, int version) =>
 		$"e_{_aggregateTypeShortName}_{aggregateId}_{$"{version}".PadLeft(_eventStoreOptions.Value.EventSuffixLength, '0')}";
@@ -260,8 +236,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		$"i_{_aggregateTypeShortName}_{aggregateId}_{idempotencyId}";
 
 #pragma warning disable CA1308 // Normalize strings to uppercase
-	public string CreateCacheKey(string aggregateId) =>
-		$"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
+	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
 	public void Dispose()

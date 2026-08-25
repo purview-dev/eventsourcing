@@ -11,9 +11,7 @@ using Purview.EventSourcing.SqlServer.Snapshots;
 namespace Purview.EventSourcing.SqlServer.Events;
 
 [ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerTestSession)]
-public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
-	SqlServerEventStoreFixture fixture
-)
+public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]
 	public async Task CommitAsync_GivenEnlistedRawSqlOperation_CommitsAggregateAndRawSqlTogether(
@@ -29,9 +27,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var aggregate = await eventStore.CreateAsync(aggregateId, cancellationToken);
 		aggregate.AppendString("raw-sql");
 
-		var factory = new SqlServerEventStoreTransactionFactory(
-			new FixedCorrelationIdProvider("sql-raw")
-		);
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-raw"));
 		await using var transaction = factory.CreateSqlServerTransaction();
 		transaction.Enlist(aggregate, eventStore);
 		transaction.Enlist(
@@ -53,11 +49,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 
 		var result = await transaction.CommitAsync(cancellationToken);
 		var savedAggregate = await eventStore.GetAsync(aggregateId, null, cancellationToken);
-		var rowCount = await GetAuditRowCountAsync(
-			fixture.ConnectionString,
-			tableName,
-			cancellationToken
-		);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
 
 		await Assert.That(result.Success).IsTrue();
 		await Assert.That(savedAggregate).IsNotNull();
@@ -79,29 +71,21 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var aggregate = await eventStore.CreateAsync(aggregateId, cancellationToken);
 		aggregate.AppendString("ef");
 
-		var factory = new SqlServerEventStoreTransactionFactory(
-			new FixedCorrelationIdProvider("sql-ef")
-		);
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-ef"));
 		await using var transaction = factory.CreateSqlServerTransaction();
 		transaction.Enlist(aggregate, eventStore);
 		transaction.Enlist(
 			connection => new TransactionAuditDbContext(connection, tableName),
 			async (dbContext, token) =>
 			{
-				dbContext.Entries.Add(
-					new TransactionAuditEntry { CorrelationId = "sql-ef", Value = "ef" }
-				);
+				dbContext.Entries.Add(new TransactionAuditEntry { CorrelationId = "sql-ef", Value = "ef" });
 				await dbContext.SaveChangesAsync(token);
 			}
 		);
 
 		var result = await transaction.CommitAsync(cancellationToken);
 		var savedAggregate = await eventStore.GetAsync(aggregateId, null, cancellationToken);
-		var rowCount = await GetAuditRowCountAsync(
-			fixture.ConnectionString,
-			tableName,
-			cancellationToken
-		);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
 
 		await Assert.That(result.Success).IsTrue();
 		await Assert.That(savedAggregate).IsNotNull();
@@ -123,9 +107,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var aggregate = await eventStore.CreateAsync(aggregateId, cancellationToken);
 		aggregate.AppendString("rollback");
 
-		var factory = new SqlServerEventStoreTransactionFactory(
-			new FixedCorrelationIdProvider("sql-rollback")
-		);
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-rollback"));
 		await using var transaction = factory.CreateSqlServerTransaction();
 		transaction.Enlist(aggregate, eventStore);
 		transaction.Enlist(
@@ -148,11 +130,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 
 		var result = await transaction.CommitAsync(cancellationToken);
 		var savedAggregate = await eventStore.GetAsync(aggregateId, null, cancellationToken);
-		var rowCount = await GetAuditRowCountAsync(
-			fixture.ConnectionString,
-			tableName,
-			cancellationToken
-		);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
 
 		await Assert.That(result.Success).IsFalse();
 		await Assert.That(result.Results).Count().IsEqualTo(1);
@@ -181,9 +159,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var secondAggregate = await snapshotStore.CreateAsync(secondAggregateId, cancellationToken);
 		secondAggregate.AppendString("snapshot");
 
-		var factory = new SqlServerEventStoreTransactionFactory(
-			new FixedCorrelationIdProvider("sql-cross")
-		);
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-cross"));
 		await using var transaction = factory.CreateSqlServerTransaction();
 		transaction.Enlist(firstAggregate, primaryStore);
 		transaction.Enlist(secondAggregate, snapshotStore);
@@ -207,11 +183,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var result = await transaction.CommitAsync(cancellationToken);
 		var savedFirst = await primaryStore.GetAsync(firstAggregateId, null, cancellationToken);
 		var savedSecond = await snapshotStore.GetAsync(secondAggregateId, null, cancellationToken);
-		var rowCount = await GetAuditRowCountAsync(
-			fixture.ConnectionString,
-			tableName,
-			cancellationToken
-		);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
 
 		await Assert.That(result.Success).IsTrue();
 		await Assert.That(savedFirst).IsNotNull();
@@ -241,9 +213,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var secondAggregate = await snapshotStore.CreateAsync(secondAggregateId, cancellationToken);
 		secondAggregate.AppendString("snapshot-rollback");
 
-		var factory = new SqlServerEventStoreTransactionFactory(
-			new FixedCorrelationIdProvider("sql-cross-rollback")
-		);
+		var factory = new SqlServerEventStoreTransactionFactory(new FixedCorrelationIdProvider("sql-cross-rollback"));
 		await using var transaction = factory.CreateSqlServerTransaction();
 		transaction.Enlist(firstAggregate, primaryStore);
 		transaction.Enlist(secondAggregate, snapshotStore);
@@ -268,11 +238,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		var result = await transaction.CommitAsync(cancellationToken);
 		var savedFirst = await primaryStore.GetAsync(firstAggregateId, null, cancellationToken);
 		var savedSecond = await snapshotStore.GetAsync(secondAggregateId, null, cancellationToken);
-		var rowCount = await GetAuditRowCountAsync(
-			fixture.ConnectionString,
-			tableName,
-			cancellationToken
-		);
+		var rowCount = await GetAuditRowCountAsync(fixture.ConnectionString, tableName, cancellationToken);
 
 		await Assert.That(result.Success).IsFalse();
 		await Assert.That(savedFirst).IsNull();
@@ -319,10 +285,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 		await using var connection = new SqlConnection(connectionString);
 		await connection.OpenAsync(cancellationToken);
 #pragma warning disable CA2100
-		await using var command = new SqlCommand(
-			$"SELECT COUNT(1) FROM {quotedTableName}",
-			connection
-		);
+		await using var command = new SqlCommand($"SELECT COUNT(1) FROM {quotedTableName}", connection);
 #pragma warning restore CA2100
 		var count = await command.ExecuteScalarAsync(cancellationToken);
 		return Convert.ToInt32(count, CultureInfo.InvariantCulture);
@@ -332,10 +295,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(
 	{
 		return AzureTableNameRegEx().IsMatch(tableName)
 			? $"[dbo].[{tableName}]"
-			: throw new ArgumentException(
-				"Audit table name contains unsupported characters.",
-				nameof(tableName)
-			);
+			: throw new ArgumentException("Audit table name contains unsupported characters.", nameof(tableName));
 	}
 
 	sealed class FixedCorrelationIdProvider(string correlationId) : IEventStoreCorrelationIdProvider

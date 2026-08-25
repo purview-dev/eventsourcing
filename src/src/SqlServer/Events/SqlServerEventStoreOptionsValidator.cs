@@ -10,14 +10,7 @@ sealed class SqlServerEventStoreOptionsValidator : IValidateOptions<SqlServerEve
 		ArgumentNullException.ThrowIfNull(options);
 		var validationContext = new ValidationContext(options);
 		var validationResults = new List<ValidationResult>();
-		if (
-			!Validator.TryValidateObject(
-				options,
-				validationContext,
-				validationResults,
-				validateAllProperties: true
-			)
-		)
+		if (!Validator.TryValidateObject(options, validationContext, validationResults, validateAllProperties: true))
 			return ValidateOptionsResult.Fail(
 				validationResults.Select(static x => x.ErrorMessage ?? "Options validation failed.")
 			);

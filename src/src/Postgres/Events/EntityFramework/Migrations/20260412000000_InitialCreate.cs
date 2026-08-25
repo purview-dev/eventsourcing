@@ -17,39 +17,15 @@ public partial class InitialCreate : Migration
 			schema: "public",
 			columns: table => new
 			{
-				Id = table.Column<string>(
-					type: "character varying(450)",
-					maxLength: 450,
-					nullable: false
-				),
+				Id = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
 				EntityType = table.Column<int>(type: "integer", nullable: false),
-				AggregateId = table.Column<string>(
-					type: "character varying(450)",
-					maxLength: 450,
-					nullable: false
-				),
-				AggregateType = table.Column<string>(
-					type: "character varying(450)",
-					maxLength: 450,
-					nullable: false
-				),
+				AggregateId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+				AggregateType = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
 				Version = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-				IsDeleted = table.Column<bool>(
-					type: "boolean",
-					nullable: false,
-					defaultValue: false
-				),
+				IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
 				Payload = table.Column<string>(type: "jsonb", nullable: true),
-				EventType = table.Column<string>(
-					type: "character varying(450)",
-					maxLength: 450,
-					nullable: true
-				),
-				IdempotencyId = table.Column<string>(
-					type: "character varying(450)",
-					maxLength: 450,
-					nullable: true
-				),
+				EventType = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+				IdempotencyId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
 				Timestamp = table.Column<DateTimeOffset>(
 					type: "timestamp with time zone",
 					nullable: false,
@@ -88,10 +64,7 @@ public partial class InitialCreate : Migration
 				columns: new[] { "AggregateId", "AggregateType", "Version" },
 				filter: "\"EntityType\" = 1"
 			)
-			.Annotation(
-				"Npgsql:IndexInclude",
-				new[] { "Payload", "EventType", "IdempotencyId", "Timestamp" }
-			);
+			.Annotation("Npgsql:IndexInclude", new[] { "Payload", "EventType", "IdempotencyId", "Timestamp" });
 	}
 
 	/// <inheritdoc />

@@ -19,6 +19,5 @@ public static class SaveResultBuilder
 		bool skipped,
 		ValidationResult? validationResult = null
 	)
-		where TAggregate : IAggregate =>
-		new(aggregate, validationResult ?? new ValidationResult(), saved, skipped);
+		where TAggregate : IAggregate => new(aggregate, validationResult ?? new ValidationResult(), saved, skipped);
 }

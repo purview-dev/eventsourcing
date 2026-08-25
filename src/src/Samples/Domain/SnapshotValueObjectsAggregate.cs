@@ -6,15 +6,10 @@ namespace Purview.EventSourcing.Samples.Domain;
 [Aggregate]
 public sealed partial class SnapshotValueObjectsAggregate : AggregateBase
 {
-	public UserDetails UserDetails { get; private set; } =
-		UserDetails.Hydrate(Guid.Empty, string.Empty, true);
+	public UserDetails UserDetails { get; private set; } = UserDetails.Hydrate(Guid.Empty, string.Empty, true);
 
-	public UserDetails2 UserDetails2 { get; private set; } =
-		UserDetails2.Hydrate(Guid.Empty, string.Empty);
+	public UserDetails2 UserDetails2 { get; private set; } = UserDetails2.Hydrate(Guid.Empty, string.Empty);
 
 	[Event(EventName = "UserDetailsCaptured")]
-	public partial SnapshotValueObjectsAggregate CaptureUserDetails(
-		UserDetails userDetails,
-		UserDetails2 userDetails2
-	);
+	public partial SnapshotValueObjectsAggregate CaptureUserDetails(UserDetails userDetails, UserDetails2 userDetails2);
 }

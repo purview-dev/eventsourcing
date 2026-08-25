@@ -6,9 +6,7 @@ using Purview.EventSourcing.MongoDB.StorageClient;
 
 namespace Purview.EventSourcing.MongoDB.Snapshots;
 
-public sealed partial class MongoDBSnapshotEventStore<T>
-	: IMongoDBSnapshotEventStore<T>,
-		IDisposable
+public sealed partial class MongoDBSnapshotEventStore<T> : IMongoDBSnapshotEventStore<T>, IDisposable
 	where T : AggregateBase, new()
 {
 	readonly IEventStoreCore<T> _eventStore;
@@ -53,13 +51,7 @@ public sealed partial class MongoDBSnapshotEventStore<T>
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
 
-		if (
-			await _mongoDbClient.UpsertAsync(
-				aggregate,
-				BuildPredicate(aggregate),
-				cancellationToken
-			)
-		)
+		if (await _mongoDbClient.UpsertAsync(aggregate, BuildPredicate(aggregate), cancellationToken))
 			_telemetry.SnapshotCreated(_aggregateName);
 	}
 

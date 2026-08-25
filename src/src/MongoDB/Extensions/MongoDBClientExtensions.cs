@@ -23,12 +23,7 @@ static class MongoDBClientExtensions
 			var request = new ContinuationRequest { MaxRecords = maxRecordsPerOperation };
 			do
 			{
-				var response = await client.QueryAsync(
-					whereClause,
-					orderByClause,
-					request,
-					cancellationToken
-				);
+				var response = await client.QueryAsync(whereClause, orderByClause, request, cancellationToken);
 				foreach (var result in response.Results)
 					yield return result;
 
@@ -42,12 +37,7 @@ static class MongoDBClientExtensions
 			CancellationToken cancellationToken = default
 		)
 			where T : class =>
-			client.GetQueryEnumerableAsync(
-				whereClause,
-				null,
-				maxRecordsPerOperation,
-				cancellationToken
-			);
+			client.GetQueryEnumerableAsync(whereClause, null, maxRecordsPerOperation, cancellationToken);
 
 		public IAsyncEnumerable<T> GetQueryEnumerableAsync<T, TOrderBy>(
 			Expression<Func<T, bool>> whereClause,
@@ -89,8 +79,7 @@ static class MongoDBClientExtensions
 			int maxRecordsPerOperation = ContinuationRequest.DefaultMaxRecords,
 			CancellationToken cancellationToken = default
 		)
-			where T : class =>
-			client.GetListEnumerableAsync<T>(null, maxRecordsPerOperation, cancellationToken);
+			where T : class => client.GetListEnumerableAsync<T>(null, maxRecordsPerOperation, cancellationToken);
 
 		public IAsyncEnumerable<T> GetListEnumerableAsync<T, TOrderBy>(
 			Expression<Func<T, TOrderBy>> orderByAscending,
@@ -158,11 +147,7 @@ static class MongoDBClientExtensions
 			CancellationToken cancellationToken = default
 		)
 			where T : class =>
-			client.ListAsync(
-				orderByClause,
-				new ContinuationRequest { MaxRecords = maxRecords },
-				cancellationToken
-			);
+			client.ListAsync(orderByClause, new ContinuationRequest { MaxRecords = maxRecords }, cancellationToken);
 
 		#endregion ListAsync
 

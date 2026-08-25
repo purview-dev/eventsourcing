@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
@@ -59,13 +58,9 @@ static partial class ScalarValueObjectEmitter
 	static void EmitHookDeclarations(StringBuilder sb, ScalarValueObjectModel model, string indent)
 	{
 		if (model.DeclareOnNormalize)
-			sb.AppendLine(
-				$"{indent}	static partial void OnNormalize(ref {model.ScalarTypeName} value);"
-			);
+			sb.AppendLine($"{indent}	static partial void OnNormalize(ref {model.ScalarTypeName} value);");
 		if (model.DeclareOnValidate)
-			sb.AppendLine(
-				$"{indent}	static partial void OnValidate({model.ScalarTypeName} value);"
-			);
+			sb.AppendLine($"{indent}	static partial void OnValidate({model.ScalarTypeName} value);");
 		if (model.DeclareOnNormalize || model.DeclareOnValidate)
 			sb.AppendLine();
 	}
@@ -99,10 +94,7 @@ static partial class ScalarValueObjectEmitter
 
 	static void EmitEmpty(StringBuilder sb, ScalarValueObjectModel model, string indent)
 	{
-		if (
-			model.Options.GenerateEmpty
-			&& !ValueObjectSymbolInspector.HasMemberWithName(model.TypeSymbol, "Empty")
-		)
+		if (model.Options.GenerateEmpty && !ValueObjectSymbolInspector.HasMemberWithName(model.TypeSymbol, "Empty"))
 		{
 			sb.AppendLine(
 				$"{indent}	public static {model.TypeName} Empty => Hydrate({ValueObjectSymbolInspector.GetEmptyValueExpression(model.ScalarProperty.Type)});"
@@ -150,9 +142,7 @@ static partial class ScalarValueObjectEmitter
 		if (!model.EnumPropertiesEnabled)
 			return;
 
-		foreach (
-			var enumField in ValueObjectSymbolInspector.GetEnumFields(model.ScalarProperty.Type)
-		)
+		foreach (var enumField in ValueObjectSymbolInspector.GetEnumFields(model.ScalarProperty.Type))
 		{
 			if (ValueObjectSymbolInspector.HasMemberWithName(model.TypeSymbol, enumField.Name))
 				continue;

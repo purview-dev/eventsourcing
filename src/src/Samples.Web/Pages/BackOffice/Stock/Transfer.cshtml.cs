@@ -7,8 +7,7 @@ using Purview.EventSourcing.SqlServer.Events.Exceptions;
 
 namespace Purview.EventSourcing.Samples.Web.Pages.BackOffice.Stock;
 
-sealed class TransferModel(IStockTransferService transferService, IQueryableEventStore store)
-	: PageModel
+sealed class TransferModel(IStockTransferService transferService, IQueryableEventStore store) : PageModel
 {
 	[BindProperty]
 	public string SourceInventoryId { get; set; } = string.Empty;
@@ -37,10 +36,7 @@ sealed class TransferModel(IStockTransferService transferService, IQueryableEven
 		if (string.IsNullOrWhiteSpace(SourceInventoryId))
 			ModelState.AddModelError(nameof(SourceInventoryId), "Please select stock to transfer.");
 		if (string.IsNullOrWhiteSpace(DestinationLocationId))
-			ModelState.AddModelError(
-				nameof(DestinationLocationId),
-				"Please select a destination location."
-			);
+			ModelState.AddModelError(nameof(DestinationLocationId), "Please select a destination location.");
 		if (Quantity < 1)
 			ModelState.AddModelError(nameof(Quantity), "Quantity must be at least 1.");
 		if (string.IsNullOrWhiteSpace(Reason))

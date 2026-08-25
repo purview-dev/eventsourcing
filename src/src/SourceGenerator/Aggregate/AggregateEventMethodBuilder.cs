@@ -1,8 +1,6 @@
 using System.Globalization;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Purview.SourceGeneratorFramework.Extensions;
 
 namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 
@@ -12,8 +10,7 @@ static class AggregateEventMethodBuilder
 
 	const string GeneratedSourceFileSuffix = ".g.cs";
 
-	static readonly int HintNameSeparatorAndSuffixLength =
-		1 + HintNameHashHexLength + GeneratedSourceFileSuffix.Length;
+	static readonly int HintNameSeparatorAndSuffixLength = 1 + HintNameHashHexLength + GeneratedSourceFileSuffix.Length;
 
 	public static bool TryBuild(
 		INamedTypeSymbol classSymbol,
@@ -26,7 +23,7 @@ static class AggregateEventMethodBuilder
 		string? aggregateEventSuffixOverride,
 		string? assemblyEventSuffix,
 		List<DiagnosticInfo> diagnostics,
-		CancellationToken ct,
+		CancellationToken cancellationToken,
 		out AggregateEventMethodInfo methodInfo
 	)
 	{
@@ -35,24 +32,12 @@ static class AggregateEventMethodBuilder
 
 		var eventAttribute = EventAttributeData.FromAttributeData(methodSymbol);
 		var collectionEventAttribute = CollectionEventAttributeData.FromAttributeData(methodSymbol);
-		var activeAttribute = methodSymbol
-			.GetAttributes()
-			.FirstOrDefault(attribute =>
-				TypeLibrary.Attributes.EventAttribute.Equals(attribute.AttributeClass)
-				|| TypeLibrary.Attributes.CollectionEventAttribute.Equals(attribute.AttributeClass)
-			);
-		var version = collectionEventAttribute.Exists
-			? collectionEventAttribute.Version
-			: eventAttribute.Version;
-		var eventName = collectionEventAttribute.Exists
-			? collectionEventAttribute.EventName
-			: eventAttribute.EventName;
+		var activeAttribute = eventAttribute.Exists || collectionEventAttribute.Exists;
+		var version = collectionEventAttribute.Exists ? collectionEventAttribute.Version : eventAttribute.Version;
+		var eventName = collectionEventAttribute.Exists ? collectionEventAttribute.EventName : eventAttribute.EventName;
 		var eventNamespaceOverride = collectionEventAttribute.Exists
 			? collectionEventAttribute.EventNamespace
 			: eventAttribute.EventNamespace;
-		var hasExplicitVersion = activeAttribute.NamedArguments.Any(static argument =>
-			argument.Key == "Version"
-		);
 		var hasExplicitEventName = !string.IsNullOrWhiteSpace(eventName);
 
 		if (eventAttribute.Exists && collectionEventAttribute.Exists)
@@ -71,11 +56,7 @@ static class AggregateEventMethodBuilder
 		if (!methodSymbol.IsPartialDefinition)
 		{
 			diagnostics.Add(
-				DiagnosticInfo.Create(
-					DiagnosticLibrary.EventMethodMustBePartial,
-					methodSymbol,
-					methodSymbol.Name
-				)
+				DiagnosticInfo.Create(DiagnosticLibrary.EventMethodMustBePartial, methodSymbol, methodSymbol.Name)
 			);
 
 			return false;
@@ -93,36 +74,39 @@ static class AggregateEventMethodBuilder
 		)
 			return false;
 
-		if (collectionEventAttribute.Exists)
+		if (version < 1)
 		{
-			if (collectionEventAttribute.Version < 1)
-			{
-				diagnostics.Add(
-					DiagnosticInfo.Create(
-						DiagnosticLibrary.EventSchemaVersionMustBePositive,
-						methodSymbol,
-						methodSymbol.Name,
-						methodSymbol.ContainingType.Name,
-						collectionEventAttribute.Version
-					)
-				);
+			diagnostics.Add(
+				DiagnosticInfo.Create(
+					DiagnosticLibrary.EventSchemaVersionMustBePositive,
+					methodSymbol,
+					methodSymbol.Name,
+					methodSymbol.ContainingType.Name,
+					version
+				)
+			);
 
-				return false;
-			}
+			return false;
 		}
+
+		var manualApply = collectionEventAttribute.Exists ? collectionEventAttribute.Manual : eventAttribute.Manual;
 
 		if (
 			!BuildParameters(
 				methodSymbol,
 				classSymbol,
 				collectionEventAttribute,
-				collectionEventAttribute.Manual,
+				manualApply,
 				propertySymbolsByName,
 				compilation,
 				valueObjectContextType,
 				diagnostics,
-				ct,
-				out var parameters,
+				cancellationToken,
+				out var allParameters,
+				out var eventParameters,
+				out var computedParameters,
+				out var nonComputedParameters,
+				out var aggregateParameters,
 				out var collectionEvent
 			)
 		)
@@ -149,18 +133,46 @@ static class AggregateEventMethodBuilder
 				: aggregateEventNamespaceOverride!.Trim()
 			: eventNamespaceOverride!.Trim();
 
+		var eventTypeFullName = string.IsNullOrWhiteSpace(eventNamespace)
+			? $"global::{resolvedEventName}"
+			: $"global::{eventNamespace}.{resolvedEventName}";
+
+		TypeIdentity eventType = new(resolvedEventName, eventNamespace);
+
+		var (userApplyMethodKind, userApplyMethodAccessibility) = DetectUserApplyMethodKind(
+			classSymbol,
+			compilation,
+			eventType,
+			cancellationToken
+		);
+
+		if (!TryCreateInvalidMethodStub(methodSymbol, [], out var invalidMethod, cancellationToken))
+		{
+			invalidMethod = new InvalidAggregateEventMethodInfo(
+				$"{returnTypeName} {methodSymbol.Name}({string.Join(", ", methodSymbol.Parameters.Select(static p => p.Type))})",
+				[]
+			);
+		}
+
 		methodInfo = new(
 			methodSymbol.Name,
-			new(new TypeValueObject(resolvedEventName, eventNamespace)),
-			parameters,
+			new(new TypeIdentity(resolvedEventName, eventNamespace)),
+			allParameters,
+			eventParameters,
+			computedParameters,
+			nonComputedParameters,
+			aggregateParameters,
 			returnTypeName,
 			returnKind,
 			methodSymbol.DeclaredAccessibility,
 			version,
-			hasExplicitVersion,
-			collectionEventAttribute.Manual,
-			collectionEvent
+			manualApply,
+			userApplyMethodKind,
+			userApplyMethodAccessibility,
+			collectionEvent,
+			invalidMethod.Signature
 		);
+
 		return true;
 	}
 
@@ -169,7 +181,7 @@ static class AggregateEventMethodBuilder
 		IMethodSymbol methodSymbol,
 		bool isCollectionEvent,
 		List<DiagnosticInfo> diagnostics,
-		out TypeReferenceOptions returnType,
+		out TypeReference returnType,
 		out EventMethodReturnKind returnKind
 	)
 	{
@@ -190,10 +202,7 @@ static class AggregateEventMethodBuilder
 			hasErrors = true;
 		}
 
-		if (
-			methodSymbol.DeclaredAccessibility == Accessibility.Public
-			&& !EventVerbMap.IsVerbPhrase(methodSymbol.Name)
-		)
+		if (methodSymbol.DeclaredAccessibility == Accessibility.Public && !EventVerbMap.IsVerbPhrase(methodSymbol.Name))
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
@@ -212,9 +221,7 @@ static class AggregateEventMethodBuilder
 
 		if (!TryResolveReturnKind(methodSymbol, classSymbol, out returnType, out returnKind))
 		{
-			ReportUnsupportedSignature(
-				"methods must return void, bool, or the containing aggregate type"
-			);
+			ReportUnsupportedSignature("methods must return void, bool, or the containing aggregate type");
 		}
 
 		if (methodSymbol.PartialImplementationPart is not null)
@@ -225,9 +232,7 @@ static class AggregateEventMethodBuilder
 			if (parameter.RefKind != RefKind.None)
 				ReportUnsupportedSignature("ref, in, and out parameters are not supported");
 
-			if (
-				parameter.IsParams && (!isCollectionEvent || parameter.Type is not IArrayTypeSymbol)
-			)
+			if (parameter.IsParams && (!isCollectionEvent || parameter.Type is not IArrayTypeSymbol))
 				ReportUnsupportedSignature("params parameters are not supported");
 		}
 
@@ -237,60 +242,128 @@ static class AggregateEventMethodBuilder
 		return !hasErrors;
 	}
 
-	static bool ResolveAttributeValues(
-		IMethodSymbol methodSymbol,
-		AttributeData? eventAttribute,
-		AttributeData? collectionEventAttribute,
-		List<DiagnosticInfo> diagnostics,
-		out int version,
-		out bool hasExplicitVersion,
-		out string eventName,
-		out bool hasExplicitEventName,
-		out string? eventNamespaceOverride,
-		out bool manualApply
+	static (UserApplyMethodKind ApplyKind, TypeDeclarationAccessibility? Accessibility) DetectUserApplyMethodKind(
+		INamedTypeSymbol classSymbol,
+		Compilation compilation,
+		TypeIdentity eventType,
+		CancellationToken cancellationToken
 	)
 	{
-		version = 1;
-		hasExplicitVersion = false;
-		eventName = string.Empty;
-		hasExplicitEventName = false;
-		eventNamespaceOverride = null;
-		manualApply = false;
+		// We can't use the symbols here as the event type
+		// likely hasn't been generated yet, so we have to
+		// rely on the syntax and semantic model to find the Apply method that matches the event type.
+		foreach (var syntaxRef in classSymbol.DeclaringSyntaxReferences)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
 
-		var activeAttribute = collectionEventAttribute ?? eventAttribute;
-		if (activeAttribute is null)
+			var syntaxTree = syntaxRef.SyntaxTree;
+			if (IsGeneratedSyntaxTree(syntaxTree))
+				continue;
+
+			if (syntaxRef.GetSyntax(cancellationToken) is not ClassDeclarationSyntax classDecl)
+				continue;
+
+			var semanticModel = compilation.GetSemanticModel(syntaxTree, ignoreAccessibility: true);
+			foreach (var member in classDecl.Members)
+			{
+				if (member is not MethodDeclarationSyntax methodDecl || methodDecl.Identifier.Text != "Apply")
+					continue;
+
+				if (methodDecl.ParameterList.Parameters.Count != 1)
+					continue;
+
+				var parameterSyntax = methodDecl.ParameterList.Parameters[0];
+				if (parameterSyntax.Type is null)
+					continue;
+
+				if (!IsParameterTypeMatch(parameterSyntax, semanticModel, eventType, cancellationToken))
+					continue;
+
+				var accessbility = methodDecl.GetDeclaredAccessibility()?.ToTypeDeclarationAccessibility();
+				var isPartial = methodDecl.Modifiers.Any(SyntaxKind.PartialKeyword);
+				var hasBody = methodDecl.Body is not null || methodDecl.ExpressionBody is not null;
+				if (isPartial && hasBody)
+				{
+					// The user has provided a partial implementation of the Apply method for this event type,
+					// which means we also need to collect the accessibility of the method so
+					// we can generate a partial method with no body but the same accessibility.
+					return (UserApplyMethodKind.PartialImplementation, accessbility);
+				}
+
+				if (!isPartial && hasBody)
+					return (UserApplyMethodKind.NonPartial, accessbility);
+			}
+		}
+
+		return (UserApplyMethodKind.None, null);
+	}
+
+	static bool IsParameterTypeMatch(
+		ParameterSyntax parameterSyntax,
+		SemanticModel semanticModel,
+		TypeIdentity eventType,
+		CancellationToken cancellationToken
+	)
+	{
+		var parameterTypeSyntax = parameterSyntax.Type;
+		if (parameterTypeSyntax is null)
+			return false;
+
+		var parameterType = semanticModel.GetTypeInfo(parameterTypeSyntax, cancellationToken).Type;
+		if (parameterType is not null)
+		{
+			var fullyQualified = parameterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+			if (fullyQualified == eventType.MetadataFullName)
+				return true;
+
+			if (parameterType.MetadataName == eventType.Name)
+				return true;
+		}
+
+		var syntaxText = parameterTypeSyntax.ToString();
+		if (syntaxText == eventType.Name)
 			return true;
 
-		hasExplicitVersion = activeAttribute.NamedArguments.Any(static arg => arg.Key == "Version");
-		if (hasExplicitVersion)
-			version = activeAttribute.GetNamedArgument("Version", 1);
+		if (syntaxText == eventType.MetadataFullName)
+			return true;
 
-		var explicitEventName = activeAttribute.GetNamedArgument<string>("EventName", null);
-		if (!string.IsNullOrEmpty(explicitEventName))
+		if (syntaxText.EndsWith("." + eventType.Name, StringComparison.Ordinal))
 		{
-			eventName = explicitEventName!.Trim();
-			hasExplicitEventName = true;
+			var prefix = syntaxText.Substring(0, syntaxText.Length - eventType.Name.Length - 1);
+			if (string.IsNullOrEmpty(prefix) || prefix == "global")
+				return true;
 		}
 
-		eventNamespaceOverride = activeAttribute.GetNamedArgument<string>("EventNamespace", null);
+		return false;
+	}
 
-		manualApply = activeAttribute.GetNamedArgument("Manual", false);
-
-		if (version < 1)
-		{
-			diagnostics.Add(
-				DiagnosticInfo.Create(
-					DiagnosticLibrary.EventSchemaVersionMustBePositive,
-					methodSymbol,
-					methodSymbol.Name,
-					methodSymbol.ContainingType.Name,
-					version
-				)
-			);
+	static bool IsGeneratedSyntaxTree(SyntaxTree syntaxTree)
+	{
+		var filePath = syntaxTree.FilePath;
+		if (string.IsNullOrEmpty(filePath))
 			return false;
+
+		if (filePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		// Check for common intermediate build directories (e.g., obj) to avoid analyzing generated files.
+		return filePath.Contains("\\obj\\", StringComparison.Ordinal)
+			|| filePath.Contains("/obj/", StringComparison.Ordinal);
+	}
+
+	internal static TypeReference CreateTypeReference(ITypeSymbol typeSymbol)
+	{
+		if (
+			typeSymbol is INamedTypeSymbol namedType
+			&& namedType.IsGenericType
+			&& namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+		)
+		{
+			return TypeReference.Create(namedType.TypeArguments[0]).Nullable();
 		}
 
-		return true;
+		// If the type is a value type, we can return it as is. If it's a reference type, we should mark it as nullable.
+		return TypeReference.Create(typeSymbol);
 	}
 
 	static bool BuildParameters(
@@ -302,13 +375,22 @@ static class AggregateEventMethodBuilder
 		Compilation compilation,
 		INamedTypeSymbol? valueObjectContextType,
 		List<DiagnosticInfo> diagnostics,
-		CancellationToken ct,
-		out List<EventPropertyInfo> parameters,
+		CancellationToken cancellationToken,
+		out ImmutableArray<EventPropertyInfo> allParameters,
+		out ImmutableArray<EventPropertyInfo> eventParameters,
+		out ImmutableArray<EventPropertyInfo> computedParameters,
+		out ImmutableArray<EventPropertyInfo> nonComputedParameters,
+		out ImmutableArray<EventPropertyInfo> aggregateParameters,
 		out CollectionEventInfo? collectionEvent
 	)
 	{
-		parameters = [];
 		collectionEvent = null;
+
+		var allParametersBuilder = ImmutableArray.CreateBuilder<EventPropertyInfo>();
+		var eventParametersBuilder = ImmutableArray.CreateBuilder<EventPropertyInfo>();
+		var computedParametersBuilder = ImmutableArray.CreateBuilder<EventPropertyInfo>();
+		var nonComputedParametersBuilder = ImmutableArray.CreateBuilder<EventPropertyInfo>();
+		var aggregateParametersBuilder = ImmutableArray.CreateBuilder<EventPropertyInfo>();
 
 		if (collectionEventAttribute.Exists)
 		{
@@ -326,14 +408,21 @@ static class AggregateEventMethodBuilder
 				return false;
 			}
 
-			parameters.Add(collectionParameter);
+			AddParameter(collectionParameter);
+
+			allParameters = allParametersBuilder.ToImmutable();
+			eventParameters = eventParametersBuilder.ToImmutable();
+			computedParameters = computedParametersBuilder.ToImmutable();
+			nonComputedParameters = nonComputedParametersBuilder.ToImmutable();
+			aggregateParameters = aggregateParametersBuilder.ToImmutable();
+
 			return true;
 		}
 
 		var hasErrors = false;
 		foreach (var parameter in methodSymbol.Parameters)
 		{
-			ct.ThrowIfCancellationRequested();
+			cancellationToken.ThrowIfCancellationRequested();
 
 			if (
 				TryBuildEventPropertyInfo(
@@ -349,7 +438,7 @@ static class AggregateEventMethodBuilder
 				)
 			)
 			{
-				parameters.Add(propertyInfo);
+				AddParameter(propertyInfo);
 			}
 			else
 			{
@@ -357,7 +446,27 @@ static class AggregateEventMethodBuilder
 			}
 		}
 
+		allParameters = allParametersBuilder.ToImmutable();
+		eventParameters = eventParametersBuilder.ToImmutable();
+		computedParameters = computedParametersBuilder.ToImmutable();
+		nonComputedParameters = nonComputedParametersBuilder.ToImmutable();
+		aggregateParameters = aggregateParametersBuilder.ToImmutable();
+
 		return !hasErrors;
+
+		void AddParameter(EventPropertyInfo propertyInfo)
+		{
+			allParametersBuilder.Add(propertyInfo);
+			if (propertyInfo.IncludeInEvent)
+				eventParametersBuilder.Add(propertyInfo);
+			if (propertyInfo.IsComputed)
+				computedParametersBuilder.Add(propertyInfo);
+			else
+				nonComputedParametersBuilder.Add(propertyInfo);
+
+			if (propertyInfo.HasAggregateProperty)
+				aggregateParametersBuilder.Add(propertyInfo);
+		}
 	}
 
 	static bool TryBuildEventPropertyInfo(
@@ -375,13 +484,12 @@ static class AggregateEventMethodBuilder
 		propertyInfo = default!;
 
 		var aggregatePropertyName =
-			GetAggregatePropertyNameOverride(parameter)
-			?? EventPropertyInfo.ToPropertyName(parameter.Name);
+			GetAggregatePropertyNameOverride(parameter) ?? EventPropertyInfo.ToPropertyName(parameter.Name);
 		var isComputedParameter = HasComputedAttribute(parameter);
 		var isNotNull = HasNotNullAttribute(parameter);
 		var isRequired = HasRequiredAttribute(parameter);
 		var isStringParameter = parameter.Type.SpecialType == SpecialType.System_String;
-		TypeReferenceOptions parameterType = new(parameter.Type);
+		var parameterType = CreateTypeReference(parameter.Type);
 
 		var metadata = MetadataAttributeData.FromAttributeData(parameter);
 
@@ -424,10 +532,7 @@ static class AggregateEventMethodBuilder
 		if (
 			manualApply
 			&& (
-				!propertySymbolsByName.TryGetValue(
-					aggregatePropertyName,
-					out var manualMappedProperty
-				)
+				!propertySymbolsByName.TryGetValue(aggregatePropertyName, out var manualMappedProperty)
 				|| manualMappedProperty.SetMethod is null
 				|| manualMappedProperty.SetMethod.IsInitOnly
 			)
@@ -496,7 +601,7 @@ static class AggregateEventMethodBuilder
 			return false;
 		}
 
-		TypeReferenceOptions propertyType = new(propertySymbol.Type);
+		var propertyType = CreateTypeReference(propertySymbol.Type);
 		var conversionKind = ResolveParameterConversionKind(
 			compilation,
 			classSymbol,
@@ -585,18 +690,9 @@ static class AggregateEventMethodBuilder
 				);
 			}
 		}
-		else if (
-			!EventVerbMap.TryCreateGeneratedEventName(
-				methodSymbol.Name,
-				classSymbol.Name,
-				out resolvedEventName
-			)
-		)
+		else if (!EventVerbMap.TryCreateGeneratedEventName(methodSymbol.Name, classSymbol.Name, out resolvedEventName))
 		{
-			var suggestedMethodName = EventVerbMap.TrySuggestVerbPhrase(
-				methodSymbol.Name,
-				out var suggestedVerbPhrase
-			)
+			var suggestedMethodName = EventVerbMap.TrySuggestVerbPhrase(methodSymbol.Name, out var suggestedVerbPhrase)
 				? suggestedVerbPhrase
 				: $"Create{TrimAggregateSuffix(classSymbol.Name)}";
 
@@ -638,8 +734,7 @@ static class AggregateEventMethodBuilder
 
 		if (
 			namedType.IsGenericType
-			&& namedType.OriginalDefinition.SpecialType
-				== SpecialType.System_Collections_Generic_IEnumerable_T
+			&& namedType.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T
 		)
 			return true;
 
@@ -648,8 +743,7 @@ static class AggregateEventMethodBuilder
 			if (
 				interfaceSymbol is INamedTypeSymbol namedInterface
 				&& namedInterface.IsGenericType
-				&& namedInterface.OriginalDefinition.SpecialType
-					== SpecialType.System_Collections_Generic_IEnumerable_T
+				&& namedInterface.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T
 			)
 				return true;
 		}
@@ -657,11 +751,7 @@ static class AggregateEventMethodBuilder
 		return false;
 	}
 
-	public static bool TryGetCollectionDetails(
-		ITypeSymbol typeSymbol,
-		out ITypeSymbol elementType,
-		out bool isSet
-	)
+	public static bool TryGetCollectionDetails(ITypeSymbol typeSymbol, out ITypeSymbol elementType, out bool isSet)
 	{
 		elementType = null!;
 		isSet = false;
@@ -686,18 +776,14 @@ static class AggregateEventMethodBuilder
 		return false;
 	}
 
-	public static bool TryGetIEnumerableElementType(
-		ITypeSymbol typeSymbol,
-		out ITypeSymbol elementType
-	)
+	public static bool TryGetIEnumerableElementType(ITypeSymbol typeSymbol, out ITypeSymbol elementType)
 	{
 		elementType = null!;
 
 		if (
 			typeSymbol is INamedTypeSymbol namedType
 			&& namedType.IsGenericType
-			&& namedType.OriginalDefinition.SpecialType
-				== SpecialType.System_Collections_Generic_IEnumerable_T
+			&& namedType.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T
 		)
 		{
 			elementType = namedType.TypeArguments[0];
@@ -732,10 +818,7 @@ static class AggregateEventMethodBuilder
 			|| TypeLibrary.Aggregates.EventStoreSet.Equals(namedType.OriginalDefinition)
 		);
 
-	public static bool TryGetComplexScalarValueType(
-		ITypeSymbol typeSymbol,
-		out string valueTypeDisplayName
-	)
+	public static bool TryGetComplexScalarValueType(ITypeSymbol typeSymbol, out string valueTypeDisplayName)
 	{
 		valueTypeDisplayName = string.Empty;
 
@@ -748,9 +831,7 @@ static class AggregateEventMethodBuilder
 		var valueProperty = namedType
 			.GetMembers("Value")
 			.OfType<IPropertySymbol>()
-			.FirstOrDefault(static property =>
-				property.GetMethod is not null && !property.IsStatic
-			);
+			.FirstOrDefault(static property => property.GetMethod is not null && !property.IsStatic);
 
 		if (valueProperty is null)
 			return false;
@@ -799,7 +880,7 @@ static class AggregateEventMethodBuilder
 		return false;
 	}
 
-	public static bool HasAttribute(ISymbol symbol, TypeValueObject attributeType) =>
+	public static bool HasAttribute(ISymbol symbol, TypeIdentity attributeType) =>
 		TypeHelpers.HasAttribute(symbol, attributeType.MetadataFullName);
 
 	public static bool HasComputedAttribute(IParameterSymbol parameterSymbol)
@@ -807,10 +888,7 @@ static class AggregateEventMethodBuilder
 		foreach (var attribute in parameterSymbol.GetAttributes())
 		{
 			var attributeClass = attribute.AttributeClass;
-			if (
-				attributeClass is not null
-				&& TypeLibrary.Attributes.ComputedAttribute.Equals(attributeClass)
-			)
+			if (attributeClass is not null && TypeLibrary.Attributes.ComputedAttribute.Equals(attributeClass))
 				return true;
 		}
 
@@ -824,8 +902,7 @@ static class AggregateEventMethodBuilder
 			var attributeClass = attribute.AttributeClass;
 			if (
 				attributeClass is not null
-				&& attributeClass.ToDisplayString()
-					== "System.Diagnostics.CodeAnalysis.NotNullAttribute"
+				&& attributeClass.ToDisplayString() == "System.Diagnostics.CodeAnalysis.NotNullAttribute"
 			)
 				return true;
 		}
@@ -840,8 +917,7 @@ static class AggregateEventMethodBuilder
 			var attributeClass = attribute.AttributeClass;
 			if (
 				attributeClass is not null
-				&& attributeClass.ToDisplayString()
-					== "System.ComponentModel.DataAnnotations.RequiredAttribute"
+				&& attributeClass.ToDisplayString() == "System.ComponentModel.DataAnnotations.RequiredAttribute"
 			)
 				return true;
 		}
@@ -860,16 +936,10 @@ static class AggregateEventMethodBuilder
 		foreach (var attribute in parameterSymbol.GetAttributes())
 		{
 			var attributeClass = attribute.AttributeClass;
-			if (
-				attributeClass is null
-				|| !TypeLibrary.Attributes.PropertyAttribute.Equals(attributeClass)
-			)
+			if (attributeClass is null || !TypeLibrary.Attributes.PropertyAttribute.Equals(attributeClass))
 				continue;
 
-			if (
-				attribute.ConstructorArguments.Length == 1
-				&& attribute.ConstructorArguments[0].Value is string value
-			)
+			if (attribute.ConstructorArguments.Length == 1 && attribute.ConstructorArguments[0].Value is string value)
 				return value.Trim();
 
 			break;
@@ -878,10 +948,7 @@ static class AggregateEventMethodBuilder
 		return null;
 	}
 
-	public static bool HasRegisterEventsMethod(
-		INamedTypeSymbol classSymbol,
-		out IMethodSymbol? registerEventsMethod
-	)
+	public static bool HasRegisterEventsMethod(INamedTypeSymbol classSymbol, out IMethodSymbol? registerEventsMethod)
 	{
 		registerEventsMethod = classSymbol
 			.GetMembers("RegisterEvents")
@@ -898,7 +965,7 @@ static class AggregateEventMethodBuilder
 	public static bool TryResolveReturnKind(
 		IMethodSymbol methodSymbol,
 		INamedTypeSymbol classSymbol,
-		out TypeReferenceOptions returnType,
+		out TypeReference returnType,
 		out EventMethodReturnKind returnKind
 	)
 	{
@@ -917,7 +984,7 @@ static class AggregateEventMethodBuilder
 
 		if (SymbolEqualityComparer.Default.Equals(methodSymbol.ReturnType, classSymbol))
 		{
-			returnType = new(classSymbol);
+			returnType = TypeReference.Create(classSymbol);
 			returnKind = EventMethodReturnKind.Aggregate;
 			return true;
 		}
@@ -929,14 +996,14 @@ static class AggregateEventMethodBuilder
 		IMethodSymbol methodSymbol,
 		string[] diagnosticIds,
 		out InvalidAggregateEventMethodInfo methodInfo,
-		CancellationToken ct
+		CancellationToken cancellationToken
 	)
 	{
-		ct.ThrowIfCancellationRequested();
+		cancellationToken.ThrowIfCancellationRequested();
 		methodInfo = null!;
 
 		var declaration = methodSymbol
-			.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax(ct))
+			.DeclaringSyntaxReferences.Select(reference => reference.GetSyntax(cancellationToken))
 			.OfType<MethodDeclarationSyntax>()
 			.FirstOrDefault(static syntax =>
 				syntax.Modifiers.Any(static modifier => modifier.IsKind(SyntaxKind.PartialKeyword))
@@ -947,27 +1014,31 @@ static class AggregateEventMethodBuilder
 		if (declaration is null)
 			return false;
 
-		var modifiers = string.Join(
-			" ",
-			declaration.Modifiers.Select(static modifier => modifier.Text)
-		);
+		var modifiers = string.Join(" ", declaration.Modifiers.Select(static modifier => modifier.Text));
 		if (modifiers.Length > 0)
 			modifiers += " ";
 
-		var explicitInterfaceSpecifier =
-			declaration.ExplicitInterfaceSpecifier?.ToString() ?? string.Empty;
+		var explicitInterfaceSpecifier = declaration.ExplicitInterfaceSpecifier?.ToString() ?? string.Empty;
 		var typeParameterList = declaration.TypeParameterList?.ToString() ?? string.Empty;
 		var constraints =
 			declaration.ConstraintClauses.Count == 0
 				? string.Empty
-				: " "
-					+ string.Join(
-						" ",
-						declaration.ConstraintClauses.Select(static clause => clause.ToString())
-					);
+				: " " + string.Join(" ", declaration.ConstraintClauses.Select(static clause => clause.ToString()));
+
+		var parameterList =
+			declaration.ParameterList.Parameters.Count == 0
+				? "()"
+				: $"({string.Join(", ", declaration.ParameterList.Parameters.Select(static p =>
+			{
+				var parameterModifiers = p.Modifiers.ToString();
+				if (parameterModifiers.Length > 0)
+					parameterModifiers += " ";
+				var defaultValue = p.Default?.ToString() ?? string.Empty;
+				return $"{parameterModifiers}{p.Type} {p.Identifier}{defaultValue}";
+			}))})";
 
 		methodInfo = new InvalidAggregateEventMethodInfo(
-			$"{modifiers}{declaration.ReturnType} {explicitInterfaceSpecifier}{declaration.Identifier}{typeParameterList}{declaration.ParameterList}{constraints}",
+			$"{modifiers}{declaration.ReturnType} {explicitInterfaceSpecifier}{declaration.Identifier}{typeParameterList}{parameterList}{constraints}",
 			diagnosticIds
 		);
 		return true;
@@ -977,9 +1048,7 @@ static class AggregateEventMethodBuilder
 	{
 		var symbolName = classSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 		var shortName = classSymbol.Name;
-		var builder = new System.Text.StringBuilder(
-			shortName.Length + HintNameSeparatorAndSuffixLength
-		);
+		var builder = new System.Text.StringBuilder(shortName.Length + HintNameSeparatorAndSuffixLength);
 
 		foreach (var character in shortName)
 		{
@@ -988,8 +1057,7 @@ static class AggregateEventMethodBuilder
 
 		builder.Append('_');
 		builder.Append(
-			ComputeStableHash(symbolName)
-				.ToString($"X{HintNameHashHexLength}", CultureInfo.InvariantCulture)
+			ComputeStableHash(symbolName).ToString($"X{HintNameHashHexLength}", CultureInfo.InvariantCulture)
 		);
 		builder.Append(GeneratedSourceFileSuffix);
 		return builder.ToString();
@@ -1045,9 +1113,7 @@ static class AggregateEventMethodBuilder
 		}
 
 		var conversion = compilation.ClassifyConversion(parameterType, propertyType);
-		return conversion.Exists && conversion.IsImplicit
-			? EventParameterConversionKind.Implicit
-			: null;
+		return conversion.Exists && conversion.IsImplicit ? EventParameterConversionKind.Implicit : null;
 	}
 
 	static bool TryResolveValueObjectCreateConversion(
@@ -1064,13 +1130,7 @@ static class AggregateEventMethodBuilder
 		var createMethods = propertyType.GetMembers("Create").OfType<IMethodSymbol>().ToArray();
 
 		var hasContextualCreate = createMethods.Any(method =>
-			IsContextualCreateMethod(
-				method,
-				propertyType,
-				aggregateType,
-				parameterType,
-				contextTypeDefinition
-			)
+			IsContextualCreateMethod(method, propertyType, aggregateType, parameterType, contextTypeDefinition)
 		);
 
 		if (hasContextualCreate)
@@ -1079,9 +1139,7 @@ static class AggregateEventMethodBuilder
 			return true;
 		}
 
-		var hasSimpleCreate = createMethods.Any(method =>
-			IsSimpleCreateMethod(method, propertyType, parameterType)
-		);
+		var hasSimpleCreate = createMethods.Any(method => IsSimpleCreateMethod(method, propertyType, parameterType));
 
 		if (hasSimpleCreate || hasScalarAttribute)
 		{
@@ -1092,11 +1150,7 @@ static class AggregateEventMethodBuilder
 		return false;
 	}
 
-	static bool IsSimpleCreateMethod(
-		IMethodSymbol method,
-		ITypeSymbol returnType,
-		ITypeSymbol parameterType
-	)
+	static bool IsSimpleCreateMethod(IMethodSymbol method, ITypeSymbol returnType, ITypeSymbol parameterType)
 	{
 		return method.IsStatic
 			&& method.DeclaredAccessibility == Accessibility.Public
@@ -1114,11 +1168,7 @@ static class AggregateEventMethodBuilder
 		INamedTypeSymbol? contextTypeDefinition
 	)
 	{
-		if (
-			!method.IsStatic
-			|| method.DeclaredAccessibility != Accessibility.Public
-			|| method.Name != "Create"
-		)
+		if (!method.IsStatic || method.DeclaredAccessibility != Accessibility.Public || method.Name != "Create")
 			return false;
 
 		if (method.Parameters.Length != 2)
@@ -1134,10 +1184,7 @@ static class AggregateEventMethodBuilder
 		return contextParameter.RefKind == RefKind.In
 			&& contextTypeDefinition is not null
 			&& contextParameter.Type is INamedTypeSymbol contextType
-			&& SymbolEqualityComparer.Default.Equals(
-				contextType.OriginalDefinition,
-				contextTypeDefinition
-			)
+			&& SymbolEqualityComparer.Default.Equals(contextType.OriginalDefinition, contextTypeDefinition)
 			&& contextType.TypeArguments.Length == 1
 			&& SymbolEqualityComparer.Default.Equals(contextType.TypeArguments[0], aggregateType);
 	}
@@ -1196,12 +1243,7 @@ static class AggregateEventMethodBuilder
 			return false;
 		}
 
-		if (
-			!propertySymbolsByName.TryGetValue(
-				collectionEventAttribute.PropertyName,
-				out var collectionProperty
-			)
-		)
+		if (!propertySymbolsByName.TryGetValue(collectionEventAttribute.PropertyName, out var collectionProperty))
 		{
 			diagnostics.Add(
 				DiagnosticInfo.Create(
@@ -1234,40 +1276,52 @@ static class AggregateEventMethodBuilder
 
 		var parameter = methodSymbol.Parameters[0];
 
-		TypeReferenceOptions parameterType = new(elementType);
-		TypeReferenceOptions eventPropertyType;
+		TypeReference parameterType;
+		TypeReference eventPropertyType;
 		CollectionParameterShape parameterShape;
-		if (TypeHelpers.IsArray(parameter.Type))
+		if (SymbolEqualityComparer.Default.Equals(parameter.Type, elementType))
+		{
+			parameterShape = CollectionParameterShape.Single;
+			parameterType = CreateTypeReference(elementType);
+			eventPropertyType = parameterType;
+		}
+		else if (TypeHelpers.IsArray(parameter.Type))
 		{
 			parameterShape = CollectionParameterShape.Array;
-			eventPropertyType = parameterType.MakeArray();
+			parameterType = CreateTypeReference(elementType).MakeArray();
+			eventPropertyType = parameterType;
 		}
 		else if (TryGetIEnumerableElementType(parameter.Type, out var enumerableElementType))
 		{
 			if (!SymbolEqualityComparer.Default.Equals(enumerableElementType, elementType))
 			{
+				var actualElementTypeName = elementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 				diagnostics.Add(
 					DiagnosticInfo.Create(
 						DiagnosticLibrary.UnsupportedEventMethodSignature,
 						parameter,
 						methodSymbol.Name,
-						$"collection item type '{parameter.Type}' does not match '{parameterType}'"
+						$"collection item type '{parameter.Type}' does not match '{actualElementTypeName}'"
 					)
 				);
 				return false;
 			}
 
 			parameterShape = CollectionParameterShape.Enumerable;
-			eventPropertyType = parameterType.MakeArray();
+			parameterType = TypeLibrary.System.Collections.Generic.IEnumerable.MakeGeneric(
+				new TypeIdentity(elementType)
+			);
+			eventPropertyType = CreateTypeReference(elementType).MakeArray();
 		}
 		else
 		{
+			var elementTypeName = elementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 			diagnostics.Add(
 				DiagnosticInfo.Create(
 					DiagnosticLibrary.UnsupportedEventMethodSignature,
 					parameter.Locations.FirstOrDefault() ?? methodLocation,
 					methodSymbol.Name,
-					$"collection methods only support '{parameterType}', '{parameterType.MakeArray()}', or IEnumerable<{parameterType}> parameters"
+					$"collection methods only support '{elementTypeName}', '{elementTypeName}[]', or IEnumerable<{elementTypeName}> parameters"
 				)
 			);
 			return false;
@@ -1277,7 +1331,7 @@ static class AggregateEventMethodBuilder
 			parameter.Name,
 			parameterType,
 			eventPropertyType,
-			"ON CRAP LOST THIS SOMEWHERE IN THE REFACTOR",
+			collectionProperty.Name,
 			HasAggregateProperty: false,
 			IncludeInEvent: true,
 			EqualityComparerTypeName: eventPropertyType,
@@ -1287,17 +1341,58 @@ static class AggregateEventMethodBuilder
 			IsParams: parameter.IsParams
 		);
 
+		var operation = ReadCollectionOperationString(methodSymbol) switch
+		{
+			"Add" => CollectionMutationOperation.Add,
+			"Remove" => CollectionMutationOperation.Remove,
+			"Auto" => methodSymbol.Name.StartsWith("Remove", StringComparison.Ordinal)
+			|| methodSymbol.Name.StartsWith("Delete", StringComparison.Ordinal)
+				? CollectionMutationOperation.Remove
+				: CollectionMutationOperation.Add,
+			_ => CollectionMutationOperation.Add,
+		};
+
 		collectionEvent = new CollectionEventInfo(
 			collectionProperty.Name,
-			parameterType,
-			new(collectionProperty.Type),
+			CreateTypeReference(elementType),
+			CreateTypeReference(collectionProperty.Type),
 			isSet,
-			(CollectionMutationOperation)
-				Enum.Parse(typeof(CollectionMutationOperation), collectionEventAttribute.Operation),
+			operation,
 			parameterShape,
 			methodSymbol.Name
 		);
 
 		return true;
+	}
+
+	static string ReadCollectionOperationString(IMethodSymbol methodSymbol)
+	{
+		var attribute = methodSymbol
+			.GetAttributes()
+			.FirstOrDefault(attribute =>
+				TypeLibrary.Attributes.CollectionEventAttribute.Equals(attribute.AttributeClass)
+			);
+		if (attribute is null)
+			return "Auto";
+
+		var operationArg = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == "Operation");
+		if (operationArg.Key is null)
+			return "Auto";
+
+		var value = operationArg.Value;
+		if (value.IsNull || value.Kind != TypedConstantKind.Enum || value.Type is not INamedTypeSymbol enumType)
+			return "Auto";
+
+		var intValue = Convert.ToInt32(value.Value, CultureInfo.InvariantCulture);
+		foreach (var member in enumType.GetMembers().OfType<IFieldSymbol>())
+		{
+			if (
+				member.HasConstantValue
+				&& Convert.ToInt32(member.ConstantValue, CultureInfo.InvariantCulture) == intValue
+			)
+				return member.Name;
+		}
+
+		return "Auto";
 	}
 }

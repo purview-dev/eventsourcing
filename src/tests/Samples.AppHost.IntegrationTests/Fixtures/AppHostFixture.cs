@@ -52,10 +52,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		await base.DisposeAsync();
 	}
 
-	void ConfigureAppServiceHelper(
-		IServiceCollection services,
-		IConfigurationBuilder configurationBuilder
-	)
+	void ConfigureAppServiceHelper(IServiceCollection services, IConfigurationBuilder configurationBuilder)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(_databaseConnectionString);
 
@@ -67,10 +64,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 			.AddDomainServices();
 
 		configurationBuilder.AddInMemoryCollection([
-			new KeyValuePair<string, string?>(
-				$"ConnectionStrings:{Platform.SqlDatabase}",
-				_databaseConnectionString
-			),
+			new KeyValuePair<string, string?>($"ConnectionStrings:{Platform.SqlDatabase}", _databaseConnectionString),
 		]);
 	}
 
@@ -83,10 +77,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 			await WaitForWebAppAsync(resourceName, CancellationToken.None);
 	}
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Reliability",
-		"CA2000:Dispose objects before losing scope"
-	)]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
 		"Reliability",
 		"CA5399:Do not use HttpClientHandler.AllowAutoRedirect"
@@ -94,10 +85,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	public HttpClient CreateWebClient(bool followRedirects = false) =>
 		CreateWebClient(Platform.WebApp, followRedirects);
 
-	[System.Diagnostics.CodeAnalysis.SuppressMessage(
-		"Reliability",
-		"CA2000:Dispose objects before losing scope"
-	)]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
 	public HttpClient CreateWebClient(string resourceName, bool followRedirects = false)
 	{
 		var httpClient = CreateHttpClient(resourceName, "http");
@@ -107,22 +95,14 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		// We want auto redirect disabled for tests to be able to assert on 302 responses,
 		// but HttpClient doesn't allow changing that setting after the client is created,
 		// so we create a new client with the same base address and a handler that has auto redirect disabled.
-		return new(
-			new HttpClientHandler()
-			{
-				AllowAutoRedirect = false,
-				CheckCertificateRevocationList = true,
-			}
-		)
+		return new(new HttpClientHandler() { AllowAutoRedirect = false, CheckCertificateRevocationList = true })
 		{
 			BaseAddress = httpClient.BaseAddress,
 		};
 	}
 
-	public Task<string?> GetResourceConnectionStringAsync(
-		string resourceName,
-		CancellationToken cancellationToken
-	) => GetConnectionStringAsync(resourceName, cancellationToken);
+	public Task<string?> GetResourceConnectionStringAsync(string resourceName, CancellationToken cancellationToken) =>
+		GetConnectionStringAsync(resourceName, cancellationToken);
 
 	async Task WaitForWebAppAsync(string resourceName, CancellationToken cancellationToken)
 	{
@@ -150,9 +130,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 			await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
 		}
 
-		throw new InvalidOperationException(
-			$"The web app resource '{resourceName}' did not become ready in time."
-		);
+		throw new InvalidOperationException($"The web app resource '{resourceName}' did not become ready in time.");
 	}
 
 	//string BuildDatabaseConnectionString(string connectionString)
@@ -162,8 +140,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	//	return builder.ConnectionString;
 	//}
 
-	public IQueryableEventStore QueryableEventStore() =>
-		_appService.Value.GetRequiredService<IQueryableEventStore>();
+	public IQueryableEventStore QueryableEventStore() => _appService.Value.GetRequiredService<IQueryableEventStore>();
 
 	public IEventStore EventStore() => _appService.Value.GetRequiredService<IEventStore>();
 

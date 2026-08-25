@@ -6,7 +6,7 @@ static partial class TypeLibrary
 	{
 		public static class DiagnosticsCodeAnalysis
 		{
-			public static readonly TypeValueObject SuppressMessageAttribute = new(
+			public static readonly TypeIdentity SuppressMessageAttribute = new(
 				nameof(SuppressMessageAttribute),
 				"System.Diagnostics.CodeAnalysis"
 			);

@@ -5,12 +5,7 @@ namespace Purview.EventSourcing;
 /// <summary>
 /// Represents the outcome of saving a single aggregate within a transaction.
 /// </summary>
-public sealed class TransactionAggregateResult(
-	IAggregate aggregate,
-	bool saved,
-	bool skipped,
-	Exception? error
-)
+public sealed class TransactionAggregateResult(IAggregate aggregate, bool saved, bool skipped, Exception? error)
 {
 	/// <summary>The aggregate that was processed.</summary>
 	public IAggregate Aggregate { get; } = aggregate;

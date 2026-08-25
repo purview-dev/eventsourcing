@@ -9,9 +9,7 @@ sealed partial class PostgresKit
 	public IResourceBuilder<PostgresDatabaseResource> Database { get; private set; }
 	public IResourceBuilder<PostgresDatabaseResource> SharedQueryDatabase { get; private set; }
 
-	protected override IResourceBuilder<PostgresServerResource> BuildResource(
-		IDistributedApplicationBuilder builder
-	)
+	protected override IResourceBuilder<PostgresServerResource> BuildResource(IDistributedApplicationBuilder builder)
 	{
 		var postgresPassword = builder.AddParameter("postgres-password", "postgres", secret: true);
 		var postgres = builder.AddPostgres(Name, postgresPassword);

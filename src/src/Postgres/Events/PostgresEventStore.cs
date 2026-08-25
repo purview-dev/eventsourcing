@@ -13,9 +13,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 // SQL strings are built from validated identifiers at construction time, not from user input.
 #pragma warning disable CA2100
 
-public sealed partial class PostgresEventStore<T>
-	: IPostgresEventStore<T>,
-		ITransactionalEventStore<T>
+public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
 	const int StreamVersionType = 0;
@@ -96,18 +94,11 @@ public sealed partial class PostgresEventStore<T>
 				await _distributedCache.RemoveAsync(cacheKey, cancellationToken);
 			else
 			{
-				if (
-					!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache)
-				)
+				if (!_eventStoreOptions.Value.CacheMode.HasFlag(SnapshotCachingOptions.StoreInCache))
 					return;
 
 				var data = SerializeSnapshot(aggregate);
-				await _distributedCache.SetStringAsync(
-					cacheKey,
-					data,
-					cacheEntryOptions,
-					cancellationToken
-				);
+				await _distributedCache.SetStringAsync(cacheKey, data, cacheEntryOptions, cancellationToken);
 			}
 		}
 #pragma warning disable CA1031
@@ -118,11 +109,8 @@ public sealed partial class PostgresEventStore<T>
 		}
 	}
 
-	DistributedCacheEntryOptions GetCacheEntryOptions(
-		DistributedCacheEntryOptions? cacheEntryOptions
-	) =>
-		cacheEntryOptions
-		?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
+	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
+		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
@@ -214,11 +202,7 @@ public sealed partial class PostgresEventStore<T>
 		return result;
 	}
 
-	static bool ReturnAggregate(
-		bool isDeleted,
-		string aggregateId,
-		EventStoreOperationContext context
-	)
+	static bool ReturnAggregate(bool isDeleted, string aggregateId, EventStoreOperationContext context)
 	{
 		if (isDeleted)
 		{
@@ -236,8 +220,7 @@ public sealed partial class PostgresEventStore<T>
 		return true;
 	}
 
-	string CreateStreamVersionId(string aggregateId) =>
-		$"s_{_aggregateTypeShortName}_{aggregateId}";
+	string CreateStreamVersionId(string aggregateId) => $"s_{_aggregateTypeShortName}_{aggregateId}";
 
 	string CreateEventId(string aggregateId, int version) =>
 		$"e_{_aggregateTypeShortName}_{aggregateId}_{$"{version}".PadLeft(_eventStoreOptions.Value.EventSuffixLength, '0')}";
@@ -247,8 +230,7 @@ public sealed partial class PostgresEventStore<T>
 
 	string CreateSnapshotId(string aggregateId) => $"snap_{_aggregateTypeShortName}_{aggregateId}";
 
-	public string CreateCacheKey(string aggregateId) =>
-		$"{_aggregateTypeShortName}:{aggregateId}".ToUpperInvariant();
+	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToUpperInvariant();
 
 	//async Task EnsureConfiguredAsync(CancellationToken cancellationToken)
 	//{
@@ -260,14 +242,9 @@ public sealed partial class PostgresEventStore<T>
 	/// Merges global options with any per-aggregate-type table override.
 	/// Returns an options instance with the effective schema and table name.
 	/// </summary>
-	static PostgresEventStoreOptions ResolveClientOptions(
-		PostgresEventStoreOptions options,
-		string aggregateTypeName
-	)
+	static PostgresEventStoreOptions ResolveClientOptions(PostgresEventStoreOptions options, string aggregateTypeName)
 	{
-		return !options.AggregateTableOverrides.TryGetValue(aggregateTypeName, out var ovr)
-			|| ovr is null
-				? options
+		return !options.AggregateTableOverrides.TryGetValue(aggregateTypeName, out var ovr) || ovr is null ? options
 			: ovr.SchemaName is null && ovr.TableName is null ? options
 			: new PostgresEventStoreOptions
 			{

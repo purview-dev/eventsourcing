@@ -23,9 +23,7 @@ public class CosmosDbSnapshotEventStoreFixture : IAsyncInitializer, IAsyncDispos
 			_azuriteContainer.GetConnectionString()
 		);
 
-		eventStoreContext.CreateCosmosDbEventStore(
-			correlationIdsToGenerate: correlationIdsToGenerate
-		);
+		eventStoreContext.CreateCosmosDbEventStore(correlationIdsToGenerate: correlationIdsToGenerate);
 
 		return eventStoreContext;
 	}

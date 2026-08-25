@@ -185,6 +185,9 @@ public sealed class BioUpdatedEvent : global::Purview.EventSourcing.Aggregates.E
 - Contextual `Create(TValue, in ValueObjectContext<TAggregate>)` is used when available.
 - Replay/hydration paths apply event payloads through generated `Apply(...)` logic.
 - Snapshot-query translation depends on how the provider maps the resulting property graph, not only on the value-object generator behavior.
+- Projects compiled with the SQL Server or PostgreSQL EF analyzer can mark a property `[EfOpaque]`. The EF-only generator emits this internal marker into the consuming compilation; it does not add a runtime attribute API.
+- `EVENTSTOREEF001` reports dictionary-like members reachable from an aggregate unless they are explicitly opaque. Prefer a collection of domain entry objects when structural querying is required; the generator does not synthesize those domain types.
+- `EVENTSTOREEF002` reports uses of an opaque member in recognized snapshot query expressions. Opaque values round-trip through JSON but their contents are not part of EF's queryable complex model.
 - A `[Scalar]` value object that wraps a complex CLR type may serialize correctly while still requiring a separate directly mapped complex mirror property for deep SQL predicates.
 
 ### Value-object conversion examples

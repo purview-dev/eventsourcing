@@ -10,9 +10,7 @@ public sealed class PostgresSnapshotClientTests
 	[Test]
 	public async Task ValidateAggregatePayloadShape_GivenUriProperty_DoesNotThrow()
 	{
-		await Assert
-			.That(() => ValidateAggregatePayloadShape(typeof(UriAggregate)))
-			.ThrowsNothing();
+		await Assert.That(() => ValidateAggregatePayloadShape(typeof(UriAggregate))).ThrowsNothing();
 	}
 
 	sealed class UriAggregate : IAggregate
@@ -42,10 +40,7 @@ public sealed class PostgresSnapshotClientTests
 			typeof(PostgresClient).GetMethod(
 				"ValidateAggregatePayloadShape",
 				BindingFlags.Static | BindingFlags.NonPublic
-			)
-			?? throw new InvalidOperationException(
-				"Unable to locate ValidateAggregatePayloadShape via reflection."
-			);
+			) ?? throw new InvalidOperationException("Unable to locate ValidateAggregatePayloadShape via reflection.");
 
 		try
 		{

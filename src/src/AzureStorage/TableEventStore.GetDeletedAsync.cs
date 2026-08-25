@@ -2,18 +2,11 @@
 
 partial class TableEventStore<T>
 {
-	public async Task<T?> GetDeletedAsync(
-		string aggregateId,
-		CancellationToken cancellationToken = default
-	)
+	public async Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		var aggregate = await GetCoreAsync(
 			aggregateId,
-			new()
-			{
-				SnapshotCacheMode = SnapshotCachingOptions.None,
-				DeleteMode = DeleteHandlingMode.ReturnsAggregate,
-			},
+			new() { SnapshotCacheMode = SnapshotCachingOptions.None, DeleteMode = DeleteHandlingMode.ReturnsAggregate },
 			cancellationToken
 		);
 

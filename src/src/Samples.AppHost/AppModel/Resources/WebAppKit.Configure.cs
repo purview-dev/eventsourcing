@@ -26,10 +26,7 @@ partial class WebAppKit
 	//	}
 	//}
 
-	void ConfigureVariant(
-		IResourceBuilder<ProjectResource> variant,
-		VariantConfiguration configuration
-	)
+	void ConfigureVariant(IResourceBuilder<ProjectResource> variant, VariantConfiguration configuration)
 	{
 		ConfigureStoreReferences(variant, HostKit, configuration);
 
@@ -37,9 +34,7 @@ partial class WebAppKit
 			variant.WithReference(HostKit.Redis).WaitFor(HostKit.Redis);
 
 		if (HostKit.AzureStorage.IsEnabled)
-			variant
-				.WithReference(HostKit.AzureStorage.SnapshotBlob)
-				.WaitFor(HostKit.AzureStorage.SnapshotBlob);
+			variant.WithReference(HostKit.AzureStorage.SnapshotBlob).WaitFor(HostKit.AzureStorage.SnapshotBlob);
 
 		variant.WithEnvironment(
 			OptionsHelper.ForSet<SampleStoreOptions>(
@@ -82,9 +77,7 @@ partial class WebAppKit
 		if (!string.IsNullOrWhiteSpace(configuration.AdminDatabaseName))
 		{
 			variant.WithEnvironment(
-				OptionsHelper.ForSet<SampleStoreOptions>(c =>
-					c.AdminDatabaseName = configuration.AdminDatabaseName
-				)
+				OptionsHelper.ForSet<SampleStoreOptions>(c => c.AdminDatabaseName = configuration.AdminDatabaseName)
 			);
 		}
 	}
@@ -102,30 +95,20 @@ partial class WebAppKit
 		{
 			case SampleEventStoreKind.SqlServer:
 				variant
-					.WithReference(
-						ResolveSqlServerDatabase(hostKit, configuration.EventStoreConnectionName)
-					)
-					.WaitFor(
-						ResolveSqlServerDatabase(hostKit, configuration.EventStoreConnectionName)
-					);
+					.WithReference(ResolveSqlServerDatabase(hostKit, configuration.EventStoreConnectionName))
+					.WaitFor(ResolveSqlServerDatabase(hostKit, configuration.EventStoreConnectionName));
 				break;
 			case SampleEventStoreKind.Postgres:
 				variant
-					.WithReference(
-						ResolvePostgresDatabase(hostKit, configuration.EventStoreConnectionName)
-					)
-					.WaitFor(
-						ResolvePostgresDatabase(hostKit, configuration.EventStoreConnectionName)
-					);
+					.WithReference(ResolvePostgresDatabase(hostKit, configuration.EventStoreConnectionName))
+					.WaitFor(ResolvePostgresDatabase(hostKit, configuration.EventStoreConnectionName));
 				break;
 			case SampleEventStoreKind.MongoDb:
 				AddMongoReference(variant, hostKit, configuration.EventStoreDatabaseName);
 				mongoReferenced = true;
 				break;
 			case SampleEventStoreKind.AzureStorage:
-				variant
-					.WithReference(hostKit.AzureStorage.TableStorage)
-					.WaitFor(hostKit.AzureStorage.TableStorage);
+				variant.WithReference(hostKit.AzureStorage.TableStorage).WaitFor(hostKit.AzureStorage.TableStorage);
 				break;
 		}
 
@@ -133,29 +116,19 @@ partial class WebAppKit
 		{
 			case SampleQueryStoreKind.SqlServer:
 				variant
-					.WithReference(
-						ResolveSqlServerDatabase(hostKit, configuration.QueryStoreConnectionName)
-					)
-					.WaitFor(
-						ResolveSqlServerDatabase(hostKit, configuration.QueryStoreConnectionName)
-					);
+					.WithReference(ResolveSqlServerDatabase(hostKit, configuration.QueryStoreConnectionName))
+					.WaitFor(ResolveSqlServerDatabase(hostKit, configuration.QueryStoreConnectionName));
 				break;
 			case SampleQueryStoreKind.Postgres:
 				variant
-					.WithReference(
-						ResolvePostgresDatabase(hostKit, configuration.QueryStoreConnectionName)
-					)
-					.WaitFor(
-						ResolvePostgresDatabase(hostKit, configuration.QueryStoreConnectionName)
-					);
+					.WithReference(ResolvePostgresDatabase(hostKit, configuration.QueryStoreConnectionName))
+					.WaitFor(ResolvePostgresDatabase(hostKit, configuration.QueryStoreConnectionName));
 				break;
 			case SampleQueryStoreKind.MongoDb:
 				if (!mongoReferenced)
 					variant.WithReference(hostKit.MongoDb);
 
-				variant.WaitFor(
-					ResolveMongoDatabase(hostKit, configuration.QueryStoreDatabaseName)
-				);
+				variant.WaitFor(ResolveMongoDatabase(hostKit, configuration.QueryStoreDatabaseName));
 				break;
 		}
 	}
@@ -178,9 +151,7 @@ partial class WebAppKit
 		{
 			Platform.SqlDatabase => hostKit.SqlServer.Database,
 			Platform.SqlSharedQueryDatabase => hostKit.SqlServer.SharedQueryDatabase,
-			_ => throw new InvalidOperationException(
-				$"Unsupported SQL Server connection name '{connectionName}'."
-			),
+			_ => throw new InvalidOperationException($"Unsupported SQL Server connection name '{connectionName}'."),
 		};
 
 	static IResourceBuilder<PostgresDatabaseResource> ResolvePostgresDatabase(
@@ -191,9 +162,7 @@ partial class WebAppKit
 		{
 			Platform.PostgresDatabase => hostKit.Postgres.Database,
 			Platform.PostgresSharedQueryDatabase => hostKit.Postgres.SharedQueryDatabase,
-			_ => throw new InvalidOperationException(
-				$"Unsupported Postgres connection name '{connectionName}'."
-			),
+			_ => throw new InvalidOperationException($"Unsupported Postgres connection name '{connectionName}'."),
 		};
 
 	static IResourceBuilder<MongoDBDatabaseResource> ResolveMongoDatabase(
@@ -204,8 +173,6 @@ partial class WebAppKit
 		{
 			Platform.MongoDatabase => hostKit.MongoDb.Database,
 			Platform.MongoSharedQueryDatabase => hostKit.MongoDb.SharedQueryDatabase,
-			_ => throw new InvalidOperationException(
-				$"Unsupported MongoDB database name '{databaseName}'."
-			),
+			_ => throw new InvalidOperationException($"Unsupported MongoDB database name '{databaseName}'."),
 		};
 }

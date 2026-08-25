@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
@@ -75,9 +74,6 @@ static partial class ComplexValueObjectEmitter
 
 	static void EmitComparison(StringBuilder sb, ComplexValueObjectModel model, string indent)
 	{
-		if (!model.Options.GenerateComparable)
-			return;
-
 		if (!model.CompareToSelfExists)
 		{
 			sb.AppendLine(
@@ -123,7 +119,7 @@ static partial class ComplexValueObjectEmitter
 			);
 		}
 
-		if (model.Options.GenerateComparisonOperators)
+		if (model.Options.GenerateComparable && model.Options.GenerateComparisonOperators)
 		{
 			ValueObjectEmitterHelpers.EmitRelationalOperators(
 				sb,

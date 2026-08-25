@@ -28,35 +28,25 @@ public interface ISqlServerEventStoreTransaction : IEventStoreTransaction
 		where TDbContext : DbContext;
 }
 
-sealed class SqlServerEventStoreTransaction(string? correlationId = null)
-	: ISqlServerEventStoreTransaction
+sealed class SqlServerEventStoreTransaction(string? correlationId = null) : ISqlServerEventStoreTransaction
 {
 	readonly List<IEnlistedAggregate> _enlisted = [];
 	readonly List<Func<SqlConnection, SqlTransaction, CancellationToken, Task>> _sqlOperations = [];
-	readonly bool _useIdempotencyMarker = !string.IsNullOrWhiteSpace(
-		correlationId ?? Activity.Current?.Id
-	);
+	readonly bool _useIdempotencyMarker = !string.IsNullOrWhiteSpace(correlationId ?? Activity.Current?.Id);
 	string? _transactionBoundaryKey;
 
 	bool _committed;
 	bool _disposed;
 
-	public string CorrelationId { get; } =
-		correlationId ?? Activity.Current?.Id ?? Guid.NewGuid().ToString();
+	public string CorrelationId { get; } = correlationId ?? Activity.Current?.Id ?? Guid.NewGuid().ToString();
 
-	public void Enlist<T>(
-		T aggregate,
-		IEventStore eventStore,
-		EventStoreOperationContext? operationContext = null
-	)
+	public void Enlist<T>(T aggregate, IEventStore eventStore, EventStoreOperationContext? operationContext = null)
 		where T : class, IAggregate, new()
 	{
 		ObjectDisposedException.ThrowIf(_disposed, this);
 
 		if (_committed)
-			throw new InvalidOperationException(
-				"Cannot enlist aggregates after the transaction has been committed."
-			);
+			throw new InvalidOperationException("Cannot enlist aggregates after the transaction has been committed.");
 
 		ArgumentNullException.ThrowIfNull(aggregate);
 		ArgumentNullException.ThrowIfNull(eventStore);
@@ -71,17 +61,9 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 			);
 		}
 
-		EnsureTransactionBoundary(
-			transactionalEventStore.TransactionBoundaryKey,
-			eventStore.GetType().FullName
-		);
+		EnsureTransactionBoundary(transactionalEventStore.TransactionBoundaryKey, eventStore.GetType().FullName);
 		_enlisted.Add(
-			new EnlistedAggregate<T>(
-				aggregate,
-				transactionalEventStore,
-				operationContext,
-				_useIdempotencyMarker
-			)
+			new EnlistedAggregate<T>(aggregate, transactionalEventStore, operationContext, _useIdempotencyMarker)
 		);
 	}
 
@@ -95,9 +77,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 		ObjectDisposedException.ThrowIf(_disposed, this);
 
 		if (_committed)
-			throw new InvalidOperationException(
-				"Cannot enlist aggregates after the transaction has been committed."
-			);
+			throw new InvalidOperationException("Cannot enlist aggregates after the transaction has been committed.");
 
 		ArgumentNullException.ThrowIfNull(aggregate);
 		ArgumentNullException.ThrowIfNull(eventStore);
@@ -109,17 +89,9 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 			);
 		}
 
-		EnsureTransactionBoundary(
-			transactionalEventStore.TransactionBoundaryKey,
-			eventStore.GetType().FullName
-		);
+		EnsureTransactionBoundary(transactionalEventStore.TransactionBoundaryKey, eventStore.GetType().FullName);
 		_enlisted.Add(
-			new EnlistedAggregate<T>(
-				aggregate,
-				transactionalEventStore,
-				operationContext,
-				_useIdempotencyMarker
-			)
+			new EnlistedAggregate<T>(aggregate, transactionalEventStore, operationContext, _useIdempotencyMarker)
 		);
 	}
 
@@ -128,9 +100,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 		ObjectDisposedException.ThrowIf(_disposed, this);
 
 		if (_committed)
-			throw new InvalidOperationException(
-				"Cannot enlist operations after the transaction has been committed."
-			);
+			throw new InvalidOperationException("Cannot enlist operations after the transaction has been committed.");
 
 		ArgumentNullException.ThrowIfNull(operation);
 		_sqlOperations.Add(operation);
@@ -187,29 +157,16 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 		);
 
 		if (failedEnlisted is null && failure is null)
-			failure = await ExecuteAdditionalSqlOperationsAsync(
-				connection,
-				transaction,
-				cancellationToken
-			);
+			failure = await ExecuteAdditionalSqlOperationsAsync(connection, transaction, cancellationToken);
 
 		if (failedEnlisted is null && failure is null)
 			return await CommitAndNotifyAsync(transaction, processed, cancellationToken);
 
 		// Rollback the transaction and build a result indicating which aggregate failed to save.
-		return await RollbackAndBuildResultAsync(
-			transaction,
-			processed,
-			failedEnlisted,
-			failure,
-			cancellationToken
-		);
+		return await RollbackAndBuildResultAsync(transaction, processed, failedEnlisted, failure, cancellationToken);
 	}
 
-	async Task PrepareTransactionConnectionAsync(
-		DbConnection connection,
-		CancellationToken cancellationToken
-	)
+	async Task PrepareTransactionConnectionAsync(DbConnection connection, CancellationToken cancellationToken)
 	{
 		await connection.OpenAsync(cancellationToken);
 
@@ -310,9 +267,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 			}
 #pragma warning restore CA1031
 
-			committedResults.Add(
-				new(operation.Aggregate, operation.Saved, operation.Skipped, postCommitError)
-			);
+			committedResults.Add(new(operation.Aggregate, operation.Saved, operation.Skipped, postCommitError));
 		}
 
 		return new TransactionResult(committedResults);
@@ -370,18 +325,11 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 		if (
 			failedEnlisted is not null
 			&& failure is not null
-			&& processed.All(operation =>
-				!ReferenceEquals(operation.Aggregate, failedEnlisted.Aggregate)
-			)
+			&& processed.All(operation => !ReferenceEquals(operation.Aggregate, failedEnlisted.Aggregate))
 		)
 		{
 			rollbackResults.Add(
-				new TransactionAggregateResult(
-					failedEnlisted.Aggregate,
-					saved: false,
-					skipped: false,
-					error: failure
-				)
+				new TransactionAggregateResult(failedEnlisted.Aggregate, saved: false, skipped: false, error: failure)
 			);
 		}
 
@@ -401,10 +349,7 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 	{
 		IAggregate Aggregate { get; }
 		DbConnection CreateTransactionConnection();
-		Task EnsureTransactionConfiguredAsync(
-			DbConnection connection,
-			CancellationToken cancellationToken
-		);
+		Task EnsureTransactionConfiguredAsync(DbConnection connection, CancellationToken cancellationToken);
 		Task<IProcessedSaveOperation> SaveInTransactionAsync(
 			string correlationId,
 			DbConnection connection,
@@ -432,13 +377,10 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 	{
 		public IAggregate Aggregate => aggregate;
 
-		public DbConnection CreateTransactionConnection() =>
-			eventStore.CreateTransactionConnection();
+		public DbConnection CreateTransactionConnection() => eventStore.CreateTransactionConnection();
 
-		public Task EnsureTransactionConfiguredAsync(
-			DbConnection connection,
-			CancellationToken cancellationToken
-		) => eventStore.EnsureTransactionConfiguredAsync(connection, cancellationToken);
+		public Task EnsureTransactionConfiguredAsync(DbConnection connection, CancellationToken cancellationToken) =>
+			eventStore.EnsureTransactionConfiguredAsync(connection, cancellationToken);
 
 		public async Task<IProcessedSaveOperation> SaveInTransactionAsync(
 			string correlationId,
@@ -447,13 +389,10 @@ sealed class SqlServerEventStoreTransaction(string? correlationId = null)
 			CancellationToken cancellationToken
 		)
 		{
-			var baseContext =
-				operationContext ?? EventStoreOperationContext.DefaultContext(correlationId);
+			var baseContext = operationContext ?? EventStoreOperationContext.DefaultContext(correlationId);
 			var context = baseContext with
 			{
-				CorrelationId = operationContext is null
-					? correlationId
-					: baseContext.CorrelationId,
+				CorrelationId = operationContext is null ? correlationId : baseContext.CorrelationId,
 				UseIdempotencyMarker = baseContext.UseIdempotencyMarker || useIdempotencyMarker,
 			};
 

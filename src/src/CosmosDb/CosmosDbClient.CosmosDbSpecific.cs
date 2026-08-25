@@ -15,11 +15,7 @@ partial class CosmosDbClient
 	)
 		where T : class
 	{
-		QueryRequestOptions requestOptions = new()
-		{
-			MaxItemCount = request.MaxRecords,
-			PartitionKey = partitionKey,
-		};
+		QueryRequestOptions requestOptions = new() { MaxItemCount = request.MaxRecords, PartitionKey = partitionKey };
 
 		var queryIterator = await FeedQueryAsync(
 			orderByClause,
@@ -55,15 +51,9 @@ partial class CosmosDbClient
 	{
 		var container = await _container.GetValueAsync(cancellationToken);
 
-		QueryRequestOptions requestOptions = new()
-		{
-			MaxItemCount = 1,
-			PartitionKey = partitionKey,
-		};
+		QueryRequestOptions requestOptions = new() { MaxItemCount = 1, PartitionKey = partitionKey };
 
-		var queryable = container
-			.GetItemLinqQueryable<T>(requestOptions: requestOptions)
-			.AsQueryable();
+		var queryable = container.GetItemLinqQueryable<T>(requestOptions: requestOptions).AsQueryable();
 		if (whereClause != null)
 		{
 			queryable = queryable.Where(whereClause);
@@ -81,11 +71,7 @@ partial class CosmosDbClient
 	)
 		where T : class
 	{
-		QueryRequestOptions requestOptions = new()
-		{
-			MaxItemCount = request.MaxRecords,
-			PartitionKey = partitionKey,
-		};
+		QueryRequestOptions requestOptions = new() { MaxItemCount = request.MaxRecords, PartitionKey = partitionKey };
 
 		var queryIterator = await FeedQueryAsync(
 			whereClause,
@@ -126,10 +112,7 @@ partial class CosmosDbClient
 		cancellationToken.ThrowIfCancellationRequested();
 
 		var listQuery = container
-			.GetItemLinqQueryable<T>(
-				continuationToken: continuationToken,
-				requestOptions: requestOptions
-			)
+			.GetItemLinqQueryable<T>(continuationToken: continuationToken, requestOptions: requestOptions)
 			.AsQueryable();
 
 		if (orderByClause != null)
@@ -152,10 +135,7 @@ partial class CosmosDbClient
 		cancellationToken.ThrowIfCancellationRequested();
 
 		var whereQuery = container
-			.GetItemLinqQueryable<T>(
-				continuationToken: continuationToken,
-				requestOptions: requestOptions
-			)
+			.GetItemLinqQueryable<T>(continuationToken: continuationToken, requestOptions: requestOptions)
 			.Where(c);
 
 		if (orderByClause != null)
@@ -174,11 +154,7 @@ partial class CosmosDbClient
 		ArgumentException.ThrowIfNullOrWhiteSpace(id, nameof(id));
 		var container = await _container.GetValueAsync(cancellationToken);
 
-		var response = await container.ReadItemStreamAsync(
-			id,
-			partitionKey,
-			cancellationToken: cancellationToken
-		);
+		var response = await container.ReadItemStreamAsync(id, partitionKey, cancellationToken: cancellationToken);
 		if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
 			return null;
 
@@ -281,10 +257,7 @@ partial class CosmosDbClient
 		return await Task.WhenAll(
 			documents.Select(async document =>
 			{
-				var stream = await CosmosDbUtilities.SerializeDocumentAsync(
-					document,
-					cancellationToken
-				);
+				var stream = await CosmosDbUtilities.SerializeDocumentAsync(document, cancellationToken);
 				var response = await container.CreateItemStreamAsync(
 					stream,
 					partitionKey,
@@ -326,10 +299,7 @@ partial class CosmosDbClient
 				.Where(m => m != null)
 				.Select(async document =>
 				{
-					var stream = await CosmosDbUtilities.SerializeDocumentAsync(
-						document,
-						cancellationToken
-					);
+					var stream = await CosmosDbUtilities.SerializeDocumentAsync(document, cancellationToken);
 					var response = await container.UpsertItemStreamAsync(
 						stream,
 						partitionKey,
@@ -373,10 +343,7 @@ partial class CosmosDbClient
 				.Select(async document =>
 				{
 					var documentId = CosmosDbUtilities.GetDocumentId(document);
-					var stream = await CosmosDbUtilities.SerializeDocumentAsync(
-						document,
-						cancellationToken
-					);
+					var stream = await CosmosDbUtilities.SerializeDocumentAsync(document, cancellationToken);
 					var response = await container.ReplaceItemStreamAsync(
 						stream,
 						documentId,

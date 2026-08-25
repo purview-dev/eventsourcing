@@ -19,29 +19,13 @@ public partial class InitialCreate : Migration
 			{
 				Id = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
 				EntityType = table.Column<int>(type: "int", nullable: false),
-				AggregateId = table.Column<string>(
-					type: "nvarchar(450)",
-					maxLength: 450,
-					nullable: false
-				),
-				AggregateType = table.Column<string>(
-					type: "nvarchar(450)",
-					maxLength: 450,
-					nullable: false
-				),
+				AggregateId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+				AggregateType = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
 				Version = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
 				IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
 				Payload = table.Column<string>(type: "json", nullable: true),
-				EventType = table.Column<string>(
-					type: "nvarchar(450)",
-					maxLength: 450,
-					nullable: true
-				),
-				IdempotencyId = table.Column<string>(
-					type: "nvarchar(450)",
-					maxLength: 450,
-					nullable: true
-				),
+				EventType = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
+				IdempotencyId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true),
 				Timestamp = table.Column<DateTimeOffset>(
 					type: "datetimeoffset",
 					nullable: false,
@@ -63,15 +47,7 @@ public partial class InitialCreate : Migration
 			)
 			.Annotation(
 				"SqlServer:Include",
-				new[]
-				{
-					"Version",
-					"IsDeleted",
-					"AggregateType",
-					"EventType",
-					"IdempotencyId",
-					"Timestamp",
-				}
+				new[] { "Version", "IsDeleted", "AggregateType", "EventType", "IdempotencyId", "Timestamp" }
 			);
 
 		migrationBuilder
@@ -93,15 +69,7 @@ public partial class InitialCreate : Migration
 			)
 			.Annotation(
 				"SqlServer:Include",
-				new[]
-				{
-					"Payload",
-					"EventType",
-					"IdempotencyId",
-					"IsDeleted",
-					"AggregateType",
-					"Timestamp",
-				}
+				new[] { "Payload", "EventType", "IdempotencyId", "IsDeleted", "AggregateType", "Timestamp" }
 			);
 	}
 

@@ -9,9 +9,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 	#region Round-Trip Persistence
 
 	[Test]
-	public async Task SaveAsync_GivenRegisteredCustomer_LoadedStateMatchesOriginal(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenRegisteredCustomer_LoadedStateMatchesOriginal(CancellationToken cancellationToken)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var customer = new CustomerAggregate();
@@ -31,9 +29,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenCustomerWithPhoneNumber_LoadedPhoneMatches(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenCustomerWithPhoneNumber_LoadedPhoneMatches(CancellationToken cancellationToken)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var customer = new CustomerAggregate();
@@ -74,9 +70,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenDeactivatedCustomer_LoadedIsActiveFalse(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenDeactivatedCustomer_LoadedIsActiveFalse(CancellationToken cancellationToken)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var customer = new CustomerAggregate();
@@ -94,9 +88,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 	}
 
 	[Test]
-	public async Task SaveAsync_GivenReactivatedCustomer_LoadedIsActiveTrue(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenReactivatedCustomer_LoadedIsActiveTrue(CancellationToken cancellationToken)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var customer = new CustomerAggregate();
@@ -119,9 +111,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 	#region Version Tracking
 
 	[Test]
-	public async Task SaveAsync_GivenMultipleOperations_VersionIsTrackedCorrectly(
-		CancellationToken cancellationToken
-	)
+	public async Task SaveAsync_GivenMultipleOperations_VersionIsTrackedCorrectly(CancellationToken cancellationToken)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var customer = new CustomerAggregate();
@@ -147,9 +137,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 	#region Delete and Restore
 
 	[Test]
-	public async Task DeleteAsync_GivenSavedCustomer_AggregateIsMarkedDeleted(
-		CancellationToken cancellationToken
-	)
+	public async Task DeleteAsync_GivenSavedCustomer_AggregateIsMarkedDeleted(CancellationToken cancellationToken)
 	{
 		var id = $"{Guid.NewGuid()}";
 		var customer = new CustomerAggregate();
@@ -231,9 +219,7 @@ public sealed class CustomerAggregateIntegrationTests(SqlServerSnapshotEventStor
 		customer.Deactivate();
 
 		// Use a very high snapshot interval to force pure event replay
-		var store = fixture.CreateSnapshotStore(
-			snapshotStrategy: new AlwaysSnapshotStrategy<CustomerAggregate>()
-		);
+		var store = fixture.CreateSnapshotStore(snapshotStrategy: new AlwaysSnapshotStrategy<CustomerAggregate>());
 		await store.SaveAsync(customer, cancellationToken);
 
 		var loaded = await store.GetAsync(id, cancellationToken);

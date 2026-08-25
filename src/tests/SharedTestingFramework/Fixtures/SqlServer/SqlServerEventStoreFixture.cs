@@ -34,12 +34,7 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 		Action<SqlServerEventStoreOptions>? configureOptions = null
 	)
 		where TAggregate : class, IAggregate, new() =>
-		CreateEventStoreContext(
-			aggregateChangeNotifier,
-			removeFromCacheOnDelete,
-			runId,
-			configureOptions
-		).EventStore;
+		CreateEventStoreContext(aggregateChangeNotifier, removeFromCacheOnDelete, runId, configureOptions).EventStore;
 
 	internal (
 		SqlServerEventStore<TAggregate> EventStore,
@@ -83,8 +78,7 @@ public class SqlServerEventStoreFixture : IAsyncInitializer, IAsyncDisposable
 			sqlServerOptions: Microsoft.Extensions.Options.Options.Create(options),
 			distributedCache: cache,
 			eventStoreTelemetry: telemetry,
-			aggregateChangeNotifier: aggregateChangeNotifier
-				?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
+			aggregateChangeNotifier: aggregateChangeNotifier ?? IAggregateChangeFeedNotifier<TAggregate>.Mock(),
 			aggregateRequirementsManager: aggregateRequirementsManager
 		);
 

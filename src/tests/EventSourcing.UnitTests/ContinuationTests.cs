@@ -16,11 +16,7 @@ public class ContinuationTests
 	public async Task ContinuationResponse_HasRecords_GivenResults_ReturnsTrue()
 	{
 		// Arrange
-		var response = new ContinuationResponse<string>
-		{
-			Results = ["item1", "item2"],
-			RequestedCount = 10,
-		};
+		var response = new ContinuationResponse<string> { Results = ["item1", "item2"], RequestedCount = 10 };
 
 		// Assert
 		await Assert.That(response.HasRecords).IsTrue();
@@ -117,9 +113,7 @@ public class ContinuationTests
 		};
 
 		// Act
-		var converted = response.Convert(i =>
-			i.ToString(System.Globalization.CultureInfo.InvariantCulture)
-		);
+		var converted = response.Convert(i => i.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
 		// Assert
 		await Assert.That(converted.Results).Count().IsEqualTo(3);
@@ -143,9 +137,7 @@ public class ContinuationTests
 		};
 
 		// Act
-		var converted = response.Convert(i =>
-			i.ToString(System.Globalization.CultureInfo.InvariantCulture)
-		);
+		var converted = response.Convert(i => i.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
 		// Assert — TotalCount should be preserved through conversion
 		await Assert.That(converted.TotalCount).IsEqualTo(150);
@@ -155,11 +147,7 @@ public class ContinuationTests
 	public async Task ContinuationResponse_Convert_TransformsType()
 	{
 		// Arrange
-		var response = new ContinuationResponse<int>
-		{
-			Results = [100, 200, 300],
-			RequestedCount = 10,
-		};
+		var response = new ContinuationResponse<int> { Results = [100, 200, 300], RequestedCount = 10 };
 
 		// Act
 		var converted = response.Convert(i => $"Value-{i}");
@@ -183,9 +171,7 @@ public class ContinuationTests
 		};
 
 		// Act
-		var converted = response.Convert(i =>
-			i.ToString(System.Globalization.CultureInfo.InvariantCulture)
-		);
+		var converted = response.Convert(i => i.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
 		// Assert
 		await Assert.That(converted.Results).IsEmpty();

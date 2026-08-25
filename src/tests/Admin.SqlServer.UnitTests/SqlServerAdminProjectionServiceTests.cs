@@ -11,10 +11,7 @@ public class SqlServerAdminProjectionServiceTests
 		// Arrange
 		var services = new ServiceCollection();
 		var options = Microsoft.Extensions.Options.Options.Create(
-			new EventSourcing.SqlServer.Events.SqlServerEventStoreOptions
-			{
-				ConnectionString = "test",
-			}
+			new EventSourcing.SqlServer.Events.SqlServerEventStoreOptions { ConnectionString = "test" }
 		);
 
 		services.AddSingleton(options);

@@ -18,9 +18,7 @@ public sealed class TransactionalSaveOperation<T>(
 	readonly Func<CancellationToken, Task> _afterCommit = afterCommit ?? NoOp;
 	readonly Func<CancellationToken, Task> _afterRollback = afterRollback ?? NoOp;
 
-	public Task AfterCommitAsync(CancellationToken cancellationToken = default) =>
-		_afterCommit(cancellationToken);
+	public Task AfterCommitAsync(CancellationToken cancellationToken = default) => _afterCommit(cancellationToken);
 
-	public Task AfterRollbackAsync(CancellationToken cancellationToken = default) =>
-		_afterRollback(cancellationToken);
+	public Task AfterRollbackAsync(CancellationToken cancellationToken = default) => _afterRollback(cancellationToken);
 }

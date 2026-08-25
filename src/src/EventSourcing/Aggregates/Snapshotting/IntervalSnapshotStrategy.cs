@@ -31,11 +31,7 @@ public sealed class IntervalSnapshotStrategy<T> : ISnapshotStrategy<T>
 	public IntervalSnapshotStrategy(int interval = 1)
 	{
 		if (interval < 1)
-			throw new ArgumentOutOfRangeException(
-				nameof(interval),
-				interval,
-				"Snapshot interval must be at least 1."
-			);
+			throw new ArgumentOutOfRangeException(nameof(interval), interval, "Snapshot interval must be at least 1.");
 
 		Interval = interval;
 	}

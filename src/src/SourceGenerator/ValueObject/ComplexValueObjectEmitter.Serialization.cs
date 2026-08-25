@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
@@ -11,14 +10,8 @@ static partial class ComplexValueObjectEmitter
 			return;
 
 		var modelTypeName = $"{model.TypeModel.Name}JsonModel";
-		var toModelAssignments = string.Join(
-			", ",
-			model.PropertyNames.Select(static name => $"{name} = value.{name}")
-		);
-		var hydrateArgs = string.Join(
-			", ",
-			model.PropertyNames.Select(static name => $"model.{name}")
-		);
+		var toModelAssignments = string.Join(", ", model.PropertyNames.Select(static name => $"{name} = value.{name}"));
+		var hydrateArgs = string.Join(", ", model.PropertyNames.Select(static name => $"model.{name}"));
 
 		sb.AppendLine();
 		sb.AppendLine(

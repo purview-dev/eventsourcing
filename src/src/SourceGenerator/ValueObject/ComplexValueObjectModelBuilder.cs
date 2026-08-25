@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
@@ -15,10 +13,7 @@ static class ComplexValueObjectModelBuilder
 		cancellationToken.ThrowIfCancellationRequested();
 		diagnostics = [];
 
-		if (
-			context.TargetSymbol is not INamedTypeSymbol typeSymbol
-			|| context.TargetNode is not TypeDeclarationSyntax
-		)
+		if (context.TargetSymbol is not INamedTypeSymbol typeSymbol || context.TargetNode is not TypeDeclarationSyntax)
 			return null;
 
 		var location = context.TargetNode.GetLocation();
@@ -28,19 +23,10 @@ static class ComplexValueObjectModelBuilder
 		);
 
 		var attributes = typeSymbol.GetAttributes();
-		if (
-			ValueObjectSymbolInspector.HasAttribute(
-				attributes,
-				ValueObjectSymbolInspector.ScalarAttributeName
-			)
-		)
+		if (ValueObjectSymbolInspector.HasAttribute(attributes, ValueObjectSymbolInspector.ScalarAttributeName))
 		{
 			diagnosticsList.Add(
-				DiagnosticInfo.Create(
-					DiagnosticLibrary.ConflictingValueObjectAttributes,
-					location,
-					typeSymbol.Name
-				)
+				DiagnosticInfo.Create(DiagnosticLibrary.ConflictingValueObjectAttributes, location, typeSymbol.Name)
 			);
 			diagnostics = [.. diagnosticsList];
 			return null;
@@ -59,10 +45,7 @@ static class ComplexValueObjectModelBuilder
 				? valueObjectOptions.GenerateConstructor
 			: assemblyDefaults.Exists ? assemblyDefaults.GenerateConstructor
 			: true;
-		valueObjectOptions = valueObjectOptions with
-		{
-			GenerateConstructor = effectiveGenerateConstructor,
-		};
+		valueObjectOptions = valueObjectOptions with { GenerateConstructor = effectiveGenerateConstructor };
 
 		var typeModel = ValueObjectSymbolInspector.BuildTypeModel(typeSymbol);
 		if (typeModel is null)
@@ -81,9 +64,7 @@ static class ComplexValueObjectModelBuilder
 				&& ValueObjectSymbolInspector.IsValueObjectPropertyCandidate(typeSymbol, property)
 				&& SymbolEqualityComparer.Default.Equals(property.ContainingType, typeSymbol)
 			)
-			.OrderBy(property =>
-				property.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue
-			)
+			.OrderBy(property => property.Locations.FirstOrDefault()?.SourceSpan.Start ?? int.MaxValue)
 			.ToArray();
 
 		var ctorExists = typeSymbol
@@ -100,38 +81,22 @@ static class ComplexValueObjectModelBuilder
 			"Hydrate",
 			[.. properties.Select(property => property.Type)]
 		);
-		var compareToSelfExists = ValueObjectSymbolInspector.HasInstanceMethod(
-			typeSymbol,
-			"CompareTo",
-			[typeSymbol]
-		);
+		var compareToSelfExists = ValueObjectSymbolInspector.HasInstanceMethod(typeSymbol, "CompareTo", [typeSymbol]);
 		var compareToObjectExists = ValueObjectSymbolInspector.HasCompareToObject(typeSymbol);
 		var isReferenceType = typeSymbol.TypeKind == TypeKind.Class;
 		var compareToSelfParameterTypeName = isReferenceType
 			? $"{typeModel.Value.FullyQualifiedName}?"
 			: typeModel.Value.FullyQualifiedName;
 		var equalsSelfExists =
-			typeSymbol.IsRecord
-			|| ValueObjectSymbolInspector.HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
+			typeSymbol.IsRecord || ValueObjectSymbolInspector.HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
 		var equalsObjectExists = ValueObjectSymbolInspector.HasEqualsObject(typeSymbol);
-		var getHashCodeExists = ValueObjectSymbolInspector.HasParameterlessMethod(
-			typeSymbol,
-			"GetHashCode"
-		);
+		var getHashCodeExists = ValueObjectSymbolInspector.HasParameterlessMethod(typeSymbol, "GetHashCode");
 		var equalityOperatorExists =
 			typeSymbol.IsRecord
-			|| ValueObjectSymbolInspector.HasBinaryOperator(
-				typeSymbol,
-				"op_Equality",
-				[typeSymbol, typeSymbol]
-			);
+			|| ValueObjectSymbolInspector.HasBinaryOperator(typeSymbol, "op_Equality", [typeSymbol, typeSymbol]);
 		var inequalityOperatorExists =
 			typeSymbol.IsRecord
-			|| ValueObjectSymbolInspector.HasBinaryOperator(
-				typeSymbol,
-				"op_Inequality",
-				[typeSymbol, typeSymbol]
-			);
+			|| ValueObjectSymbolInspector.HasBinaryOperator(typeSymbol, "op_Inequality", [typeSymbol, typeSymbol]);
 		var hasJsonConverterAttribute = ValueObjectSymbolInspector.HasAttribute(
 			typeSymbol,
 			ValueObjectSymbolInspector.JsonConverterAttributeName
@@ -153,9 +118,7 @@ static class ComplexValueObjectModelBuilder
 			.Any(ctor => ctor.Parameters.Length == 0 && !ctor.IsImplicitlyDeclared);
 
 		var hydrateFactoryName =
-			valueObjectOptions.DeserializationMode == ValueObjectSymbolInspector.StrictModeName
-				? "Create"
-				: "Hydrate";
+			valueObjectOptions.DeserializationMode == ValueObjectSymbolInspector.StrictModeName ? "Create" : "Hydrate";
 
 		var hintName = ValueObjectSymbolInspector.BuildHintName(typeSymbol, "ComplexValueObject");
 
@@ -194,9 +157,7 @@ static class ComplexValueObjectModelBuilder
 		string propertyName
 	)
 	{
-		var attribute = attributes.FirstOrDefault(a =>
-			a.AttributeClass?.ToDisplayString() == attributeName
-		);
+		var attribute = attributes.FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == attributeName);
 		return attribute?.NamedArguments.Any(kvp => kvp.Key == propertyName) ?? false;
 	}
 }

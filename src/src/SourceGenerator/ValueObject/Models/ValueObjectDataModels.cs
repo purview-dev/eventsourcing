@@ -1,6 +1,6 @@
 namespace Purview.EventSourcing.SourceGenerator.ValueObject.Models;
 
-[Generate("Purview.EventSourcing.Serialization.ScalarAttribute")]
+[Generate(TypeLibrary.Attributes.ScalarAttributeFullTypeName)]
 readonly partial record struct ScalarAttributeData(
 	[Argument("propertyName", DefaultValue = "Value")] string PropertyName,
 	[Property(DefaultValue = true)] bool GenerateJsonConverter,
@@ -11,13 +11,13 @@ readonly partial record struct ScalarAttributeData(
 	[Property(DefaultValue = true)] bool GenerateImplicitToPrimitive,
 	[Property(DefaultValue = true)] bool GenerateEmpty,
 	[Property(
-		DefaultValue = "global::Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Hydrate",
+		DefaultValue = TypeLibrary.Attributes.ValueObjectDeserializationModeFullTypeName + ".Hydrate",
 		IsEnum = true
 	)]
 		string DeserializationMode
 );
 
-[Generate("Purview.EventSourcing.Serialization.ValueObjectAttribute")]
+[Generate(TypeLibrary.Attributes.ValueObjectAttributeFullTypeName)]
 readonly partial record struct ValueObjectAttributeData(
 	[Property(DefaultValue = true)] bool GenerateJsonConverter,
 	[Property(DefaultValue = true)] bool GenerateComparable,
@@ -25,13 +25,13 @@ readonly partial record struct ValueObjectAttributeData(
 	[Property(DefaultValue = true)] bool GenerateEmpty,
 	[Property(DefaultValue = true)] bool GenerateConstructor,
 	[Property(
-		DefaultValue = "global::Purview.EventSourcing.Serialization.ValueObjectDeserializationMode.Hydrate",
+		DefaultValue = TypeLibrary.Attributes.ValueObjectDeserializationModeFullTypeName + ".Hydrate",
 		IsEnum = true
 	)]
 		string DeserializationMode
 );
 
-[Generate("Purview.EventSourcing.Serialization.ValueObjectDefaultsAttribute")]
+[Generate(TypeLibrary.Attributes.ValueObjectDefaultsAttributeFullTypeName)]
 readonly partial record struct ValueObjectDefaultsAttributeData(
 	[Property(DefaultValue = true)] bool GenerateConstructor
 );

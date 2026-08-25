@@ -7,9 +7,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 	: EventSourcingSourceGeneratorTestBase<AggregateSourceGenerator>
 {
 	[Test]
-	public async Task Generate_UsesContextualValueObjectCreateAndHookMethods(
-		CancellationToken cancellationToken
-	)
+	public async Task Generate_UsesContextualValueObjectCreateAndHookMethods(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -62,9 +60,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 		var result = await GenerateAsync(source, cancellationToken);
 		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains("OnRaisingOrderConfirmedEvent(ref __statusValue);");
+		await Assert.That(generatedSource).Contains("OnRaisingOrderConfirmedEvent(ref __statusValue);");
 		await Assert.That(generatedSource).Contains("OnRaisedOrderConfirmedEvent(@event);");
 		await Assert
 			.That(generatedSource)
@@ -75,9 +71,7 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 	}
 
 	[Test]
-	public async Task Generate_AllowsHookToRejectInvalidTransition(
-		CancellationToken cancellationToken
-	)
+	public async Task Generate_AllowsHookToRejectInvalidTransition(CancellationToken cancellationToken)
 	{
 		const string source = """
 			namespace Testing
@@ -243,20 +237,13 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 		var traceAfterCommand = (string)aggregateType.GetProperty("Trace")!.GetValue(aggregate)!;
 		var changingCalls = (int)aggregateType.GetProperty("ChangingCalls")!.GetValue(aggregate)!;
 		var changedCalls = (int)aggregateType.GetProperty("ChangedCalls")!.GetValue(aggregate)!;
-		var previousValue = (string?)
-			aggregateType.GetProperty("PreviousEmailValue")!.GetValue(aggregate);
-		var currentValue = (string?)
-			aggregateType.GetProperty("CurrentEmailValue")!.GetValue(aggregate);
+		var previousValue = (string?)aggregateType.GetProperty("PreviousEmailValue")!.GetValue(aggregate);
+		var currentValue = (string?)aggregateType.GetProperty("CurrentEmailValue")!.GetValue(aggregate);
 		var createCalls = (int)emailType.GetProperty("CreateCalls")!.GetValue(null)!;
 
-		var hydrateMethod = emailType.GetMethod(
-			"Hydrate",
-			BindingFlags.Public | BindingFlags.Static
-		)!;
+		var hydrateMethod = emailType.GetMethod("Hydrate", BindingFlags.Public | BindingFlags.Static)!;
 		var replayEvent = Activator.CreateInstance(eventType)!;
-		eventType
-			.GetProperty("Email")!
-			.SetValue(replayEvent, hydrateMethod.Invoke(null, ["replay@example.com"]));
+		eventType.GetProperty("Email")!.SetValue(replayEvent, hydrateMethod.Invoke(null, ["replay@example.com"]));
 
 		var applyMethod = aggregateType.GetMethod(
 			"Apply",
@@ -267,10 +254,8 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 		)!;
 		applyMethod.Invoke(aggregate, [replayEvent]);
 
-		var changingCallsAfterReplay = (int)
-			aggregateType.GetProperty("ChangingCalls")!.GetValue(aggregate)!;
-		var changedCallsAfterReplay = (int)
-			aggregateType.GetProperty("ChangedCalls")!.GetValue(aggregate)!;
+		var changingCallsAfterReplay = (int)aggregateType.GetProperty("ChangingCalls")!.GetValue(aggregate)!;
+		var changedCallsAfterReplay = (int)aggregateType.GetProperty("ChangedCalls")!.GetValue(aggregate)!;
 		var createCallsAfterReplay = (int)emailType.GetProperty("CreateCalls")!.GetValue(null)!;
 		var traceAfterReplay = (string)aggregateType.GetProperty("Trace")!.GetValue(aggregate)!;
 

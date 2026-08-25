@@ -29,9 +29,7 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration
-							.GetSection(AzureStorageEventStoreOptions.AzureStorageEventStore)
-							.Bind(options);
+						configuration.GetSection(AzureStorageEventStoreOptions.AzureStorageEventStore).Bind(options);
 
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{

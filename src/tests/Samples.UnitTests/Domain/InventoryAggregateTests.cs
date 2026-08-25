@@ -33,9 +33,7 @@ public class InventoryAggregateTests
 	public void Create_GivenNullProductId_ThrowsArgumentException()
 	{
 		var inv = new InventoryAggregate();
-		Assert.Throws<ArgumentException>(() =>
-			inv.Create(null!, "name", "loc-1", "Main Warehouse")
-		);
+		Assert.Throws<ArgumentException>(() => inv.Create(null!, "name", "loc-1", "Main Warehouse"));
 	}
 
 	[Test]
@@ -49,9 +47,7 @@ public class InventoryAggregateTests
 	public void Create_GivenNegativeQuantity_ThrowsArgumentOutOfRangeException()
 	{
 		var inv = new InventoryAggregate();
-		Assert.Throws<ArgumentOutOfRangeException>(() =>
-			inv.Create("p1", "name", "loc-1", "Main Warehouse", -1)
-		);
+		Assert.Throws<ArgumentOutOfRangeException>(() => inv.Create("p1", "name", "loc-1", "Main Warehouse", -1));
 	}
 
 	#endregion

@@ -30,20 +30,14 @@ partial class SqlServerSnapshotEventStoreTests
 			for (var eventIndex = 0; eventIndex < numberOfEvents; eventIndex++)
 				aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}
 
 		// Act
 		var aggregates = (
-			await store.QueryAsync(
-				m => m.IncrementInt32 == numberOfEvents,
-				cancellationToken: cancellationToken
-			)
+			await store.QueryAsync(m => m.IncrementInt32 == numberOfEvents, cancellationToken: cancellationToken)
 		).Results;
 
 		// Assert
@@ -69,10 +63,7 @@ partial class SqlServerSnapshotEventStoreTests
 			var aggregate = CreateAggregate($"agg_{aggregateIndex}");
 			aggregate.IncrementInt32Value();
 
-			bool saveResult = await store.SaveAsync(
-				aggregate,
-				cancellationToken: cancellationToken
-			);
+			bool saveResult = await store.SaveAsync(aggregate, cancellationToken: cancellationToken);
 
 			await Assert.That(saveResult).IsTrue();
 		}

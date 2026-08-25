@@ -70,10 +70,5 @@ public interface IAggregateChangeFeedNotifier<T>
 	/// <param name="exception">The exception that occurred during the operation.</param>
 	/// <param name="cancellationToken">The stopping token.</param>
 	/// <returns>An awaitable task.</returns>
-	Task FailureAsync(
-		T aggregate,
-		bool isDelete,
-		Exception exception,
-		CancellationToken cancellationToken = default
-	);
+	Task FailureAsync(T aggregate, bool isDelete, Exception exception, CancellationToken cancellationToken = default);
 }

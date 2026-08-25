@@ -9,9 +9,7 @@ public sealed class AdminSitePageTests(AppHostFixture fixture)
 	readonly HttpClient _client = fixture.CreateWebClient(followRedirects: true);
 
 	[Test]
-	public async Task AdminDashboard_Returns200_AndContainsSearchUi(
-		CancellationToken cancellationToken
-	)
+	public async Task AdminDashboard_Returns200_AndContainsSearchUi(CancellationToken cancellationToken)
 	{
 		var response = await _client.GetAsync("/admin", cancellationToken);
 		var html = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -34,9 +32,7 @@ public sealed class AdminSitePageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task AdminEventsPage_WithNoEvents_ShowsNoEventsFound(
-		CancellationToken cancellationToken
-	)
+	public async Task AdminEventsPage_WithNoEvents_ShowsNoEventsFound(CancellationToken cancellationToken)
 	{
 		var response = await _client.GetAsync(
 			"/admin/events?aggregateType=CustomerAggregate&aggregateId=non-existent-aggregate-id",
@@ -49,9 +45,7 @@ public sealed class AdminSitePageTests(AppHostFixture fixture)
 	}
 
 	[Test]
-	public async Task AdminProjectionPage_WithParameters_Returns200(
-		CancellationToken cancellationToken
-	)
+	public async Task AdminProjectionPage_WithParameters_Returns200(CancellationToken cancellationToken)
 	{
 		var response = await _client.GetAsync(
 			"/admin/projection?aggregateType=OrderAggregate&aggregateId=test-aggregate-id",

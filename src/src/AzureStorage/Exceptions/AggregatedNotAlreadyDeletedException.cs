@@ -7,9 +7,7 @@ public class AggregatedNotAlreadyDeletedException(string aggregateId, string ide
 	)
 #pragma warning restore CA1032 // Implement standard exception constructors
 {
-	public string AggregateId { get; } =
-		aggregateId ?? throw new ArgumentNullException(nameof(aggregateId));
+	public string AggregateId { get; } = aggregateId ?? throw new ArgumentNullException(nameof(aggregateId));
 
-	public string IdempotencyId { get; } =
-		idempotencyId ?? throw new ArgumentNullException(nameof(idempotencyId));
+	public string IdempotencyId { get; } = idempotencyId ?? throw new ArgumentNullException(nameof(idempotencyId));
 }

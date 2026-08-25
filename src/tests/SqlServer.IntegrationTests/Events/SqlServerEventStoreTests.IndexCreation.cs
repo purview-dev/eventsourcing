@@ -46,9 +46,7 @@ partial class SqlServerEventStoreTests
 		await Assert
 			.That(string.Join(',', aggregateLookupKeyColumns))
 			.IsEqualTo("AggregateId,AggregateType,EntityType");
-		await Assert
-			.That(string.Join(',', eventRangeKeyColumns))
-			.IsEqualTo("AggregateId,AggregateType,Version");
+		await Assert.That(string.Join(',', eventRangeKeyColumns)).IsEqualTo("AggregateId,AggregateType,Version");
 		await Assert
 			.That(string.Join(',', eventRangeIncludeColumns))
 			.IsEqualTo("Payload,EventType,IdempotencyId,Timestamp");
@@ -90,24 +88,10 @@ partial class SqlServerEventStoreTests
 
 		await Assert.That(saved.Saved).IsTrue();
 		await Assert
-			.That(
-				await ColumnExistsAsync(
-					fixture.ConnectionString,
-					tableName,
-					computedColumnName,
-					cancellationToken
-				)
-			)
+			.That(await ColumnExistsAsync(fixture.ConnectionString, tableName, computedColumnName, cancellationToken))
 			.IsTrue();
 		await Assert
-			.That(
-				await IndexExistsAsync(
-					fixture.ConnectionString,
-					tableName,
-					indexName,
-					cancellationToken
-				)
-			)
+			.That(await IndexExistsAsync(fixture.ConnectionString, tableName, indexName, cancellationToken))
 			.IsTrue();
 	}
 
@@ -132,10 +116,7 @@ partial class SqlServerEventStoreTests
 		);
 		command.Parameters.AddWithValue("@tableName", tableName);
 		command.Parameters.AddWithValue("@columnName", columnName);
-		return Convert.ToInt32(
-				await command.ExecuteScalarAsync(cancellationToken),
-				CultureInfo.InvariantCulture
-			) > 0;
+		return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
 	}
 
 	static async Task<bool> IndexExistsAsync(
@@ -159,10 +140,7 @@ partial class SqlServerEventStoreTests
 		);
 		command.Parameters.AddWithValue("@tableName", tableName);
 		command.Parameters.AddWithValue("@indexName", indexName);
-		return Convert.ToInt32(
-				await command.ExecuteScalarAsync(cancellationToken),
-				CultureInfo.InvariantCulture
-			) > 0;
+		return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) > 0;
 	}
 
 	static async Task<List<string>> GetIndexKeyColumnsAsync(

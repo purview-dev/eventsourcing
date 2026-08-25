@@ -46,9 +46,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 		var database = await InitializeDatabase(client, cancellationToken);
 		var container = database.GetContainer(_containerName);
 
-		var response = await container.ReadContainerStreamAsync(
-			cancellationToken: cancellationToken
-		);
+		var response = await container.ReadContainerStreamAsync(cancellationToken: cancellationToken);
 		var containerExists = response.StatusCode == System.Net.HttpStatusCode.OK;
 
 		var indexOptions = _cosmosDbOptions.IndexOptions;
@@ -56,9 +54,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 		{
 			// Attempt to modify the container...
 			var containerRequiresUpdate = false;
-			var containerResponse = await container.ReadContainerAsync(
-				cancellationToken: cancellationToken
-			);
+			var containerResponse = await container.ReadContainerAsync(cancellationToken: cancellationToken);
 
 			#region Update existing resource
 
@@ -68,9 +64,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 				containerRequiresUpdate = true;
 			}
 
-			if (
-				indexOptions.IndexingModel != containerResponse.Resource.IndexingPolicy.IndexingMode
-			)
+			if (indexOptions.IndexingModel != containerResponse.Resource.IndexingPolicy.IndexingMode)
 			{
 				containerResponse.Resource.IndexingPolicy.IndexingMode = indexOptions.IndexingModel;
 				containerRequiresUpdate = true;
@@ -78,11 +72,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 
 			foreach (var includePath in indexOptions.IncludedPaths)
 			{
-				if (
-					!containerResponse.Resource.IndexingPolicy.IncludedPaths.Any(m =>
-						m.Path == includePath
-					)
-				)
+				if (!containerResponse.Resource.IndexingPolicy.IncludedPaths.Any(m => m.Path == includePath))
 				{
 					containerResponse.Resource.IndexingPolicy.IncludedPaths.Add(
 						new IncludedPath { Path = includePath }
@@ -93,11 +83,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 
 			foreach (var excludePath in indexOptions.ExcludedPaths)
 			{
-				if (
-					!containerResponse.Resource.IndexingPolicy.ExcludedPaths.Any(m =>
-						m.Path == excludePath
-					)
-				)
+				if (!containerResponse.Resource.IndexingPolicy.ExcludedPaths.Any(m => m.Path == excludePath))
 				{
 					containerResponse.Resource.IndexingPolicy.ExcludedPaths.Add(
 						new ExcludedPath { Path = excludePath }
@@ -108,11 +94,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 
 			foreach (var spatialIndex in indexOptions.SpatialIndices)
 			{
-				if (
-					!containerResponse.Resource.IndexingPolicy.SpatialIndexes.Any(m =>
-						m.Path == spatialIndex.Path
-					)
-				)
+				if (!containerResponse.Resource.IndexingPolicy.SpatialIndexes.Any(m => m.Path == spatialIndex.Path))
 				{
 					containerResponse.Resource.IndexingPolicy.SpatialIndexes.Add(spatialIndex);
 					containerRequiresUpdate = true;
@@ -204,11 +186,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 				_cosmosDbOptions.ContainerThroughput,
 				cancellationToken
 			);
-			if (
-				containerResponse.StatusCode
-				is System.Net.HttpStatusCode.OK
-					or System.Net.HttpStatusCode.Accepted
-			)
+			if (containerResponse.StatusCode is System.Net.HttpStatusCode.OK or System.Net.HttpStatusCode.Accepted)
 				return containerResponse;
 
 			// Hoping that someone came in between and created it while we were waiting.
@@ -216,10 +194,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 		}
 	}
 
-	async Task<Container> InitializeAsync(
-		CosmosClient? cosmosClient,
-		CancellationToken cancellationToken
-	)
+	async Task<Container> InitializeAsync(CosmosClient? cosmosClient, CancellationToken cancellationToken)
 	{
 		var client = cosmosClient ?? GetOrCreateClient();
 		await InitializeDatabase(client, cancellationToken);
@@ -239,10 +214,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 						?? throw new NullReferenceException(
 							$"Unable to get the container response for '{_containerName}'"
 						);
-					return
-						response.StatusCode
-							is System.Net.HttpStatusCode.OK
-								or System.Net.HttpStatusCode.Accepted
+					return response.StatusCode is System.Net.HttpStatusCode.OK or System.Net.HttpStatusCode.Accepted
 						? response.Container
 						: throw new InvalidOperationException(
 							$"Unable to get or create the container '{_containerName}', with status code: {response.StatusCode}"
@@ -252,10 +224,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 			.GetValueAsync(cancellationToken);
 	}
 
-	async Task<Database> InitializeDatabase(
-		CosmosClient client,
-		CancellationToken cancellationToken
-	)
+	async Task<Database> InitializeDatabase(CosmosClient client, CancellationToken cancellationToken)
 	{
 		return _database = await CreatedDatabases
 			.GetOrAdd(
@@ -293,8 +262,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 				{
 					ConnectionMode = configuration.ConnectionMode,
 					RequestTimeout = TimeSpan.FromSeconds(
-						configuration.RequestTimeoutInSeconds
-							?? CosmosDbOptions.DefaultRequestTimeout
+						configuration.RequestTimeoutInSeconds ?? CosmosDbOptions.DefaultRequestTimeout
 					),
 					Serializer = new CosmosSystemTextJsonSerializer(),
 				};

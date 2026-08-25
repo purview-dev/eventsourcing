@@ -23,8 +23,7 @@ public sealed class CosmosDbSnapshotEventStoreContext(
 
 	public Guid RunId { get; } = Guid.NewGuid();
 
-	public CosmosDbSnapshotEventStore<PersistenceAggregate> EventStore { get; private set; } =
-		default!;
+	public CosmosDbSnapshotEventStore<PersistenceAggregate> EventStore { get; private set; } = default!;
 
 	internal AzureTableClient TableClient { get; private set; } = default!;
 

@@ -24,7 +24,6 @@
 | EVENTSTORE020 | Aggregates | Warning | Complex scalar Value paths may not translate in SQL snapshot queries |
 | EVENTSTORE021 | Aggregates | Error | Event schema version must be positive |
 | EVENTSTORE022 | Aggregates | Error | Duplicate event schema version on aggregate |
-| EVENTSTORE023 | Aggregates | Warning | Explicit event schema versions should be contiguous |
 | EVENTSTORE101 | ValueObjects | Error | Value object must be partial |
 | EVENTSTORE102 | ValueObjects | Error | Nested value objects are not supported |
 | EVENTSTORE103 | ValueObjects | Error | Generic value objects are not supported |

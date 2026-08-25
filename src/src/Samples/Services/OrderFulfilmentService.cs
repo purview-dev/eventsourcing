@@ -5,15 +5,11 @@ using Purview.EventSourcing.Samples.Domain;
 
 namespace Purview.EventSourcing.Samples.Services;
 
-public sealed class OrderFulfilmentService(
-	IEventStoreTransactionFactory transactionFactory,
-	IQueryableEventStore store
-) : IOrderFulfilmentService
+public sealed class OrderFulfilmentService(IEventStoreTransactionFactory transactionFactory, IQueryableEventStore store)
+	: IOrderFulfilmentService
 {
 	// Thread-safe price cache shared across all instances.
-	static readonly ConcurrentDictionary<string, decimal> UnitPrices = new(
-		StringComparer.OrdinalIgnoreCase
-	);
+	static readonly ConcurrentDictionary<string, decimal> UnitPrices = new(StringComparer.OrdinalIgnoreCase);
 
 	public async Task<FulfilmentResult> PlaceOrderAsync(
 		string customerId,
@@ -41,9 +37,7 @@ public sealed class OrderFulfilmentService(
 
 		// Create and confirm the order.
 		var order = await store.CreateAsync<OrderAggregate>(cancellationToken: cancellationToken);
-		order
-			.CreateOrder(customerId)
-			.AddLineItem(inventory.ProductId, inventory.ProductName, quantity, unitPrice);
+		order.CreateOrder(customerId).AddLineItem(inventory.ProductId, inventory.ProductName, quantity, unitPrice);
 		if (!string.IsNullOrWhiteSpace(shippingAddress))
 			order.SetShippingAddress(shippingAddress);
 

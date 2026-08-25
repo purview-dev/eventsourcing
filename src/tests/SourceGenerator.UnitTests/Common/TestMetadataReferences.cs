@@ -8,9 +8,7 @@ public static class TestMetadataReferences
 	{
 		var references = new List<MetadataReference>
 		{
-			MetadataReference.CreateFromFile(
-				typeof(System.Text.Json.JsonSerializer).Assembly.Location
-			),
+			MetadataReference.CreateFromFile(typeof(System.Text.Json.JsonSerializer).Assembly.Location),
 			MetadataReference.CreateFromFile(
 				typeof(System.ComponentModel.DataAnnotations.RequiredAttribute).Assembly.Location
 			),

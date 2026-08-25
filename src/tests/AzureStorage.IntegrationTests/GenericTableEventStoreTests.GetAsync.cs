@@ -62,9 +62,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		await Assert.That(result!.Id()).IsEqualTo(aggregate.Id());
 		await Assert.That(result!.IncrementInt32).IsEqualTo(aggregate.IncrementInt32);
 		await Assert.That(result!.Details.SavedVersion).IsEqualTo(aggregate.Details.SavedVersion);
-		await Assert
-			.That(result!.Details.CurrentVersion)
-			.IsEqualTo(aggregate.Details.CurrentVersion);
+		await Assert.That(result!.Details.CurrentVersion).IsEqualTo(aggregate.Details.CurrentVersion);
 		await Assert.That(result!.Details.Etag).IsEqualTo(aggregate.Details.Etag);
 		await Assert
 			.That(result!.Details.SnapshotVersion)
@@ -90,9 +88,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 		var totalEventsToCreate = eventsToCreate + eventCountOffset;
 
 		var aggregateId = $"{Guid.NewGuid()}";
-		var eventStore = fixture.CreateEventStore<TAggregate>(
-			snapshotRecalculationInterval: snapshotInterval
-		);
+		var eventStore = fixture.CreateEventStore<TAggregate>(snapshotRecalculationInterval: snapshotInterval);
 
 		// Act
 		var aggregate = TestHelpers.Aggregate<TAggregate>(aggregateId: aggregateId);
@@ -157,11 +153,7 @@ partial class GenericTableEventStoreTests<TAggregate>
 			numberOfOldEventsToCreate
 		);
 
-		await GenericTableEventStoreTestSeed.AssertRecreatedWithTotals(
-			result,
-			aggregate,
-			totalEvents
-		);
+		await GenericTableEventStoreTestSeed.AssertRecreatedWithTotals(result, aggregate, totalEvents);
 	}
 
 	// This is testing that the aggregate is still correct after an event type cannot be found - removed
@@ -220,10 +212,6 @@ partial class GenericTableEventStoreTests<TAggregate>
 			numberOfOldEventsToCreate
 		);
 
-		await GenericTableEventStoreTestSeed.AssertRecreatedWithTotals(
-			result,
-			aggregate,
-			totalEvents
-		);
+		await GenericTableEventStoreTestSeed.AssertRecreatedWithTotals(result, aggregate, totalEvents);
 	}
 }

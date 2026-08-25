@@ -17,8 +17,7 @@ public static class ServiceCollectionExtensions
 {
 	extension([NotNull] IServiceCollection services)
 	{
-		public IServiceCollection AddMongoDBEventStore() =>
-			services.AddMongoDBEventStore(connectionStringName: null);
+		public IServiceCollection AddMongoDBEventStore() => services.AddMongoDBEventStore(connectionStringName: null);
 
 		public IServiceCollection AddMongoDBEventStore(string? connectionStringName)
 		{
@@ -38,9 +37,7 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration
-							.GetSection(MongoDBEventStoreOptions.MongoDBEventStore)
-							.Bind(options);
+						configuration.GetSection(MongoDBEventStoreOptions.MongoDBEventStore).Bind(options);
 
 						if (string.IsNullOrWhiteSpace(options.ConnectionString))
 						{
@@ -77,13 +74,8 @@ public static class ServiceCollectionExtensions
 			return services;
 		}
 
-		public IServiceCollection AddMongoDBSnapshotQueryableEventStore(
-			bool registerAsIEventStore = false
-		) =>
-			services.AddMongoDBSnapshotQueryableEventStore(
-				connectionStringName: null,
-				registerAsIEventStore
-			);
+		public IServiceCollection AddMongoDBSnapshotQueryableEventStore(bool registerAsIEventStore = false) =>
+			services.AddMongoDBSnapshotQueryableEventStore(connectionStringName: null, registerAsIEventStore);
 
 		public IServiceCollection AddMongoDBSnapshotQueryableEventStore(
 			string? connectionStringName,
@@ -93,14 +85,8 @@ public static class ServiceCollectionExtensions
 			services.AddEventSourcing();
 
 			services
-				.AddTransient(
-					typeof(IQueryableEventStoreCore<>),
-					typeof(MongoDBSnapshotEventStore<>)
-				)
-				.AddTransient(
-					typeof(IMongoDBSnapshotEventStore<>),
-					typeof(MongoDBSnapshotEventStore<>)
-				)
+				.AddTransient(typeof(IQueryableEventStoreCore<>), typeof(MongoDBSnapshotEventStore<>))
+				.AddTransient(typeof(IMongoDBSnapshotEventStore<>), typeof(MongoDBSnapshotEventStore<>))
 				.AddMongoDBSnapshotEventStoreTelemetry();
 			services.AddMongoDBClientTelemetry();
 
@@ -108,10 +94,7 @@ public static class ServiceCollectionExtensions
 
 			if (registerAsIEventStore)
 			{
-				services.AddTransient(
-					typeof(IEventStoreCore<>),
-					typeof(MongoDBSnapshotEventStore<>)
-				);
+				services.AddTransient(typeof(IEventStoreCore<>), typeof(MongoDBSnapshotEventStore<>));
 				services.TryAddTransient<IEventStore, EventStoreFacade>();
 			}
 
@@ -120,9 +103,7 @@ public static class ServiceCollectionExtensions
 				.Configure<IConfiguration>(
 					(options, configuration) =>
 					{
-						configuration
-							.GetSection(MongoDBSnapshotEventStoreOptions.MongoDBEventStore)
-							.Bind(options);
+						configuration.GetSection(MongoDBSnapshotEventStoreOptions.MongoDBEventStore).Bind(options);
 
 						options.ConnectionString ??= configuration.GetRequiredConnectionString([
 							connectionStringName,
@@ -147,9 +128,7 @@ public static class ServiceCollectionExtensions
 
 			services.TryAddSingleton<IMongoClient>(sp =>
 			{
-				var options = sp.GetRequiredService<
-					IOptions<MongoDBSnapshotEventStoreOptions>
-				>().Value;
+				var options = sp.GetRequiredService<IOptions<MongoDBSnapshotEventStoreOptions>>().Value;
 				var settings = MongoClientSettings.FromConnectionString(options.ConnectionString);
 				if (!string.IsNullOrWhiteSpace(options.ApplicationName))
 					settings.ApplicationName = options.ApplicationName;

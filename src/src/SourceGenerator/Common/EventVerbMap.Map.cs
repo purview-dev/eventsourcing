@@ -6,10 +6,9 @@ partial class EventVerbMap
 {
 	// Verb -> past-tense form. For EVENT naming the value should be the PAST
 	// PARTICIPLE ("Order" + "Shipped"/"Taken"/"Given"), not the simple past.
-	static readonly FrozenDictionary<string, string> PastTenseByVerb = new Dictionary<
-		string,
-		string
-	>(StringComparer.Ordinal)
+	static readonly FrozenDictionary<string, string> PastTenseByVerb = new Dictionary<string, string>(
+		StringComparer.Ordinal
+	)
 	{
 		// ── Original entries (Cancel now US-spelled) ──
 		{ "Reactivate", "Reactivated" },
@@ -307,9 +306,7 @@ partial class EventVerbMap
 	//
 	// FrozenSet built from a comparer-seeded HashSet is
 	// the correct O(1), case-insensitive form.
-	static readonly FrozenSet<string> ModifierPrefixes = new HashSet<string>(
-		StringComparer.OrdinalIgnoreCase
-	)
+	static readonly FrozenSet<string> ModifierPrefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 	{
 		"Force",
 		"Bulk",
@@ -327,9 +324,7 @@ partial class EventVerbMap
 	// identifier's LAST PascalCase word is a real past-tense verb form. Replaces
 	// the old EndsWith-over-all-suffixes approach, which false-positived on
 	// "Outbound"/"Present"/"Offset" etc.
-	static readonly FrozenSet<string> KnownPastTenseForms = PastTenseByVerb.Values.ToFrozenSet(
-		StringComparer.Ordinal
-	);
+	static readonly FrozenSet<string> KnownPastTenseForms = PastTenseByVerb.Values.ToFrozenSet(StringComparer.Ordinal);
 
 	// Length bounds used to prune the greedy verb-span search.
 	static readonly int MinVerbLength = PastTenseByVerb.Keys.Min(static k => k.Length);

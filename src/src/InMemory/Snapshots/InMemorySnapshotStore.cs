@@ -24,12 +24,7 @@ public sealed class InMemorySnapshotStore<T>(
 	public Task<long> CountAsync(
 		Expression<Func<T, bool>>? whereClause,
 		CancellationToken cancellationToken = default
-	) =>
-		Task.FromResult(
-			whereClause is null
-				? Aggregates.LongCount()
-				: Aggregates.LongCount(whereClause.Compile())
-		);
+	) => Task.FromResult(whereClause is null ? Aggregates.LongCount() : Aggregates.LongCount(whereClause.Compile()));
 
 	public Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
@@ -87,9 +82,7 @@ public sealed class InMemorySnapshotStore<T>(
 		if (orderByClause != null)
 			results = orderByClause(results.AsQueryable()).AsEnumerable();
 
-		var totalCount = request.IncludeTotalCount
-			? await CountAsync(null, cancellationToken)
-			: -1L;
+		var totalCount = request.IncludeTotalCount ? await CountAsync(null, cancellationToken) : -1L;
 		var skip = 0;
 		if (int.TryParse(request.ContinuationToken, out var continuationToken))
 			skip = continuationToken;
@@ -117,9 +110,7 @@ public sealed class InMemorySnapshotStore<T>(
 		if (whereClause != null)
 			results = results.Where(whereClause.Compile());
 
-		var totalCount = request.IncludeTotalCount
-			? await CountAsync(null, cancellationToken)
-			: -1L;
+		var totalCount = request.IncludeTotalCount ? await CountAsync(null, cancellationToken) : -1L;
 		var skip = 0;
 		if (int.TryParse(request.ContinuationToken, out var continuationToken))
 			skip = continuationToken;

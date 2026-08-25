@@ -38,10 +38,7 @@ public sealed class SnapshotStrategySelector : ISnapshotStrategySelector
 	public ISnapshotStrategy<T>? Resolve<T>()
 		where T : class, IAggregate, new()
 	{
-		return (
-				_snapshotStrategies.TryGetValue(typeof(T), out var strategy)
-					? strategy
-					: _defaultStrategy
-			) as ISnapshotStrategy<T>;
+		return (_snapshotStrategies.TryGetValue(typeof(T), out var strategy) ? strategy : _defaultStrategy)
+			as ISnapshotStrategy<T>;
 	}
 }

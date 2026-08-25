@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
@@ -55,11 +54,7 @@ static partial class ComplexValueObjectEmitter
 		sb.AppendLine($"{indent}{{");
 	}
 
-	static void EmitOnNormalizeDeclaration(
-		StringBuilder sb,
-		ComplexValueObjectModel model,
-		string indent
-	)
+	static void EmitOnNormalizeDeclaration(StringBuilder sb, ComplexValueObjectModel model, string indent)
 	{
 		if (!model.DeclareOnNormalize)
 			return;
@@ -87,10 +82,7 @@ static partial class ComplexValueObjectEmitter
 				static (type, name) => $"{type} {ValueObjectSymbolInspector.ToCamelCase(name)}"
 			)
 		);
-		var createArgs = string.Join(
-			", ",
-			model.PropertyNames.Select(ValueObjectSymbolInspector.ToCamelCase)
-		);
+		var createArgs = string.Join(", ", model.PropertyNames.Select(ValueObjectSymbolInspector.ToCamelCase));
 		var normalizeInvocation =
 			model.PropertyNames.Length == 0
 				? "OnNormalize();"
@@ -107,11 +99,7 @@ static partial class ComplexValueObjectEmitter
 		sb.AppendLine();
 	}
 
-	static void EmitOnValidateDeclaration(
-		StringBuilder sb,
-		ComplexValueObjectModel model,
-		string indent
-	)
+	static void EmitOnValidateDeclaration(StringBuilder sb, ComplexValueObjectModel model, string indent)
 	{
 		if (
 			!ValueObjectSymbolInspector.ShouldEmitComplexHookDeclaration(
@@ -156,10 +144,7 @@ static partial class ComplexValueObjectEmitter
 				static (type, name) => $"{type} {ValueObjectSymbolInspector.ToCamelCase(name)}"
 			)
 		);
-		var hydrateArgs = string.Join(
-			", ",
-			model.PropertyNames.Select(ValueObjectSymbolInspector.ToCamelCase)
-		);
+		var hydrateArgs = string.Join(", ", model.PropertyNames.Select(ValueObjectSymbolInspector.ToCamelCase));
 		sb.AppendLine(
 			$@"{indent}	public static {model.TypeName} Hydrate({hydrateParams})
 {indent}	{{
@@ -171,10 +156,7 @@ static partial class ComplexValueObjectEmitter
 
 	static void EmitEmpty(StringBuilder sb, ComplexValueObjectModel model, string indent)
 	{
-		if (
-			model.Options.GenerateEmpty
-			&& !ValueObjectSymbolInspector.HasMemberWithName(model.TypeSymbol, "Empty")
-		)
+		if (model.Options.GenerateEmpty && !ValueObjectSymbolInspector.HasMemberWithName(model.TypeSymbol, "Empty"))
 		{
 			var emptyArgs = string.Join(
 				", ",
@@ -182,9 +164,7 @@ static partial class ComplexValueObjectEmitter
 					ValueObjectSymbolInspector.GetEmptyValueExpression(property.Type)
 				)
 			);
-			sb.AppendLine(
-				$"{indent}	public static {model.TypeName} Empty => Hydrate({emptyArgs});"
-			);
+			sb.AppendLine($"{indent}	public static {model.TypeName} Empty => Hydrate({emptyArgs});");
 			sb.AppendLine();
 		}
 	}
@@ -207,9 +187,7 @@ static partial class ComplexValueObjectEmitter
 {indent}	{{"
 		);
 		foreach (var propertyName in model.PropertyNames)
-			sb.AppendLine(
-				$"{indent}		{propertyName} = {ValueObjectSymbolInspector.ToCamelCase(propertyName)};"
-			);
+			sb.AppendLine($"{indent}		{propertyName} = {ValueObjectSymbolInspector.ToCamelCase(propertyName)};");
 		sb.AppendLine($"{indent}	}}");
 	}
 
@@ -226,20 +204,15 @@ static partial class ComplexValueObjectEmitter
 		)
 			return;
 
-		var efCtorAccessibility =
-			model.TypeSymbol.TypeKind == TypeKind.Struct ? "public" : "private";
+		var efCtorAccessibility = model.TypeSymbol.TypeKind == TypeKind.Struct ? "public" : "private";
 		sb.AppendLine();
 		sb.AppendLine($"{indent}	/// <summary>");
 		sb.AppendLine($"{indent}	/// Parameterless constructor for EF Core deserialization.");
 		sb.AppendLine(
 			$"{indent}	/// This constructor is required to work around EF Core's ConstructorBindingConvention,"
 		);
-		sb.AppendLine(
-			$"{indent}	/// which cannot bind complex type parameters during JSON deserialization."
-		);
-		sb.AppendLine(
-			$"{indent}	/// EF Core uses this parameterless constructor to instantiate the value object,"
-		);
+		sb.AppendLine($"{indent}	/// which cannot bind complex type parameters during JSON deserialization.");
+		sb.AppendLine($"{indent}	/// EF Core uses this parameterless constructor to instantiate the value object,");
 		sb.AppendLine($"{indent}	/// then sets properties directly from the JSON payload.");
 		sb.AppendLine($"{indent}	/// </summary>");
 		sb.AppendLine(

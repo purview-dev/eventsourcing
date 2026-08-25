@@ -16,10 +16,7 @@ static class SqlServerAdminTableResolver
 			return [ResolveTable(options, aggregateType)];
 		}
 
-		List<SqlServerAdminTableDescriptor> tables =
-		[
-			new(null, options.SchemaName, options.TableName),
-		];
+		List<SqlServerAdminTableDescriptor> tables = [new(null, options.SchemaName, options.TableName)];
 
 		foreach (var overrideEntry in options.AggregateTableOverrides)
 		{
@@ -38,24 +35,14 @@ static class SqlServerAdminTableResolver
 		return tables;
 	}
 
-	public static SqlServerAdminTableDescriptor ResolveTable(
-		SqlServerEventStoreOptions options,
-		string aggregateType
-	)
+	public static SqlServerAdminTableDescriptor ResolveTable(SqlServerEventStoreOptions options, string aggregateType)
 	{
 		ArgumentNullException.ThrowIfNull(options);
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateType);
 
-		if (
-			!options.AggregateTableOverrides.TryGetValue(aggregateType, out var overrideEntry)
-			|| overrideEntry is null
-		)
+		if (!options.AggregateTableOverrides.TryGetValue(aggregateType, out var overrideEntry) || overrideEntry is null)
 		{
-			return new SqlServerAdminTableDescriptor(
-				aggregateType,
-				options.SchemaName,
-				options.TableName
-			);
+			return new SqlServerAdminTableDescriptor(aggregateType, options.SchemaName, options.TableName);
 		}
 
 		// If an override exists for the aggregate type, use the override values (if provided) or fall back to the default options

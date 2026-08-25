@@ -38,10 +38,7 @@ public interface IQueryableEventStore : IEventStore
 	)
 		where T : class, IAggregate, new();
 
-	Task<long> CountAsync<T>(
-		Expression<Func<T, bool>>? whereClause,
-		CancellationToken cancellationToken = default
-	)
+	Task<long> CountAsync<T>(Expression<Func<T, bool>>? whereClause, CancellationToken cancellationToken = default)
 		where T : class, IAggregate, new();
 
 	Task<T?> SingleOrDefaultAsync<T>(

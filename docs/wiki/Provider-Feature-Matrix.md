@@ -36,7 +36,8 @@ This page summarizes feature availability by package so provider selection is ex
 - For provider-converted members (for example, a `[Scalar]` value object whose inner `Value` is a complex type), deep predicates on inner members are **not SQL-translatable** (for example: `a.ReportSummary.Value.ParserDetails.FailedLines > 0`).
 - The same conceptual data **can** be queried deeply when exposed as a directly mapped complex property in the snapshot graph (for example: `a.ReportSummaryScalar.ParserDetails.FailedLines > 0`, where `ReportSummaryScalar` is a `ParserReportSummary`).
 - `EventStoreList<T>` / `EventStoreSet<T>` members with `[ValueObject]` struct elements are persisted via JSON conversion for compatibility; treat nested element member filtering as non-translatable unless explicitly covered by tests.
-- Nested dictionary/interface-collection members inside directly mapped complex snapshot graphs require explicit mapper support; when supported, prove the exact predicate path with provider integration tests.
+- Nested dictionary/interface-collection members cannot be structurally mapped by the SQL Server or PostgreSQL EF snapshot model. Mark non-queryable values `[EfOpaque]` to persist them as a converted JSON scalar, or remodel them as complex entry collections when their contents must be queried.
+- Opaque JSON currently uses EF's supported string conversion inside the outer JSON document. This preserves round-trip values but stores the nested value as JSON text rather than a raw nested JSON token.
 - Recommended pattern: query by SQL-translatable fields first, or expose a directly mapped complex mirror property when deep SQL filtering is a real requirement.
 
 ## Related docs
