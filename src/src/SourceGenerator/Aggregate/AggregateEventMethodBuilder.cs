@@ -22,7 +22,7 @@ static class AggregateEventMethodBuilder
 		string? aggregateEventNamespaceOverride,
 		string? aggregateEventSuffixOverride,
 		string? assemblyEventSuffix,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		CancellationToken cancellationToken,
 		out AggregateEventMethodInfo methodInfo
 	)
@@ -180,7 +180,7 @@ static class AggregateEventMethodBuilder
 		INamedTypeSymbol classSymbol,
 		IMethodSymbol methodSymbol,
 		bool isCollectionEvent,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		out TypeReference returnType,
 		out EventMethodReturnKind returnKind
 	)
@@ -374,7 +374,7 @@ static class AggregateEventMethodBuilder
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
 		Compilation compilation,
 		INamedTypeSymbol? valueObjectContextType,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		CancellationToken cancellationToken,
 		out ImmutableArray<EventPropertyInfo> allParameters,
 		out ImmutableArray<EventPropertyInfo> eventParameters,
@@ -477,7 +477,7 @@ static class AggregateEventMethodBuilder
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
 		Compilation compilation,
 		INamedTypeSymbol? valueObjectContextType,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		out EventPropertyInfo propertyInfo
 	)
 	{
@@ -670,7 +670,7 @@ static class AggregateEventMethodBuilder
 		string eventSuffix,
 		bool hasExplicitEventName,
 		string eventName,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		out string resolvedEventName
 	)
 	{
@@ -1217,7 +1217,7 @@ static class AggregateEventMethodBuilder
 		IMethodSymbol methodSymbol,
 		CollectionEventAttributeData collectionEventAttribute,
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		out EventPropertyInfo parameterInfo,
 		out CollectionEventInfo? collectionEvent
 	)

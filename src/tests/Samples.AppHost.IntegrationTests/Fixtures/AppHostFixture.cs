@@ -10,16 +10,6 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 {
 	readonly string _databaseName = $"EventStoreSample_" + $"{Guid.NewGuid():N}"[..8];
 	readonly string _snapshotBlobName = $"es-snapshot-" + $"{Guid.NewGuid():N}"[..8];
-	static readonly string[] WebResourceNames =
-	[
-		Platform.WebApp,
-		Platform.PostgresWebApp,
-		Platform.MongoDbWebApp,
-		Platform.AzureSqlWebApp,
-		Platform.AzurePostgresWebApp,
-		Platform.AzureMongoDbWebApp,
-	];
-
 	readonly Lazy<AppServiceHelper> _appService;
 
 	string? _databaseConnectionString;
@@ -32,17 +22,14 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	}
 
 	protected override string[] Args =>
-		[
-			.. base.Args,
-			.. OptionsHelper
-				.ForSet<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
-					c => c.IsTestRun = true,
-					c => c.IsLocal = false,
-					c => c.SqlServer.DatabaseName = _databaseName,
-					c => c.AzureStorage.BlobName = _snapshotBlobName
-				)
-				.Build(),
-		];
+		OptionsHelper
+			.ForSet<AppHost.AppModel.SampleAppHostKit.SampleAppHostKitOptions>(
+				c => c.IsTestRun = true,
+				c => c.IsLocal = false,
+				c => c.SqlServer.DatabaseName = _databaseName,
+				c => c.AzureStorage.BlobName = _snapshotBlobName
+			)
+			.Build();
 
 	public override async ValueTask DisposeAsync()
 	{
@@ -73,8 +60,6 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		await base.InitializeAsync();
 
 		_databaseConnectionString = await GetConnectionStringAsync(Platform.SqlDatabase);
-		foreach (var resourceName in WebResourceNames)
-			await WaitForWebAppAsync(resourceName, CancellationToken.None);
 	}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
@@ -104,53 +89,11 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 	public Task<string?> GetResourceConnectionStringAsync(string resourceName, CancellationToken cancellationToken) =>
 		GetConnectionStringAsync(resourceName, cancellationToken);
 
-	async Task WaitForWebAppAsync(string resourceName, CancellationToken cancellationToken)
-	{
-		using var client = CreateWebClient(resourceName, followRedirects: true);
-		client.Timeout = TimeSpan.FromSeconds(10);
-
-		var timeoutAt = DateTimeOffset.UtcNow.AddMinutes(3);
-		while (DateTimeOffset.UtcNow < timeoutAt)
-		{
-			try
-			{
-				using var response = await client.GetAsync("/pingz", cancellationToken);
-				if (response.IsSuccessStatusCode)
-					return;
-			}
-			catch (HttpRequestException) when (DateTimeOffset.UtcNow < timeoutAt)
-			{
-				// Resource may still be starting.
-			}
-			catch (TaskCanceledException) when (DateTimeOffset.UtcNow < timeoutAt)
-			{
-				// Resource may still be starting.
-			}
-
-			await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
-		}
-
-		throw new InvalidOperationException($"The web app resource '{resourceName}' did not become ready in time.");
-	}
-
-	//string BuildDatabaseConnectionString(string connectionString)
-	//{
-	//	SqlConnectionStringBuilder builder = new(connectionString) { InitialCatalog = _databaseName };
-
-	//	return builder.ConnectionString;
-	//}
-
 	public IQueryableEventStore QueryableEventStore() => _appService.Value.GetRequiredService<IQueryableEventStore>();
 
 	public IEventStore EventStore() => _appService.Value.GetRequiredService<IEventStore>();
 
 	public object? GetService(Type serviceType) => _appService.Value.GetService(serviceType);
-
-	//public object? GetService(Type serviceType) => App.Services.GetService(serviceType);
-
-	//public IQueryableEventStore QueryableEventStore() => App.Services.GetRequiredService<IQueryableEventStore>();
-
-	//public IEventStore EventStore() => App.Services.GetRequiredService<IEventStore>();
 
 	public IServiceProvider CloneServices(Action<IServiceCollection>? configure) =>
 		_appService.Value.CloneServices(configure);

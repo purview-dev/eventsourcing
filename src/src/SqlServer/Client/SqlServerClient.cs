@@ -440,7 +440,7 @@ sealed partial class SqlServerClient
 					builder.ComplexCollection(
 						propertyType,
 						property.Name,
-						nested => ConfigureComplexGraphRecursive(nested, elementType, new HashSet<Type>(visited))
+						nested => ConfigureComplexGraphRecursive(nested, elementType, [with(visited)])
 					);
 				else
 					throw CreateUnsupportedShapeException(type, property);
@@ -462,7 +462,7 @@ sealed partial class SqlServerClient
 				builder.ComplexProperty(
 					propertyType,
 					property.Name,
-					nested => ConfigureComplexGraphRecursive(nested, propertyType, new HashSet<Type>(visited))
+					nested => ConfigureComplexGraphRecursive(nested, propertyType, [with(visited)])
 				);
 				continue;
 			}
@@ -525,7 +525,7 @@ sealed partial class SqlServerClient
 					builder.ComplexCollection(
 						propertyType,
 						property.Name,
-						nested => ConfigureComplexGraphRecursive(nested, elementType, new HashSet<Type>(visited))
+						nested => ConfigureComplexGraphRecursive(nested, elementType, [with(visited)])
 					);
 				else
 					throw CreateUnsupportedShapeException(type, property);
@@ -547,7 +547,7 @@ sealed partial class SqlServerClient
 				builder.ComplexProperty(
 					propertyType,
 					property.Name,
-					nested => ConfigureComplexGraphRecursive(nested, propertyType, new HashSet<Type>(visited))
+					nested => ConfigureComplexGraphRecursive(nested, propertyType, [with(visited)])
 				);
 				continue;
 			}

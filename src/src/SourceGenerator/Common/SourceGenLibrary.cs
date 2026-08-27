@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Purview.EventSourcing.SourceGenerator.Generators;
 
 namespace Purview.EventSourcing.SourceGenerator.Common;
 
@@ -8,11 +9,18 @@ static partial class SourceGenLibrary
 		IncrementalGeneratorInitializationContext context
 	)
 	{
-		var generationContext = IncrementalPipeline.GenerationContextValueProvider<AggregateGenerationContext>(
+		var generationContext = IncrementalPipeline.GenerationContextValueProvider<
+			AggregateGenerationCapabilities,
+			AggregateSourceGenerator
+		>(
 			context,
-			TypeLibrary.AggregateGeneratorName,
-			AssemblyInfo.Version,
-			(compilation, generatorSettings, logger, _) => new(compilation, generatorSettings, logger),
+			static (compilation, settings, logger, _) =>
+			{
+				var hasAggregateBase =
+					compilation.GetTypeByMetadataName(TypeLibrary.Aggregates.AggregateBase.MetadataFullName)
+					is not null;
+				return new(hasAggregateBase);
+			},
 			PropertyLibrary.DisableSourceGenerator
 		);
 
@@ -28,13 +36,11 @@ static partial class SourceGenLibrary
 			aggregateInfo,
 			static (context, aggregateInfo, _) =>
 			{
-				List<DiagnosticInfo> diagnostics = [];
-				if (!context.HasAggregateBase)
-				{
+				var diagnostics = ImmutableArray.CreateBuilder<DiagnosticInfo>();
+				if (!context.Capabilities.HasAggregateBase)
 					diagnostics.Add(DiagnosticInfo.Create(DiagnosticLibrary.AggregateBaseReferenceMissing));
-				}
 
-				AggregateGenerationModel model = new(context, aggregateInfo, new([.. diagnostics]));
+				AggregateGenerationModel model = new(context, aggregateInfo, diagnostics.ToImmutable());
 
 				return model;
 			},

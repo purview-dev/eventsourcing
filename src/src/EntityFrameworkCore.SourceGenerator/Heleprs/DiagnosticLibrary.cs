@@ -5,8 +5,6 @@ namespace Purview.EventSourcing.EntityFrameworkCore.SourceGenerator.Heleprs;
 
 static class DiagnosticLibrary
 {
-	public static ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [UnsupportedDictionary, OpaqueQuery];
-
 	public static readonly DiagnosticDescriptor UnsupportedDictionary = new(
 		"EVENTSTOREEF001",
 		"Dictionary-like property cannot be mapped as an EF complex property",
@@ -25,4 +23,7 @@ static class DiagnosticLibrary
 		DiagnosticSeverity.Error,
 		isEnabledByDefault: true
 	);
+
+	// Leave this at the bottom...!
+	public static ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [UnsupportedDictionary, OpaqueQuery];
 }

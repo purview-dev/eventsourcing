@@ -28,13 +28,18 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 		DisableSourceGeneratorPropertyName = PropertyLibrary.DisableSourceGenerator;
 		AdditionalNamespaces =
 		[
-			"Purview.EventSourcing.Aggregates",
-			"Purview.EventSourcing.Serialization",
-			"Purview.EventSourcing.ValueObjects",
 			typeof(EventStoreSet<>).Namespace!,
+			typeof(Aggregates.AggregateBase).Namespace!,
+			typeof(Serialization.ScalarJsonConverterFactory).Namespace!,
+			typeof(ValueObjects.IValueObject).Namespace!,
 		];
 		AdditionalAssemblyTypes = [typeof(Aggregates.IAggregate)];
 		AdditionalReferences = [.. TestMetadataReferences.GetAdditionalReferences()];
 		ExcludeGeneratedSourceHintNames = [.. GeneratedAttributes];
 	}
+
+	public static readonly EventSourcingGeneratorTestOptions NoValidation = new()
+	{
+		ThrowOnGenerationException = false,
+	};
 }

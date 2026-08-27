@@ -1,27 +1,21 @@
 namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 
 sealed record AggregateGenerationModel(
-	AggregateGenerationContext GenerationContext,
+	GenerationContext<AggregateGenerationCapabilities> GenerationContext,
 	EquatableArray<GeneratorResult<AggregateInfo>> Aggregates,
 	EquatableArray<DiagnosticInfo> Diagnostics
 );
 
-sealed class AggregateGenerationContext(
-	Compilation compilation,
-	GenerationSettings generationSettings,
-	ISourceGenLogger? logger
-) : GenerationContext(compilation, generationSettings, logger)
-{
-	public bool HasAggregateBase { get; } =
-		compilation.GetTypeByMetadataName(TypeLibrary.Aggregates.AggregateBase.MetadataFullName) is not null;
-}
+sealed record AggregateGenerationCapabilities(bool HasAggregateBase) : IGenerationCapabilities;
 
 // This is recreated outside of the pipeline to avoid the state
 // of the CodeWriter being shared across multiple source outputs.
-sealed class AggregateEmitContext(AggregateGenerationContext generationContext, AggregateInfo aggregate)
-	: ISourceGenLogger
+sealed class AggregateEmitContext(
+	GenerationContext<AggregateGenerationCapabilities> generationContext,
+	AggregateInfo aggregate
+) : ISourceGenLogger
 {
-	public AggregateGenerationContext Generation { get; } = generationContext;
+	public GenerationContext<AggregateGenerationCapabilities> Generation { get; } = generationContext;
 
 	public AggregateInfo Aggregate { get; } = aggregate;
 

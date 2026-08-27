@@ -21,7 +21,7 @@ static class AggregateInfoBuilder
 		var mergedClassSymbol = compilation.GetTypeByMetadataName(classMetadataFullName);
 		if (mergedClassSymbol is not null)
 			classSymbol = mergedClassSymbol;
-		List<DiagnosticInfo> diagnostics = [];
+		var diagnostics = ImmutableArray.CreateBuilder<DiagnosticInfo>();
 
 		var canGenerate = ValidateAggregateClass(
 			classSymbol,
@@ -127,14 +127,14 @@ static class AggregateInfoBuilder
 				[.. containingTypes],
 				aggregateTypeParameters
 			),
-			[.. diagnostics]
+			diagnostics.ToImmutable()
 		);
 	}
 
 	static bool ValidateAggregateClass(
 		INamedTypeSymbol classSymbol,
 		ClassDeclarationSyntax syntax,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		out bool shouldDeclareAggregateBase,
 		out bool isPartial,
 		out bool inheritsAggregateBase
@@ -217,7 +217,7 @@ static class AggregateInfoBuilder
 
 	static void ScanProperties(
 		INamedTypeSymbol classSymbol,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		List<AggregateStatePropertyInfo> properties,
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
 		List<IMethodSymbol> attributedMethods,
@@ -322,7 +322,7 @@ static class AggregateInfoBuilder
 		List<InvalidAggregateEventMethodInfo> invalidMethods,
 		Dictionary<TypeReference, IMethodSymbol> methodsByEventType,
 		Dictionary<int, (IMethodSymbol Symbol, bool IsExplicit)> methodsBySchemaVersion,
-		List<DiagnosticInfo> diagnostics,
+		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		CancellationToken cancellationToken
 	)
 	{
