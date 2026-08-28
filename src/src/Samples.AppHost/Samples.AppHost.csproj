@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.5.2">
+<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
 	<ItemGroup>
 		<Compile
 			Include="..\..\tests\SharedTestingFramework\ContainerHelper.Resources.cs"
