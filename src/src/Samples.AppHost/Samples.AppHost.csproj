@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
 	<ItemGroup>
 		<Compile
 			Include="..\..\tests\SharedTestingFramework\ContainerHelper.Resources.cs"
@@ -21,6 +21,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Samples.Shared\Samples.Shared.csproj" IsAspireProjectResource="false" />
+		<ProjectReference Include="..\ZodSharpImpl\ZodSharpImpl.csproj" IsAspireProjectResource="false" />
 		<ProjectReference Include="..\Samples.Web\Samples.Web.csproj" />
 	</ItemGroup>
 </Project>

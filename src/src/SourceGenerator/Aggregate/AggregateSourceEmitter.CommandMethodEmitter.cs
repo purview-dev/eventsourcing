@@ -24,22 +24,22 @@ static partial class CommandMethodEmitter
 			{
 				var bodyContext = outputContext.WithWriter(writeBody);
 
-				if (method.AllParameters.Length > 0)
+				if (!method.AllParameters.IsEmpty)
 					EmitParameterPreparationBlock(bodyContext, method);
 
-				if (method.ComputedParameters.Length > 0)
+				if (!method.ComputedParameters.IsEmpty)
 					EmitOnComputingBefore(bodyContext, method, hookSuffix);
 
 				EmitEventCreationAndShouldApply(bodyContext, method, hookSuffix, declareVariable: true);
 
 				EmitRaisingHook(bodyContext, method, hookSuffix);
 
-				if (method.ComputedParameters.Length > 0)
+				if (!method.ComputedParameters.IsEmpty)
 					EmitOnComputingAfter(bodyContext, method, hookSuffix);
 
 				EmitEventCreationAndShouldApply(bodyContext, method, hookSuffix, declareVariable: false);
 
-				if (method.AllParameters.Length > 0)
+				if (!method.AllParameters.IsEmpty)
 				{
 					var mappedParameters = method
 						.AllParameters.Where(static parameter => parameter.HasAggregateProperty)
@@ -177,7 +177,7 @@ static partial class CommandMethodEmitter
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.ComputedParameters)
 		);
 
-		if (method.NonComputedParameters.Length > 0)
+		if (!method.NonComputedParameters.IsEmpty)
 		{
 			writer.WriteMethodCall(
 				$"OnComputing{hookSuffix}",
@@ -210,11 +210,11 @@ static partial class CommandMethodEmitter
 	{
 		var writer = outputContext.Writer;
 		var onRaisingMethodName = $"OnRaising{hookSuffix}";
-		if (method.AllParameters.Length == 0)
+		if (method.AllParameters.IsEmpty)
 			writer.WriteMethodCall(onRaisingMethodName);
-		else if (method.ComputedParameters.Length > 0)
+		else if (!method.ComputedParameters.IsEmpty)
 		{
-			if (method.NonComputedParameters.Length == 0)
+			if (method.NonComputedParameters.IsEmpty)
 				writer.WriteMethodCall(onRaisingMethodName);
 			else
 			{
@@ -252,7 +252,7 @@ static partial class CommandMethodEmitter
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.ComputedParameters)
 		);
 
-		if (method.NonComputedParameters.Length > 0)
+		if (!method.NonComputedParameters.IsEmpty)
 		{
 			writer.WriteMethodCall(
 				onComputingMethodName,
@@ -298,7 +298,7 @@ static partial class CommandMethodEmitter
 		var writer = outputContext.Writer;
 		var suppression = AggregateSourceEmitter.CreateCA1822Suppression();
 
-		if (method.ComputedParameters.Length > 0)
+		if (!method.ComputedParameters.IsEmpty)
 		{
 			var computingMethodName = $"OnComputing{hookSuffix}";
 			writer.WritePartialMethod(
@@ -311,7 +311,7 @@ static partial class CommandMethodEmitter
 				}
 			);
 
-			if (method.NonComputedParameters.Length > 0)
+			if (!method.NonComputedParameters.IsEmpty)
 			{
 				writer.WritePartialMethod(
 					new(computingMethodName)
@@ -334,13 +334,13 @@ static partial class CommandMethodEmitter
 		}
 
 		var raisingMethodName = $"OnRaising{hookSuffix}";
-		if (method.AllParameters.Length == 0)
+		if (method.AllParameters.IsEmpty)
 		{
 			writer.WritePartialMethod(new(raisingMethodName) { Attributes = [suppression] });
 		}
-		else if (method.ComputedParameters.Length > 0)
+		else if (!method.ComputedParameters.IsEmpty)
 		{
-			if (method.NonComputedParameters.Length == 0)
+			if (method.NonComputedParameters.IsEmpty)
 				writer.WritePartialMethod(new(raisingMethodName) { Attributes = [suppression] });
 			else
 			{

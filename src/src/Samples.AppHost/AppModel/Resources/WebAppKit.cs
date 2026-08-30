@@ -1,6 +1,7 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using Purview.Aspire.ResourceKit;
+using ZodSharp;
 
 namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 
@@ -11,8 +12,7 @@ sealed partial class WebAppKit
 
 	protected override IResourceBuilder<ResourceGroup> BuildResource(IDistributedApplicationBuilder builder)
 	{
-		var resourceGroup = builder.AddResource(new ResourceGroup(Name)).WithIconName("AppFolderFilled");
-
+		var resourceGroup = builder.AddResource(new ResourceGroup(Name)).WithIconName("AddStarburstColor");
 		var variants = ImmutableDictionary.CreateBuilder<string, IResourceBuilder<ProjectResource>>();
 		foreach (var variant in Options.Variants)
 		{
@@ -47,7 +47,7 @@ sealed partial class WebAppKit
 		base.ConfigureResource();
 	}
 
-	//[ZodSchema]
+	[ZodSchema]
 	sealed partial class WebAppKitOptions
 	{
 		[Required]

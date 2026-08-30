@@ -1039,7 +1039,7 @@ static class AggregateEventMethodBuilder
 
 		methodInfo = new InvalidAggregateEventMethodInfo(
 			$"{modifiers}{declaration.ReturnType} {explicitInterfaceSpecifier}{declaration.Identifier}{typeParameterList}{parameterList}{constraints}",
-			diagnosticIds
+			diagnosticIds.ToImmutableArray()
 		);
 		return true;
 	}

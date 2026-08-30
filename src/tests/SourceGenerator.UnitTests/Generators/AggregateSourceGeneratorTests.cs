@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.CodeAnalysis;
-using TUnit.Assertions.Conditions;
 
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
@@ -2688,7 +2687,11 @@ namespace Testing
 }
 ";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var aggregateType = assembly.GetType("Testing.CustomerAggregate")!;
@@ -2725,7 +2728,11 @@ namespace Testing
 }
 ";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		var onChangingIndex = generatedSource.IndexOf(
@@ -2787,7 +2794,11 @@ namespace Testing
 }
 ";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var aggregateType = assembly.GetType("Testing.OrderAggregate")!;
@@ -2829,7 +2840,11 @@ namespace Testing
 }
 ";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var eventType = assembly.GetType("Testing.OrderEvents.OrderCreatedEvent")!;

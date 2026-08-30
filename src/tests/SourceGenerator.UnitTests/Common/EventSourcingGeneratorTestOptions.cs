@@ -38,6 +38,8 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 		ExcludeGeneratedSourceHintNames = [.. GeneratedAttributes];
 	}
 
+	public static new EventSourcingGeneratorTestOptions Default => new();
+
 	public static readonly EventSourcingGeneratorTestOptions NoValidation = new()
 	{
 		ThrowOnGenerationException = false,

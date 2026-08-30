@@ -3,7 +3,7 @@ agent: ask
 description: "Refactor a legacy source generator emitter from string/StringBuilder to CodeWriter + XmlCodeWriter-style XML extensions with behavior parity."
 ---
 
-You are modernizing a source generator implementation in this repository.
+You are modernizing a source generator implementation in this repository. Apply the guidance from the `source-generator-codewriter-modernization` skill for incremental pipelines, value equality, deterministic output, and CodeWriter scope safety.
 
 ## Inputs
 

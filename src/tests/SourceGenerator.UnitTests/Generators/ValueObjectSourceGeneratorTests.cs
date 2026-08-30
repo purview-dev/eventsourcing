@@ -75,7 +75,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var harnessType = assembly.GetType("Testing.ValueObjectHarness")!;
@@ -167,7 +171,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("private PhoneNumber(string value) => Value = value;");
@@ -227,7 +235,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public override string ToString()");
@@ -303,7 +315,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("private ProjectId(string value) => Value = value;");
@@ -369,7 +385,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert
@@ -518,7 +538,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var harnessType = assembly.GetType("Testing.ComplexHarness")!;
@@ -559,7 +583,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("private Address(string line1, string city)");
@@ -627,7 +655,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("global::System.IEquatable<global::Testing.UserCaptureStruct>");
@@ -665,7 +697,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert.That(generatedSource).Contains("public static global::Testing.EmptyValueObject Create()");
@@ -734,7 +770,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 		await Assert.That(generatedSource).Contains("return Create(value);");
 
@@ -850,7 +890,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert
@@ -1069,7 +1113,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var harnessType = assembly.GetType("Testing.UserDetailsHarness")!;
@@ -1148,7 +1196,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 
 		var recordSource = GetSourceForType(result, "UserCaptureRecord");
 		var recordStructSource = GetSourceForType(result, "UserCaptureRecordStruct");
@@ -1256,7 +1308,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var harnessType = assembly.GetType("Testing.UserDetailsNormalizeHarness")!;
@@ -1313,7 +1369,11 @@ public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGenerat
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var generatedSource = result.GetSource();
 
 		await Assert

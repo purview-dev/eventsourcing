@@ -32,7 +32,7 @@ static partial class AggregateSourceEmitter
 		// Generate the partial aggregate class in a block-scoped namespace.
 		using var nsBlock = writer.WriteBlockNamespaceScope(outputContext.Aggregate.AggregateClass);
 
-		List<IDisposable> containingScopes = [with(outputContext.Aggregate.ContainingTypes.Length)];
+		List<IDisposable> containingScopes = [with(outputContext.Aggregate.ContainingTypes.Count)];
 		foreach (var containingType in outputContext.Aggregate.ContainingTypes)
 		{
 			containingScopes.Add(
@@ -514,8 +514,9 @@ static partial class AggregateSourceEmitter
 		InvalidAggregateEventMethodInfo method
 	)
 	{
-		var diagnosticIds =
-			method.DiagnosticIds.Length > 0 ? string.Join(", ", method.DiagnosticIds) : "unknown diagnostic IDs";
+		var diagnosticIds = !method.DiagnosticIds.IsEmpty
+			? string.Join(", ", method.DiagnosticIds)
+			: "unknown diagnostic IDs";
 		var message = EscapeStringLiteral(
 			$"The generated aggregate event method '{method.Signature}' is unavailable because [Event] validation failed. Review the suppressed generator diagnostics for this method ({diagnosticIds})."
 		);

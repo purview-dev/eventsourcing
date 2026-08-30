@@ -4,7 +4,7 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate.Models;
 readonly partial record struct AggregateAttributeData(string? EventNamespace, string? EventSuffix);
 
 [Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.AggregateDefaultsAttribute))]
-readonly partial record struct AggregateDefaultsAttributeData(string? EventSuffix, ITypeSymbol? EventType);
+readonly partial record struct AggregateDefaultsAttributeData(string? EventSuffix, TypeIdentity EventType);
 
 [Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.CollectionEventAttribute))]
 readonly partial record struct CollectionEventAttributeData(

@@ -4,23 +4,23 @@ sealed record class AggregateInfo(
 	TypeReference AggregateClass,
 	Accessibility Accessibility,
 	bool ShouldDeclareAggregateBase,
-	List<AggregateStatePropertyInfo> Properties,
-	List<AggregateEventMethodInfo> Methods,
-	List<InvalidAggregateEventMethodInfo> InvalidMethods,
+	EquatableArray<AggregateStatePropertyInfo> Properties,
+	EquatableArray<AggregateEventMethodInfo> Methods,
+	EquatableArray<InvalidAggregateEventMethodInfo> InvalidMethods,
 	string HintName,
 	bool IsValid = true,
 	bool IsPartial = true,
 	bool InheritsAggregateBase = false,
 	bool HasManualRegisterEvents = false,
-	ImmutableArray<AggregateContainingTypeInfo> ContainingTypes = default,
-	ImmutableArray<GenericTypeParameterOptions> TypeParameters = default
+	EquatableArray<AggregateContainingTypeInfo> ContainingTypes = default,
+	EquatableArray<GenericTypeParameterOptions> TypeParameters = default
 );
 
 sealed record class AggregateContainingTypeInfo(
 	string Name,
 	Accessibility Accessibility,
 	bool IsStatic,
-	ImmutableArray<GenericTypeParameterOptions> TypeParameters = default
+	EquatableArray<GenericTypeParameterOptions> TypeParameters = default
 );
 
 sealed record class AggregateStatePropertyInfo(string PropertyName, TypeReference PropertyType);
@@ -47,11 +47,11 @@ sealed record class AggregateStatePropertyInfo(string PropertyName, TypeReferenc
 sealed record class AggregateEventMethodInfo(
 	string MethodName,
 	TypeReference EventType,
-	ImmutableArray<EventPropertyInfo> AllParameters,
-	ImmutableArray<EventPropertyInfo> EventParameters,
-	ImmutableArray<EventPropertyInfo> ComputedParameters,
-	ImmutableArray<EventPropertyInfo> NonComputedParameters,
-	ImmutableArray<EventPropertyInfo> AggregateProperties,
+	EquatableArray<EventPropertyInfo> AllParameters,
+	EquatableArray<EventPropertyInfo> EventParameters,
+	EquatableArray<EventPropertyInfo> ComputedParameters,
+	EquatableArray<EventPropertyInfo> NonComputedParameters,
+	EquatableArray<EventPropertyInfo> AggregateProperties,
 	TypeReference ReturnType,
 	EventMethodReturnKind ReturnKind,
 	Accessibility MethodAccessibility,
@@ -101,7 +101,7 @@ enum UserApplyMethodKind
 	NonPartial = 2,
 }
 
-sealed record class InvalidAggregateEventMethodInfo(string Signature, string[] DiagnosticIds);
+sealed record class InvalidAggregateEventMethodInfo(string Signature, EquatableArray<string> DiagnosticIds);
 
 /// <param name="ParameterName"></param>
 /// <param name="ParameterType"></param>

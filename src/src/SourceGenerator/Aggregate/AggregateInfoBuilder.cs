@@ -107,24 +107,20 @@ static class AggregateInfoBuilder
 			.TypeParameters.Select(static tp => new GenericTypeParameterOptions(tp.Name))
 			.ToImmutableArray();
 
-		if (!isPartial)
-			return GeneratorResult<AggregateInfo>.Fail([.. diagnostics]);
-
-		// If the aggregate class is not partial, we cannot generate code for it. However, we still want to return the diagnostics collected so far.
-		return GeneratorResult<AggregateInfo>.Ok(
+		return GeneratorResult<AggregateInfo>.Create(
 			new(
 				aggregateType,
 				classSymbol.DeclaredAccessibility,
 				shouldDeclareAggregateBase,
-				properties,
-				methods,
-				invalidMethods,
+				properties.ToImmutableArray(),
+				methods.ToImmutableArray(),
+				invalidMethods.ToImmutableArray(),
 				AggregateEventMethodBuilder.CreateHintName(classSymbol),
 				canGenerate,
 				isPartial,
 				inheritsAggregateBase,
 				hasManualRegisterEvents,
-				[.. containingTypes],
+				containingTypes.ToImmutableArray(),
 				aggregateTypeParameters
 			),
 			diagnostics.ToImmutable()

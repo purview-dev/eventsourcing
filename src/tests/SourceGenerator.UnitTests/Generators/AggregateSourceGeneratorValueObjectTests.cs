@@ -117,7 +117,11 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var aggregateType = assembly.GetType("Testing.OrderAggregate")!;
@@ -222,7 +226,11 @@ public sealed class AggregateSourceGeneratorValueObjectTests
 			}
 			""";
 
-		var result = await GenerateAsync(source, cancellationToken);
+		var result = await GenerateAsync(
+			source,
+			EventSourcingGeneratorTestOptions.Default.Compile(),
+			cancellationToken
+		);
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 
 		var aggregateType = assembly.GetType("Testing.CustomerAggregate")!;

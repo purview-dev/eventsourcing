@@ -5,10 +5,10 @@ partial class AggregateSourceEmitter
 	static void GenerateEventClass(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
 	{
 		outputContext.Debug(
-			$"Generating event class '{method.EventType}' for method '{method.MethodName}' with {method.EventParameters.Length} stored parameters and version {method.Version}."
+			$"Generating event class '{method.EventType}' for method '{method.MethodName}' with {method.EventParameters.Count} stored parameters and version {method.Version}."
 		);
 
-		var hashParameterName = method.EventParameters.Length == 0 ? "_" : "hash";
+		var hashParameterName = method.EventParameters.IsEmpty ? "_" : "hash";
 
 		outputContext.Writer.WriteClass(
 			new(method.EventType.Identity.Name, TypeDeclarationAccessibility.Public)

@@ -8,7 +8,7 @@
 		<PackageId>Purview.EventSourcing.ZodSharp</PackageId>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="ZodSharp" />
+		<PackageReference Include="ZodSharp" PrivateAssets="contentfiles;build" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
