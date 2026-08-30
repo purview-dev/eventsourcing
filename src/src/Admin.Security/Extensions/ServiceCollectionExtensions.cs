@@ -9,8 +9,19 @@ using Purview.EventSourcing.Admin.Security.Requirements;
 
 namespace Purview.EventSourcing.Admin.Security;
 
+/// <summary>
+/// Registers the admin portal security services and authorization policies.
+/// </summary>
 public static class AdminSecurityServiceCollectionExtensions
 {
+	/// <summary>
+	/// Registers the admin portal permission provider and authorization handlers with the service collection.
+	/// </summary>
+	/// <param name="services">The service collection to configure.</param>
+	/// <param name="permissionProvider">
+	/// The permission provider to use, or <see langword="null"/> to register a deny-by-default provider.
+	/// </param>
+	/// <returns>The configured service collection.</returns>
 	public static IServiceCollection AddPurviewEventSourcingAdminSecurity(
 		this IServiceCollection services,
 		IAdminPermissionProvider? permissionProvider = null
@@ -26,6 +37,11 @@ public static class AdminSecurityServiceCollectionExtensions
 		return services;
 	}
 
+	/// <summary>
+	/// Adds the admin portal authorization policies to the authorization builder.
+	/// </summary>
+	/// <param name="builder">The authorization builder to configure.</param>
+	/// <returns>The configured authorization builder for chaining.</returns>
 	public static AuthorizationBuilder AddPurviewEventSourcingAdminPolicies([NotNull] this AuthorizationBuilder builder)
 	{
 		builder.AddPolicy(

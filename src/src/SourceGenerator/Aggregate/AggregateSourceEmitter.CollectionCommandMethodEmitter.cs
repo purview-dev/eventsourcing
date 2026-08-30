@@ -4,7 +4,7 @@ static partial class AggregateSourceEmitter
 {
 	static class CollectionCommandMethodEmitter
 	{
-		public static void Generate(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
+		public static void Generate(CodeWriter writer, AggregateEventMethodInfo method)
 		{
 			var collectionEvent = method.CollectionEvent!;
 			var parameter = method.AllParameters[0];
@@ -13,55 +13,41 @@ static partial class AggregateSourceEmitter
 			var methodAccessModifier = GetAccessModifierString(method.MethodAccessibility);
 			var parameterList = BuildParameterList(method.AllParameters);
 
-			outputContext.Writer.WriteLine(
+			writer.WriteLine(
 				$"{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({parameterList})"
 			);
 
-			using (outputContext.Writer.OpenBlockScope())
+			using (writer.OpenBlockScope())
 			{
-				EmitCollectionGuard(outputContext, collectionEvent);
+				EmitCollectionGuard(writer, collectionEvent);
 
 				if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
-					EmitSingleItemBody(
-						outputContext,
-						method,
-						collectionEvent,
-						parameter,
-						hookSuffix,
-						normalizeValidateSuffix
-					);
+					EmitSingleItemBody(writer, method, collectionEvent, parameter, hookSuffix, normalizeValidateSuffix);
 				else
-					EmitEnumerableBody(
-						outputContext,
-						method,
-						collectionEvent,
-						parameter,
-						hookSuffix,
-						normalizeValidateSuffix
-					);
+					EmitEnumerableBody(writer, method, collectionEvent, parameter, hookSuffix, normalizeValidateSuffix);
 
-				EmitCollectionFinalization(outputContext, method, hookSuffix);
+				EmitCollectionFinalization(writer, method, hookSuffix);
 			}
 
-			outputContext.Writer.NewLine();
+			writer.NewLine();
 
-			EmitCollectionTrailingHookDeclarations(outputContext, method, collectionEvent, parameter, hookSuffix);
+			EmitCollectionTrailingHookDeclarations(writer, method, collectionEvent, parameter, hookSuffix);
 		}
 
-		static void EmitCollectionGuard(AggregateEmitContext outputContext, CollectionEventInfo collectionEvent)
+		static void EmitCollectionGuard(CodeWriter writer, CollectionEventInfo collectionEvent)
 		{
-			outputContext.Writer.WriteBlock(
+			writer.WriteBlock(
 				$"if ({collectionEvent.PropertyName} is null)",
 				block =>
 					block.WriteThrow(
 						$"new global::System.InvalidOperationException(\"Collection property '{collectionEvent.PropertyName}' cannot be null.\")"
 					)
 			);
-			outputContext.Writer.NewLine();
+			writer.NewLine();
 		}
 
 		static void EmitSingleItemBody(
-			AggregateEmitContext outputContext,
+			CodeWriter writer,
 			AggregateEventMethodInfo method,
 			CollectionEventInfo collectionEvent,
 			EventPropertyInfo parameter,
@@ -69,8 +55,6 @@ static partial class AggregateSourceEmitter
 			string normalizeValidateSuffix
 		)
 		{
-			var writer = outputContext.Writer;
-
 			writer.WriteAssignment("var", "__itemValue", parameter.ParameterName);
 			writer.WriteMethodCall(
 				$"OnNormalizing{normalizeValidateSuffix}",
@@ -86,14 +70,14 @@ static partial class AggregateSourceEmitter
 			{
 				writer.WriteIfBlock(
 					$"{collectionEvent.PropertyName}.Contains(__itemValue)",
-					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+					ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 				);
 			}
 			else if (!isAddOperation)
 			{
 				writer.WriteIfBlock(
 					$"!{collectionEvent.PropertyName}.Contains(__itemValue)",
-					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+					ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 				);
 			}
 
@@ -106,7 +90,7 @@ static partial class AggregateSourceEmitter
 
 			writer.WriteIfBlock(
 				$"!ShouldApply{hookSuffix}(@event)",
-				ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+				ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 			);
 
 			writer.WriteMethodCall(
@@ -116,7 +100,7 @@ static partial class AggregateSourceEmitter
 		}
 
 		static void EmitEnumerableBody(
-			AggregateEmitContext outputContext,
+			CodeWriter writer,
 			AggregateEventMethodInfo method,
 			CollectionEventInfo collectionEvent,
 			EventPropertyInfo parameter,
@@ -124,7 +108,6 @@ static partial class AggregateSourceEmitter
 			string normalizeValidateSuffix
 		)
 		{
-			var writer = outputContext.Writer;
 			var enumerableType = TypeLibrary.System.Collections.Generic.IEnumerable.MakeGeneric(
 				collectionEvent.ElementType
 			);
@@ -147,10 +130,7 @@ static partial class AggregateSourceEmitter
 				"__eventItems",
 				$"__itemsValue as {collectionEvent.ElementType}[] ?? [.. __itemsValue]"
 			);
-			writer.WriteIfBlock(
-				"__eventItems.Length == 0",
-				ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
-			);
+			writer.WriteIfBlock("__eventItems.Length == 0", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
 
 			var isAddOperation = collectionEvent.Operation == CollectionMutationOperation.Add;
 			if (isAddOperation && collectionEvent.IsSet)
@@ -168,10 +148,7 @@ static partial class AggregateSourceEmitter
 							}
 						)
 				);
-				writer.WriteIfBlock(
-					"!__hasNewValues",
-					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
-				);
+				writer.WriteIfBlock("!__hasNewValues", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
 			}
 			else if (!isAddOperation)
 			{
@@ -188,10 +165,7 @@ static partial class AggregateSourceEmitter
 							}
 						)
 				);
-				writer.WriteIfBlock(
-					"!__hasExistingValues",
-					ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
-				);
+				writer.WriteIfBlock("!__hasExistingValues", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
 			}
 
 			writer.Write("var @event = new ").Write(method.EventType);
@@ -203,7 +177,7 @@ static partial class AggregateSourceEmitter
 
 			writer.WriteIfBlock(
 				$"!ShouldApply{hookSuffix}(@event)",
-				ifBody => EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+				ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 			);
 
 			writer.WriteMethodCall(
@@ -212,28 +186,22 @@ static partial class AggregateSourceEmitter
 			);
 		}
 
-		static void EmitCollectionFinalization(
-			AggregateEmitContext outputContext,
-			AggregateEventMethodInfo method,
-			string hookSuffix
-		)
+		static void EmitCollectionFinalization(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 		{
-			var writer = outputContext.Writer;
 			writer.NewLine();
 			writer.WriteMethodCall($"OnRaised{hookSuffix}", ["@event"]);
 			writer.WriteMethodCall("RecordAndApply", ["@event"]);
-			EmitSuccessReturn(outputContext, method.ReturnKind);
+			EmitSuccessReturn(writer, method.ReturnKind);
 		}
 
 		static void EmitCollectionTrailingHookDeclarations(
-			AggregateEmitContext outputContext,
+			CodeWriter writer,
 			AggregateEventMethodInfo method,
 			CollectionEventInfo collectionEvent,
 			EventPropertyInfo parameter,
 			string hookSuffix
 		)
 		{
-			var writer = outputContext.Writer;
 			var suppression = CreateCA1822Suppression();
 
 			var normalizeValidateType =

@@ -1,22 +1,44 @@
-using System.Text;
-
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 static class ValueObjectEmitterHelpers
 {
+	public static void WriteExpressionMethod(CodeWriter writer, MethodDeclarationOptions declaration)
+	{
+		using (writer.WriteMethodScope(declaration))
+		{
+			//
+		}
+	}
+
+	public static void EmitBinaryOperator(
+		CodeWriter writer,
+		string leftTypeName,
+		string rightTypeName,
+		string operatorToken,
+		string expression
+	)
+	{
+		using (
+			writer.OpenBlockScope(
+				$"public static bool operator {operatorToken}({leftTypeName} left, {rightTypeName} right)"
+			)
+		)
+		{
+			writer.WriteReturn(expression);
+		}
+	}
+
 	public static void EmitRelationalOperators(
-		StringBuilder sb,
-		string indent,
-		INamedTypeSymbol declaringType,
+		CodeWriter writer,
+		EquatableArray<string> existingOperators,
 		string leftTypeName,
 		string rightTypeName,
 		string compareExpression
 	)
 	{
 		EmitRelationalOperator(
-			sb,
-			indent,
-			declaringType,
+			writer,
+			existingOperators,
 			ValueObjectSymbolInspector.LessThanOperatorName,
 			"<",
 			leftTypeName,
@@ -25,9 +47,8 @@ static class ValueObjectEmitterHelpers
 			"< 0"
 		);
 		EmitRelationalOperator(
-			sb,
-			indent,
-			declaringType,
+			writer,
+			existingOperators,
 			ValueObjectSymbolInspector.GreaterThanOperatorName,
 			">",
 			leftTypeName,
@@ -36,9 +57,8 @@ static class ValueObjectEmitterHelpers
 			"> 0"
 		);
 		EmitRelationalOperator(
-			sb,
-			indent,
-			declaringType,
+			writer,
+			existingOperators,
 			ValueObjectSymbolInspector.LessThanOrEqualOperatorName,
 			"<=",
 			leftTypeName,
@@ -47,9 +67,8 @@ static class ValueObjectEmitterHelpers
 			"<= 0"
 		);
 		EmitRelationalOperator(
-			sb,
-			indent,
-			declaringType,
+			writer,
+			existingOperators,
 			ValueObjectSymbolInspector.GreaterThanOrEqualOperatorName,
 			">=",
 			leftTypeName,
@@ -60,9 +79,8 @@ static class ValueObjectEmitterHelpers
 	}
 
 	static void EmitRelationalOperator(
-		StringBuilder sb,
-		string indent,
-		INamedTypeSymbol declaringType,
+		CodeWriter writer,
+		EquatableArray<string> existingOperators,
 		string operatorMethodName,
 		string operatorToken,
 		string leftTypeName,
@@ -71,21 +89,16 @@ static class ValueObjectEmitterHelpers
 		string comparisonSuffix
 	)
 	{
-		if (
-			ValueObjectSymbolInspector.HasRelationalOperator(
-				declaringType,
-				operatorMethodName,
-				leftTypeName,
-				rightTypeName
-			)
-		)
+		if (existingOperators.Contains(operatorMethodName))
 			return;
 
-		sb.AppendLine(
-			$@"{indent}	public static bool operator {operatorToken}({leftTypeName} left, {rightTypeName} right)
-{indent}	{{
-{indent}		return left.{compareExpression} {comparisonSuffix};
-{indent}	}}"
-		);
+		using (
+			writer.OpenBlockScope(
+				$"public static bool operator {operatorToken}({leftTypeName} left, {rightTypeName} right)"
+			)
+		)
+		{
+			writer.WriteReturn($"left.{compareExpression} {comparisonSuffix}");
+		}
 	}
 }

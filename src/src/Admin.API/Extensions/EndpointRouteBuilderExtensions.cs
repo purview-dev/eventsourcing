@@ -6,8 +6,24 @@ using Purview.EventSourcing.Admin.Api.Endpoints;
 
 namespace Purview.EventSourcing.Admin.Api;
 
+/// <summary>
+/// Maps the Admin portal minimal API endpoints onto the application's route table.
+/// </summary>
 public static class AdminApiEndpointRouteBuilderExtensions
 {
+	/// <summary>
+	/// Maps the Admin portal endpoints, honouring the enabled feature toggles in <see cref="AdminPortalOptions"/>.
+	/// </summary>
+	/// <param name="app">The <see cref="WebApplication"/> to map the endpoints onto.</param>
+	/// <param name="optionsAccessor">
+	/// The options to configure the Admin portal with, or <see langword="null"/> to resolve them from the application's services.
+	/// </param>
+	/// <remarks>
+	/// <para>
+	/// When <see cref="AdminPortalOptions.Enabled"/> is <see langword="false"/> no endpoints are mapped. All mapped
+	/// endpoints require authorization and are grouped under <see cref="AdminPortalOptions.RoutePrefix"/>.
+	/// </para>
+	/// </remarks>
 	public static void MapPurviewEventSourcingAdminAPI(
 		[NotNull] this WebApplication app,
 		IOptions<AdminPortalOptions>? optionsAccessor = null

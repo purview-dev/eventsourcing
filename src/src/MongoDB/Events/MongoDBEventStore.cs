@@ -12,6 +12,18 @@ using Purview.EventSourcing.Services;
 
 namespace Purview.EventSourcing.MongoDB;
 
+/// <summary>
+/// A MongoDB-backed event store for <typeparamref name="T"/> that persists events to MongoDB collections.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Events, stream version records and idempotency markers are persisted to an events collection, while
+/// snapshots are persisted to a separate snapshot collection. Aggregates are replayed from snapshots and
+/// events, and can be cached in an <see cref="IDistributedCache"/>. This store does not support queryable
+/// reads; use <see cref="MongoDBSnapshotEventStore{T}"/> for queryable snapshot access.
+/// </remarks>
+/// <seealso cref="IMongoDBEventStore{T}"/>
+/// <seealso cref="MongoDBSnapshotEventStore{T}"/>
 public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDisposable
 	where T : class, IAggregate, new()
 {
@@ -31,6 +43,20 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
 
+	/// <summary>
+	/// Initializes a new <see cref="MongoDBEventStore{T}"/> instance.
+	/// </summary>
+	/// <param name="eventNameMapper">The mapper used to convert between event types and their serialized names.</param>
+	/// <param name="mongoDbOptions">The options controlling MongoDB connection, database and collection configuration.</param>
+	/// <param name="distributedCache">The cache used to store and retrieve aggregate snapshots.</param>
+	/// <param name="eventStoreTelemetry">The telemetry contract used to trace store operations.</param>
+	/// <param name="mongoDBClientTelemetry">The telemetry contract used to trace MongoDB client operations.</param>
+	/// <param name="aggregateChangeNotifier">The notifier invoked before and after aggregates are saved or deleted.</param>
+	/// <param name="aggregateRequirementsManager">The manager used to fulfil aggregate requirements.</param>
+	/// <param name="storageNameBuilder">Optional builder used to derive MongoDB database and collection names.</param>
+	/// <param name="validator">Optional <see cref="IAggregateValidator{T}"/> used to validate aggregates before they are saved.</param>
+	/// <param name="aggregateIdFactory">Optional factory used to generate aggregate ids when none is supplied.</param>
+	/// <param name="eventUpcasterRegistry">Optional registry used to upcast legacy events during replay.</param>
 	public MongoDBEventStore(
 		IAggregateEventNameMapper eventNameMapper,
 		[NotNull] IOptions<MongoDBEventStoreOptions> mongoDbOptions,
@@ -93,6 +119,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		);
 	}
 
+	///<inheritdoc/>
 	public T FulfilRequirements(T aggregate)
 	{
 		_aggregateRequirementsManager.Fulfil(aggregate);
@@ -136,6 +163,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
 		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
+	///<inheritdoc/>
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default
@@ -236,9 +264,17 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 		$"i_{_aggregateTypeShortName}_{aggregateId}_{idempotencyId}";
 
 #pragma warning disable CA1308 // Normalize strings to uppercase
+	/// <summary>
+	/// Creates the distributed cache key for the aggregate with the specified <paramref name="aggregateId"/>.
+	/// </summary>
+	/// <param name="aggregateId">The identifier of the aggregate.</param>
+	/// <returns>The case-insensitive cache key used to store and retrieve the aggregate snapshot.</returns>
 	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
+	/// <summary>
+	/// Releases the MongoDB client resources held by the store.
+	/// </summary>
 	public void Dispose()
 	{
 		GC.SuppressFinalize(this);

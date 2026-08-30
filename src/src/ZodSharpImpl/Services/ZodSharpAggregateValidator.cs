@@ -5,12 +5,21 @@ using ZodSharp.Core;
 
 namespace Purview.EventSourcing.ZodSharp.Services;
 
+/// <summary>
+/// Adapts an <see cref="IZodSchemaValidator{TAggregate}"/> to the
+/// <see cref="IAggregateValidator{TAggregate}"/> interface, mapping ZodSharp validation results to
+/// <see cref="ValidationResult"/>.
+/// </summary>
+/// <typeparam name="TAggregate">The aggregate type to validate.</typeparam>
+/// <param name="validator">The <see cref="IZodSchemaValidator{TAggregate}"/> to adapt.</param>
 public sealed class ZodSharpAggregateValidator<TAggregate>(IZodSchemaValidator<TAggregate> validator)
 	: IAggregateValidator<TAggregate>
 	where TAggregate : IAggregate
 {
+	///<inheritdoc/>
 	public ValidationResult Validate(TAggregate aggregate) => Convert(validator.Validate(aggregate));
 
+	///<inheritdoc/>
 	public async Task<ValidationResult> ValidateAsync(
 		TAggregate aggregate,
 		CancellationToken cancellationToken = default

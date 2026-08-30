@@ -2,6 +2,7 @@
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<T?> GetOrCreateAsync(
 		string? aggregateId,
 		EventStoreOperationContext? operationContext,

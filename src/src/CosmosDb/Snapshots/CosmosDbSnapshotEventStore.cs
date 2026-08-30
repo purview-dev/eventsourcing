@@ -7,6 +7,16 @@ using Purview.EventSourcing.Internal;
 
 namespace Purview.EventSourcing.CosmosDb.Snapshot;
 
+/// <summary>
+/// An Azure Cosmos DB-backed queryable snapshot event store for <typeparamref name="T"/>.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Aggregates are upserted as documents into the configured Cosmos DB container, partitioned by
+/// <see cref="IAggregate.AggregateType"/>. Event persistence is delegated to the registered
+/// <see cref="INonQueryableEventStore{T}"/>, while snapshots are written according to the configured
+/// <see cref="ISnapshotStrategy{T}"/> and telemetry is recorded via <see cref="ICosmosDbSnapshotEventStoreTelemetry"/>.
+/// </remarks>
 public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEventStore<T>, IAsyncDisposable
 	where T : class, IAggregate, new()
 {
@@ -25,6 +35,15 @@ public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEve
 
 	static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, string> AggregateTypeNames = new();
 
+	/// <summary>
+	/// Creates a new <see cref="CosmosDbSnapshotEventStore{T}"/>.
+	/// </summary>
+	/// <param name="eventStore">The non-queryable event store used to persist the aggregate's events.</param>
+	/// <param name="cosmosDbEventStoreOptions">The options used to configure the Cosmos DB connection, container, and indexing.</param>
+	/// <param name="telemetry">The telemetry used to record snapshot metrics.</param>
+	/// <param name="cosmosClient">Optional, a pre-configured <see cref="CosmosClient"/>; when null, one is created from the options.</param>
+	/// <param name="snapshotStrategy">Optional, the strategy used to decide when a snapshot should be written; defaults to <see cref="AlwaysSnapshotStrategy{T}"/>.</param>
+	/// <param name="snapshotStrategySelector">Optional, the selector used to resolve a snapshot strategy for the aggregate.</param>
 	public CosmosDbSnapshotEventStore(
 		// Explicitly request a non-queryable event store.
 		INonQueryableEventStore<T> eventStore,
@@ -48,10 +67,10 @@ public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEve
 	}
 
 	/// <summary>
-	/// This will upsert the aggregate regardless of it's save state in the internal event store.
+	/// This will upsert the aggregate regardless of its save state in the internal event store.
 	/// </summary>
-	/// <param name="aggregate"></param>
-	/// <param name="cancellationToken"></param>
+	/// <param name="aggregate">The aggregate to upsert as a snapshot.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
 	public async Task SnapshotAsync(T aggregate, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
@@ -63,6 +82,7 @@ public sealed partial class CosmosDbSnapshotEventStore<T> : ICosmosDbSnapshotEve
 
 	string GetAggregateTypeName() => AggregateTypeNames.GetOrAdd(_aggregateType, _ => new T().AggregateType);
 
+	/// <inheritdoc/>
 	public async ValueTask DisposeAsync()
 	{
 		await _cosmosDbClient.DisposeAsync();

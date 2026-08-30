@@ -7,6 +7,21 @@ using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.InMemory.Events;
 
+/// <summary>
+/// An in-memory <see cref="IEventStoreCore{T}"/> that stores aggregates and their events in process,
+/// without queryable snapshot reads.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <param name="aggregateChangeNotifier">The notifier invoked before and after aggregates are saved or deleted.</param>
+/// <param name="aggregateRequirementsManager">The manager used to fulfil aggregate requirements.</param>
+/// <param name="validator">Optional <see cref="IAggregateValidator{T}"/> used to validate aggregates before they are saved.</param>
+/// <param name="aggregateIdFactory">Optional factory used to generate aggregate ids when none is supplied.</param>
+/// <remarks>
+/// Aggregates are held in memory and are identified by id in a case-insensitive manner. This store is
+/// intended for testing and single-process scenarios; data is not shared between instances or persisted
+/// across restarts.
+/// </remarks>
+/// <seealso cref="IInMemoryEventStore{T}"/>
 public partial class InMemoryEventStore<T>(
 	ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 	IAggregateRequirementsManager aggregateRequirementsManager,
@@ -20,8 +35,13 @@ public partial class InMemoryEventStore<T>(
 
 	readonly IAggregateValidator<T>? _validator = validator;
 
+	/// <summary>
+	/// The aggregates currently held by the store.
+	/// </summary>
+	/// <remarks>Exposed so derived snapshot stores can enumerate the in-memory aggregates.</remarks>
 	protected IEnumerable<T> Aggregates => _aggregates.Values;
 
+	///<inheritdoc/>
 	public Task ClearAsync(CancellationToken cancellationToken = default)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
@@ -50,6 +70,7 @@ public partial class InMemoryEventStore<T>(
 		return Task.FromResult(true);
 	}
 
+	///<inheritdoc/>
 	public async Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))
@@ -71,6 +92,7 @@ public partial class InMemoryEventStore<T>(
 		return FulfilRequirements(aggregate);
 	}
 
+	///<inheritdoc/>
 	public async Task<bool> DeleteAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -136,6 +158,7 @@ public partial class InMemoryEventStore<T>(
 		return Task.FromResult(aggregate);
 	}
 
+	///<inheritdoc/>
 	public async Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		await Task.CompletedTask;
@@ -153,6 +176,7 @@ public partial class InMemoryEventStore<T>(
 			: ExistsState.DoesNotExist;
 	}
 
+	///<inheritdoc/>
 	public T FulfilRequirements(T aggregate)
 	{
 		aggregateRequirementsManager.Fulfil(aggregate);
@@ -160,6 +184,7 @@ public partial class InMemoryEventStore<T>(
 		return aggregate;
 	}
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
 		CancellationToken cancellationToken = default
@@ -172,6 +197,7 @@ public partial class InMemoryEventStore<T>(
 		return results.Select(a => a.Id()).ToAsyncEnumerable();
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> GetAsync(
 		string aggregateId,
 		EventStoreOperationContext? operationContext,
@@ -192,6 +218,7 @@ public partial class InMemoryEventStore<T>(
 		return await AddToCacheAsync(aggregate);
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> GetAtAsync(
 		string aggregateId,
 		int version,
@@ -212,6 +239,7 @@ public partial class InMemoryEventStore<T>(
 		return FulfilRequirements(aggregate);
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		var aggregate = await GetAsync(
@@ -225,6 +253,7 @@ public partial class InMemoryEventStore<T>(
 			: throw AggregateNotDeletedException(aggregateId);
 	}
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync(
 		string aggregateId,
 		int versionFrom,
@@ -243,6 +272,7 @@ public partial class InMemoryEventStore<T>(
 			.ToAsyncEnumerable();
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> GetOrCreateAsync(
 		string? aggregateId,
 		EventStoreOperationContext? operationContext,
@@ -259,10 +289,12 @@ public partial class InMemoryEventStore<T>(
 		return await CreateAsync(aggregateId, cancellationToken);
 	}
 
+	///<inheritdoc/>
 	public async Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
 		await ExistsAsync(aggregateId, cancellationToken)
 		&& (_aggregates.TryGetValue(aggregateId, out var aggregate) && aggregate.Details.IsDeleted);
 
+	///<inheritdoc/>
 	public async Task<bool> RestoreAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -289,6 +321,7 @@ public partial class InMemoryEventStore<T>(
 		return true;
 	}
 
+	///<inheritdoc/>
 	public async Task<SaveResult<T>> SaveAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -385,6 +418,10 @@ public partial class InMemoryEventStore<T>(
 		return ReturnSaveResult(aggregate, true, false);
 	}
 
+	/// <summary>
+	/// Releases the aggregates and events held by the store.
+	/// </summary>
+	/// <param name="disposing"><see langword="true"/> to release managed resources; otherwise, <see langword="false"/>.</param>
 	protected virtual void Dispose(bool disposing)
 	{
 		if (disposing)
@@ -394,6 +431,7 @@ public partial class InMemoryEventStore<T>(
 		}
 	}
 
+	///<inheritdoc/>
 	public void Dispose()
 	{
 		Dispose(disposing: true);

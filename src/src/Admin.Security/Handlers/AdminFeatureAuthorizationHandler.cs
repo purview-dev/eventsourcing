@@ -5,9 +5,15 @@ using Purview.EventSourcing.Admin.Security.Requirements;
 
 namespace Purview.EventSourcing.Admin.Security.Handlers;
 
+/// <summary>
+/// Authorization handler that grants a requirement only when the user holds an explicit
+/// allowed permission for the feature.
+/// </summary>
+/// <param name="permissionProvider">The permission provider used to resolve the current user's permissions.</param>
 public sealed class AdminFeatureAuthorizationHandler(IAdminPermissionProvider permissionProvider)
 	: AuthorizationHandler<AdminFeatureRequirement>
 {
+	///<inheritdoc/>
 	protected override async Task HandleRequirementAsync(
 		[NotNull] AuthorizationHandlerContext context,
 		AdminFeatureRequirement requirement

@@ -5,17 +5,34 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Purview.EventSourcing.AzureStorage;
 
+/// <summary>
+/// Options for configuring the Azure Table and Blob Storage event store provider.
+/// </summary>
+/// <remarks>
+/// Bound from the <see cref="AzureStorageEventStore"/> configuration section when registered through
+/// <see cref="Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions"/>. Options are validated on start-up.
+/// </remarks>
 public sealed class AzureStorageEventStoreOptions
 {
+	/// <summary>
+	/// The configuration section name that the options are bound from.
+	/// </summary>
 	public const string AzureStorageEventStore = "EventStore:AzureStorage";
 
 	const bool DefaultRemoveDeletedFromCache = true;
 	const int DefaultEventSuffixLength = 30;
 	const string DefaultEventPrefix = "e";
 
+	/// <summary>
+	/// Gets or sets the connection string used to access Azure Table and Blob Storage.
+	/// </summary>
+	/// <remarks>When unset, the connection string is resolved from the registered configuration.</remarks>
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	/// <summary>
+	/// Gets or sets the name of the Azure Table used to store events and related entities.
+	/// </summary>
 	[Required]
 	[StringLength(63, MinimumLength = 3)]
 	[RegularExpression("^[A-Za-z][A-Za-z0-9]*$")]
@@ -28,6 +45,10 @@ public sealed class AzureStorageEventStoreOptions
 	[RegularExpression("^[a-z0-9](?!.*--)[a-z0-9-]{1,61}[a-z0-9]$")]
 	public string Container { get; set; } = "snapshots";
 
+	/// <summary>
+	/// Gets or sets the timeout, in seconds, applied to Azure Storage client operations.
+	/// </summary>
+	/// <remarks>When <see langword="null"/>, the Azure SDK default network timeout is used.</remarks>
 	[Range(1, 120000)]
 	public int? TimeoutInSeconds { get; set; } = 60;
 
@@ -73,6 +94,10 @@ public sealed class AzureStorageEventStoreOptions
 	[DefaultValue(SnapshotCachingOptions.GetAndStore)]
 	public SnapshotCachingOptions CacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
 
+	/// <summary>
+	/// Gets or sets the sliding expiration applied to cached aggregate snapshots when no explicit cache
+	/// options are supplied by the <see cref="EventStoreOperationContext"/>.
+	/// </summary>
 	public TimeSpan DefaultCacheSlidingDuration { get; set; } = TimeSpan.FromMinutes(60);
 
 	/// <summary>

@@ -4,19 +4,24 @@ namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 static class ComplexValueObjectModelBuilder
 {
-	public static ComplexValueObjectModel? Build(
-		GeneratorAttributeSyntaxContext context,
-		CancellationToken cancellationToken,
-		out ImmutableArray<DiagnosticInfo> diagnostics
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Design",
+		"CA1506:Avoid excessive class coupling",
+		Justification = "Value object model construction couples many value types."
+	)]
+	public static GeneratorResult<ComplexValueObjectModel> Build(
+		INamedTypeSymbol typeSymbol,
+		TypeDeclarationSyntax syntax,
+		Compilation compilation,
+		CancellationToken cancellationToken
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		diagnostics = [];
 
-		if (context.TargetSymbol is not INamedTypeSymbol typeSymbol || context.TargetNode is not TypeDeclarationSyntax)
-			return null;
+		if (typeSymbol is null || syntax is null)
+			return GeneratorResult<ComplexValueObjectModel>.Empty;
 
-		var location = context.TargetNode.GetLocation();
+		var location = syntax.GetLocation();
 		var diagnosticsList = new List<DiagnosticInfo>();
 		diagnosticsList.AddRange(
 			ValueObjectSymbolInspector.ValidateValueObjectType(typeSymbol, "ValueObject", location)
@@ -28,13 +33,10 @@ static class ComplexValueObjectModelBuilder
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(DiagnosticLibrary.ConflictingValueObjectAttributes, location, typeSymbol.Name)
 			);
-			diagnostics = [.. diagnosticsList];
-			return null;
+			return GeneratorResult<ComplexValueObjectModel>.Create([.. diagnosticsList]);
 		}
 
-		var assemblyDefaults = ValueObjectDefaultsAttributeData.FromAttributeData(
-			context.SemanticModel.Compilation.Assembly.GetAttributes()
-		);
+		var assemblyDefaults = ValueObjectDefaultsAttributeData.FromAttributeData(compilation.Assembly.GetAttributes());
 		var valueObjectOptions = ValueObjectAttributeData.FromAttributeData(attributes);
 		var effectiveGenerateConstructor =
 			IsPropertyExplicitlySet(
@@ -49,10 +51,7 @@ static class ComplexValueObjectModelBuilder
 
 		var typeModel = ValueObjectSymbolInspector.BuildTypeModel(typeSymbol);
 		if (typeModel is null)
-		{
-			diagnostics = [.. diagnosticsList];
-			return null;
-		}
+			return GeneratorResult<ComplexValueObjectModel>.Create([.. diagnosticsList]);
 
 		var properties = typeSymbol
 			.GetMembers()
@@ -71,10 +70,17 @@ static class ComplexValueObjectModelBuilder
 			.Constructors.Where(static ctor => !ctor.IsStatic)
 			.Any(ctor => ValueObjectSymbolInspector.ConstructorMatches(ctor, properties));
 
-		var propertyTypeNames = properties
-			.Select(property => ValueObjectSymbolInspector.ToTypeName(property.Type))
-			.ToArray();
-		var propertyNames = properties.Select(property => property.Name).ToArray();
+		var propertyModels = ImmutableArray.CreateBuilder<ComplexPropertyModel>(properties.Length);
+		foreach (var property in properties)
+		{
+			propertyModels.Add(
+				new ComplexPropertyModel(
+					property.Name,
+					ValueObjectSymbolInspector.ToTypeName(property.Type),
+					TypeReference.Create(property.Type)
+				)
+			);
+		}
 
 		var hydrateExists = ValueObjectSymbolInspector.HasStaticFactory(
 			typeSymbol,
@@ -84,9 +90,6 @@ static class ComplexValueObjectModelBuilder
 		var compareToSelfExists = ValueObjectSymbolInspector.HasInstanceMethod(typeSymbol, "CompareTo", [typeSymbol]);
 		var compareToObjectExists = ValueObjectSymbolInspector.HasCompareToObject(typeSymbol);
 		var isReferenceType = typeSymbol.TypeKind == TypeKind.Class;
-		var compareToSelfParameterTypeName = isReferenceType
-			? $"{typeModel.Value.FullyQualifiedName}?"
-			: typeModel.Value.FullyQualifiedName;
 		var equalsSelfExists =
 			typeSymbol.IsRecord || ValueObjectSymbolInspector.HasInstanceMethod(typeSymbol, "Equals", [typeSymbol]);
 		var equalsObjectExists = ValueObjectSymbolInspector.HasEqualsObject(typeSymbol);
@@ -109,9 +112,17 @@ static class ComplexValueObjectModelBuilder
 		var declareOnNormalize = ValueObjectSymbolInspector.ShouldEmitComplexHookDeclaration(
 			typeSymbol,
 			"OnNormalize",
-			propertyNames.Length,
+			properties.Length,
 			includeRef: true
 		);
+		var declareOnValidate = ValueObjectSymbolInspector.ShouldEmitComplexHookDeclaration(
+			typeSymbol,
+			"OnValidate",
+			properties.Length
+		);
+		var validateHookIsReadOnly =
+			typeSymbol.TypeKind == TypeKind.Struct
+			&& ValueObjectSymbolInspector.IsComplexHookReadOnly(typeSymbol, "OnValidate", properties.Length);
 
 		var parameterlessCtorExists = typeSymbol
 			.Constructors.Where(static ctor => !ctor.IsStatic)
@@ -120,35 +131,75 @@ static class ComplexValueObjectModelBuilder
 		var hydrateFactoryName =
 			valueObjectOptions.DeserializationMode == ValueObjectSymbolInspector.StrictModeName ? "Create" : "Hydrate";
 
+		var efConstructorArguments = ValueObjectSymbolInspector.TryGetEfConstructorArguments(
+			typeSymbol,
+			properties,
+			out var efCtorArgs
+		)
+			? efCtorArgs
+			: null;
+
 		var hintName = ValueObjectSymbolInspector.BuildHintName(typeSymbol, "ComplexValueObject");
 
-		diagnostics = [.. diagnosticsList];
-		return new ComplexValueObjectModel(
-			typeSymbol,
+		var emptyArguments = ImmutableArray.CreateBuilder<string>(properties.Length);
+		foreach (var property in properties)
+			emptyArguments.Add(ValueObjectSymbolInspector.GetEmptyValueExpression(property.Type));
+
+		var model = new ComplexValueObjectModel(
 			typeModel.Value,
-			properties,
+			propertyModels.ToImmutable(),
 			valueObjectOptions,
 			ctorExists,
 			hintName,
 			typeModel.Value.FullyQualifiedName,
-			propertyTypeNames,
-			propertyNames,
+			isReferenceType,
+			typeSymbol.TypeKind == TypeKind.Struct,
+			typeSymbol.IsRecord,
+			typeSymbol.IsReadOnly,
+			typeSymbol.DeclaredAccessibility.ToTypeDeclarationAccessibility(),
+			ValueObjectSymbolInspector.ImplementsSelfEquatable(typeSymbol),
 			hydrateExists,
+			createExists,
 			compareToSelfExists,
 			compareToObjectExists,
-			isReferenceType,
-			compareToSelfParameterTypeName,
 			equalsSelfExists,
 			equalsObjectExists,
 			getHashCodeExists,
 			equalityOperatorExists,
 			inequalityOperatorExists,
 			hasJsonConverterAttribute,
-			createExists,
 			declareOnNormalize,
+			declareOnValidate,
+			validateHookIsReadOnly,
+			ValueObjectSymbolInspector.HasMemberWithName(typeSymbol, "Empty"),
+			emptyArguments.ToImmutable(),
 			parameterlessCtorExists,
-			hydrateFactoryName
+			efConstructorArguments,
+			hydrateFactoryName,
+			BuildExistingRelationalOperators(
+				typeSymbol,
+				typeModel.Value.FullyQualifiedName,
+				typeModel.Value.FullyQualifiedName
+			)
 		);
+
+		return GeneratorResult<ComplexValueObjectModel>.Create(model, diagnosticsList.ToImmutableArray());
+	}
+
+	static EquatableArray<string> BuildExistingRelationalOperators(
+		INamedTypeSymbol typeSymbol,
+		string leftTypeName,
+		string rightTypeName
+	)
+	{
+		var builder = ImmutableArray.CreateBuilder<string>();
+		foreach (var operatorName in ValueObjectSymbolInspector.RelationalOperatorNames)
+		{
+			if (ValueObjectSymbolInspector.HasRelationalOperator(typeSymbol, operatorName, leftTypeName, rightTypeName))
+				builder.Add(operatorName);
+		}
+
+		return builder.ToImmutable();
 	}
 
 	static bool IsPropertyExplicitlySet(

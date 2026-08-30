@@ -1,48 +1,96 @@
-using System.Text;
-
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 static partial class ComplexValueObjectEmitter
 {
-	static void EmitJsonConverter(StringBuilder sb, ComplexValueObjectModel model, string indent)
+	static void EmitJsonConverter(CodeWriter writer, ComplexValueObjectModel model)
 	{
 		if (!model.Options.GenerateJsonConverter)
 			return;
 
 		var modelTypeName = $"{model.TypeModel.Name}JsonModel";
-		var toModelAssignments = string.Join(", ", model.PropertyNames.Select(static name => $"{name} = value.{name}"));
-		var hydrateArgs = string.Join(", ", model.PropertyNames.Select(static name => $"model.{name}"));
+		var toModelAssignments = string.Join(
+			", ",
+			model.Properties.Select(static property => $"{property.Name} = value.{property.Name}")
+		);
+		var hydrateArgs = string.Join(", ", model.Properties.Select(static property => $"model.{property.Name}"));
+		var valueObjectType = ValueObjectType(model);
 
-		sb.AppendLine();
-		sb.AppendLine(
-			$@"{indent}	sealed class {model.TypeModel.Name}JsonConverter : global::System.Text.Json.Serialization.JsonConverter<{model.TypeName}>
-{indent}	{{
-{indent}		public override {model.TypeName} Read(ref global::System.Text.Json.Utf8JsonReader reader, global::System.Type typeToConvert, global::System.Text.Json.JsonSerializerOptions options)
-{indent}		{{
-{indent}			var model = global::System.Text.Json.JsonSerializer.Deserialize<{modelTypeName}>(ref reader, options);
-{indent}			if (model is null)
-{indent}				throw new global::System.Text.Json.JsonException(""Unable to deserialize {model.TypeModel.Name}."");
-{indent}			return {model.HydrateFactoryName}({hydrateArgs});
-{indent}		}}
+		writer.WriteClass(
+			new($"{model.TypeModel.Name}JsonConverter")
+			{
+				IsPartial = false,
+				IsSealed = true,
+				BaseType = TypeLibrary.System.TextJson.JsonConverter.MakeGeneric(valueObjectType),
+			},
+			body =>
+			{
+				body.WriteMethod(
+					new("Read", valueObjectType, TypeDeclarationAccessibility.Public)
+					{
+						IsOverride = true,
+						Parameters =
+						[
+							new("reader", TypeLibrary.System.TextJson.Utf8JsonReader, ParameterModifier.Ref),
+							new("typeToConvert", PurviewTypeLibrary.System.Type),
+							new("options", TypeLibrary.System.TextJson.JsonSerializerOptions),
+						],
+					},
+					methodBody =>
+					{
+						methodBody.WriteAssignment(
+							"var",
+							"model",
+							$"global::System.Text.Json.JsonSerializer.Deserialize<{modelTypeName}>(ref reader, options)"
+						);
+						methodBody.WriteIfBlock(
+							"model is null",
+							ifBody =>
+								ifBody.WriteThrow(
+									$"new {TypeLibrary.System.TextJson.JsonException}(\"Unable to deserialize {model.TypeModel.Name}.\")"
+								)
+						);
+						methodBody.WriteReturn($"{model.HydrateFactoryName}({hydrateArgs})");
+					}
+				);
 
-{indent}		public override void Write(global::System.Text.Json.Utf8JsonWriter writer, {model.TypeName} value, global::System.Text.Json.JsonSerializerOptions options)
-{indent}		{{
-{indent}			var model = new {modelTypeName} {{ {toModelAssignments} }};
-{indent}			global::System.Text.Json.JsonSerializer.Serialize(writer, model, options);
-{indent}		}}
-{indent}	}}
-
-{indent}	sealed class {modelTypeName}
-{indent}	{{"
+				body.WriteMethod(
+					new("Write", TypeDeclarationAccessibility.Public)
+					{
+						IsOverride = true,
+						Parameters =
+						[
+							new("writer", TypeLibrary.System.TextJson.Utf8JsonWriter),
+							new("value", valueObjectType),
+							new("options", TypeLibrary.System.TextJson.JsonSerializerOptions),
+						],
+					},
+					methodBody =>
+					{
+						methodBody.WriteAssignment("var", "model", $"new {modelTypeName} {{ {toModelAssignments} }}");
+						methodBody.WriteMethodCall(
+							TypeLibrary.System.TextJson.JsonSerializer.StaticMember("Serialize"),
+							["writer", "model", "options"]
+						);
+					}
+				);
+			}
 		);
 
-		for (var i = 0; i < model.Properties.Length; i++)
-		{
-			sb.AppendLine(
-				$"{indent}		public {model.PropertyTypeNames[i]} {model.PropertyNames[i]} {{ get; set; }} = default!;"
-			);
-		}
-
-		sb.AppendLine($"{indent}	}}");
+		writer.WriteClass(
+			new(modelTypeName) { IsPartial = false, IsSealed = true },
+			body =>
+			{
+				foreach (var property in model.Properties)
+				{
+					body.WriteProperty(
+						new(property.Name, property.Type, TypeDeclarationAccessibility.Public)
+						{
+							HasSetter = true,
+							Initializer = "default!",
+						}
+					);
+				}
+			}
+		);
 	}
 }

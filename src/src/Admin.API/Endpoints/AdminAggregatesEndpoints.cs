@@ -12,8 +12,15 @@ using Purview.EventSourcing.Admin.Security;
 
 namespace Purview.EventSourcing.Admin.Api.Endpoints;
 
+/// <summary>
+/// Maps the Admin portal aggregate query endpoints onto a route group.
+/// </summary>
 public static class AdminAggregatesEndpoints
 {
+	/// <summary>
+	/// Maps the <c>POST /aggregates/search</c> endpoint used to search for aggregates.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapSearchAggregates(RouteGroupBuilder group)
 	{
 		group
@@ -24,6 +31,10 @@ public static class AdminAggregatesEndpoints
 			.RequireAuthorization(AdminPortalPolicies.SearchAggregates);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/events</c> endpoint used to read an aggregate's event stream.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapEventRange(RouteGroupBuilder group)
 	{
 		group
@@ -34,6 +45,10 @@ public static class AdminAggregatesEndpoints
 			.RequireAuthorization(AdminPortalPolicies.ViewEvents);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/projection</c> endpoint used to project state at a version.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapProjectionAtVersion(RouteGroupBuilder group)
 	{
 		group
@@ -44,6 +59,10 @@ public static class AdminAggregatesEndpoints
 			.RequireAuthorization(AdminPortalPolicies.ProjectPointInTime);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/projection/time</c> endpoint used to project state at a timestamp.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapProjectionAtTime(RouteGroupBuilder group)
 	{
 		group

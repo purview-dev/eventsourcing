@@ -2,7 +2,11 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 
 partial class AggregateSourceEmitter
 {
-	static void GenerateEventClass(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
+	static void GenerateEventClass(
+		AggregateEmitContext outputContext,
+		CodeWriter writer,
+		AggregateEventMethodInfo method
+	)
 	{
 		outputContext.Debug(
 			$"Generating event class '{method.EventType}' for method '{method.MethodName}' with {method.EventParameters.Count} stored parameters and version {method.Version}."
@@ -10,7 +14,7 @@ partial class AggregateSourceEmitter
 
 		var hashParameterName = method.EventParameters.IsEmpty ? "_" : "hash";
 
-		outputContext.Writer.WriteClass(
+		writer.WriteClass(
 			new(method.EventType.Identity.Name, TypeDeclarationAccessibility.Public)
 			{
 				IsSealed = true,
@@ -22,9 +26,6 @@ partial class AggregateSourceEmitter
 				foreach (var prop in method.EventParameters)
 				{
 					var propertyType = prop.PropertyType;
-					// TODO: not sure this is needed anymore...
-					//if ((prop.IsNotNull || prop.IsRequired) && propertyType.IsNullable)
-					//	propertyType = propertyType.Nullable();
 
 					bodyWriter.WriteProperty(
 						new(prop.PropertyName, propertyType, TypeDeclarationAccessibility.Public)

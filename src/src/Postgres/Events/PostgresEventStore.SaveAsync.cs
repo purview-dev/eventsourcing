@@ -16,6 +16,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 partial class PostgresEventStore<T>
 {
+	///<inheritdoc/>
 	[DebuggerStepThrough]
 	public async Task<SaveResult<T>> SaveAsync(
 		[NotNull] T aggregate,

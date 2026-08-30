@@ -16,6 +16,12 @@ public sealed class DefaultAggregateValidator<TAggregate> : IAggregateValidator<
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types")]
 	public static IAggregateValidator<TAggregate> Instance { get; } = new DefaultAggregateValidator<TAggregate>();
 
+	/// <summary>
+	/// Validates the aggregate using standard data annotations.
+	/// </summary>
+	/// <param name="aggregate">The aggregate to validate.</param>
+	/// <returns>A <see cref="ValidationResult"/> describing any annotation failures.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="aggregate"/> is null.</exception>
 	public ValidationResult Validate(TAggregate aggregate)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate);
@@ -24,6 +30,13 @@ public sealed class DefaultAggregateValidator<TAggregate> : IAggregateValidator<
 		return new ValidationResult(failures);
 	}
 
+	/// <summary>
+	/// Validates the aggregate using standard data annotations.
+	/// </summary>
+	/// <param name="aggregate">The aggregate to validate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>A task whose result is a <see cref="ValidationResult"/> describing any annotation failures.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="aggregate"/> is null.</exception>
 	public Task<ValidationResult> ValidateAsync(TAggregate aggregate, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate);

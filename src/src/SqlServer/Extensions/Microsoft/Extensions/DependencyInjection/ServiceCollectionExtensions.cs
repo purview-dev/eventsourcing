@@ -9,6 +9,9 @@ using Purview.EventSourcing.SqlServer.Snapshots;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Dependency-injection extension methods for registering the SQL Server event-store and snapshot stores.
+/// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {
@@ -44,6 +47,19 @@ public static class ServiceCollectionExtensions
 
 	extension(IServiceCollection services)
 	{
+		/// <summary>
+		/// Registers the SQL Server event store and its supporting services.
+		/// </summary>
+		/// <param name="connectionStringName">
+		/// Optional name of the connection string to use. When omitted, the well-known connection-string names are
+		/// consulted in order.
+		/// </param>
+		/// <returns>The same service collection, for chaining.</returns>
+		/// <remarks>
+		/// Registers <see cref="SqlServerEventStore{T}"/> as the event-store implementation, configures
+		/// <see cref="SqlServerEventStoreOptions"/> from the <c>EventStore:SqlServer</c> section, and enables
+		/// validation on startup.
+		/// </remarks>
 		public IServiceCollection AddSqlServerEventStore(string? connectionStringName = null)
 		{
 			services.AddEventSourcing();
@@ -84,6 +100,23 @@ public static class ServiceCollectionExtensions
 			return services;
 		}
 
+		/// <summary>
+		/// Registers the SQL Server snapshot (queryable) event store and its supporting services.
+		/// </summary>
+		/// <param name="connectionStringName">
+		/// Optional name of the connection string to use. When omitted, the well-known connection-string names are
+		/// consulted in order.
+		/// </param>
+		/// <param name="registerAsIEventStore">
+		/// When <see langword="true"/>, the snapshot store is also registered as the non-queryable
+		/// <c>IEventStore</c> implementation.
+		/// </param>
+		/// <returns>The same service collection, for chaining.</returns>
+		/// <remarks>
+		/// Registers <see cref="SqlServerSnapshotEventStore{T}"/> as the queryable event-store implementation,
+		/// configures <see cref="SqlServerSnapshotEventStoreOptions"/> from the <c>EventStore:SqlServerSnapshot</c>
+		/// section, and enables validation on startup.
+		/// </remarks>
 		public IServiceCollection AddSqlServerSnapshotQueryableEventStore(
 			string? connectionStringName = null,
 			bool registerAsIEventStore = false

@@ -6,6 +6,7 @@ namespace Purview.EventSourcing.SqlServer.Events;
 
 partial class SqlServerEventStore<T>
 {
+	///<inheritdoc/>
 	[System.Diagnostics.DebuggerStepThrough]
 	public Task<T?> GetAsync(
 		string aggregateId,

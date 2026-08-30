@@ -11,6 +11,14 @@ namespace Purview.EventSourcing;
 public interface IAggregateEventHistoryStoreCore<T>
 	where T : class, IAggregate, new()
 {
+	/// <summary>
+	/// Enumerates a range of events for the aggregate.
+	/// </summary>
+	/// <param name="aggregateId">The id of the aggregate.</param>
+	/// <param name="versionFrom">The inclusive event number to start the range at.</param>
+	/// <param name="versionTo">Optional, the inclusive event number to finish the range at.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The events and their persisted names in the requested range.</returns>
 	IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync(
 		string aggregateId,
 		int versionFrom,

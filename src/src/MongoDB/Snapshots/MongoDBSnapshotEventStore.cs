@@ -6,6 +6,17 @@ using Purview.EventSourcing.MongoDB.StorageClient;
 
 namespace Purview.EventSourcing.MongoDB.Snapshots;
 
+/// <summary>
+/// A MongoDB-backed, queryable event store for <typeparamref name="T"/> that combines an event stream with
+/// snapshot documents stored in MongoDB.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Persistence of events, deletes and restores is delegated to an underlying non-queryable event store,
+/// while snapshot documents are stored in a MongoDB collection and used to serve queryable reads. Snapshots
+/// are always reconstructible from the event stream and never become the sole source of aggregate state.
+/// </remarks>
+/// <seealso cref="IMongoDBSnapshotEventStore{T}"/>
 public sealed partial class MongoDBSnapshotEventStore<T> : IMongoDBSnapshotEventStore<T>, IDisposable
 	where T : AggregateBase, new()
 {
@@ -18,6 +29,15 @@ public sealed partial class MongoDBSnapshotEventStore<T> : IMongoDBSnapshotEvent
 
 	readonly string _aggregateName;
 
+	/// <summary>
+	/// Initializes a new <see cref="MongoDBSnapshotEventStore{T}"/> instance.
+	/// </summary>
+	/// <param name="eventStore">The underlying non-queryable event store that persists events, deletes and restores.</param>
+	/// <param name="mongoDbOptions">The options controlling MongoDB connection, database and collection configuration.</param>
+	/// <param name="telemetry">The telemetry contract used to trace snapshot operations.</param>
+	/// <param name="mongoDBClientTelemetry">The telemetry contract used to trace MongoDB client operations.</param>
+	/// <param name="snapshotStrategy">Optional strategy controlling when snapshots are taken; defaults to always snapshotting.</param>
+	/// <param name="snapshotStrategySelector">Optional selector used to resolve the snapshot strategy for an operation.</param>
 	public MongoDBSnapshotEventStore(
 		Internal.INonQueryableEventStore<T> eventStore,
 		IOptions<MongoDBSnapshotEventStoreOptions> mongoDbOptions,
@@ -47,6 +67,7 @@ public sealed partial class MongoDBSnapshotEventStore<T> : IMongoDBSnapshotEvent
 		);
 	}
 
+	///<inheritdoc/>
 	public async Task SnapshotAsync(T aggregate, CancellationToken cancellationToken = default)
 	{
 		ArgumentNullException.ThrowIfNull(aggregate, nameof(aggregate));
@@ -65,6 +86,9 @@ public sealed partial class MongoDBSnapshotEventStore<T> : IMongoDBSnapshotEvent
 		return predicate;
 	}
 
+	/// <summary>
+	/// Releases the MongoDB client resources held by the store.
+	/// </summary>
 	public void Dispose()
 	{
 		GC.SuppressFinalize(this);

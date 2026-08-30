@@ -9,6 +9,11 @@ namespace Purview.EventSourcing.Postgres.Events.EntityFramework;
 /// </summary>
 public sealed class EventStoreDbContextDesignTimeFactory : IDesignTimeDbContextFactory<EventStoreDbContext>
 {
+	/// <summary>
+	/// Creates a new <see cref="EventStoreDbContext"/> for design-time tooling.
+	/// </summary>
+	/// <param name="args">Command-line arguments passed by EF Core design-time tools.</param>
+	/// <returns>A new <see cref="EventStoreDbContext"/> instance.</returns>
 	public EventStoreDbContext CreateDbContext(string[] args)
 	{
 		var optionsBuilder = new DbContextOptionsBuilder<EventStoreDbContext>();

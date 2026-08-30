@@ -10,9 +10,19 @@ using Purview.EventSourcing.Postgres.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.Postgres;
 
+/// <summary>
+/// Provides event range queries against PostgreSQL for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service resolves the table that holds the requested aggregate type via <c>PostgresAdminTableResolver</c>
+/// and translates the version, time and paging filters into Entity Framework Core queries executed against the
+/// database.
+/// </remarks>
+/// <param name="options">The configured <see cref="PostgresEventStoreOptions"/>.</param>
 public sealed class PostgresAdminEventQueryService(IOptions<PostgresEventStoreOptions> options)
 	: IAdminEventQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
 		string aggregateId,

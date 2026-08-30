@@ -16,12 +16,23 @@ public interface ISqlServerEventStoreTransactionFactory
 	ISqlServerEventStoreTransaction CreateSqlServerTransaction(string? correlationId = null);
 }
 
+/// <summary>
+/// Default implementation of <see cref="ISqlServerEventStoreTransactionFactory"/> that consults the ambient
+/// correlation-ID provider when no explicit correlation ID is supplied.
+/// </summary>
+/// <remarks>
+/// Creates <see cref="SqlServerEventStoreTransaction"/> instances that support enlisting additional SQL/EF work
+/// alongside event-store aggregate saves.
+/// </remarks>
+/// <param name="correlationIdProvider">The provider consulted to generate a correlation ID when none is supplied.</param>
 public sealed class SqlServerEventStoreTransactionFactory(IEventStoreCorrelationIdProvider correlationIdProvider)
 	: IEventStoreTransactionFactory,
 		ISqlServerEventStoreTransactionFactory
 {
+	///<inheritdoc/>
 	public IEventStoreTransaction Create(string? correlationId = null) => CreateSqlServerTransaction(correlationId);
 
+	///<inheritdoc/>
 	public ISqlServerEventStoreTransaction CreateSqlServerTransaction(string? correlationId = null) =>
 		new SqlServerEventStoreTransaction(correlationId ?? correlationIdProvider.GetCorrelationId());
 }

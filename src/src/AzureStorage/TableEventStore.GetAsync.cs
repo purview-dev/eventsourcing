@@ -6,6 +6,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	[System.Diagnostics.DebuggerStepThrough]
 	public Task<T?> GetAsync(
 		string aggregateId,

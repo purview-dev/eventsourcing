@@ -7,12 +7,23 @@ using Purview.EventSourcing.MongoDB.Events.Entities;
 
 namespace Purview.EventSourcing.Admin.MongoDB;
 
+/// <summary>
+/// Provides event range queries against MongoDB for the Admin portal.
+/// </summary>
+/// <remarks>
+/// Events are read from the <c>es-{aggregateType}-events</c> collection and exposed as
+/// <see cref="EventEnvelopeResponse"/> values. Version, time and paging filters are translated into MongoDB
+/// query filters and executed against the database.
+/// </remarks>
+/// <param name="mongoClient">The MongoDB client used to reach the event store database.</param>
+/// <param name="databaseName">The name of the database that holds the event store collections.</param>
 public sealed class MongoDbAdminEventQueryService(IMongoClient mongoClient, string databaseName)
 	: IAdminEventQueryService
 {
 	readonly IMongoClient _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
 	readonly string _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
 
+	///<inheritdoc/>
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
 		string aggregateId,

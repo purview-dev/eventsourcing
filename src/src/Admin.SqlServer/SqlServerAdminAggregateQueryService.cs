@@ -9,9 +9,19 @@ using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 
+/// <summary>
+/// Provides aggregate summary queries against SQL Server for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service resolves the tables that can hold the requested aggregate type via
+/// <c>SqlServerAdminTableResolver</c> and queries each one's stream-version rows. Results are combined, sorted and
+/// paged in memory.
+/// </remarks>
+/// <param name="options">The configured <see cref="SqlServerEventStoreOptions"/>.</param>
 public sealed class SqlServerAdminAggregateQueryService(IOptions<SqlServerEventStoreOptions> options)
 	: IAdminAggregateQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
 		CancellationToken cancellationToken
@@ -37,6 +47,7 @@ public sealed class SqlServerAdminAggregateQueryService(IOptions<SqlServerEventS
 		return new PagedResult<AggregateSummaryResponse>(pageItems, page, pageSize, totalCount);
 	}
 
+	///<inheritdoc/>
 	public async Task<AggregateSummaryResponse?> GetAsync(
 		string aggregateType,
 		string aggregateId,

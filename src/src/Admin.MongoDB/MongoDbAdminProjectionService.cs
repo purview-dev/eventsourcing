@@ -6,12 +6,23 @@ using Purview.EventSourcing.MongoDB.Events.Entities;
 
 namespace Purview.EventSourcing.Admin.MongoDB;
 
+/// <summary>
+/// Projects aggregate state at a point in time from MongoDB for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service replays the stored events of an aggregate from the <c>es-{aggregateType}-events</c> collection and
+/// produces a <see cref="ProjectionResponse"/> that captures the projected state, the highest version reached and
+/// a <see cref="ProjectionProvenance"/> describing which event versions were applied and which were skipped.
+/// </remarks>
+/// <param name="mongoClient">The MongoDB client used to reach the event store database.</param>
+/// <param name="databaseName">The name of the database that holds the event store collections.</param>
 public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, string databaseName)
 	: IAdminProjectionService
 {
 	readonly IMongoClient _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
 	readonly string _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
 
+	///<inheritdoc/>
 	public async Task<ProjectionResponse?> ProjectAtVersionAsync(
 		string aggregateType,
 		string aggregateId,
@@ -90,6 +101,7 @@ public sealed class MongoDbAdminProjectionService(IMongoClient mongoClient, stri
 		);
 	}
 
+	///<inheritdoc/>
 	public async Task<ProjectionResponse?> ProjectAtTimeAsync(
 		string aggregateType,
 		string aggregateId,

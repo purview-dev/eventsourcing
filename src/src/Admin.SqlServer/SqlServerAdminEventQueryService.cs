@@ -10,9 +10,19 @@ using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 
+/// <summary>
+/// Provides event range queries against SQL Server for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service resolves the table that holds the requested aggregate type via <c>SqlServerAdminTableResolver</c>
+/// and translates the version, time and paging filters into Entity Framework Core queries executed against the
+/// database.
+/// </remarks>
+/// <param name="options">The configured <see cref="SqlServerEventStoreOptions"/>.</param>
 public sealed class SqlServerAdminEventQueryService(IOptions<SqlServerEventStoreOptions> options)
 	: IAdminEventQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
 		string aggregateId,

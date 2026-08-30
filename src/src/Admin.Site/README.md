@@ -1,198 +1,85 @@
-# Admin.Site - Purview EventSourcing Admin Portal UI
+# Purview.EventSourcing.Admin.Site
 
-## Overview
+`Purview.EventSourcing.Admin.Site` is an optional Razor Class Library that provides a ready-to-use web UI for the Purview EventSourcing admin portal. It lets you browse aggregates, inspect event streams, and explore point-in-time projections through Razor Pages.
 
-**Admin.Site** is an optional **Razor Class Library** that provides a ready-to-use web dashboard for the Purview EventSourcing Admin Portal. It enables developers to quickly browse aggregates, inspect event streams, and explore point-in-time projections through a clean, responsive web interface.
+## Install
 
-## Features
+```bash
+dotnet add package Purview.EventSourcing.Admin.Site
+```
 
-### 📊 Aggregate Search
-- Search aggregates by type, ID, or timestamp range
-- Pagination support for large datasets
-- View aggregate metadata and current version
-- Quick navigation to related event streams and projections
-
-### 📝 Event Stream Inspector
-- Browse complete event history for any aggregate
-- Filter events by version or time range
-- View event metadata (correlation ID, causation ID, idempotency ID, user ID)
-- Inspect event payloads with collapsible JSON display
-
-### 🔍 Point-in-Time Projection Viewer
-- Reconstruct aggregate state at specific versions
-- Reconstruct aggregate state at specific UTC timestamps
-- View projection provenance (applied/skipped events)
-- Inspect final aggregate state as JSON
-
-## Pages
-
-### Index.cshtml
-- **Route:** `/` or `/admin/`
-- **Purpose:** Main search interface for aggregates
-- **Features:**
-  - Filter by aggregate type and ID
-  - Pagination with configurable page size
-  - Table view with version and last-updated info
-  - Quick action links to events and projections
-
-### Events.cshtml
-- **Route:** `/admin/events`
-- **Purpose:** Browse event stream for a single aggregate
-- **Features:**
-  - View all events in sequence
-  - Filter by version or time range
-  - Expandable event cards with metadata
-  - Event payload inspection
-
-### Projection.cshtml
-- **Route:** `/admin/projection`
-- **Purpose:** Inspect point-in-time state of an aggregate
-- **Features:**
-  - Project to specific version
-  - Project to specific UTC timestamp
-  - Project to latest version
-  - View provenance and event application history
-
-## Integration
-
-### Setup in ASP.NET Application
+## Register and map the UI
 
 ```csharp
-// Program.cs
-var builder = WebApplicationBuilder.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-// Add Admin Portal services
-builder.Services.AddPurviewEventSourcingAdminApi(options => 
-{
-    options.EnableAggregateSearch = true;
-    options.EnableEventInspection = true;
-    options.EnableProjection = true;
-});
-
-// Add storage adapter (e.g., SQL Server)
+// Register the admin services (API options, storage adapter, security).
+builder.Services.AddPurviewEventSourcingAdminApi();
 builder.Services.AddPurviewEventSourcingAdminSqlServer();
+builder.Services.AddPurviewEventSourcingAdminSecurity();
 
-// Add Razor Pages UI
+// Register the Razor Pages UI.
 builder.Services.AddPurviewEventSourcingAdminSite(enableRazorRuntimeCompilation: false);
 
 var app = builder.Build();
 
-// Map API endpoints
-app.MapPurviewEventSourcingAdminApi();
-
-// Map Razor Pages
-app.MapPurviewEventSourcingAdminSite();
+// Map the admin API endpoints and the Razor Pages UI.
+app.MapPurviewEventSourcingAdminAPI();
+app.MapPurviewEventSourcingAdminSite(); // defaults to the /admin prefix
 
 app.Run();
 ```
 
-### Package Dependencies
+`MapPurviewEventSourcingAdminSite` accepts a `pathPrefix` (defaults to `/admin`).
 
-- `Purview.EventSourcing.Admin.Abstractions` - Core types and interfaces
-- `Purview.EventSourcing.Admin.Api` - REST API implementation
-- `Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation` - Razor page support
-- `Microsoft.AspNetCore.Components.Web` - Web components
+## Pages
 
-## Storage Provider Support
+### Index (`/admin/`)
 
-Admin.Site works with any storage adapter implementing:
-- `IAdminAggregateQueryService` - Aggregate search
-- `IAdminEventQueryService` - Event range queries
-- `IAdminProjectionService` - Point-in-time projections
+The aggregate search page.
 
-Supported providers:
-- ✅ **SQL Server** (Admin.SqlServer)
-- ✅ **MongoDB** (Admin.MongoDB)
-- ✅ **Custom implementations** (via abstraction interfaces)
+- Filter by aggregate type and aggregate id
+- Paginated table of matching aggregates with version and last-updated information
+- Navigation links to the event-history and projection pages for each aggregate
 
-## Styling and Customization
+### Events (`/admin/events`)
 
-### CSS Organization
+The event-stream inspector for a single aggregate.
 
-All styles are embedded in the Razor pages for simplicity:
-- **Index.cshtml:** Aggregate search form and table styles
-- **Events.cshtml:** Event card and metadata display styles
-- **Projection.cshtml:** Projection result and provenance visualization styles
-- **_Layout.cshtml:** Global layout and navigation styles
+- Lists the event history in version order
+- Displays event metadata (aggregate version, timestamp, idempotency id, user id, causation id, correlation id)
+- Shows each event payload as collapsible JSON
 
-### Customization Options
+### Projection (`/admin/projection`)
 
-To customize the UI, extend the base pages:
+The point-in-time projection viewer.
 
-```csharp
-// Create custom Pages folder in host application
-// Razor Pages will override library defaults
-// Example: Pages/Index.cshtml (custom version)
-```
+- Project aggregate state at a specific stream version
+- Project aggregate state at a specific UTC timestamp
+- Shows projection provenance (applied/skipped events) and the final aggregate state as JSON
 
-## Security Considerations
+## Requirements
 
-Admin.Site uses the same authorization policies as Admin.Api:
-- `admin:aggregates:search` - Aggregate search
-- `admin:events:view` - Event inspection
-- `admin:projection:execute` - Point-in-time projection
+The UI relies on the admin service contracts from `Purview.EventSourcing.Admin.Abstractions`:
 
-Authorization is enforced at the API layer. Ensure proper policy configuration in your host application.
+- `IAdminAggregateQueryService` - aggregate search
+- `IAdminEventQueryService` - event-range queries
+- `IAdminProjectionService` - point-in-time projections
 
-## Performance Characteristics
+A storage adapter must be registered to provide these services. Supported adapters:
 
-- **Page Load Time:** < 100ms (excluding network)
-- **Search Response:** Depends on storage provider
-- **Pagination:** 25 items/page (configurable)
-- **Event Payload Rendering:** Limited to 10,000 character preview
+- `Purview.EventSourcing.Admin.SqlServer`
+- `Purview.EventSourcing.Admin.MongoDB`
+- `Purview.EventSourcing.Admin.Postgres`
+- `Purview.EventSourcing.Admin.AzureStorage`
+- Any custom implementation of the abstraction contracts
 
-## Limitations
+## Authorization
 
-- Razor runtime compilation requires additional CPU/memory (consider disabling in production)
-- Large event payloads (>1MB) may render slowly
-- Search performance depends on underlying storage provider query performance
+Authorization is enforced at the API layer using the policies defined in `Purview.EventSourcing.Admin.Security`. Ensure the policies are registered and your `IAdminPermissionProvider` grants the relevant `AdminFeature` permissions (search, aggregate view, event view, projection).
 
-## Future Enhancements
+## Related packages
 
-Potential additions for future versions:
-- Event filtering by event type
-- Batch projection for multiple aggregates
-- Event payload comparison (version-to-version)
-- Export events to CSV/JSON
-- Real-time event stream subscription
-- Custom field mapping for aggregate display
-
-## Examples
-
-### Search for Orders Created Today
-1. Navigate to main admin page (`/`)
-2. Enter "OrderAggregate" in Aggregate Type
-3. Events page shows all order aggregates
-4. Click "Events" to see history
-5. Click "Projection" to see current state
-
-### Find Aggregate at Specific Point in Time
-1. Navigate to Projection page with aggregate details
-2. Select "Specific Time (UTC)" option
-3. Enter desired timestamp
-4. View provenance showing which events were applied
-
-## Troubleshooting
-
-### Pages Won't Load
-- Ensure `MapPurviewEventSourcingAdminSite()` is called in Program.cs
-- Check that storage adapter is registered (SqlServer, MongoDB, etc.)
-- Verify authorization policies are configured
-
-### "No aggregates found"
-- Verify event store contains events
-- Check aggregate type name matches exactly
-- Ensure authorization policies allow search access
-
-### Pagination Not Working
-- Check page number > 0 and <= total pages
-- Verify PageSize setting in options
-- Ensure storage provider supports pagination
-
-## See Also
-
-- `Admin.Api` - REST API endpoints
-- `Admin.Security` - Authorization policies
-- `Admin.Abstractions` - Core types and interfaces
-- `Admin.SqlServer` - SQL Server storage adapter
-- `Admin.MongoDB` - MongoDB storage adapter
+- [Admin abstractions](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Abstractions/README.md): `Purview.EventSourcing.Admin.Abstractions`
+- [Admin API](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.API/README.md): `Purview.EventSourcing.Admin.Api`
+- [Admin security](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Security/README.md): `Purview.EventSourcing.Admin.Security`

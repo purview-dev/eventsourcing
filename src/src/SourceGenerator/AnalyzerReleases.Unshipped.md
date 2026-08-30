@@ -30,7 +30,7 @@
 | EVENTSTORE104 | ValueObjects | Error | Scalar property is missing |
 | EVENTSTORE105 | ValueObjects | Error | Scalar constructor is missing |
 | EVENTSTORE106 | ValueObjects | Error | Value object hydration constructor is missing |
-| EVENTSTORE107 | ValueObjects | Error | Strict mode requires Create |
+| EVENTSTORE107 | ValueObjects | Warning | Strict mode requires Create |
 | EVENTSTORE108 | ValueObjects | Error | Conflicting value object attributes |
 | EVENTSTORE109 | ValueObjects | Warning | Scalar value objects should be record structs |
 | EVENTSTORE110 | Aggregates | Error | Unable to find reference to AggregateBase |

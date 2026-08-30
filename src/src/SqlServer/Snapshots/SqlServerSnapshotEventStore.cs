@@ -7,6 +7,15 @@ using Purview.EventSourcing.SqlServer.Snapshots;
 
 namespace Purview.EventSourcing.SqlServer.Snapshot;
 
+/// <summary>
+/// SQL Server-backed snapshot event store that combines an underlying non-queryable event store with a
+/// queryable snapshot model.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Writes aggregate snapshots to a SQL Server (or Azure SQL) table and translates snapshot queries into
+/// SQL/EF queries over the JSON payload column.
+/// </remarks>
 public sealed partial class SqlServerSnapshotEventStore<T>
 	: ISqlServerSnapshotEventStore<T>,
 		ITransactionalEventStore<T>
@@ -25,6 +34,17 @@ public sealed partial class SqlServerSnapshotEventStore<T>
 
 	static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, string> AggregateTypeNames = new();
 
+	/// <summary>
+	/// Creates a new <see cref="SqlServerSnapshotEventStore{T}"/> instance.
+	/// </summary>
+	/// <param name="eventStore">The underlying non-queryable event store used for aggregate reads and writes.</param>
+	/// <param name="sqlServerEventStoreOptions">The options that configure the snapshot store.</param>
+	/// <param name="telemetry">The telemetry contract used to emit activities, metrics, and logs.</param>
+	/// <param name="snapshotStrategy">Optional strategy that decides when an aggregate should be snapshotted; defaults to <see cref="AlwaysSnapshotStrategy{T}"/>.</param>
+	/// <param name="snapshotStrategySelector">Optional selector used to resolve a snapshot strategy for a given aggregate.</param>
+	/// <exception cref="ArgumentNullException">
+	/// <paramref name="eventStore"/>, <paramref name="sqlServerEventStoreOptions"/>, or <paramref name="telemetry"/> is <see langword="null"/>.
+	/// </exception>
 	public SqlServerSnapshotEventStore(
 		// Explicitly request a non-queryable event store.
 		INonQueryableEventStore<T> eventStore,

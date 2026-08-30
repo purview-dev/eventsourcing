@@ -7,56 +7,79 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 {
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
-		var scalarCandidates = context.SyntaxProvider.ForAttributeWithMetadataName(
-			ValueObjectSymbolInspector.ScalarAttributeName,
-			predicate: static (node, _) => node is TypeDeclarationSyntax,
-			transform: static (ctx, ct) => BuildScalarGenerationResult(ctx, ct)
-		);
+		var generationContext = IncrementalPipeline.GenerationContextValueProvider<
+			EmptyCapabilities,
+			ValueObjectSourceGenerator
+		>(context, static (_, _, _, _) => EmptyCapabilities.Instance, PropertyLibrary.DisableSourceGenerator);
 
-		var complexCandidates = context.SyntaxProvider.ForAttributeWithMetadataName(
-			ValueObjectSymbolInspector.ValueObjectAttributeName,
-			predicate: static (node, _) => node is TypeDeclarationSyntax,
-			transform: static (ctx, ct) => BuildComplexGenerationResult(ctx, ct)
-		);
+		var scalarCandidates = context
+			.SyntaxProvider.ForAttributeWithMetadataName(
+				ValueObjectSymbolInspector.ScalarAttributeName,
+				predicate: static (node, _) => node is TypeDeclarationSyntax,
+				transform: static (ctx, ct) =>
+					ScalarValueObjectModelBuilder.Build(
+						(INamedTypeSymbol)ctx.TargetSymbol,
+						(TypeDeclarationSyntax)ctx.TargetNode,
+						ct
+					)
+			)
+			.WithTrackingName("GetScalarValueObjectTargets");
 
-		context.RegisterSourceOutput(scalarCandidates, EmitResult);
-		context.RegisterSourceOutput(complexCandidates, EmitResult);
+		var complexCandidates = context
+			.SyntaxProvider.ForAttributeWithMetadataName(
+				ValueObjectSymbolInspector.ValueObjectAttributeName,
+				predicate: static (node, _) => node is TypeDeclarationSyntax,
+				transform: static (ctx, ct) =>
+					ComplexValueObjectModelBuilder.Build(
+						(INamedTypeSymbol)ctx.TargetSymbol,
+						(TypeDeclarationSyntax)ctx.TargetNode,
+						ctx.SemanticModel.Compilation,
+						ct
+					)
+			)
+			.WithTrackingName("GetComplexValueObjectTargets");
+
+		context.RegisterSourceOutput(
+			scalarCandidates.Combine(generationContext),
+			static (spc, tuple) => EmitScalarResult(spc, tuple.Left, tuple.Right)
+		);
+		context.RegisterSourceOutput(
+			complexCandidates.Combine(generationContext),
+			static (spc, tuple) => EmitComplexResult(spc, tuple.Left, tuple.Right)
+		);
 	}
 
-	static void EmitResult(SourceProductionContext context, ValueObjectGenerationResult result)
-	{
-		foreach (var diagnostic in result.Diagnostics)
-			context.ReportDiagnostic(diagnostic);
-
-		if (result.Source is not null && result.HintName is not null)
-			context.AddSource(result.HintName, result.Source);
-	}
-
-	static ValueObjectGenerationResult BuildScalarGenerationResult(
-		GeneratorAttributeSyntaxContext context,
-		CancellationToken cancellationToken
+	static void EmitScalarResult(
+		SourceProductionContext context,
+		GeneratorResult<ScalarValueObjectModel> result,
+		GenerationContext<EmptyCapabilities> generationContext
 	)
 	{
-		cancellationToken.ThrowIfCancellationRequested();
-		var model = ScalarValueObjectModelBuilder.Build(context, cancellationToken, out var diagnostics);
-		if (model is null)
-			return new ValueObjectGenerationResult(null, null, diagnostics);
+		if (generationContext.Settings.IsSourceGeneratorDisabled)
+			return;
 
-		var source = ScalarValueObjectEmitter.Emit(model);
-		return new ValueObjectGenerationResult(model.HintName, source, diagnostics);
+		if (!result.ShouldProcess)
+			return;
+
+		var writer = generationContext.CreateCodeWriter();
+		ScalarValueObjectEmitter.Emit(writer, result.Value);
+		context.AddSource(result.Value.HintName, writer);
 	}
 
-	static ValueObjectGenerationResult BuildComplexGenerationResult(
-		GeneratorAttributeSyntaxContext context,
-		CancellationToken cancellationToken
+	static void EmitComplexResult(
+		SourceProductionContext context,
+		GeneratorResult<ComplexValueObjectModel> result,
+		GenerationContext<EmptyCapabilities> generationContext
 	)
 	{
-		cancellationToken.ThrowIfCancellationRequested();
-		var model = ComplexValueObjectModelBuilder.Build(context, cancellationToken, out var diagnostics);
-		if (model is null)
-			return new ValueObjectGenerationResult(null, null, diagnostics);
+		if (generationContext.Settings.IsSourceGeneratorDisabled)
+			return;
 
-		var source = ComplexValueObjectEmitter.Emit(model);
-		return new ValueObjectGenerationResult(model.HintName, source, diagnostics);
+		if (!result.ShouldProcess)
+			return;
+
+		var writer = generationContext.CreateCodeWriter();
+		ComplexValueObjectEmitter.Emit(writer, result.Value);
+		context.AddSource(result.Value.HintName, writer);
 	}
 }

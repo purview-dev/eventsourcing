@@ -1,28 +1,37 @@
 namespace Purview.EventSourcing.SourceGenerator.ValueObject.Models;
 
 sealed record class ComplexValueObjectModel(
-	INamedTypeSymbol TypeSymbol,
 	GeneratedTypeModel TypeModel,
-	IPropertySymbol[] Properties,
+	EquatableArray<ComplexPropertyModel> Properties,
 	ValueObjectAttributeData Options,
 	bool CtorExists,
 	string HintName,
 	string TypeName,
-	string[] PropertyTypeNames,
-	string[] PropertyNames,
+	bool IsReferenceType,
+	bool IsStruct,
+	bool IsRecord,
+	bool IsReadOnly,
+	TypeDeclarationAccessibility? Accessibility,
+	bool ImplementsSelfEquatable,
 	bool HydrateExists,
+	bool CreateExists,
 	bool CompareToSelfExists,
 	bool CompareToObjectExists,
-	bool IsReferenceType,
-	string CompareToSelfParameterTypeName,
 	bool EqualsSelfExists,
 	bool EqualsObjectExists,
 	bool GetHashCodeExists,
 	bool EqualityOperatorExists,
 	bool InequalityOperatorExists,
 	bool HasJsonConverterAttribute,
-	bool CreateExists,
 	bool DeclareOnNormalize,
+	bool DeclareOnValidate,
+	bool ValidateHookIsReadOnly,
+	bool EmptyExists,
+	EquatableArray<string> EmptyArguments,
 	bool ParameterlessCtorExists,
-	string HydrateFactoryName
+	string? EfConstructorArguments,
+	string HydrateFactoryName,
+	EquatableArray<string> ExistingRelationalOperators
 );
+
+readonly record struct ComplexPropertyModel(string Name, string TypeName, TypeReference Type);

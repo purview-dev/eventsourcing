@@ -28,20 +28,40 @@ public sealed class SqlServerAggregateTableOverride
 	public string? TableName { get; set; }
 }
 
+/// <summary>
+/// Options that configure the SQL Server event store.
+/// </summary>
+/// <remarks>
+/// Bound from the <c>EventStore:SqlServer</c> configuration section; the connection string can also be resolved
+/// from the configured connection-string names when it is not supplied directly.
+/// </remarks>
 public sealed class SqlServerEventStoreOptions
 {
+	/// <summary>
+	/// The configuration section name used to bind <see cref="SqlServerEventStoreOptions"/>.
+	/// </summary>
 	public const string SqlServerEventStore = "EventStore:SqlServer";
 
 	const bool DefaultRemoveDeletedFromCache = true;
 	const int DefaultEventSuffixLength = 30;
 
+	/// <summary>
+	/// The connection string used to access the SQL Server (or Azure SQL) database.
+	/// </summary>
+	/// <remarks>Required; do not embed credentials in source control.</remarks>
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	/// <summary>
+	/// The name of the table that stores event-store rows.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreEvents";
 
+	/// <summary>
+	/// The schema that owns the event-store table.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "dbo";
@@ -59,6 +79,9 @@ public sealed class SqlServerEventStoreOptions
 	/// <remarks>Only applies when <see cref="AutoCreateTable"/> is true and the table is being created for the first time.</remarks>
 	public bool UseDataCompression { get; set; } = true;
 
+	/// <summary>
+	/// The command timeout, in seconds, applied to event-store database operations.
+	/// </summary>
 	[Range(1, 120000)]
 	public int? TimeoutInSeconds { get; set; } = 60;
 
@@ -95,6 +118,9 @@ public sealed class SqlServerEventStoreOptions
 	[DefaultValue(SnapshotCachingOptions.GetAndStore)]
 	public SnapshotCachingOptions CacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
 
+	/// <summary>
+	/// The sliding-expiration duration used when storing aggregate snapshots in the distributed cache.
+	/// </summary>
 	public TimeSpan DefaultCacheSlidingDuration { get; set; } = TimeSpan.FromMinutes(60);
 
 	/// <summary>

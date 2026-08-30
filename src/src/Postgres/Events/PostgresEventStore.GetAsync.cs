@@ -6,6 +6,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 partial class PostgresEventStore<T>
 {
+	///<inheritdoc/>
 	[System.Diagnostics.DebuggerStepThrough]
 	public Task<T?> GetAsync(
 		string aggregateId,

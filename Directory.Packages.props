@@ -3,7 +3,7 @@
 		<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
 		<!-- Keep compiler-facing Roslyn packages aligned with the minimum SDK pinned in global.json so analyser ProjectReferences load on build machines. -->
 		<RoslynCompilerVersion>[5.0.0]</RoslynCompilerVersion>
-		<RoslynAnalyzersVersion>5.9.0</RoslynAnalyzersVersion>
+		<RoslynAnalyzersVersion>[5.9.0,)</RoslynAnalyzersVersion>
 		<TUnitVersion>[1.65.68,)</TUnitVersion>
 		<PurviewSGFrameworkVersion>[1.0.0-prerelease.26,)</PurviewSGFrameworkVersion>
 		<ModularPipelinesVersion>[3.2.8,)</ModularPipelinesVersion>
@@ -13,6 +13,11 @@
 		<PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
 	</ItemGroup>
 	<ItemGroup>
+		<PackageVersion Include="ModularPipelines" Version="$(ModularPipelinesVersion)" />
+		<PackageVersion Include="ModularPipelines.DotNet" Version="$(ModularPipelinesVersion)" />
+		<PackageVersion Include="ModularPipelines.Git" Version="$(ModularPipelinesVersion)" />
+		<PackageVersion Include="ModularPipelines.GitHub" Version="$(ModularPipelinesVersion)" />
+		<PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
 		<PackageVersion Include="NuGet.Versioning" Version="7.9.0" />
 		<PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="13.5.3" />
 		<PackageVersion Include="AspireC4.Hosting" Version="13.3.5" />

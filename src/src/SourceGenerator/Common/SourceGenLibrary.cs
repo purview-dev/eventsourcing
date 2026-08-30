@@ -5,14 +5,10 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 
 static partial class SourceGenLibrary
 {
-	public static IncrementalValueProvider<AggregateGenerationModel> GetGeneratorValueProviders(
+	public static IncrementalValueProvider<GenerationContext<AggregateGenerationCapabilities>> GetGenerationContext(
 		IncrementalGeneratorInitializationContext context
-	)
-	{
-		var generationContext = IncrementalPipeline.GenerationContextValueProvider<
-			AggregateGenerationCapabilities,
-			AggregateSourceGenerator
-		>(
+	) =>
+		IncrementalPipeline.GenerationContextValueProvider<AggregateGenerationCapabilities, AggregateSourceGenerator>(
 			context,
 			static (compilation, settings, logger, _) =>
 			{
@@ -24,27 +20,20 @@ static partial class SourceGenLibrary
 			PropertyLibrary.DisableSourceGenerator
 		);
 
-		var aggregateInfo = IncrementalPipeline.ForAttributeWithMetadataName(
+	public static IncrementalValuesProvider<GeneratorResult<AggregateInfo>> GetAggregateTargets(
+		IncrementalGeneratorInitializationContext context
+	) =>
+		IncrementalPipeline.ForAttributeWithMetadataName(
 			context,
 			TypeLibrary.Attributes.AggregateAttribute,
 			predicate: static (s, _) => s is ClassDeclarationSyntax,
-			transform: static (ctx, ct) => AggregateInfoBuilder.Build(ctx, ct),
+			transform: static (ctx, ct) =>
+				AggregateInfoBuilder.Build(
+					(INamedTypeSymbol)ctx.TargetSymbol,
+					(ClassDeclarationSyntax)ctx.TargetNode,
+					ctx.SemanticModel.Compilation,
+					ct
+				),
 			trackingName: "GetAggregateTargets"
 		);
-
-		return generationContext.CollectWith(
-			aggregateInfo,
-			static (context, aggregateInfo, _) =>
-			{
-				var diagnostics = ImmutableArray.CreateBuilder<DiagnosticInfo>();
-				if (!context.Capabilities.HasAggregateBase)
-					diagnostics.Add(DiagnosticInfo.Create(DiagnosticLibrary.AggregateBaseReferenceMissing));
-
-				AggregateGenerationModel model = new(context, aggregateInfo, diagnostics.ToImmutable());
-
-				return model;
-			},
-			"CollectAggregates"
-		);
-	}
 }

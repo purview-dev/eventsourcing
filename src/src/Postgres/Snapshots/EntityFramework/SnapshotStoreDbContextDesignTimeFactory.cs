@@ -9,6 +9,11 @@ namespace Purview.EventSourcing.Postgres.Snapshots.EntityFramework;
 /// </summary>
 public sealed class SnapshotStoreDbContextDesignTimeFactory : IDesignTimeDbContextFactory<SnapshotStoreDbContext>
 {
+	/// <summary>
+	/// Creates a new <see cref="SnapshotStoreDbContext"/> for design-time tooling.
+	/// </summary>
+	/// <param name="args">Command-line arguments passed by EF Core design-time tools.</param>
+	/// <returns>A new <see cref="SnapshotStoreDbContext"/> instance.</returns>
 	public SnapshotStoreDbContext CreateDbContext(string[] args)
 	{
 		var optionsBuilder = new DbContextOptionsBuilder<SnapshotStoreDbContext>();

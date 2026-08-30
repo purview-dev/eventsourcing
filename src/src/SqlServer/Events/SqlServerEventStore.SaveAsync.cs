@@ -16,6 +16,7 @@ namespace Purview.EventSourcing.SqlServer.Events;
 
 partial class SqlServerEventStore<T>
 {
+	///<inheritdoc/>
 	[DebuggerStepThrough]
 	public async Task<SaveResult<T>> SaveAsync(
 		[NotNull] T aggregate,

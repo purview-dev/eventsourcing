@@ -6,25 +6,57 @@ namespace Purview.EventSourcing;
 /// Event-sourced list collection.
 /// Exposes read-only semantics to consumers while providing IList access for EF materialization.
 /// </summary>
+/// <typeparam name="T">The type of the elements in the list.</typeparam>
+/// <remarks>
+/// <para>
+/// Aggregate collection state that participates in generated events should use this type (or
+/// <see cref="EventStoreSet{T}"/>) rather than an ordinary mutable collection, because the generated
+/// collection-event plumbing is designed around these wrappers.
+/// </para>
+/// <para>
+/// Consumers see read-only semantics through <see cref="IReadOnlyList{T}"/>; the mutating <see cref="IList{T}"/>
+/// surface exists so persistence frameworks (for example EF Core) can materialize the collection during reads.
+/// </para>
+/// </remarks>
 public sealed class EventStoreList<T> : IList<T>, IReadOnlyList<T>, IList
 {
 	readonly List<T> _items;
 
+	/// <summary>
+	/// Initializes an empty list.
+	/// </summary>
 	public EventStoreList()
 	{
 		_items = [];
 	}
 
+	/// <summary>
+	/// Initializes a list with the specified initial capacity.
+	/// </summary>
+	/// <param name="capacity">The initial capacity of the list.</param>
 	public EventStoreList(int capacity) => _items = [with(capacity)];
 
+	/// <summary>
+	/// Initializes a list populated with the supplied items.
+	/// </summary>
+	/// <param name="items">The items to add to the list.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="items"/> is null.</exception>
 	public EventStoreList(IEnumerable<T> items)
 	{
 		ArgumentNullException.ThrowIfNull(items);
 		_items = [.. items];
 	}
 
+	/// <summary>
+	/// Gets the number of elements in the list.
+	/// </summary>
 	public int Count => _items.Count;
 
+	/// <summary>
+	/// Gets the element at the specified index.
+	/// </summary>
+	/// <param name="index">The zero-based index of the element to get.</param>
+	/// <returns>The element at the specified index.</returns>
 	public T this[int index] => _items[index];
 
 	bool ICollection<T>.IsReadOnly => false;
@@ -35,6 +67,10 @@ public sealed class EventStoreList<T> : IList<T>, IReadOnlyList<T>, IList
 		set => _items[index] = value;
 	}
 
+	/// <summary>
+	/// Returns an enumerator that iterates through the list.
+	/// </summary>
+	/// <returns>An enumerator for the list.</returns>
 	public IEnumerator<T> GetEnumerator() => _items.GetEnumerator();
 
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -107,26 +143,56 @@ public sealed class EventStoreList<T> : IList<T>, IReadOnlyList<T>, IList
 /// Event-sourced set collection.
 /// Enforces uniqueness while providing IList access for EF materialization.
 /// </summary>
+/// <typeparam name="T">The type of the elements in the set.</typeparam>
+/// <remarks>
+/// <para>
+/// Aggregate collection state that participates in generated events should use this type (or
+/// <see cref="EventStoreList{T}"/>) rather than an ordinary mutable collection, because the generated
+/// collection-event plumbing is designed around these wrappers.
+/// </para>
+/// <para>
+/// Consumers see read-only semantics through <see cref="IReadOnlySet{T}"/>; the mutating <see cref="IList{T}"/>
+/// surface exists so persistence frameworks (for example EF Core) can materialize the collection during reads.
+/// Uniqueness is enforced for every mutation path.
+/// </para>
+/// </remarks>
 public sealed class EventStoreSet<T> : IList<T>, IReadOnlySet<T>, IReadOnlyList<T>, IList
 {
 	readonly List<T> _items;
 	readonly HashSet<T> _set;
 
+	/// <summary>
+	/// Initializes an empty set.
+	/// </summary>
 	public EventStoreSet()
 	{
 		_items = [];
 		_set = [];
 	}
 
+	/// <summary>
+	/// Initializes a set with the specified initial capacity.
+	/// </summary>
+	/// <param name="capacity">The initial capacity of the set.</param>
 	public EventStoreSet(int capacity)
 	{
 		_items = [with(capacity)];
 		_set = [];
 	}
 
+	/// <summary>
+	/// Initializes a set populated with the supplied items using the default equality comparer.
+	/// </summary>
+	/// <param name="items">The items to add to the set.</param>
 	public EventStoreSet(IEnumerable<T> items)
 		: this(items, comparer: null) { }
 
+	/// <summary>
+	/// Initializes a set populated with the supplied items using the specified equality comparer.
+	/// </summary>
+	/// <param name="items">The items to add to the set.</param>
+	/// <param name="comparer">The comparer used to enforce uniqueness, or null for the default comparer.</param>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="items"/> is null.</exception>
 	public EventStoreSet(IEnumerable<T> items, IEqualityComparer<T>? comparer)
 	{
 		ArgumentNullException.ThrowIfNull(items);
@@ -137,8 +203,16 @@ public sealed class EventStoreSet<T> : IList<T>, IReadOnlySet<T>, IReadOnlyList<
 			AddUnique(item);
 	}
 
+	/// <summary>
+	/// Gets the number of elements in the set.
+	/// </summary>
 	public int Count => _items.Count;
 
+	/// <summary>
+	/// Gets the element at the specified index.
+	/// </summary>
+	/// <param name="index">The zero-based index of the element to get.</param>
+	/// <returns>The element at the specified index.</returns>
 	public T this[int index] => _items[index];
 
 	bool ICollection<T>.IsReadOnly => false;
@@ -161,6 +235,10 @@ public sealed class EventStoreSet<T> : IList<T>, IReadOnlySet<T>, IReadOnlyList<
 		}
 	}
 
+	/// <summary>
+	/// Returns an enumerator that iterates through the set.
+	/// </summary>
+	/// <returns>An enumerator for the set.</returns>
 	public IEnumerator<T> GetEnumerator() => _items.GetEnumerator();
 
 	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -173,6 +251,11 @@ public sealed class EventStoreSet<T> : IList<T>, IReadOnlySet<T>, IReadOnlyList<
 		_set.Clear();
 	}
 
+	/// <summary>
+	/// Determines whether the set contains the specified item.
+	/// </summary>
+	/// <param name="item">The item to locate.</param>
+	/// <returns>True when the item is present, otherwise false.</returns>
 	public bool Contains(T item) => _set.Contains(item);
 
 	bool ICollection<T>.Contains(T item) => _set.Contains(item);
@@ -206,16 +289,46 @@ public sealed class EventStoreSet<T> : IList<T>, IReadOnlySet<T>, IReadOnlyList<
 		_set.Remove(item);
 	}
 
+	/// <summary>
+	/// Determines whether the set is a proper subset of the specified collection.
+	/// </summary>
+	/// <param name="other">The collection to compare against.</param>
+	/// <returns>True when the set is a proper subset of <paramref name="other"/>.</returns>
 	public bool IsProperSubsetOf(IEnumerable<T> other) => _set.IsProperSubsetOf(other);
 
+	/// <summary>
+	/// Determines whether the set is a proper superset of the specified collection.
+	/// </summary>
+	/// <param name="other">The collection to compare against.</param>
+	/// <returns>True when the set is a proper superset of <paramref name="other"/>.</returns>
 	public bool IsProperSupersetOf(IEnumerable<T> other) => _set.IsProperSupersetOf(other);
 
+	/// <summary>
+	/// Determines whether the set is a subset of the specified collection.
+	/// </summary>
+	/// <param name="other">The collection to compare against.</param>
+	/// <returns>True when the set is a subset of <paramref name="other"/>.</returns>
 	public bool IsSubsetOf(IEnumerable<T> other) => _set.IsSubsetOf(other);
 
+	/// <summary>
+	/// Determines whether the set is a superset of the specified collection.
+	/// </summary>
+	/// <param name="other">The collection to compare against.</param>
+	/// <returns>True when the set is a superset of <paramref name="other"/>.</returns>
 	public bool IsSupersetOf(IEnumerable<T> other) => _set.IsSupersetOf(other);
 
+	/// <summary>
+	/// Determines whether the set shares any elements with the specified collection.
+	/// </summary>
+	/// <param name="other">The collection to compare against.</param>
+	/// <returns>True when at least one element is shared.</returns>
 	public bool Overlaps(IEnumerable<T> other) => _set.Overlaps(other);
 
+	/// <summary>
+	/// Determines whether the set and the specified collection contain the same elements.
+	/// </summary>
+	/// <param name="other">The collection to compare against.</param>
+	/// <returns>True when the collections are equal.</returns>
 	public bool SetEquals(IEnumerable<T> other) => _set.SetEquals(other);
 
 	bool IList.IsFixedSize => false;

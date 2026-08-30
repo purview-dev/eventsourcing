@@ -10,9 +10,19 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
+/// <summary>
+/// Provides event range queries against Azure Table Storage for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service reads the event rows written by the Azure Storage event store and exposes them as
+/// <see cref="EventEnvelopeResponse"/> values. Event versions are decoded from each row's
+/// <see cref="Azure.Data.Tables.TableEntity.RowKey"/> using the configured event prefix.
+/// </remarks>
+/// <param name="options">The configured <see cref="AzureStorageEventStoreOptions"/>.</param>
 public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEventStoreOptions> options)
 	: IAdminEventQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
 		string aggregateId,

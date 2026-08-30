@@ -6,11 +6,28 @@ using Purview.EventSourcing.Aggregates.Events;
 
 namespace Purview.EventSourcing;
 
+/// <summary>
+/// Provides event-history enumeration over an <see cref="IEventStoreCore{T}"/>.
+/// </summary>
 [System.Diagnostics.DebuggerStepThrough]
 public static class IEventStoreCoreHistoryExtensions
 {
 	const int MaxAllowedPageSize = 1000;
 
+	/// <summary>
+	/// Enumerates the event history for the aggregate, honoring the paging, version, and time filters in
+	/// <paramref name="request"/>.
+	/// </summary>
+	/// <typeparam name="T">The aggregate type.</typeparam>
+	/// <param name="eventStore">The event store used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate whose history should be enumerated.</param>
+	/// <param name="request">The paging and filtering options; when null, the defaults are used.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>A <see cref="ContinuationResponse{AggregateEventHistoryItem}"/> containing the requested history items
+	/// and a continuation token when more results are available.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> is null or whitespace.</exception>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="request"/> contains invalid paging or range values.</exception>
+	/// <exception cref="NotSupportedException">Thrown when the configured store does not implement <see cref="IAggregateEventHistoryStoreCore{T}"/>.</exception>
 	public static async Task<ContinuationResponse<AggregateEventHistoryItem>> GetEventHistoryAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,

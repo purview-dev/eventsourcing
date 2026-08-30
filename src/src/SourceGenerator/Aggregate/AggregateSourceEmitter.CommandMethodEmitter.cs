@@ -2,10 +2,9 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 
 static partial class CommandMethodEmitter
 {
-	public static void Generate(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
+	public static void Generate(AggregateEmitContext outputContext, CodeWriter writer, AggregateEventMethodInfo method)
 	{
 		var hookSuffix = AggregateSourceEmitter.GetHookName(method.EventType);
-		var writer = outputContext.Writer;
 
 		writer.WriteMethod(
 			new(method.MethodName, method.ReturnType)
@@ -22,22 +21,20 @@ static partial class CommandMethodEmitter
 			},
 			writeBody =>
 			{
-				var bodyContext = outputContext.WithWriter(writeBody);
-
 				if (!method.AllParameters.IsEmpty)
-					EmitParameterPreparationBlock(bodyContext, method);
+					EmitParameterPreparationBlock(outputContext, writeBody, method);
 
 				if (!method.ComputedParameters.IsEmpty)
-					EmitOnComputingBefore(bodyContext, method, hookSuffix);
+					EmitOnComputingBefore(writeBody, method, hookSuffix);
 
-				EmitEventCreationAndShouldApply(bodyContext, method, hookSuffix, declareVariable: true);
+				EmitEventCreationAndShouldApply(writeBody, method, hookSuffix, declareVariable: true);
 
-				EmitRaisingHook(bodyContext, method, hookSuffix);
+				EmitRaisingHook(writeBody, method, hookSuffix);
 
 				if (!method.ComputedParameters.IsEmpty)
-					EmitOnComputingAfter(bodyContext, method, hookSuffix);
+					EmitOnComputingAfter(writeBody, method, hookSuffix);
 
-				EmitEventCreationAndShouldApply(bodyContext, method, hookSuffix, declareVariable: false);
+				EmitEventCreationAndShouldApply(writeBody, method, hookSuffix, declareVariable: false);
 
 				if (!method.AllParameters.IsEmpty)
 				{
@@ -46,19 +43,22 @@ static partial class CommandMethodEmitter
 						.ToList();
 
 					if (mappedParameters.Count > 0)
-						EmitUnchangedCheck(bodyContext, method, mappedParameters);
+						EmitUnchangedCheck(writeBody, method, mappedParameters);
 				}
 
-				EmitFinalization(bodyContext, method, hookSuffix);
+				EmitFinalization(writeBody, method, hookSuffix);
 			}
 		);
 
-		EmitHookDeclarations(outputContext, method, hookSuffix);
+		EmitHookDeclarations(writer, method, hookSuffix);
 	}
 
-	static void EmitParameterPreparationBlock(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
+	static void EmitParameterPreparationBlock(
+		AggregateEmitContext outputContext,
+		CodeWriter writer,
+		AggregateEventMethodInfo method
+	)
 	{
-		var writer = outputContext.Writer;
 		foreach (var prop in method.AllParameters)
 		{
 			if (prop.IsComputed)
@@ -101,7 +101,7 @@ static partial class CommandMethodEmitter
 			);
 		}
 
-		EmitValidationGuards(outputContext, method);
+		EmitValidationGuards(writer, method);
 
 		foreach (var prop in method.AllParameters)
 		{
@@ -122,9 +122,8 @@ static partial class CommandMethodEmitter
 		}
 	}
 
-	static void EmitValidationGuards(AggregateEmitContext outputContext, AggregateEventMethodInfo method)
+	static void EmitValidationGuards(CodeWriter writer, AggregateEventMethodInfo method)
 	{
-		var writer = outputContext.Writer;
 		foreach (var prop in method.AllParameters)
 		{
 			if (prop.IsComputed)
@@ -164,14 +163,8 @@ static partial class CommandMethodEmitter
 		}
 	}
 
-	static void EmitOnComputingBefore(
-		AggregateEmitContext outputContext,
-		AggregateEventMethodInfo method,
-		string hookSuffix
-	)
+	static void EmitOnComputingBefore(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		var writer = outputContext.Writer;
-
 		writer.WriteMethodCall(
 			$"OnComputing{hookSuffix}",
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.ComputedParameters)
@@ -192,23 +185,22 @@ static partial class CommandMethodEmitter
 	}
 
 	static void EmitEventCreationAndShouldApply(
-		AggregateEmitContext outputContext,
+		CodeWriter writer,
 		AggregateEventMethodInfo method,
 		string hookSuffix,
 		bool declareVariable
 	)
 	{
-		AggregateSourceEmitter.EmitEventCreation(outputContext, method, declareVariable);
+		AggregateSourceEmitter.EmitEventCreation(writer, method, declareVariable);
 
-		outputContext.Writer.WriteIfBlock(
+		writer.WriteIfBlock(
 			$"!ShouldApply{hookSuffix}(@event)",
-			ifBody => AggregateSourceEmitter.EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+			ifBody => AggregateSourceEmitter.EmitNoChangeReturn(ifBody, method.ReturnKind)
 		);
 	}
 
-	static void EmitRaisingHook(AggregateEmitContext outputContext, AggregateEventMethodInfo method, string hookSuffix)
+	static void EmitRaisingHook(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		var writer = outputContext.Writer;
 		var onRaisingMethodName = $"OnRaising{hookSuffix}";
 		if (method.AllParameters.IsEmpty)
 			writer.WriteMethodCall(onRaisingMethodName);
@@ -238,13 +230,8 @@ static partial class CommandMethodEmitter
 		}
 	}
 
-	static void EmitOnComputingAfter(
-		AggregateEmitContext outputContext,
-		AggregateEventMethodInfo method,
-		string hookSuffix
-	)
+	static void EmitOnComputingAfter(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		var writer = outputContext.Writer;
 		var onComputingMethodName = $"OnComputing{hookSuffix}";
 
 		writer.WriteMethodCall(
@@ -267,35 +254,27 @@ static partial class CommandMethodEmitter
 	}
 
 	static void EmitUnchangedCheck(
-		AggregateEmitContext outputContext,
+		CodeWriter writer,
 		AggregateEventMethodInfo method,
 		List<EventPropertyInfo> mappedParameters
 	)
 	{
-		var writer = outputContext.Writer;
 		writer.WriteIfBlock(
 			AggregateSourceEmitter.BuildUnchangedCondition(mappedParameters),
-			ifBody => AggregateSourceEmitter.EmitNoChangeReturn(outputContext.WithWriter(ifBody), method.ReturnKind)
+			ifBody => AggregateSourceEmitter.EmitNoChangeReturn(ifBody, method.ReturnKind)
 		);
 	}
 
-	static void EmitFinalization(AggregateEmitContext outputContext, AggregateEventMethodInfo method, string hookSuffix)
+	static void EmitFinalization(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		var writer = outputContext.Writer;
-
 		writer.WriteMethodCall($"OnRaised{hookSuffix}", ["@event"]);
 		writer.WriteMethodCall($"RecordAndApply", ["@event"]);
 
-		AggregateSourceEmitter.EmitSuccessReturn(outputContext, method.ReturnKind);
+		AggregateSourceEmitter.EmitSuccessReturn(writer, method.ReturnKind);
 	}
 
-	static void EmitHookDeclarations(
-		AggregateEmitContext outputContext,
-		AggregateEventMethodInfo method,
-		string hookSuffix
-	)
+	static void EmitHookDeclarations(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		var writer = outputContext.Writer;
 		var suppression = AggregateSourceEmitter.CreateCA1822Suppression();
 
 		if (!method.ComputedParameters.IsEmpty)

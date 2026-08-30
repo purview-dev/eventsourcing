@@ -7,11 +7,25 @@ using Purview.EventSourcing.CosmosDb.Snapshots;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Dependency-injection extension methods for registering the Azure Cosmos DB snapshot event store.
+/// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {
 	extension(IServiceCollection services)
 	{
+		/// <summary>
+		/// Registers the Cosmos DB snapshot event store as the queryable event store.
+		/// </summary>
+		/// <param name="registerAsIEventStore">When <see langword="true"/>, the store is also registered as the default <see cref="Purview.EventSourcing.IEventStore"/>; otherwise only the queryable registration is added.</param>
+		/// <returns>The <see cref="IServiceCollection"/> for chaining further registrations.</returns>
+		/// <remarks>
+		/// The store is registered as <see cref="IQueryableEventStoreCore{T}"/> and
+		/// <see cref="Purview.EventSourcing.CosmosDb.Snapshots.ICosmosDbSnapshotEventStore{T}"/>, and options are
+		/// bound from the <see cref="Purview.EventSourcing.CosmosDb.Snapshots.CosmosDbEventStoreOptions.CosmosDbEventStore"/>
+		/// configuration section, falling back to the <c>"EventStore_CosmosDb"</c> or <c>"CosmosDb"</c> connection string.
+		/// </remarks>
 		public IServiceCollection AddCosmosDbSnapshotQueryableEventStore(bool registerAsIEventStore = false)
 		{
 			services.AddEventSourcing();

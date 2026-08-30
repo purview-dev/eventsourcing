@@ -17,9 +17,9 @@ public abstract class AggregateBase : IAggregate
 	/// <summary>
 	/// Initializes the base-class.
 	/// </summary>
-	/// <param name="aggregateType">Specifies the <see cref="AggregateType"/>, if not value is specified
+	/// <param name="aggregateType">Specifies the <see cref="AggregateType"/>, if no value is specified
 	/// <see cref="TypeNameHelper.GetName(Type, string, bool)"/> is called, with 'Aggregate' being trimmed if it's a suffix
-	/// of the type na,e.</param>
+	/// of the type name.</param>
 	protected AggregateBase(string? aggregateType = null)
 	{
 		AggregateType = aggregateType ?? TypeNameHelper.GetName(GetType(), "Aggregate");

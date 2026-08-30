@@ -9,6 +9,7 @@ namespace Purview.EventSourcing.SqlServer.Snapshots.EntityFramework;
 /// </summary>
 public sealed class SnapshotStoreDbContextDesignTimeFactory : IDesignTimeDbContextFactory<SnapshotStoreDbContext>
 {
+	///<inheritdoc/>
 	public SnapshotStoreDbContext CreateDbContext(string[] args)
 	{
 		var optionsBuilder = new DbContextOptionsBuilder<SnapshotStoreDbContext>();

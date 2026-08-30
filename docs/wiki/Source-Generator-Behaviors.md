@@ -220,7 +220,13 @@ public readonly partial record struct OrderStatus
 
 ## Diagnostics to expect
 
-Common diagnostic IDs:
+Validation diagnostics are produced by `Purview.EventSourcing.SourceGenerator` analyzers
+(`AggregateDiagnosticAnalyzer`, `ValueObjectDiagnosticAnalyzer`, and `EventStoreAnalyzer`), not by the
+source generators themselves. The generators consume the same validation internally to decide whether to
+emit source, but they never report diagnostics. Analyzer diagnostics can be suppressed or configured
+through the usual `#pragma warning` / `.editorconfig` mechanisms.
+
+Common aggregate diagnostic IDs:
 
 - `EVENTSTORE001` aggregate must be partial
 - `EVENTSTORE002` aggregate must inherit `AggregateBase` (or have no base so generator can add it)
@@ -228,5 +234,18 @@ Common diagnostic IDs:
 - `EVENTSTORE004` generic aggregates unsupported
 - `EVENTSTORE005` manual `RegisterEvents` unsupported
 - `EVENTSTORE007` generated event method must be partial
+- `EVENTSTORE009` duplicate generated event names
 - `EVENTSTORE010` parameter must map to writable property
 - `EVENTSTORE018` unsupported aggregate collection property type
+- `EVENTSTORE021` event schema version must be positive
+- `EVENTSTORE022` duplicate event schema version on aggregate
+
+Common value-object diagnostic IDs:
+
+- `EVENTSTORE101` value object must be partial
+- `EVENTSTORE102` nested value objects unsupported
+- `EVENTSTORE103` generic value objects unsupported
+- `EVENTSTORE104` scalar property missing
+- `EVENTSTORE107` strict mode relies on a generated `Create`
+- `EVENTSTORE108` conflicting `[Scalar]` and `[ValueObject]` attributes
+- `EVENTSTORE109` scalar value objects should be record structs

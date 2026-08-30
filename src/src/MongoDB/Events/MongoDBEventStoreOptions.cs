@@ -3,30 +3,67 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Purview.EventSourcing.MongoDB.Events;
 
+/// <summary>
+/// Configuration options for the MongoDB-backed <see cref="MongoDBEventStore{T}"/>.
+/// </summary>
+/// <remarks>
+/// Bound from the <c>EventStore:MongoDB</c> configuration section by the default dependency-injection
+/// registrations, and validated on start-up.
+/// </remarks>
 public sealed class MongoDBEventStoreOptions
 {
+	/// <summary>
+	/// The configuration section the options are bound from.
+	/// </summary>
 	public const string MongoDBEventStore = "EventStore:MongoDB";
 
 	const bool DefaultRemoveDeletedFromCache = true;
 	const int DefaultEventSuffixLength = 30;
 
+	/// <summary>
+	/// The MongoDB connection string used by the store.
+	/// </summary>
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	/// <summary>
+	/// The optional application name reported to the MongoDB server.
+	/// </summary>
 	public string? ApplicationName { get; set; }
 
+	/// <summary>
+	/// The name of the MongoDB database that holds the store's collections.
+	/// </summary>
 	[Required]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string Database { get; set; } = default!;
 
+	/// <summary>
+	/// The name of the collection that stores aggregate events, stream version records and idempotency markers.
+	/// </summary>
+	/// <remarks>
+	/// When null, a default collection name derived from the aggregate type is used.
+	/// </remarks>
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string? EventCollection { get; set; }
 
+	/// <summary>
+	/// The name of the collection that stores aggregate snapshots.
+	/// </summary>
+	/// <remarks>
+	/// When null, a default collection name derived from the aggregate type is used.
+	/// </remarks>
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string? SnapshotCollection { get; set; }
 
+	/// <summary>
+	/// The optional MongoDB replica-set name.
+	/// </summary>
 	public string? ReplicaName { get; set; }
 
+	/// <summary>
+	/// The operation timeout in seconds.
+	/// </summary>
 	[Range(1, 120000)]
 	public int? TimeoutInSeconds { get; set; } = 60;
 
@@ -63,6 +100,9 @@ public sealed class MongoDBEventStoreOptions
 	[DefaultValue(SnapshotCachingOptions.GetAndStore)]
 	public SnapshotCachingOptions CacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
 
+	/// <summary>
+	/// The default sliding expiration applied to cached aggregate snapshots.
+	/// </summary>
 	public TimeSpan DefaultCacheSlidingDuration { get; set; } = TimeSpan.FromMinutes(60);
 
 	/// <summary>

@@ -12,6 +12,14 @@ namespace Purview.EventSourcing.SqlServer.Events;
 // SQL strings are built from validated identifiers at construction time, not from user input.
 #pragma warning disable CA2100
 
+/// <summary>
+/// SQL Server-backed event store for a single aggregate type.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Persists stream versions, events, idempotency markers, and snapshots to a SQL Server (or Azure SQL) table,
+/// optionally maintaining a distributed cache of aggregate snapshots.
+/// </remarks>
 public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
@@ -35,6 +43,23 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
 
+	/// <summary>
+	/// Creates a new <see cref="SqlServerEventStore{T}"/> instance.
+	/// </summary>
+	/// <param name="eventNameMapper">The mapper used to resolve aggregate and event type names.</param>
+	/// <param name="sqlServerOptions">The options that configure the store, including connection string and table/schema names.</param>
+	/// <param name="distributedCache">The cache used to store aggregate snapshots.</param>
+	/// <param name="eventStoreTelemetry">The telemetry contract used to emit activities, metrics, and logs.</param>
+	/// <param name="aggregateChangeNotifier">The change-feed notifier invoked for save/delete notifications.</param>
+	/// <param name="aggregateRequirementsManager">The manager that fulfils aggregate requirements.</param>
+	/// <param name="validator">Optional validator invoked before persisting aggregates.</param>
+	/// <param name="aggregateIdFactory">Optional factory used to generate aggregate ids when none is supplied.</param>
+	/// <param name="eventUpcasterRegistry">Optional registry used to upcast events during reconstitution.</param>
+	/// <exception cref="ArgumentNullException">
+	/// Any of <paramref name="eventNameMapper"/>, <paramref name="sqlServerOptions"/>, <paramref name="distributedCache"/>,
+	/// <paramref name="eventStoreTelemetry"/>, <paramref name="aggregateChangeNotifier"/>, or
+	/// <paramref name="aggregateRequirementsManager"/> is <see langword="null"/>.
+	/// </exception>
 	public SqlServerEventStore(
 		IAggregateEventNameMapper eventNameMapper,
 		[NotNull] IOptions<SqlServerEventStoreOptions> sqlServerOptions,
@@ -68,6 +93,7 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 		_client = new SqlServerEventStoreClient(clientOptions);
 	}
 
+	///<inheritdoc/>
 	public T FulfilRequirements(T aggregate)
 	{
 		_aggregateRequirementsManager.Fulfil(aggregate);
@@ -111,6 +137,7 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
 		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
+	///<inheritdoc/>
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default
@@ -228,6 +255,11 @@ public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, IT
 
 	string CreateSnapshotId(string aggregateId) => $"snap_{_aggregateTypeShortName}_{aggregateId}";
 
+	/// <summary>
+	/// Creates the distributed-cache key for an aggregate.
+	/// </summary>
+	/// <param name="aggregateId">The id of the aggregate.</param>
+	/// <returns>The cache key, derived from the aggregate type's short name and id.</returns>
 	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToUpperInvariant();
 
 	//async Task EnsureConfiguredAsync(CancellationToken cancellationToken)

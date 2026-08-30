@@ -592,3 +592,5 @@ coverage/
 !scripts/*
 !src/src/EventSourcing/build
 !assets/packages/*
+
+!build/

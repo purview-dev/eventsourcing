@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.Postgres.Snapshot;
 
 partial class PostgresSnapshotEventStore<T>
 {
+	///<inheritdoc/>
 	public async IAsyncEnumerable<T> GetQueryEnumerableAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -23,6 +24,7 @@ partial class PostgresSnapshotEventStore<T>
 		} while (response.HasMoreRecords);
 	}
 
+	///<inheritdoc/>
 	public async IAsyncEnumerable<T> GetListEnumerableAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = ContinuationRequest.DefaultMaxRecords,
@@ -41,6 +43,7 @@ partial class PostgresSnapshotEventStore<T>
 		} while (response.HasMoreRecords);
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> QueryAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -53,6 +56,7 @@ partial class PostgresSnapshotEventStore<T>
 		return await ExecuteQueryAsync(whereClause, orderByClause, request, cancellationToken);
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> ListAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		ContinuationRequest request,
@@ -64,6 +68,7 @@ partial class PostgresSnapshotEventStore<T>
 		return await ExecuteQueryAsync(null, orderByClause, request, cancellationToken);
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> SingleOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		CancellationToken cancellationToken = default
@@ -74,6 +79,7 @@ partial class PostgresSnapshotEventStore<T>
 		return query.SingleOrDefault();
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -84,6 +90,7 @@ partial class PostgresSnapshotEventStore<T>
 		return query.FirstOrDefault();
 	}
 
+	///<inheritdoc/>
 	public async Task<long> CountAsync(
 		Expression<Func<T, bool>>? whereClause,
 		CancellationToken cancellationToken = default
@@ -109,6 +116,7 @@ partial class PostgresSnapshotEventStore<T>
 		return query.Results.Select(FulfilRequirements);
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> WherePayloadContainsAsync(
 		string jsonFragment,
 		ContinuationRequest request,
@@ -140,6 +148,7 @@ partial class PostgresSnapshotEventStore<T>
 		};
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> WherePayloadHasKeyAsync(
 		string key,
 		ContinuationRequest request,

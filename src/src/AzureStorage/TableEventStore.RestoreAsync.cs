@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<bool> RestoreAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,

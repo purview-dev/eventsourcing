@@ -5,16 +5,14 @@ namespace Purview.EventSourcing.SourceGenerator.Aggregate;
 static class AggregateInfoBuilder
 {
 	public static GeneratorResult<AggregateInfo> Build(
-		GeneratorAttributeSyntaxContext context,
+		INamedTypeSymbol classSymbol,
+		ClassDeclarationSyntax syntax,
+		Compilation compilation,
 		CancellationToken cancellationToken
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		var classSymbol = (INamedTypeSymbol)context.TargetSymbol;
-		var syntax = (ClassDeclarationSyntax)context.TargetNode;
-
-		var compilation = context.SemanticModel.Compilation;
 		var classMetadataFullName = classSymbol.ContainingNamespace.IsGlobalNamespace
 			? classSymbol.MetadataName
 			: $"{classSymbol.ContainingNamespace}.{classSymbol.MetadataName}";

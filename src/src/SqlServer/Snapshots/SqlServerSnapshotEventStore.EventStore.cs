@@ -9,21 +9,25 @@ namespace Purview.EventSourcing.SqlServer.Snapshot;
 
 partial class SqlServerSnapshotEventStore<T>
 {
+	///<inheritdoc/>
 	public Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default) =>
 		_eventStore.CreateAsync(aggregateId, cancellationToken);
 
+	///<inheritdoc/>
 	public Task<T?> GetOrCreateAsync(
 		string? aggregateId,
 		EventStoreOperationContext? operationContext,
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetOrCreateAsync(aggregateId, operationContext, cancellationToken);
 
+	///<inheritdoc/>
 	public Task<T?> GetAsync(
 		string aggregateId,
 		EventStoreOperationContext? operationContext,
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetAsync(aggregateId, operationContext, cancellationToken);
 
+	///<inheritdoc/>
 	public Task<T?> GetAtAsync(
 		string aggregateId,
 		int version,
@@ -31,6 +35,7 @@ partial class SqlServerSnapshotEventStore<T>
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetAtAsync(aggregateId, version, operationContext, cancellationToken);
 
+	///<inheritdoc/>
 	public async Task<SaveResult<T>> SaveAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -143,12 +148,15 @@ partial class SqlServerSnapshotEventStore<T>
 		}
 	}
 
+	///<inheritdoc/>
 	public Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
 		_eventStore.IsDeletedAsync(aggregateId, cancellationToken);
 
+	///<inheritdoc/>
 	public Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default) =>
 		_eventStore.GetDeletedAsync(aggregateId, cancellationToken);
 
+	///<inheritdoc/>
 	public async Task<bool> DeleteAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -178,6 +186,7 @@ partial class SqlServerSnapshotEventStore<T>
 		}
 	}
 
+	///<inheritdoc/>
 	public async Task<bool> RestoreAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -193,16 +202,20 @@ partial class SqlServerSnapshotEventStore<T>
 		return result;
 	}
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
 		CancellationToken cancellationToken = default
 	) => _eventStore.GetAggregateIdsAsync(includeDeleted, cancellationToken);
 
+	///<inheritdoc/>
 	public Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default) =>
 		_eventStore.ExistsAsync(aggregateId, cancellationToken);
 
+	///<inheritdoc/>
 	public T FulfilRequirements(T aggregate) => _eventStore.FulfilRequirements(aggregate);
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync(
 		string aggregateId,
 		int versionFrom,

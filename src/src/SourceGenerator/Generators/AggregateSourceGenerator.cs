@@ -13,31 +13,27 @@ public sealed partial class AggregateSourceGenerator : IIncrementalGenerator
 					ctx.AddSource(HintName, Source);
 			});
 
-		var generationModel = SourceGenLibrary.GetGeneratorValueProviders(context);
+		var generationContext = SourceGenLibrary.GetGenerationContext(context);
+		var aggregateInfo = SourceGenLibrary.GetAggregateTargets(context);
+
 		context.RegisterSourceOutput(
-			generationModel,
-			(spc, model) =>
+			aggregateInfo.Combine(generationContext),
+			static (spc, tuple) =>
 			{
-				if (model.GenerationContext.Settings.IsSourceGeneratorDisabled)
+				var (aggregateResult, context) = tuple;
+				if (context.Settings.IsSourceGeneratorDisabled)
 					return;
 
-				spc.ReportDiagnostics(model.Diagnostics);
+				if (!aggregateResult.ShouldProcess || !aggregateResult.HasValue)
+					return;
 
-				foreach (var aggregateResult in model.Aggregates)
-				{
-					if (aggregateResult.HasDiagnostics)
-						spc.ReportDiagnostics(aggregateResult.Diagnostics);
+				var info = aggregateResult.Value;
+				var writer = context.CreateCodeWriter();
 
-					if (!aggregateResult.ShouldProcess)
-						continue;
+				AggregateEmitContext outputContext = new(context, info);
+				AggregateSourceEmitter.GenerateAggregateSource(outputContext, writer);
 
-					var info = aggregateResult.Value;
-
-					AggregateEmitContext outputContext = new(model.GenerationContext, info);
-					AggregateSourceEmitter.GenerateAggregateSource(outputContext);
-
-					spc.AddSource(info.HintName, outputContext.Writer);
-				}
+				spc.AddSource(info.HintName, writer);
 			}
 		);
 	}

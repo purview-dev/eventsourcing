@@ -6,6 +6,20 @@ using Purview.EventSourcing.Services;
 
 namespace Purview.EventSourcing.InMemory.Snapshots;
 
+/// <summary>
+/// An in-memory <see cref="IQueryableEventStoreCore{T}"/> that persists aggregates and their events in
+/// process and supports queryable snapshot reads.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <param name="aggregateChangeNotifier">The notifier invoked before and after aggregates are saved or deleted.</param>
+/// <param name="aggregateRequirementsManager">The manager used to fulfil aggregate requirements.</param>
+/// <param name="validator">Optional <see cref="IAggregateValidator{T}"/> used to validate aggregates before they are saved.</param>
+/// <param name="aggregateIdFactory">Optional factory used to generate aggregate ids when none is supplied.</param>
+/// <remarks>
+/// Queries are evaluated over the in-memory aggregates, so this store is intended for testing and
+/// single-process scenarios; data is not shared between instances or persisted across restarts.
+/// </remarks>
+/// <seealso cref="IInMemorySnapshotStore{T}"/>
 public sealed class InMemorySnapshotStore<T>(
 	ChangeFeed.IAggregateChangeFeedNotifier<T> aggregateChangeNotifier,
 	IAggregateRequirementsManager aggregateRequirementsManager,
@@ -21,11 +35,13 @@ public sealed class InMemorySnapshotStore<T>(
 		IInMemorySnapshotStore<T>
 	where T : class, IAggregate, new()
 {
+	///<inheritdoc/>
 	public Task<long> CountAsync(
 		Expression<Func<T, bool>>? whereClause,
 		CancellationToken cancellationToken = default
 	) => Task.FromResult(whereClause is null ? Aggregates.LongCount() : Aggregates.LongCount(whereClause.Compile()));
 
+	///<inheritdoc/>
 	public Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -42,6 +58,7 @@ public sealed class InMemorySnapshotStore<T>(
 		return Task.FromResult(results.FirstOrDefault());
 	}
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<T> GetListEnumerableAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = 20,
@@ -55,6 +72,7 @@ public sealed class InMemorySnapshotStore<T>(
 		return results.ToAsyncEnumerable();
 	}
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<T> GetQueryEnumerableAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -72,6 +90,7 @@ public sealed class InMemorySnapshotStore<T>(
 		return results.ToAsyncEnumerable();
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> ListAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		[NotNull] ContinuationRequest request,
@@ -97,6 +116,7 @@ public sealed class InMemorySnapshotStore<T>(
 		};
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> QueryAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -125,6 +145,7 @@ public sealed class InMemorySnapshotStore<T>(
 		};
 	}
 
+	///<inheritdoc/>
 	public Task<T?> SingleOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		CancellationToken cancellationToken = default

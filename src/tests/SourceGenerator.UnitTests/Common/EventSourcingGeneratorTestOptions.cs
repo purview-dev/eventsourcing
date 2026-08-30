@@ -36,6 +36,11 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 		AdditionalAssemblyTypes = [typeof(Aggregates.IAggregate)];
 		AdditionalReferences = [.. TestMetadataReferences.GetAdditionalReferences()];
 		ExcludeGeneratedSourceHintNames = [.. GeneratedAttributes];
+		AnalyzerTypes =
+		[
+			typeof(Analyzers.AggregateDiagnosticAnalyzer),
+			typeof(Analyzers.ValueObjectDiagnosticAnalyzer),
+		];
 	}
 
 	public static new EventSourcingGeneratorTestOptions Default => new();

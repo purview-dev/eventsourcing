@@ -5,6 +5,16 @@ using Purview.EventSourcing.Services;
 
 namespace Purview.EventSourcing;
 
+/// <summary>
+/// Convenience extension methods over <see cref="IEventStoreCore{T}"/> for common create, get, save,
+/// delete, and restore workflows.
+/// </summary>
+/// <remarks>
+/// These helpers reduce boilerplate by supplying default operation contexts, converting object-based ids to
+/// strings, and running creator callbacks on newly created aggregates. They are hidden from IntelliSense as
+/// they are intended for use through the main <see cref="IEventStore"/> and <see cref="IQueryableEventStore"/>
+/// facades.
+/// </remarks>
 [EditorBrowsable(EditorBrowsableState.Never)]
 [System.Diagnostics.DebuggerStepThrough]
 public static class IEventStoreCoreExtensions
@@ -25,7 +35,7 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new()
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))
-			aggregateId = $"{Guid.NewGuid()}:D";
+			aggregateId = $"{Guid.NewGuid():D}";
 
 		var aggregate = new T { Details = new() { Id = aggregateId } };
 
@@ -34,9 +44,25 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> using the string representation of the id.
+	/// </summary>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="aggregateId">The id to use; when null, a new <see cref="Guid"/> is generated.</param>
+	/// <returns>A new aggregate of <typeparamref name="T"/>.</returns>
 	public static T QuickCreate<T>(this IEventStoreCore<T> eventStore, object? aggregateId)
 		where T : class, IAggregate, new() => eventStore.QuickCreate(aggregateId?.ToString());
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> and runs the <paramref name="creator"/> callback
+	/// against it.
+	/// </summary>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="aggregateId">The id to use; when null, a new <see cref="Guid"/> is generated.</param>
+	/// <param name="creator">The callback used to initialize the new aggregate.</param>
+	/// <returns>The initialized aggregate.</returns>
 	public static T QuickCreate<T>(this IEventStoreCore<T> eventStore, string? aggregateId, [NotNull] Action<T> creator)
 		where T : class, IAggregate, new()
 	{
@@ -47,9 +73,28 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> using the string representation of the id and runs
+	/// the <paramref name="creator"/> callback against it.
+	/// </summary>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="aggregateId">The id to use; when null, a new <see cref="Guid"/> is generated.</param>
+	/// <param name="creator">The callback used to initialize the new aggregate.</param>
+	/// <returns>The initialized aggregate.</returns>
 	public static T QuickCreate<T>(this IEventStoreCore<T> eventStore, object? aggregateId, Action<T> creator)
 		where T : class, IAggregate, new() => eventStore.QuickCreate(aggregateId?.ToString(), creator);
 
+	/// <summary>
+	/// Asynchronously creates a new aggregate of <typeparamref name="T"/> and runs the <paramref name="creator"/>
+	/// callback against it.
+	/// </summary>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="aggregateId">The id to use; when null, a new <see cref="Guid"/> is generated.</param>
+	/// <param name="creator">The asynchronous callback used to initialize the new aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The initialized aggregate.</returns>
 	public static async Task<T> QuickCreateAsync<T>(
 		this IEventStoreCore<T> eventStore,
 		string? aggregateId,
@@ -65,6 +110,16 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Asynchronously creates a new aggregate of <typeparamref name="T"/> using the string representation of the
+	/// id and runs the <paramref name="creator"/> callback against it.
+	/// </summary>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="aggregateId">The id to use; when null, a new <see cref="Guid"/> is generated.</param>
+	/// <param name="creator">The asynchronous callback used to initialize the new aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The initialized aggregate.</returns>
 	public static async Task<T> QuickCreateAsync<T>(
 		this IEventStoreCore<T> eventStore,
 		object? aggregateId,
@@ -86,6 +141,17 @@ public static class IEventStoreCoreExtensions
 
 	#region id: string, with context.
 
+	/// <summary>
+	/// Gets the aggregate for the id, creating and initializing it with the <paramref name="creator"/> when it
+	/// does not yet exist.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The asynchronous callback used to initialize a newly created aggregate.</param>
+	/// <param name="context">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId,
@@ -102,6 +168,17 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Gets the aggregate for the id, creating and initializing it with the <paramref name="creator"/> when it
+	/// does not yet exist.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The callback used to initialize a newly created aggregate.</param>
+	/// <param name="context">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId,
@@ -122,6 +199,14 @@ public static class IEventStoreCoreExtensions
 
 	#region id: string, without context.
 
+	/// <summary>
+	/// Gets the aggregate for the id, creating it when it does not yet exist using the default context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId,
@@ -129,6 +214,16 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.GetOrCreateAsync(aggregateId, null, cancellationToken);
 
+	/// <summary>
+	/// Gets the aggregate for the id, creating and initializing it with the <paramref name="creator"/> when it
+	/// does not yet exist using the default context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The asynchronous callback used to initialize a newly created aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId,
@@ -144,6 +239,16 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Gets the aggregate for the id, creating and initializing it with the <paramref name="creator"/> when it
+	/// does not yet exist using the default context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The callback used to initialize a newly created aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId,
@@ -163,6 +268,15 @@ public static class IEventStoreCoreExtensions
 
 	#region id: object, with context.
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id, creating it when it does not yet exist.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="operationContext">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId,
@@ -172,6 +286,17 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new() =>
 		eventStore.GetOrCreateAsync(aggregateId?.ToString(), operationContext, cancellationToken);
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id, creating and initializing it with the
+	/// <paramref name="creator"/> when it does not yet exist.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The asynchronous callback used to initialize a newly created aggregate.</param>
+	/// <param name="context">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId,
@@ -188,6 +313,17 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id, creating and initializing it with the
+	/// <paramref name="creator"/> when it does not yet exist.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The callback used to initialize a newly created aggregate.</param>
+	/// <param name="context">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId,
@@ -208,6 +344,15 @@ public static class IEventStoreCoreExtensions
 
 	#region id: object, no context.
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id, creating it when it does not yet exist
+	/// using the default context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId,
@@ -216,6 +361,16 @@ public static class IEventStoreCoreExtensions
 		where T : class, IAggregate, new() =>
 		eventStore.GetOrCreateAsync(aggregateId?.ToString(), null, cancellationToken);
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id, creating and initializing it with the
+	/// <paramref name="creator"/> when it does not yet exist using the default context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The asynchronous callback used to initialize a newly created aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId,
@@ -231,6 +386,16 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id, creating and initializing it with the
+	/// <paramref name="creator"/> when it does not yet exist using the default context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="id">The id of the aggregate to get, or use as the id of the aggregate to create.</param>
+	/// <param name="creator">The callback used to initialize a newly created aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The existing or newly created aggregate, or null.</returns>
 	public static async Task<T?> GetOrCreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? id,
@@ -252,6 +417,16 @@ public static class IEventStoreCoreExtensions
 
 	#region CreateAsync
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> and optionally runs the <paramref name="creator"/>
+	/// callback against it.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">Optional, the id of the aggregate to create; when null, an id is generated.</param>
+	/// <param name="creator">Optional asynchronous callback used to initialize the new aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The newly created aggregate.</returns>
 	public static async Task<T> CreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId = null,
@@ -267,6 +442,16 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> and optionally runs the <paramref name="creator"/>
+	/// callback against it.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">Optional, the id of the aggregate to create; when null, an id is generated.</param>
+	/// <param name="creator">Optional callback used to initialize the new aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The newly created aggregate.</returns>
 	public static async Task<T> CreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string? aggregateId = null,
@@ -281,6 +466,14 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> using the string representation of the id.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">Optional, the id of the aggregate to create; when null, an id is generated.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The newly created aggregate.</returns>
 	public static Task<T> CreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId = null,
@@ -288,6 +481,16 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.CreateAsync(aggregateId?.ToString(), cancellationToken);
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> using the string representation of the id and
+	/// optionally runs the <paramref name="creator"/> callback against it.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">Optional, the id of the aggregate to create; when null, an id is generated.</param>
+	/// <param name="creator">Optional asynchronous callback used to initialize the new aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The newly created aggregate.</returns>
 	public static async Task<T> CreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId = null,
@@ -303,6 +506,16 @@ public static class IEventStoreCoreExtensions
 		return aggregate;
 	}
 
+	/// <summary>
+	/// Creates a new aggregate of <typeparamref name="T"/> using the string representation of the id and
+	/// optionally runs the <paramref name="creator"/> callback against it.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> to create.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">Optional, the id of the aggregate to create; when null, an id is generated.</param>
+	/// <param name="creator">Optional callback used to initialize the new aggregate.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The newly created aggregate.</returns>
 	public static async Task<T> CreateAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object? aggregateId = null,
@@ -321,6 +534,14 @@ public static class IEventStoreCoreExtensions
 
 	#region GetAsync
 
+	/// <summary>
+	/// Gets the aggregate for the id using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The requested aggregate, or null when it does not exist.</returns>
 	public static Task<T?> GetAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,
@@ -328,6 +549,15 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.GetAsync(aggregateId, null, cancellationToken);
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The requested aggregate, or null when it does not exist.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> has no string representation.</exception>
 	public static Task<T?> GetAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -341,6 +571,16 @@ public static class IEventStoreCoreExtensions
 		return eventStore.GetAsync(idAsString, null, cancellationToken);
 	}
 
+	/// <summary>
+	/// Gets the aggregate for the string representation of the id using the supplied operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get.</param>
+	/// <param name="context">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The requested aggregate, or null when it does not exist.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> has no string representation.</exception>
 	public static Task<T?> GetAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -359,6 +599,15 @@ public static class IEventStoreCoreExtensions
 
 	#region GetAtAsync
 
+	/// <summary>
+	/// Gets the aggregate up to a specific version using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get.</param>
+	/// <param name="version">The version of the aggregate to get.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The requested aggregate, or null when it does not exist.</returns>
 	public static Task<T?> GetAtAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,
@@ -367,6 +616,15 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.GetAtAsync(aggregateId, version, null, cancellationToken);
 
+	/// <summary>
+	/// Gets the aggregate up to a specific version using the string representation of the id.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get.</param>
+	/// <param name="version">The version of the aggregate to get.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The requested aggregate, or null when it does not exist.</returns>
 	public static Task<T?> GetAtAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -375,6 +633,18 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.GetAtAsync(aggregateId, version, null, cancellationToken);
 
+	/// <summary>
+	/// Gets the aggregate up to a specific version using the string representation of the id and the supplied
+	/// operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to get.</param>
+	/// <param name="version">The version of the aggregate to get.</param>
+	/// <param name="context">The operational context controlling how the aggregate is retrieved.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The requested aggregate, or null when it does not exist.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> has no string representation.</exception>
 	public static Task<T?> GetAtAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -394,6 +664,15 @@ public static class IEventStoreCoreExtensions
 
 	#region IsDeletedAsync
 
+	/// <summary>
+	/// Determines if the aggregate with the string representation of the id exists in the deleted state.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to check.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>True when the aggregate exists in the deleted state, otherwise false.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> has no string representation.</exception>
 	public static Task<bool> IsDeletedAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -411,6 +690,15 @@ public static class IEventStoreCoreExtensions
 
 	#region GetDeletedAsync
 
+	/// <summary>
+	/// Gets a deleted aggregate using the string representation of the id.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the deleted aggregate to get.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>The deleted aggregate, or null when it is not found.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> has no string representation.</exception>
 	public static Task<T?> GetDeletedAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -428,6 +716,15 @@ public static class IEventStoreCoreExtensions
 
 	#region ExistsAsync
 
+	/// <summary>
+	/// Determines if the aggregate with the string representation of the id exists, including deleted states.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to check.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>An <see cref="ExistsState"/> describing the existence of the aggregate.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> has no string representation.</exception>
 	public static Task<ExistsState> ExistsAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -441,6 +738,15 @@ public static class IEventStoreCoreExtensions
 		return eventStore.ExistsAsync(idAsString, cancellationToken);
 	}
 
+	/// <summary>
+	/// Determines if the aggregate with the string representation of the id exists, returning
+	/// <see cref="ExistsState.DoesNotExist"/> for null or blank ids instead of throwing.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to check.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>An <see cref="ExistsState"/> describing the existence of the aggregate.</returns>
 	public static Task<ExistsState> ExistsWithNullCheckAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		object aggregateId,
@@ -454,6 +760,15 @@ public static class IEventStoreCoreExtensions
 		return eventStore.ExistsWithNullCheckAsync(idAsString, cancellationToken);
 	}
 
+	/// <summary>
+	/// Determines if the aggregate exists, returning <see cref="ExistsState.DoesNotExist"/> for null or blank
+	/// ids instead of throwing.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to check.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>An <see cref="ExistsState"/> describing the existence of the aggregate.</returns>
 	public static Task<ExistsState> ExistsWithNullCheckAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,
@@ -540,6 +855,14 @@ public static class IEventStoreCoreExtensions
 
 	#region SaveAsync
 
+	/// <summary>
+	/// Saves the aggregate using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregate">The aggregate to save.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>A <see cref="SaveResult{T}"/> describing the result of the save.</returns>
 	public static Task<SaveResult<T>> SaveAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		T aggregate,
@@ -551,6 +874,14 @@ public static class IEventStoreCoreExtensions
 
 	#region DeleteAsync
 
+	/// <summary>
+	/// Deletes the aggregate using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregate">The aggregate to delete.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>True when the aggregate was successfully deleted, otherwise false.</returns>
 	public static Task<bool> DeleteAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		T aggregate,
@@ -558,6 +889,14 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.DeleteAsync(aggregate, null, cancellationToken);
 
+	/// <summary>
+	/// Deletes the aggregate with the given id using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to delete.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>True when the aggregate was successfully deleted, otherwise false.</returns>
 	public static Task<bool> DeleteAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,
@@ -565,6 +904,16 @@ public static class IEventStoreCoreExtensions
 	)
 		where T : class, IAggregate, new() => eventStore.DeleteAsync(aggregateId, null, cancellationToken);
 
+	/// <summary>
+	/// Deletes the aggregate with the given id using the supplied operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregateId">The id of the aggregate to delete.</param>
+	/// <param name="operationContext">The operational context controlling how the aggregate is deleted.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>True when the aggregate was successfully deleted, otherwise false.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> is null or whitespace.</exception>
 	public static async Task<bool> DeleteAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		string aggregateId,
@@ -583,6 +932,14 @@ public static class IEventStoreCoreExtensions
 
 	#region RestoreAsync
 
+	/// <summary>
+	/// Restores a previously deleted aggregate using the default operation context.
+	/// </summary>
+	/// <typeparam name="T">The <see cref="IAggregate"/> type.</typeparam>
+	/// <param name="eventStore">The <see cref="IEventStoreCore{T}"/> used as the root object.</param>
+	/// <param name="aggregate">The aggregate to restore.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	/// <returns>True when the aggregate was successfully restored, otherwise false.</returns>
 	public static Task<bool> RestoreAsync<T>(
 		[NotNull] this IEventStoreCore<T> eventStore,
 		T aggregate,

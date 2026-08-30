@@ -17,6 +17,14 @@ static class ValueObjectSymbolInspector
 	public const string LessThanOrEqualOperatorName = "op_LessThanOrEqual";
 	public const string GreaterThanOrEqualOperatorName = "op_GreaterThanOrEqual";
 
+	public static readonly string[] RelationalOperatorNames =
+	[
+		LessThanOperatorName,
+		GreaterThanOperatorName,
+		LessThanOrEqualOperatorName,
+		GreaterThanOrEqualOperatorName,
+	];
+
 	public static List<DiagnosticInfo> ValidateValueObjectType(
 		INamedTypeSymbol typeSymbol,
 		string attributeName,

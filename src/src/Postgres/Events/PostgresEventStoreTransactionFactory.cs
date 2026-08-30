@@ -16,12 +16,18 @@ public interface IPostgresEventStoreTransactionFactory
 	IPostgresEventStoreTransaction CreatePostgresTransaction(string? correlationId = null);
 }
 
+/// <summary>
+/// Creates PostgreSQL transaction coordinators that also support enlisting additional SQL/EF Core work.
+/// </summary>
+/// <param name="correlationIdProvider">Provides a default correlation id when none is supplied.</param>
 public sealed class PostgresEventStoreTransactionFactory(IEventStoreCorrelationIdProvider correlationIdProvider)
 	: IEventStoreTransactionFactory,
 		IPostgresEventStoreTransactionFactory
 {
+	///<inheritdoc/>
 	public IEventStoreTransaction Create(string? correlationId = null) => CreatePostgresTransaction(correlationId);
 
+	///<inheritdoc/>
 	public IPostgresEventStoreTransaction CreatePostgresTransaction(string? correlationId = null) =>
 		new PostgresEventStoreTransaction(correlationId ?? correlationIdProvider.GetCorrelationId());
 }

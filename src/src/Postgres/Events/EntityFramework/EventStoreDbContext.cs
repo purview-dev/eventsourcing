@@ -29,6 +29,7 @@ public class EventStoreDbContext(DbContextOptions<EventStoreDbContext> options, 
 	public EventStoreDbContext(DbContextOptions<EventStoreDbContext> options)
 		: this(options, "public", "EventStore") { }
 
+	///<inheritdoc/>
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -91,6 +92,7 @@ public class EventStoreDbContext(DbContextOptions<EventStoreDbContext> options, 
 		});
 	}
 
+	///<inheritdoc/>
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 	{
 		ArgumentNullException.ThrowIfNull(optionsBuilder);

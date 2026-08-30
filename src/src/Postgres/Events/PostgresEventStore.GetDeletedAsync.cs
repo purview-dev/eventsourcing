@@ -2,6 +2,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 partial class PostgresEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		var aggregate = await GetCoreAsync(

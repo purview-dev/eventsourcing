@@ -9,6 +9,7 @@ namespace Purview.EventSourcing.SqlServer.Events.EntityFramework;
 /// </summary>
 public sealed class EventStoreDbContextDesignTimeFactory : IDesignTimeDbContextFactory<EventStoreDbContext>
 {
+	///<inheritdoc/>
 	public EventStoreDbContext CreateDbContext(string[] args)
 	{
 		var optionsBuilder = new DbContextOptionsBuilder<EventStoreDbContext>();

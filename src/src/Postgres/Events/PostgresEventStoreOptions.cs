@@ -28,20 +28,38 @@ public sealed class PostgresAggregateTableOverride
 	public string? TableName { get; set; }
 }
 
+/// <summary>
+/// Options for the PostgreSQL event store.
+/// </summary>
+/// <remarks>
+/// These options are bound from the <see cref="PostgresEventStore"/> configuration section.
+/// </remarks>
 public sealed class PostgresEventStoreOptions
 {
+	/// <summary>
+	/// The configuration section name used to bind these options.
+	/// </summary>
 	public const string PostgresEventStore = "EventStore:Postgres";
 
 	const bool DefaultRemoveDeletedFromCache = true;
 	const int DefaultEventSuffixLength = 30;
 
+	/// <summary>
+	/// The connection string to the PostgreSQL instance.
+	/// </summary>
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	/// <summary>
+	/// The name of the table that stores events.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreEvents";
 
+	/// <summary>
+	/// The name of the schema that contains the event table.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "public";
@@ -59,6 +77,9 @@ public sealed class PostgresEventStoreOptions
 	/// <remarks>Only applies when <see cref="AutoCreateTable"/> is true and the table is being created for the first time.</remarks>
 	public bool UseDataCompression { get; set; }
 
+	/// <summary>
+	/// The command timeout, in seconds, applied to event-store commands; when null, a default timeout is used.
+	/// </summary>
 	[Range(1, 120000)]
 	public int? TimeoutInSeconds { get; set; } = 60;
 
@@ -95,6 +116,9 @@ public sealed class PostgresEventStoreOptions
 	[DefaultValue(SnapshotCachingOptions.GetAndStore)]
 	public SnapshotCachingOptions CacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
 
+	/// <summary>
+	/// The sliding expiration applied to cached aggregates when no cache options are supplied.
+	/// </summary>
 	public TimeSpan DefaultCacheSlidingDuration { get; set; } = TimeSpan.FromMinutes(60);
 
 	/// <summary>

@@ -9,9 +9,19 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
+/// <summary>
+/// Provides aggregate summary queries against Azure Table Storage for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service reads the stream-version rows written by the Azure Storage event store and exposes them as
+/// <see cref="AggregateSummaryResponse"/> values. Rows are fetched from every table that could hold the requested
+/// aggregate type and are filtered, sorted and paged in memory.
+/// </remarks>
+/// <param name="options">The configured <see cref="AzureStorageEventStoreOptions"/>.</param>
 public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorageEventStoreOptions> options)
 	: IAdminAggregateQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
 		CancellationToken cancellationToken
@@ -95,6 +105,7 @@ public sealed class AzureStorageAdminAggregateQueryService(IOptions<AzureStorage
 		return new PagedResult<AggregateSummaryResponse>(pageItems, page, pageSize, totalCount);
 	}
 
+	///<inheritdoc/>
 	public async Task<AggregateSummaryResponse?> GetAsync(
 		string aggregateType,
 		string aggregateId,

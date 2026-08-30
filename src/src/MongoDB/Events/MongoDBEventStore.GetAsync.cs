@@ -8,6 +8,7 @@ namespace Purview.EventSourcing.MongoDB;
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	[System.Diagnostics.DebuggerStepThrough]
 	public Task<T?> GetAsync(
 		string aggregateId,

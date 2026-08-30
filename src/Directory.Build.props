@@ -15,8 +15,9 @@
 
 	<PropertyGroup>
 		<NoWarn>$(NoWarn);CS0436;</NoWarn>
-		<!-- Ignoring XML comments for now -->
-		<NoWarn>$(NoWarn);CS1574;CS1591;</NoWarn>
+		<!-- CS1574 (unresolvable cref) is suppressed because cross-assembly crefs cannot always be resolved;
+		     CS1591 (missing XML docs) is deliberately reported so documentation is enforced on packable projects. -->
+		<NoWarn>$(NoWarn);CS1574;</NoWarn>
 		<AzureCosmosDisableNewtonsoftJsonCheck>true</AzureCosmosDisableNewtonsoftJsonCheck>
 	</PropertyGroup>
 
@@ -52,7 +53,19 @@
 	</PropertyGroup>
 
 	<ItemGroup Label="NuGet package assets" Condition="'$(IsPackable)' == 'true'">
-		<None Include="$(MSBuildThisFileDirectory)../README.md" Pack="true" PackagePath="/" />
+		<!-- Prefer the project-local README when present, otherwise fall back to the repository README. -->
+		<None
+			Include="$(MSBuildProjectDirectory)/README.md"
+			Pack="true"
+			PackagePath="/"
+			Condition="Exists('$(MSBuildProjectDirectory)/README.md')"
+		/>
+		<None
+			Include="$(MSBuildThisFileDirectory)../README.md"
+			Pack="true"
+			PackagePath="/"
+			Condition="!Exists('$(MSBuildProjectDirectory)/README.md')"
+		/>
 		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Pack="true" PackagePath="/" />
 		<None Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg" Pack="true" PackagePath="/" />
 	</ItemGroup>

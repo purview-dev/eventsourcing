@@ -41,7 +41,7 @@ The most important rules are:
 - **Generate deterministic output and stable hint names.**
 - **Test incrementally, not just generated text.**
 - **Compile against the oldest Roslyn API version containing the functionality you need.**
-- **Keep `CodeWriter` instances output-scoped; never cache them in incremental provider state or custom contexts.**
+- **Create `CodeWriter` inside the output callback and pass it to helpers within that callback; never create it earlier in the pipeline or store it in incremental provider state or custom contexts.**
 
 ## Available resources
 
@@ -53,7 +53,7 @@ The most important rules are:
 1. Load and apply the `source-generator-codewriter-modernization` skill.
 2. Prefer structured declaration APIs over handwritten declaration strings.
 3. Prefer XML helper extensions (`XmlSummary`, `XmlParam`, etc.) over raw `///` output.
-4. Keep `CodeWriter` instances output-scoped; never cache in incremental provider state or custom contexts.
+4. Create `CodeWriter` inside each output callback; never create it earlier in the pipeline or cache it in incremental provider state or custom contexts.
 5. Preserve semantic behavior while modernizing implementation style.
 6. Keep edits minimal and localized to emitter concerns.
 

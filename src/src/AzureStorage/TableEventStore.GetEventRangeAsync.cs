@@ -7,14 +7,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
-	/// <summary>
-	/// Gets a range of <see cref="IEvent"/>s for a given aggregate, as specified by it's <paramref name="aggregateId"/>.
-	/// </summary>
-	/// <param name="aggregateId">The id of the <see cref="Interfaces.Aggregates.IAggregate"/>.</param>
-	/// <param name="versionFrom">The inclusive event number to start the range at.</param>
-	/// <param name="versionTo">Optional, the inclusive event number to finish the range at.</param>
-	/// <param name="cancellationToken">The stopping token.</param>
-	/// <returns>If no <paramref name="versionFrom"/> is specified all available events greater than <paramref name="versionFrom"/> are returned.</returns>
+	///<inheritdoc/>
 	public async IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync(
 		string aggregateId,
 		int versionFrom,

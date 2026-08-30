@@ -1,130 +1,155 @@
-using System.Text;
-
 namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 static partial class ComplexValueObjectEmitter
 {
-	static void EmitEquality(StringBuilder sb, ComplexValueObjectModel model, string indent)
+	static void EmitEquality(CodeWriter writer, ComplexValueObjectModel model)
 	{
 		if (!model.EqualsSelfExists)
 		{
-			sb.AppendLine();
-			sb.AppendLine(
-				model.IsReferenceType
-					? $@"{indent}	public bool Equals({model.TypeName} other)
-{indent}	{{
-{indent}		if (other is null)
-{indent}			return false;"
-					: $"{indent}	public bool Equals({model.TypeName} other)\n{indent}	{{"
-			);
-			for (var i = 0; i < model.Properties.Length; i++)
-			{
-				sb.AppendLine(
-					$"{indent}		if (!global::System.Collections.Generic.EqualityComparer<{model.PropertyTypeNames[i]}>.Default.Equals({model.PropertyNames[i]}, other.{model.PropertyNames[i]}))"
-				);
-				sb.AppendLine($"{indent}			return false;");
-			}
+			writer.WriteMethod(
+				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
+				{
+					Parameters = [new("other", ValueObjectType(model))],
+				},
+				body =>
+				{
+					if (model.IsReferenceType)
+						body.WriteIfBlock("other is null", ifBody => ifBody.WriteReturn("false"));
 
-			sb.AppendLine($"{indent}		return true;");
-			sb.AppendLine($"{indent}	}}");
+					foreach (var property in model.Properties)
+					{
+						body.WriteIfBlock(
+							$"!global::System.Collections.Generic.EqualityComparer<{property.TypeName}>.Default.Equals({property.Name}, other.{property.Name})",
+							ifBody => ifBody.WriteReturn("false")
+						);
+					}
+
+					body.WriteReturn("true");
+				}
+			);
 		}
 
 		if (!model.EqualsObjectExists)
 		{
-			sb.AppendLine();
-			sb.AppendLine(
-				$@"{indent}	public override bool Equals(object? obj) =>
-{indent}		obj is {model.TypeName} other && Equals(other);"
+			ValueObjectEmitterHelpers.WriteExpressionMethod(
+				writer,
+				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
+				{
+					IsOverride = true,
+					Parameters = [new("obj", PurviewTypeLibrary.System.Object.AsTypeReference().Nullable())],
+					ExpressionBody = $"obj is {model.TypeName} other && Equals(other)",
+				}
 			);
 		}
 
 		if (!model.GetHashCodeExists)
 		{
-			sb.AppendLine();
-			sb.AppendLine($"{indent}	public override int GetHashCode()");
-			sb.AppendLine($"{indent}	{{");
-			sb.AppendLine($"{indent}		global::System.HashCode hash = new();");
-			for (var i = 0; i < model.PropertyNames.Length; i++)
-				sb.AppendLine($"{indent}		hash.Add({model.PropertyNames[i]});");
-			sb.AppendLine($"{indent}		return hash.ToHashCode();");
-			sb.AppendLine($"{indent}	}}");
+			writer.WriteMethod(
+				new("GetHashCode", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
+				{
+					IsOverride = true,
+				},
+				body =>
+				{
+					body.WriteAssignment("var", "hash", "new global::System.HashCode()");
+					foreach (var property in model.Properties)
+						body.WriteMethodCall("hash.Add", property.Name);
+
+					body.WriteReturn("hash.ToHashCode()");
+				}
+			);
 		}
 	}
 
-	static void EmitOperators(StringBuilder sb, ComplexValueObjectModel model, string indent)
+	static void EmitOperators(CodeWriter writer, ComplexValueObjectModel model)
 	{
 		if (!model.EqualityOperatorExists)
 		{
-			sb.AppendLine();
-			sb.AppendLine(
-				model.IsReferenceType
-					? $"{indent}	public static bool operator ==({model.TypeName} left, {model.TypeName} right) =>\n{indent}		left is null ? right is null : left.Equals(right);"
-					: $"{indent}	public static bool operator ==({model.TypeName} left, {model.TypeName} right) =>\n{indent}		left.Equals(right);"
+			ValueObjectEmitterHelpers.EmitBinaryOperator(
+				writer,
+				model.TypeName,
+				model.TypeName,
+				"==",
+				model.IsReferenceType ? "left is null ? right is null : left.Equals(right)" : "left.Equals(right)"
 			);
 		}
 
 		if (!model.InequalityOperatorExists)
 		{
-			sb.AppendLine();
-			sb.AppendLine(
-				$"{indent}	public static bool operator !=({model.TypeName} left, {model.TypeName} right) =>\n{indent}		!(left == right);"
+			ValueObjectEmitterHelpers.EmitBinaryOperator(
+				writer,
+				model.TypeName,
+				model.TypeName,
+				"!=",
+				"!(left == right)"
 			);
 		}
 	}
 
-	static void EmitComparison(StringBuilder sb, ComplexValueObjectModel model, string indent)
+	static void EmitComparison(CodeWriter writer, ComplexValueObjectModel model)
 	{
 		if (!model.CompareToSelfExists)
 		{
-			sb.AppendLine(
-				$@"{indent}	public int CompareTo({model.CompareToSelfParameterTypeName} other)
-{indent}	{{"
-			);
-			if (model.TypeSymbol.TypeKind == TypeKind.Class)
-			{
-				sb.AppendLine(
-					$@"{indent}		if (other is null)
-{indent}			return 1;"
-				);
-			}
+			writer.WriteMethod(
+				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
+				{
+					Parameters =
+					[
+						new(
+							"other",
+							model.IsReferenceType ? ValueObjectType(model).Nullable() : ValueObjectType(model)
+						),
+					],
+				},
+				body =>
+				{
+					if (model.IsReferenceType)
+						body.WriteIfBlock("other is null", ifBody => ifBody.WriteReturn("1"));
 
-			for (var i = 0; i < model.Properties.Length; i++)
-			{
-				var prop = model.Properties[i];
-				var propTypeName = model.PropertyTypeNames[i];
-				sb.AppendLine(
-					$@"{indent}		var compare{prop.Name} = global::System.Collections.Generic.Comparer<{propTypeName}>.Default.Compare({prop.Name}, other.{prop.Name});
-{indent}		if (compare{prop.Name} != 0)
-{indent}			return compare{prop.Name};"
-				);
-			}
+					foreach (var property in model.Properties)
+					{
+						body.WriteAssignment(
+							"var",
+							$"compare{property.Name}",
+							$"global::System.Collections.Generic.Comparer<{property.TypeName}>.Default.Compare({property.Name}, other.{property.Name})"
+						);
+						body.WriteIfBlock(
+							$"compare{property.Name} != 0",
+							ifBody => ifBody.WriteReturn($"compare{property.Name}")
+						);
+					}
 
-			sb.AppendLine(
-				$@"{indent}		return 0;
-{indent}	}}"
+					body.WriteReturn("0");
+				}
 			);
 		}
 
 		if (!model.CompareToObjectExists)
 		{
-			sb.AppendLine(
-				$@"{indent}	public int CompareTo(object? obj)
-{indent}	{{
-{indent}		if (obj is null)
-{indent}			return 1;
-{indent}		if (obj is {model.TypeName} otherValueObject)
-{indent}			return CompareTo(otherValueObject);
-{indent}		throw new global::System.ArgumentException($""Object must be of type {{nameof({model.TypeModel.Name})}}."", nameof(obj));
-{indent}	}}"
+			writer.WriteMethod(
+				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
+				{
+					Parameters = [new("obj", PurviewTypeLibrary.System.Object.AsTypeReference().Nullable())],
+				},
+				body =>
+				{
+					body.WriteIfBlock("obj is null", ifBody => ifBody.WriteReturn("1"));
+					body.WriteIfBlock(
+						$"obj is {model.TypeName} otherValueObject",
+						ifBody => ifBody.WriteReturn("CompareTo(otherValueObject)")
+					);
+					body.WriteThrow(
+						$"new global::System.ArgumentException($\"Object must be of type {{nameof({model.TypeModel.Name})}}.\", nameof(obj))"
+					);
+				}
 			);
 		}
 
 		if (model.Options.GenerateComparable && model.Options.GenerateComparisonOperators)
 		{
 			ValueObjectEmitterHelpers.EmitRelationalOperators(
-				sb,
-				indent,
-				model.TypeSymbol,
+				writer,
+				model.ExistingRelationalOperators,
 				model.TypeName,
 				model.TypeName,
 				"CompareTo(right)"

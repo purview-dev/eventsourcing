@@ -6,6 +6,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	[DebuggerStepThrough]
 	public Task<SaveResult<T>> SaveAsync(
 		[NotNull] T aggregate,

@@ -16,6 +16,7 @@ namespace Purview.EventSourcing.MongoDB;
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	[DebuggerStepThrough]
 	public Task<SaveResult<T>> SaveAsync(
 		[NotNull] T aggregate,

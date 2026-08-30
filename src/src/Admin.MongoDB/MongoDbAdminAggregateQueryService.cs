@@ -6,12 +6,23 @@ using Purview.EventSourcing.MongoDB.Events.Entities;
 
 namespace Purview.EventSourcing.Admin.MongoDB;
 
+/// <summary>
+/// Provides aggregate summary queries against MongoDB for the Admin portal.
+/// </summary>
+/// <remarks>
+/// MongoDB stores each aggregate type in its own collection using the <c>es-{aggregateType}-events</c> naming
+/// pattern. Aggregate summaries are read from the stream-version documents in that collection. When no aggregate
+/// type is supplied the search returns an empty result, because a single query cannot span collections.
+/// </remarks>
+/// <param name="mongoClient">The MongoDB client used to reach the event store database.</param>
+/// <param name="databaseName">The name of the database that holds the event store collections.</param>
 public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, string databaseName)
 	: IAdminAggregateQueryService
 {
 	readonly IMongoClient _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
 	readonly string _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
 
+	///<inheritdoc/>
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
 		CancellationToken cancellationToken
@@ -75,6 +86,7 @@ public sealed class MongoDbAdminAggregateQueryService(IMongoClient mongoClient, 
 		return new PagedResult<AggregateSummaryResponse>(summaries, query.Page, pageSize, total);
 	}
 
+	///<inheritdoc/>
 	public async Task<AggregateSummaryResponse?> GetAsync(
 		string aggregateType,
 		string aggregateId,

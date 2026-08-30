@@ -4,19 +4,23 @@ namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 static class ScalarValueObjectModelBuilder
 {
-	public static ScalarValueObjectModel? Build(
-		GeneratorAttributeSyntaxContext context,
-		CancellationToken cancellationToken,
-		out ImmutableArray<DiagnosticInfo> diagnostics
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Design",
+		"CA1506:Avoid excessive class coupling",
+		Justification = "Value object model construction couples many value types."
+	)]
+	public static GeneratorResult<ScalarValueObjectModel> Build(
+		INamedTypeSymbol typeSymbol,
+		TypeDeclarationSyntax syntax,
+		CancellationToken cancellationToken
 	)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
-		diagnostics = [];
 
-		if (context.TargetSymbol is not INamedTypeSymbol typeSymbol || context.TargetNode is not TypeDeclarationSyntax)
-			return null;
+		if (typeSymbol is null || syntax is null)
+			return GeneratorResult<ScalarValueObjectModel>.Empty;
 
-		var location = context.TargetNode.GetLocation();
+		var location = syntax.GetLocation();
 		var diagnosticsList = new List<DiagnosticInfo>();
 		diagnosticsList.AddRange(ValueObjectSymbolInspector.ValidateValueObjectType(typeSymbol, "Scalar", location));
 
@@ -26,8 +30,7 @@ static class ScalarValueObjectModelBuilder
 			diagnosticsList.Add(
 				DiagnosticInfo.Create(DiagnosticLibrary.ConflictingValueObjectAttributes, location, typeSymbol.Name)
 			);
-			diagnostics = [.. diagnosticsList];
-			return null;
+			return GeneratorResult<ScalarValueObjectModel>.Create([.. diagnosticsList]);
 		}
 
 		var scalarOptions = ScalarAttributeData.FromAttributeData(attributes);
@@ -46,8 +49,7 @@ static class ScalarValueObjectModelBuilder
 					scalarOptions.PropertyName
 				)
 			);
-			diagnostics = [.. diagnosticsList];
-			return null;
+			return GeneratorResult<ScalarValueObjectModel>.Create([.. diagnosticsList]);
 		}
 
 		var ctorExists = typeSymbol
@@ -59,10 +61,7 @@ static class ScalarValueObjectModelBuilder
 
 		var typeModel = ValueObjectSymbolInspector.BuildTypeModel(typeSymbol);
 		if (typeModel is null)
-		{
-			diagnostics = [.. diagnosticsList];
-			return null;
-		}
+			return GeneratorResult<ScalarValueObjectModel>.Create([.. diagnosticsList]);
 
 		if (typeSymbol.TypeKind == TypeKind.Struct && !typeSymbol.IsRecord)
 		{
@@ -73,11 +72,10 @@ static class ScalarValueObjectModelBuilder
 
 		var typeName = typeModel.Value.FullyQualifiedName;
 		var scalarTypeName = ValueObjectSymbolInspector.ToTypeName(scalarProperty.Type);
-		var compareParameterTypeName = scalarProperty.Type.IsReferenceType ? $"{scalarTypeName}?" : scalarTypeName;
-		var compareToSelfParameterTypeName = typeSymbol.TypeKind == TypeKind.Class ? $"{typeName}?" : typeName;
 		var scalarCanBeNull =
 			scalarProperty.Type.IsReferenceType
 			|| scalarProperty.Type.NullableAnnotation == NullableAnnotation.Annotated;
+		var scalarIsReferenceType = scalarProperty.Type.IsReferenceType;
 		var isReferenceType = typeSymbol.TypeKind == TypeKind.Class;
 		var scalarPropertyName = scalarProperty.Name;
 		var createExists = ValueObjectSymbolInspector.HasStaticFactory(typeSymbol, "Create", [scalarProperty.Type]);
@@ -127,6 +125,7 @@ static class ScalarValueObjectModelBuilder
 		);
 		var enumPropertiesEnabled =
 			scalarOptions.GenerateEnumProperties && scalarProperty.Type.TypeKind == TypeKind.Enum;
+		var enumFieldNames = enumPropertiesEnabled ? BuildEnumFieldNames(typeSymbol, scalarProperty.Type) : [];
 		var toStringExists = ValueObjectSymbolInspector.HasParameterlessMethod(typeSymbol, "ToString");
 		var hasJsonConverterAttribute = ValueObjectSymbolInspector.HasAttribute(
 			typeSymbol,
@@ -158,21 +157,21 @@ static class ScalarValueObjectModelBuilder
 
 		var hintName = ValueObjectSymbolInspector.BuildHintName(typeSymbol, "ScalarValueObject");
 
-		diagnostics = [.. diagnosticsList];
-		return new ScalarValueObjectModel(
-			typeSymbol,
+		var model = new ScalarValueObjectModel(
 			typeModel.Value,
-			scalarProperty,
 			scalarOptions,
 			ctorExists,
 			hintName,
 			typeName,
 			scalarTypeName,
-			compareParameterTypeName,
-			compareToSelfParameterTypeName,
-			scalarCanBeNull,
-			isReferenceType,
 			scalarPropertyName,
+			scalarCanBeNull,
+			scalarIsReferenceType,
+			isReferenceType,
+			typeSymbol.IsRecord,
+			typeSymbol.IsReadOnly,
+			typeSymbol.DeclaredAccessibility.ToTypeDeclarationAccessibility(),
+			TypeReference.Create(scalarProperty.Type),
 			createExists,
 			hydrateExists,
 			tryCreateExists,
@@ -190,10 +189,52 @@ static class ScalarValueObjectModelBuilder
 			reversePrimitiveEqualityOperatorExists,
 			reversePrimitiveInequalityOperatorExists,
 			enumPropertiesEnabled,
+			enumFieldNames,
 			toStringExists,
 			hasJsonConverterAttribute,
 			declareOnNormalize,
-			declareOnValidate
+			declareOnValidate,
+			ValueObjectSymbolInspector.ImplementsSelfEquatable(typeSymbol),
+			ValueObjectSymbolInspector.HasMemberWithName(typeSymbol, "Empty"),
+			ValueObjectSymbolInspector.GetEmptyValueExpression(scalarProperty.Type),
+			ValueObjectSymbolInspector.HasConversionOperator(typeSymbol, scalarProperty.Type, fromPrimitive: true),
+			ValueObjectSymbolInspector.HasConversionOperator(typeSymbol, scalarProperty.Type, fromPrimitive: false),
+			ValueObjectSymbolInspector.HasContextualCreateOverload(typeSymbol, scalarProperty.Type),
+			SymbolEqualityComparer.Default.Equals(scalarProperty.Type, typeSymbol),
+			BuildExistingRelationalOperators(typeSymbol, typeName, typeName),
+			BuildExistingRelationalOperators(typeSymbol, typeName, scalarTypeName)
 		);
+
+		return GeneratorResult<ScalarValueObjectModel>.Create(model, diagnosticsList.ToImmutableArray());
+	}
+
+	static EquatableArray<string> BuildExistingRelationalOperators(
+		INamedTypeSymbol typeSymbol,
+		string leftTypeName,
+		string rightTypeName
+	)
+	{
+		var builder = ImmutableArray.CreateBuilder<string>();
+		foreach (var operatorName in ValueObjectSymbolInspector.RelationalOperatorNames)
+		{
+			if (ValueObjectSymbolInspector.HasRelationalOperator(typeSymbol, operatorName, leftTypeName, rightTypeName))
+				builder.Add(operatorName);
+		}
+
+		return builder.ToImmutable();
+	}
+
+	static EquatableArray<string> BuildEnumFieldNames(INamedTypeSymbol typeSymbol, ITypeSymbol enumType)
+	{
+		var builder = ImmutableArray.CreateBuilder<string>();
+		foreach (var enumField in ValueObjectSymbolInspector.GetEnumFields(enumType))
+		{
+			if (ValueObjectSymbolInspector.HasMemberWithName(typeSymbol, enumField.Name))
+				continue;
+
+			builder.Add(enumField.Name);
+		}
+
+		return builder.ToImmutable();
 	}
 }

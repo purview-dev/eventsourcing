@@ -49,12 +49,12 @@ When using snapshot-backed providers, especially SQL Server, read the provider d
 
 ## Agent skill integration
 
-When installed from NuGet, `Purview.EventSourcing` copies bundled agent skills into `.agents\skills\` in the consuming repository so supported coding agents can discover framework-specific guidance automatically.
+When installed from NuGet, `Purview.EventSourcing` ships bundled agent skills. Consuming repositories that use `Purview.DotNetProjectSdk` get those skills copied into `.agents\skills\` before build so supported coding agents can discover framework-specific guidance automatically.
 
 To opt out, set:
 
 ```xml
 <PropertyGroup>
-  <EnableEmbeddedAgentSkills>false</EnableEmbeddedAgentSkills>
+  <EnableAgentFolderInPackage>false</EnableAgentFolderInPackage>
 </PropertyGroup>
 ```

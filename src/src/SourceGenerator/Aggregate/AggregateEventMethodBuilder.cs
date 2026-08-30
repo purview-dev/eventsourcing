@@ -224,7 +224,10 @@ static class AggregateEventMethodBuilder
 			ReportUnsupportedSignature("methods must return void, bool, or the containing aggregate type");
 		}
 
-		if (methodSymbol.PartialImplementationPart is not null)
+		if (
+			methodSymbol.PartialImplementationPart is { } implementationPart
+			&& !GeneratedCodeHelpers.IsGenerated(implementationPart)
+		)
 			ReportUnsupportedSignature("methods must be partial declarations without a body");
 
 		foreach (var parameter in methodSymbol.Parameters)
@@ -957,6 +960,7 @@ static class AggregateEventMethodBuilder
 				method.Parameters.Length == 0
 				&& method.MethodKind == MethodKind.Ordinary
 				&& !method.IsImplicitlyDeclared
+				&& !GeneratedCodeHelpers.IsGenerated(method)
 			);
 
 		return registerEventsMethod is not null;

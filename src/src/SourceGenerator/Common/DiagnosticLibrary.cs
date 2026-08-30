@@ -280,7 +280,7 @@ static class DiagnosticLibrary
 		title: "Strict mode requires Create",
 		messageFormat: "Value object '{0}' uses strict deserialization mode but does not declare a compatible static Create(...) overload",
 		category: ValueObjectCategory,
-		defaultSeverity: DiagnosticSeverity.Error,
+		defaultSeverity: DiagnosticSeverity.Warning,
 		isEnabledByDefault: true
 	);
 

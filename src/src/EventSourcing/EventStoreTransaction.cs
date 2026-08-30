@@ -32,6 +32,13 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 	bool _committed;
 	bool _disposed;
 
+	/// <summary>
+	/// Creates a new transaction with the given correlation ID.
+	/// </summary>
+	/// <param name="correlationId">
+	/// Optional correlation ID shared by all enlisted aggregate saves. When <see langword="null"/>, the ambient
+	/// <see cref="Activity"/> ID is used when available, otherwise a new <see cref="Guid"/> is generated.
+	/// </param>
 	public EventStoreTransaction(string? correlationId = null)
 	{
 		var resolvedCorrelationId = correlationId ?? Activity.Current?.Id;
