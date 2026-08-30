@@ -40,10 +40,13 @@ static partial class ScalarValueObjectEmitter
 
 	static TypeDeclarationKind GetTypeKind(ScalarValueObjectModel model)
 	{
-		if (model.IsRecord)
-			return model.IsReferenceType ? TypeDeclarationKind.RecordClass : TypeDeclarationKind.RecordStruct;
-
-		return model.IsReferenceType ? TypeDeclarationKind.Class : TypeDeclarationKind.Struct;
+		return model.IsRecord
+			? model.IsReferenceType
+				? TypeDeclarationKind.RecordClass
+				: TypeDeclarationKind.RecordStruct
+			: model.IsReferenceType
+				? TypeDeclarationKind.Class
+				: TypeDeclarationKind.Struct;
 	}
 
 	internal static TypeReference ValueObjectType(ScalarValueObjectModel model) =>
@@ -51,18 +54,15 @@ static partial class ScalarValueObjectEmitter
 
 	static ImmutableArray<AttributeDeclarationOptions> BuildTypeAttributes(ScalarValueObjectModel model)
 	{
-		if (model.Options.GenerateJsonConverter && !model.HasJsonConverterAttribute)
-		{
-			return
+		return model.Options.GenerateJsonConverter && !model.HasJsonConverterAttribute
+			?
 			[
 				new AttributeDeclarationOptions(TypeLibrary.System.TextJson.JsonConverterAttribute)
 				{
 					Arguments = [new($"typeof({model.TypeModel.Name}JsonConverter)")],
 				},
-			];
-		}
-
-		return [];
+			]
+			: [];
 	}
 
 	static ImmutableArray<TypeReference> BuildInterfaces(ScalarValueObjectModel model)

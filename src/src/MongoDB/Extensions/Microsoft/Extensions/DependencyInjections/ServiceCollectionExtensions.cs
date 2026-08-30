@@ -32,7 +32,7 @@ public static class ServiceCollectionExtensions
 		/// <returns>The same service collection, for chaining.</returns>
 		/// <remarks>
 		/// The store is registered for <see cref="IMongoDBEventStore{T}"/>, <see cref="INonQueryableEventStore{T}"/>
-		/// and <see cref="Purview.EventSourcing.IEventStoreCore{T}"/>. The connection string is resolved from the
+		/// and <see cref="IEventStoreCore{T}"/>. The connection string is resolved from the
 		/// <c>EventStore_MongoDB</c> or <c>MongoDB</c> connection string when not configured explicitly.
 		/// </remarks>
 		public IServiceCollection AddMongoDBEventStore() => services.AddMongoDBEventStore(connectionStringName: null);
@@ -44,7 +44,7 @@ public static class ServiceCollectionExtensions
 		/// <returns>The same service collection, for chaining.</returns>
 		/// <remarks>
 		/// The store is registered for <see cref="IMongoDBEventStore{T}"/>, <see cref="INonQueryableEventStore{T}"/>
-		/// and <see cref="Purview.EventSourcing.IEventStoreCore{T}"/>. The connection string is resolved from the
+		/// and <see cref="IEventStoreCore{T}"/>. The connection string is resolved from the
 		/// named connection string, falling back to <c>EventStore_MongoDB</c> and <c>MongoDB</c>.
 		/// </remarks>
 		public IServiceCollection AddMongoDBEventStore(string? connectionStringName)
@@ -106,11 +106,11 @@ public static class ServiceCollectionExtensions
 		/// Registers the MongoDB-backed queryable <see cref="MongoDBSnapshotEventStore{T}"/> with the service collection.
 		/// </summary>
 		/// <param name="registerAsIEventStore">When <see langword="true"/>, the store is also registered for the
-		/// non-queryable <see cref="Purview.EventSourcing.IEventStoreCore{T}"/> contract.</param>
+		/// non-queryable <see cref="IEventStoreCore{T}"/> contract.</param>
 		/// <returns>The same service collection, for chaining.</returns>
 		/// <remarks>
 		/// The store is registered for <see cref="IMongoDBSnapshotEventStore{T}"/> and
-		/// <see cref="Purview.EventSourcing.IQueryableEventStoreCore{T}"/>. The connection string is resolved from
+		/// <see cref="IQueryableEventStoreCore{T}"/>. The connection string is resolved from
 		/// the <c>EventStore_MongoDBSnapshot</c> or <c>MongoDBSnapshot</c> connection string when not configured
 		/// explicitly.
 		/// </remarks>
@@ -122,11 +122,11 @@ public static class ServiceCollectionExtensions
 		/// </summary>
 		/// <param name="connectionStringName">The name of the connection string to use, or <see langword="null"/> for the default.</param>
 		/// <param name="registerAsIEventStore">When <see langword="true"/>, the store is also registered for the
-		/// non-queryable <see cref="Purview.EventSourcing.IEventStoreCore{T}"/> contract.</param>
+		/// non-queryable <see cref="IEventStoreCore{T}"/> contract.</param>
 		/// <returns>The same service collection, for chaining.</returns>
 		/// <remarks>
 		/// The store is registered for <see cref="IMongoDBSnapshotEventStore{T}"/> and
-		/// <see cref="Purview.EventSourcing.IQueryableEventStoreCore{T}"/>. The connection string is resolved from
+		/// <see cref="IQueryableEventStoreCore{T}"/>. The connection string is resolved from
 		/// the named connection string, falling back to <c>EventStore_MongoDBSnapshot</c>, <c>MongoDBSnapshot</c>,
 		/// <c>EventStore_MongoDB</c> and <c>MongoDB</c>.
 		/// </remarks>

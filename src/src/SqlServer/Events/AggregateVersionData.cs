@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
@@ -6,7 +6,7 @@ namespace Purview.EventSourcing.SqlServer.Events;
 /// Captures the versioning state of an aggregate at a point in time.
 /// </summary>
 /// <remarks>
-/// Represents the aggregate's <see cref="Purview.EventSourcing.Aggregates.AggregateDetails.SavedVersion"/>,
+/// Represents the aggregate's <see cref="AggregateDetails.SavedVersion"/>,
 /// snapshot version, and current version.
 /// </remarks>
 /// <param name="SavedVersion">The version of the aggregate persisted in the event store.</param>

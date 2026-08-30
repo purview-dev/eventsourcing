@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates;
 
 namespace Purview.EventSourcing.CosmosDb.Snapshots;
 
@@ -6,7 +6,7 @@ namespace Purview.EventSourcing.CosmosDb.Snapshots;
 /// Queryable snapshot event-store contract for the Azure Cosmos DB provider.
 /// </summary>
 /// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
-/// <seealso cref="Purview.EventSourcing.IQueryableEventStoreCore{T}"/>
+/// <seealso cref="IQueryableEventStoreCore{T}"/>
 public interface ICosmosDbSnapshotEventStore<T> : IQueryableEventStoreCore<T>
 	where T : class, IAggregate, new()
 {

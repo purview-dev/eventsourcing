@@ -39,10 +39,13 @@ static partial class ComplexValueObjectEmitter
 
 	static TypeDeclarationKind GetTypeKind(ComplexValueObjectModel model)
 	{
-		if (model.IsRecord)
-			return model.IsReferenceType ? TypeDeclarationKind.RecordClass : TypeDeclarationKind.RecordStruct;
-
-		return model.IsReferenceType ? TypeDeclarationKind.Class : TypeDeclarationKind.Struct;
+		return model.IsRecord
+			? model.IsReferenceType
+				? TypeDeclarationKind.RecordClass
+				: TypeDeclarationKind.RecordStruct
+			: model.IsReferenceType
+				? TypeDeclarationKind.Class
+				: TypeDeclarationKind.Struct;
 	}
 
 	internal static TypeReference ValueObjectType(ComplexValueObjectModel model) =>
@@ -50,18 +53,15 @@ static partial class ComplexValueObjectEmitter
 
 	static ImmutableArray<AttributeDeclarationOptions> BuildTypeAttributes(ComplexValueObjectModel model)
 	{
-		if (model.Options.GenerateJsonConverter && !model.HasJsonConverterAttribute)
-		{
-			return
+		return model.Options.GenerateJsonConverter && !model.HasJsonConverterAttribute
+			?
 			[
 				new AttributeDeclarationOptions(TypeLibrary.System.TextJson.JsonConverterAttribute)
 				{
 					Arguments = [new($"typeof({model.TypeModel.Name}JsonConverter)")],
 				},
-			];
-		}
-
-		return [];
+			]
+			: [];
 	}
 
 	static ImmutableArray<TypeReference> BuildInterfaces(ComplexValueObjectModel model)

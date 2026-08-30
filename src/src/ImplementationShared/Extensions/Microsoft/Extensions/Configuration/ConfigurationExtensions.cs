@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Purview.EventSourcing.Guards;
 
 namespace Microsoft.Extensions.Configuration;
@@ -40,7 +40,7 @@ public static class ConfigurationExtensions
 		/// <returns>The resolved connection string.</returns>
 		/// <exception cref="ArgumentException">Thrown when no connection string is found for any key.</exception>
 		public string GetRequiredConnectionString(IEnumerable<string?> keys) =>
-			GetRequiredConnectionString(configuration, keys.ToArray());
+			GetRequiredConnectionString(configuration, [.. keys]);
 
 		/// <summary>
 		/// Gets the first non-blank connection string found for the supplied keys, or null when none resolve.

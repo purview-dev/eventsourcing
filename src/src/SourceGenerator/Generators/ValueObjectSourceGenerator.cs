@@ -52,7 +52,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	static void EmitScalarResult(
 		SourceProductionContext context,
 		GeneratorResult<ScalarValueObjectModel> result,
-		GenerationContext<EmptyCapabilities> generationContext
+		GeneratorContext generationContext
 	)
 	{
 		if (generationContext.Settings.IsSourceGeneratorDisabled)
@@ -69,7 +69,7 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 	static void EmitComplexResult(
 		SourceProductionContext context,
 		GeneratorResult<ComplexValueObjectModel> result,
-		GenerationContext<EmptyCapabilities> generationContext
+		GeneratorContext generationContext
 	)
 	{
 		if (generationContext.Settings.IsSourceGeneratorDisabled)

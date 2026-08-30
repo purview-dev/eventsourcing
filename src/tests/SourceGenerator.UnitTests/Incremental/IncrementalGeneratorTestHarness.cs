@@ -30,7 +30,7 @@ static class IncrementalGeneratorTestHarness
 
 	public static ImmutableArray<MetadataReference> ResolveReferences()
 	{
-		var generatorAssemblyPath = typeof(Purview.SourceGeneratorFramework.TypeIdentity).Assembly.Location;
+		var generatorAssemblyPath = typeof(SourceGeneratorFramework.TypeIdentity).Assembly.Location;
 		var builder = ImmutableArray.CreateBuilder<MetadataReference>();
 
 		var trusted = (AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string ?? string.Empty).Split(
@@ -64,13 +64,13 @@ static class IncrementalGeneratorTestHarness
 	{
 		if (
 			step.Outputs.Length > 0
-			&& step.Outputs[0].Value
-				is Purview.SourceGeneratorFramework.GeneratorResult<Purview.EventSourcing.SourceGenerator.Aggregate.Models.AggregateInfo> result
+			&& step.Outputs[0].Value is SourceGeneratorFramework.GeneratorResult<AggregateInfo> result
 		)
 		{
 			return result.HasValue ? result.Value.AggregateClass.Identity.Name : "(failed)";
 		}
 
+		// If the output is not an AggregateInfo, it might be a ValueObjectModel
 		return "(unknown)";
 	}
 
@@ -78,8 +78,7 @@ static class IncrementalGeneratorTestHarness
 	{
 		if (
 			step.Outputs.Length > 0
-			&& step.Outputs[0].Value
-				is Purview.SourceGeneratorFramework.GeneratorResult<Purview.EventSourcing.SourceGenerator.ValueObject.Models.ScalarValueObjectModel> scalar
+			&& step.Outputs[0].Value is SourceGeneratorFramework.GeneratorResult<ScalarValueObjectModel> scalar
 		)
 		{
 			return scalar.HasValue ? scalar.Value.TypeModel.Name : "(failed)";
@@ -87,13 +86,13 @@ static class IncrementalGeneratorTestHarness
 
 		if (
 			step.Outputs.Length > 0
-			&& step.Outputs[0].Value
-				is Purview.SourceGeneratorFramework.GeneratorResult<Purview.EventSourcing.SourceGenerator.ValueObject.Models.ComplexValueObjectModel> complex
+			&& step.Outputs[0].Value is SourceGeneratorFramework.GeneratorResult<ComplexValueObjectModel> complex
 		)
 		{
 			return complex.HasValue ? complex.Value.TypeModel.Name : "(failed)";
 		}
 
+		// If the output is not a ValueObjectModel, it might be an AggregateInfo
 		return "(unknown)";
 	}
 }

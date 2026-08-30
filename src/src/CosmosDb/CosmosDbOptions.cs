@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Azure.Cosmos;
 
 namespace Purview.EventSourcing.CosmosDb;
@@ -8,7 +8,7 @@ namespace Purview.EventSourcing.CosmosDb;
 /// </summary>
 /// <remarks>
 /// The options are bound from the <c>"EventStore:CosmosDbSnapshot"</c> configuration section
-/// (see <see cref="Purview.EventSourcing.CosmosDb.Snapshots.CosmosDbEventStoreOptions.CosmosDbEventStore"/>) and validated on startup.
+/// (see <see cref="Snapshots.CosmosDbEventStoreOptions.CosmosDbEventStore"/>) and validated on startup.
 /// </remarks>
 public class CosmosDbOptions
 {
