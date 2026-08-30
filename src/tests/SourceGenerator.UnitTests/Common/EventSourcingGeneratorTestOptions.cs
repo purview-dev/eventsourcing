@@ -2,7 +2,7 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 
 public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 {
-	public static readonly string[] GeneratedAttributes =
+	public static readonly string[] AggregateGeneratedAttributes =
 	[
 		"EmbeddedAttribute.g.cs",
 		"PropertyAttribute.g.cs",
@@ -15,9 +15,19 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 		"ComputedAttribute.g.cs",
 	];
 
-	public static readonly int ExpectedFileCount = GeneratedAttributes.Length;
+	public static readonly int AggregateExpectedFileCount = AggregateGeneratedAttributes.Length;
 
-	public static readonly int ExpectedFileCountPlusGen = ExpectedFileCount + 1;
+	public static readonly int AggregateExpectedFileCountPlusGen = AggregateExpectedFileCount + 1;
+
+	public static readonly string[] ValueObjectGeneratedAttributes =
+	[
+		"EmbeddedAttribute.g.cs",
+		"ValueObjectDefaultsAttribute.g.cs",
+	];
+
+	public static readonly int ValueObjectExpectedFileCount = ValueObjectGeneratedAttributes.Length;
+
+	public static readonly int ValueObjectExpectedFileCountPlusGen = ValueObjectExpectedFileCount + 1;
 
 	public const int HintNameHashHexLength = 16;
 
@@ -35,7 +45,7 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 		];
 		AdditionalAssemblyTypes = [typeof(Aggregates.IAggregate)];
 		AdditionalReferences = [.. TestMetadataReferences.GetAdditionalReferences()];
-		ExcludeGeneratedSourceHintNames = [.. GeneratedAttributes];
+		ExcludeGeneratedSourceHintNames = [.. AggregateGeneratedAttributes, .. ValueObjectGeneratedAttributes];
 		AnalyzerTypes =
 		[
 			typeof(Analyzers.AggregateDiagnosticAnalyzer),

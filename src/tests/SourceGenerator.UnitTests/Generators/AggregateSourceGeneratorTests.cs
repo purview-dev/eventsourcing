@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
-public sealed class AggregateSourceGeneratorTests : EventSourcingSourceGeneratorTestBase<AggregateSourceGenerator>
+public sealed class AggregateSourceGeneratorTests : AggregateSourceGeneratorTestBase
 {
 	[Test]
 	public async Task Generate_GivenEmptySource_GeneratesAttributesOnly(CancellationToken cancellationToken)
@@ -22,7 +22,9 @@ namespace Testing
 		var result = await GenerateAsync(source, cancellationToken);
 
 		// Assert
-		await Assert.That(result.AllSyntaxTrees.Length).IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCount);
+		await Assert
+			.That(result.AllSyntaxTrees.Length)
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCount);
 	}
 
 	[Test]
@@ -54,7 +56,7 @@ namespace Testing
 		// Assert that 4 attribute files + 1 generated aggregate file
 		await Assert
 			.That(result.AllSyntaxTrees.Length)
-			.IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCountPlusGen);
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCountPlusGen);
 	}
 
 	[Test]
@@ -80,7 +82,7 @@ namespace Testing
 		// Assert
 		await Assert
 			.That(result.AllSyntaxTrees.Length)
-			.IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCountPlusGen);
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCountPlusGen);
 	}
 
 	[Test]
@@ -110,7 +112,7 @@ namespace Testing
 		// Assert
 		await Assert
 			.That(result.AllSyntaxTrees.Length)
-			.IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCountPlusGen);
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCountPlusGen);
 	}
 
 	[Test]
@@ -133,7 +135,9 @@ namespace Testing
 		var result = await GenerateAsync(source, cancellationToken);
 
 		// Assert that only attribute files, no generated aggregate
-		await Assert.That(result.AllSyntaxTrees.Length).IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCount);
+		await Assert
+			.That(result.AllSyntaxTrees.Length)
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCount);
 		await Assert.That(result).HasDiagnostic(DiagnosticLibrary.AggregateMustBePartial);
 	}
 
@@ -164,7 +168,7 @@ namespace Testing
 		// Assert
 		await Assert
 			.That(result.AllSyntaxTrees.Length)
-			.IsEqualTo(EventSourcingGeneratorTestOptions.ExpectedFileCountPlusGen);
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCountPlusGen);
 	}
 
 	[Test]

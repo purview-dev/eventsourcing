@@ -7,6 +7,14 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 {
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
+		context
+			.RegisterEmbeddedAttribute<ValueObjectSourceGenerator>()
+			.RegisterPostInitializationOutput(ctx =>
+			{
+				foreach (var (HintName, Source) in ValueObjectsAttributeEmitter.EmitAttributes())
+					ctx.AddSource(HintName, Source);
+			});
+
 		var generationContext = IncrementalPipeline.GenerationContextValueProvider<
 			EmptyCapabilities,
 			ValueObjectSourceGenerator

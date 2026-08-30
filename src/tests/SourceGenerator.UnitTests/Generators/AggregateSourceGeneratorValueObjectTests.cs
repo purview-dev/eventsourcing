@@ -2,8 +2,7 @@ using System.Reflection;
 
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
-public sealed class AggregateSourceGeneratorValueObjectTests
-	: EventSourcingSourceGeneratorTestBase<AggregateSourceGenerator>
+public sealed class AggregateSourceGeneratorValueObjectTests : AggregateSourceGeneratorTestBase
 {
 	[Test]
 	public async Task Generate_UsesContextualValueObjectCreateAndHookMethods(CancellationToken cancellationToken)

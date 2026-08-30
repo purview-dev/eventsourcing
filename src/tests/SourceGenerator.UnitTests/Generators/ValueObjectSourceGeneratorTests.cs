@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
-public sealed class ValueObjectSourceGeneratorTests : EventSourcingSourceGeneratorTestBase<ValueObjectSourceGenerator>
+public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGeneratorTestBase
 {
 	[Test]
 	public async Task ScalarGeneration_UsesStrictCreateAndHydrateCorrectly(CancellationToken cancellationToken)
