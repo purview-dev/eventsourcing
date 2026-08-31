@@ -4,7 +4,6 @@
 		<Title>Purview Event Sourcing</Title>
 		<Description>Core abstractions, aggregate types, facades, transactions, and dependency injection extensions for building event-sourced .NET applications.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;eventstore;event-store;aggregate;domain-driven-design;</PackageTags>
-		<PackageId>Purview.EventSourcing</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

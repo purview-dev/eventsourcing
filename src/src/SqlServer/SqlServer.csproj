@@ -4,7 +4,6 @@
 		<Title>Purview Event Store for Azure SQL and SQL Server</Title>
 		<Description>Azure SQL and SQL Server event stream storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;sql-server;azure-sql;events;</PackageTags>
-		<PackageId>Purview.EventSourcing.SqlServer</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

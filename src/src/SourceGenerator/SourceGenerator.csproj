@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<IsRoslynComponent>true</IsRoslynComponent>
-		<AssemblyName>Purview.EventSourcing.SourceGeneration</AssemblyName>
 		<!--<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>-->
 	</PropertyGroup>
 

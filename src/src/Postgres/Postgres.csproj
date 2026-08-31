@@ -4,7 +4,6 @@
 		<Title>Purview Event Store for PostgreSQL</Title>
 		<Description>PostgreSQL event stream and queryable snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;postgres;postgresql;events;</PackageTags>
-		<PackageId>Purview.EventSourcing.Postgres</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

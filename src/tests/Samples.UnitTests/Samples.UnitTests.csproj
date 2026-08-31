@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
+		<!--<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>-->
 	</PropertyGroup>
 
 	<PropertyGroup>
