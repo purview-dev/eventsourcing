@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>Purview.EventSourcing.Tools.AdminApiOpenApi</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Admin.API\Admin.API.csproj" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<!-- The Microsoft.AspNetCore.OpenApi XML-comment source generator builds a cache of XML doc IDs across the
+		     compilation and its referenced assemblies. Purview telemetry scaffolding re-declares the same types in
+		     several assemblies, which makes that cache throw at runtime with a duplicate key, so the referenced
+		     assembly XML docs are not fed to it here. -->
+		<RemoveOpenApiReferencedXmlFiles>true</RemoveOpenApiReferencedXmlFiles>
+	</PropertyGroup>
+
+	<Target
+		Name="RemoveOpenApiReferencedXmlFiles"
+		AfterTargets="GenerateAdditionalXmlFilesForOpenApi"
+		Condition="'$(RemoveOpenApiReferencedXmlFiles)' == 'true'"
+	>
+		<ItemGroup>
+			<AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml'" />
+		</ItemGroup>
+	</Target>
+</Project>

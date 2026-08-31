@@ -11,6 +11,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Admin.Abstractions\Admin.Abstractions.csproj" />
 		<ProjectReference Include="..\Admin.API\Admin.API.csproj" />
+		<ProjectReference Include="..\Admin.Client\Admin.Client.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,8 +1,5 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Abstractions.Queries;
-using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Client;
 using Purview.EventSourcing.Admin.Site.Pages;
 
 namespace Purview.EventSourcing.Samples.Admin.Site;
@@ -10,48 +7,54 @@ namespace Purview.EventSourcing.Samples.Admin.Site;
 public sealed class AdminSiteEventsModelTests
 {
 	[Test]
-	public async Task OnGetAsync_WithExistingAggregate_CallsQueryServiceAndReturnsPage(
+	public async Task OnGetAsync_WithExistingAggregate_CallsAdminApiClientAndReturnsPage(
 		CancellationToken cancellationToken
 	)
 	{
-		var expected = new PagedResult<EventEnvelopeResponse>(
+		var expected = new PagedResultOfEventEnvelopeResponse
+		{
+			Items =
 			[
-				new EventEnvelopeResponse(
-					"CustomerAggregate",
-					"customer-1",
-					new EventMetadataResponse(
-						1,
-						DateTimeOffset.UtcNow,
-						"CustomerRegistered",
-						1,
-						null,
-						null,
-						null,
-						null
-					),
-					JsonDocument.Parse("{}").RootElement.Clone()
-				),
+				new EventEnvelopeResponse
+				{
+					AggregateType = "CustomerAggregate",
+					AggregateId = "customer-1",
+					Metadata = new EventMetadataResponse
+					{
+						Version = 1,
+						TimestampUtc = DateTimeOffset.UtcNow,
+						EventType = "CustomerRegistered",
+						SchemaVersion = 1,
+					},
+					Payload = new JsonElement(),
+				},
 			],
-			1,
-			25,
-			1
-		);
+			Page = 1,
+			PageSize = 25,
+			TotalCount = 1,
+		};
 
 		var capturedAggregateType = (string?)null;
 		var capturedAggregateId = (string?)null;
-		EventRangeQuery? capturedQuery = null;
+		var capturedVersionFrom = (long?)null;
+		var capturedVersionTo = (long?)null;
+		var capturedPage = (int?)null;
+		var capturedPageSize = (int?)null;
 
-		var mockService = new MockAdminEventQueryService(
-			(aggregateType, aggregateId, query, ct) =>
+		var fakeClient = new FakeAdminApiClient(
+			(aggregateType, aggregateId, versionFrom, versionTo, _, _, page, pageSize, _, _) =>
 			{
 				capturedAggregateType = aggregateType;
 				capturedAggregateId = aggregateId;
-				capturedQuery = query;
-				return Task.FromResult<PagedResult<EventEnvelopeResponse>?>(expected);
+				capturedVersionFrom = versionFrom;
+				capturedVersionTo = versionTo;
+				capturedPage = page;
+				capturedPageSize = pageSize;
+				return Task.FromResult(expected);
 			}
 		);
 
-		var model = new EventsModel(mockService) { AggregateType = "CustomerAggregate", AggregateId = "customer-1" };
+		var model = new EventsModel(fakeClient) { AggregateType = "CustomerAggregate", AggregateId = "customer-1" };
 
 		var result = await model.OnGetAsync(cancellationToken);
 
@@ -59,21 +62,26 @@ public sealed class AdminSiteEventsModelTests
 		await Assert.That(model.EventRange).IsSameReferenceAs(expected);
 		await Assert.That(capturedAggregateType).IsEqualTo("CustomerAggregate");
 		await Assert.That(capturedAggregateId).IsEqualTo("customer-1");
-		await Assert.That(capturedQuery).IsNotNull();
-		await Assert.That(capturedQuery!.Page).IsEqualTo(1);
-		await Assert.That(capturedQuery.PageSize).IsEqualTo(25);
+		await Assert.That(capturedVersionFrom).IsNull();
+		await Assert.That(capturedVersionTo).IsNull();
+		await Assert.That(capturedPage).IsEqualTo(1);
+		await Assert.That(capturedPageSize).IsEqualTo(25);
 	}
 
 	[Test]
 	public async Task OnGetAsync_WithEmptyEventStream_ReturnsPageAndEmptyResult(CancellationToken cancellationToken)
 	{
-		var expected = new PagedResult<EventEnvelopeResponse>([], 1, 25, 0);
+		var expected = new PagedResultOfEventEnvelopeResponse
+		{
+			Items = [],
+			Page = 1,
+			PageSize = 25,
+			TotalCount = 0,
+		};
 
-		var mockService = new MockAdminEventQueryService(
-			(_, _, _, _) => Task.FromResult<PagedResult<EventEnvelopeResponse>?>(expected)
-		);
+		var fakeClient = new FakeAdminApiClient((_, _, _, _, _, _, _, _, _, _) => Task.FromResult(expected));
 
-		var model = new EventsModel(mockService) { AggregateType = "CustomerAggregate", AggregateId = "customer-1" };
+		var model = new EventsModel(fakeClient) { AggregateType = "CustomerAggregate", AggregateId = "customer-1" };
 
 		var result = await model.OnGetAsync(cancellationToken);
 
@@ -82,15 +90,47 @@ public sealed class AdminSiteEventsModelTests
 		await Assert.That(model.EventRange!.Items).IsEmpty();
 	}
 
-	sealed class MockAdminEventQueryService(
-		Func<string, string, EventRangeQuery, CancellationToken, Task<PagedResult<EventEnvelopeResponse>?>> handler
-	) : IAdminEventQueryService
+	static readonly HttpClient SharedHttpClient = new();
+
+	sealed class FakeAdminApiClient(
+		Func<
+			string,
+			string,
+			long?,
+			long?,
+			DateTimeOffset?,
+			DateTimeOffset?,
+			int?,
+			int?,
+			string?,
+			CancellationToken,
+			Task<PagedResultOfEventEnvelopeResponse>
+		> handler
+	) : AdminApiClient(string.Empty, SharedHttpClient)
 	{
-		public Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
+		public override Task<PagedResultOfEventEnvelopeResponse> GetAggregateEventRangeAsync(
 			string aggregateType,
 			string aggregateId,
-			EventRangeQuery query,
-			CancellationToken cancellationToken
-		) => handler(aggregateType, aggregateId, query, cancellationToken);
+			long? versionFrom = null,
+			long? versionTo = null,
+			DateTimeOffset? timeFromUtc = null,
+			DateTimeOffset? timeToUtc = null,
+			int? page = null,
+			int? pageSize = null,
+			string? sort = null,
+			CancellationToken cancellationToken = default
+		) =>
+			handler(
+				aggregateType,
+				aggregateId,
+				versionFrom,
+				versionTo,
+				timeFromUtc,
+				timeToUtc,
+				page,
+				pageSize,
+				sort,
+				cancellationToken
+			);
 	}
 }

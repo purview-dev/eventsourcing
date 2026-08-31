@@ -19,5 +19,6 @@
 		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
 		<ProjectReference Include="..\..\src\Samples.Shared\Samples.Shared.csproj" />
 		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />
+		<ProjectReference Include="..\..\src\Admin.Client\Admin.Client.csproj" />
 	</ItemGroup>
 </Project>

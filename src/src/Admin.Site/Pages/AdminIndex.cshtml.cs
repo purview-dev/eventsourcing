@@ -1,19 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Abstractions.Queries;
-using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Client;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
 /// <summary>
 /// Page model for the admin portal home page that searches for aggregates.
 /// </summary>
-/// <param name="aggregateQueryService">The query service used to search for aggregates.</param>
-public class AdminIndexModel(IAdminAggregateQueryService aggregateQueryService) : PageModel
+/// <param name="adminApiClient">The generated Admin API client used to search aggregates.</param>
+public class AdminIndexModel(AdminApiClient adminApiClient) : PageModel
 {
-	readonly IAdminAggregateQueryService _aggregateQueryService =
-		aggregateQueryService ?? throw new ArgumentNullException(nameof(aggregateQueryService));
+	readonly AdminApiClient _adminApiClient = adminApiClient ?? throw new ArgumentNullException(nameof(adminApiClient));
 
 	/// <summary>
 	/// Gets or sets the aggregate type filter for the search.
@@ -42,10 +39,10 @@ public class AdminIndexModel(IAdminAggregateQueryService aggregateQueryService) 
 	/// <summary>
 	/// Gets or sets the search results to render on the page.
 	/// </summary>
-	public PagedResult<AggregateSummaryResponse>? SearchResults { get; set; }
+	public PagedResultOfAggregateSummaryResponse? SearchResults { get; set; }
 
 	/// <summary>
-	/// Handles GET requests for the page by executing an aggregate search.
+	/// Handles GET requests for the page by executing an aggregate search through the Admin API client.
 	/// </summary>
 	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
 	/// <returns>The page result.</returns>
@@ -53,27 +50,25 @@ public class AdminIndexModel(IAdminAggregateQueryService aggregateQueryService) 
 	{
 		try
 		{
-			var query = new AggregateSearchQuery(
-				AggregateType,
-				AggregateId,
-				null,
-				null,
-				null,
-				null,
-				PageNo,
-				PageSize,
-				"LastUpdatedUtc desc"
+			SearchResults = await _adminApiClient.SearchAggregatesAsync(
+				new AggregateSearchRequest
+				{
+					AggregateType = string.IsNullOrWhiteSpace(AggregateType) ? null : AggregateType,
+					AggregateId = string.IsNullOrWhiteSpace(AggregateId) ? null : AggregateId,
+					Page = PageNo,
+					PageSize = PageSize,
+				},
+				cancellationToken
 			);
 
-			SearchResults = await _aggregateQueryService.SearchAsync(query, cancellationToken);
 			return Page();
 		}
-		catch (InvalidOperationException ex)
+		catch (AdminApiException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Search failed: {ex.Message}");
 			return Page();
 		}
-		catch (ArgumentException ex)
+		catch (HttpRequestException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Search failed: {ex.Message}");
 			return Page();

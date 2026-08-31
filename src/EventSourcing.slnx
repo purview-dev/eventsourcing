@@ -17,6 +17,7 @@
 		<Project Path="src/Admin.Abstractions/Admin.Abstractions.csproj" />
 		<Project Path="src/Admin.API/Admin.API.csproj" />
 		<Project Path="src/Admin.AzureStorage/Admin.AzureStorage.csproj" />
+		<Project Path="src/Admin.Client/Admin.Client.csproj" />
 		<Project Path="src/Admin.MongoDB/Admin.MongoDB.csproj" />
 		<Project Path="src/Admin.Postgres/Admin.Postgres.csproj" />
 		<Project Path="src/Admin.Security/Admin.Security.csproj" />
@@ -71,5 +72,8 @@
 	<Folder Name="/tests/validators/">
 		<Project Path="tests/FluentValidationImpl.UnitTests/FluentValidationImpl.UnitTests.csproj" />
 		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
+	</Folder>
+	<Folder Name="/tools/">
+		<Project Path="tools/AdminApi.OpenApi/AdminApi.OpenApi.csproj" />
 	</Folder>
 </Solution>

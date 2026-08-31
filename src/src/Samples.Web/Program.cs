@@ -113,6 +113,7 @@ app.UseSession();
 
 if (sampleStoreOptions.AdminAPIAvailable)
 {
+	app.MapOpenApi();
 	app.MapPurviewEventSourcingAdminAPI();
 	app.MapPurviewEventSourcingAdminSite();
 }
@@ -355,7 +356,12 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 		);
 	services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
 	services.AddPurviewEventSourcingAdminSecurity(new SampleAdminPermissionProvider());
-	services.AddPurviewEventSourcingAdminApi(options => options.RoutePrefix = sampleStoreOptions.AdminAPIPath);
+	services.AddPurviewEventSourcingAdminApi(options =>
+	{
+		options.RoutePrefix = sampleStoreOptions.AdminAPIPath;
+		options.Features.ExportEvents = true;
+	});
+	services.AddPurviewEventSourcingAdminOpenApi();
 
 #pragma warning disable IDE0010 // Add missing cases
 	switch (sampleStoreOptions.AdminStore)

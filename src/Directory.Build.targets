@@ -3,7 +3,9 @@
 
 	<!-- Enforce XML documentation on public API for packable projects. IsPackable is only known after the
 	     project body has been evaluated, so this cannot live in Directory.Build.props. The SDK re-adds CS1591
-	     to NoWarn for library projects (Sdk.props), so it is stripped here and promoted to an error. -->
+	     to NoWarn for library projects (Sdk.props), so it is stripped here. Severity is then governed by the
+	     repo .editorconfig ([*.{cs,vb}] = error, [*.g.cs] = none) so generated code is exempt; elevating via
+	     WarningsAsErrors instead would override that per-file scoping. -->
 	<Target
 		Name="EnforcePublicApiDocumentation"
 		BeforeTargets="CoreCompile"
@@ -11,7 +13,6 @@
 	>
 		<PropertyGroup>
 			<NoWarn>$(NoWarn.Replace('CS1591;', ''))</NoWarn>
-			<WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
 		</PropertyGroup>
 	</Target>
 

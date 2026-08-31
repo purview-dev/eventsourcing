@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup Label="NuGet Package Values">
+		<IsPackable>true</IsPackable>
+		<Title>Purview Event Sourcing Admin Client</Title>
+		<Description>Generated C# typed client for the Purview EventSourcing Admin API, produced by NSwag from the committed OpenAPI document.</Description>
+		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;client;openapi;nswag;</PackageTags>
+		<PackageId>Purview.EventSourcing.Admin.Client</PackageId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Http" />
+		<PackageReference Include="Microsoft.Extensions.Options" />
+	</ItemGroup>
+</Project>

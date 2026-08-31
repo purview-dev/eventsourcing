@@ -70,6 +70,22 @@ vs-pipeline:
 vs-sg:
     open "{{ sg_solution_file }}"
 
+# Export the Admin API OpenAPI document to src/src/Admin.Client/OpenApi/admin.openapi.json
+[group('Utilities')]
+admin-openapi-export:
+    dotnet run --project src/tools/AdminApi.OpenApi --configuration {{ build_configuration }}
+
+# Regenerate the NSwag Admin API client from the committed OpenAPI document
+[group('Utilities')]
+admin-client-generate:
+    dotnet nswag run src/src/Admin.Client/nswag.json
+
+# Regenerate the OpenAPI document and the NSwag client (run after Admin API contract changes)
+[group('Utilities')]
+admin-client-regenerate:
+    just admin-openapi-export
+    just admin-client-generate
+
 # Build the solution for the specified configuration (default: Release)
 [group('Build and Test')]
 build *args:

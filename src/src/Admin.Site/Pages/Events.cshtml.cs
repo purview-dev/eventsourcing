@@ -1,19 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Abstractions.Queries;
-using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Client;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
 /// <summary>
 /// Page model for the admin portal event history page.
 /// </summary>
-/// <param name="eventQueryService">The query service used to load event ranges.</param>
-public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
+/// <param name="adminApiClient">The generated Admin API client used to load event ranges.</param>
+public class EventsModel(AdminApiClient adminApiClient) : PageModel
 {
-	readonly IAdminEventQueryService _eventQueryService =
-		eventQueryService ?? throw new ArgumentNullException(nameof(eventQueryService));
+	readonly AdminApiClient _adminApiClient = adminApiClient ?? throw new ArgumentNullException(nameof(adminApiClient));
 
 	/// <summary>
 	/// Gets or sets the aggregate type whose events are displayed.
@@ -66,10 +63,10 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 	/// <summary>
 	/// Gets or sets the event range to render on the page.
 	/// </summary>
-	public PagedResult<EventEnvelopeResponse>? EventRange { get; set; }
+	public PagedResultOfEventEnvelopeResponse? EventRange { get; set; }
 
 	/// <summary>
-	/// Handles GET requests for the page by loading the requested event range.
+	/// Handles GET requests for the page by loading the requested event range through the Admin API client.
 	/// </summary>
 	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
 	/// <returns>The page result, or a bad request when the required parameters are missing.</returns>
@@ -82,25 +79,27 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 
 		try
 		{
-			var query = new EventRangeQuery(
+			EventRange = await _adminApiClient.GetAggregateEventRangeAsync(
+				AggregateType,
+				AggregateId,
 				VersionFrom,
 				VersionTo,
 				TimeFromUtc is not null ? new DateTimeOffset(TimeFromUtc.Value, TimeSpan.Zero) : null,
 				TimeToUtc is not null ? new DateTimeOffset(TimeToUtc.Value, TimeSpan.Zero) : null,
 				PageNo,
 				PageSize,
-				"Version asc"
+				"Version asc",
+				cancellationToken
 			);
 
-			EventRange = await _eventQueryService.GetRangeAsync(AggregateType, AggregateId, query, cancellationToken);
 			return Page();
 		}
-		catch (InvalidOperationException ex)
+		catch (AdminApiException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load events: {ex.Message}");
 			return Page();
 		}
-		catch (ArgumentException ex)
+		catch (HttpRequestException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load events: {ex.Message}");
 			return Page();

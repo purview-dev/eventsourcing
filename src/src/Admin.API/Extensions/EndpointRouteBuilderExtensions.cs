@@ -41,8 +41,16 @@ public static class AdminApiEndpointRouteBuilderExtensions
 		if (options.Features.SearchAggregates)
 			AdminAggregatesEndpoints.MapSearchAggregates(group);
 
+		if (options.Features.ViewAggregate)
+			AdminAggregatesEndpoints.MapViewAggregate(group);
+
 		if (options.Features.ViewEvents)
+		{
 			AdminAggregatesEndpoints.MapEventRange(group);
+
+			if (options.Features.ExportEvents)
+				AdminAggregatesEndpoints.MapExportEvents(group);
+		}
 
 		if (options.Features.ProjectPointInTime)
 		{

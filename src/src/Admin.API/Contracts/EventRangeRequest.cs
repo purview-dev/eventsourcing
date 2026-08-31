@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using ZodSharp;
+
 namespace Purview.EventSourcing.Admin.Api.Contracts;
 
 /// <summary>
@@ -10,12 +13,13 @@ namespace Purview.EventSourcing.Admin.Api.Contracts;
 /// <param name="Page">The one-based page number to return.</param>
 /// <param name="PageSize">The maximum number of events to return per page.</param>
 /// <param name="Sort">The sort expression, for example <c>"Version asc"</c>.</param>
+[ZodSchema]
 public sealed record EventRangeRequest(
 	long? VersionFrom = null,
 	long? VersionTo = null,
 	DateTimeOffset? TimeFromUtc = null,
 	DateTimeOffset? TimeToUtc = null,
-	int Page = 1,
-	int PageSize = 50,
-	string Sort = "Version asc"
+	[property: Range(1, int.MaxValue)] int Page = 1,
+	[property: Range(1, int.MaxValue)] int PageSize = 50,
+	[property: RegularExpression(@"^(?i)[A-Za-z][A-Za-z0-9_.]*\s+(asc|desc)$")] string Sort = "Version asc"
 );

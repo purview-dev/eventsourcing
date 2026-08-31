@@ -517,8 +517,15 @@ dotnet_style_coalesce_expression = true:warning
 dotnet_style_null_propagation = true:warning
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:warning
 
+# Missing XML comment for publicly visible type or member 'Type_or_Member'.
+# Hand-written code must document public API in packable projects. Severity lives here (not in MSBuild
+# WarningsAsErrors) so generated files can be exempted below via a more specific glob. Non-packable projects
+# keep CS1591 in NoWarn, which suppresses regardless of this severity.
+[*.{cs,vb}]
+dotnet_diagnostic.CS1591.severity = error
+
 [*.g.cs]
-# Missing XML comment for publicly visible type or member 'Type_or_Member'
+# Generated files (source generators, NSwag/Kiota clients) are exempt from the public-API documentation rule.
 dotnet_diagnostic.CS1591.severity = none
 
 # Design Rules (CA1000-CA1070)

@@ -2,6 +2,8 @@
 
 `Purview.EventSourcing.Admin.Site` is an optional Razor Class Library that provides a ready-to-use web UI for the Purview EventSourcing admin portal. It lets you browse aggregates, inspect event streams, and explore point-in-time projections through Razor Pages.
 
+The pages talk to the Admin API through the generated typed client (`Purview.EventSourcing.Admin.Client`), so the UI is a real consumer of the Admin API contract.
+
 ## Install
 
 ```bash
@@ -18,7 +20,7 @@ builder.Services.AddPurviewEventSourcingAdminApi();
 builder.Services.AddPurviewEventSourcingAdminSqlServer();
 builder.Services.AddPurviewEventSourcingAdminSecurity();
 
-// Register the Razor Pages UI.
+// Register the Razor Pages UI (also registers the generated Admin API client).
 builder.Services.AddPurviewEventSourcingAdminSite(enableRazorRuntimeCompilation: false);
 
 var app = builder.Build();
@@ -31,6 +33,23 @@ app.Run();
 ```
 
 `MapPurviewEventSourcingAdminSite` accepts a `pathPrefix` (defaults to `/admin`).
+
+### Client configuration
+
+By default the pages call the Admin API on the same origin (the request's `scheme://host`), which is appropriate when the UI and the API are hosted in the same web application. To target a remote Admin API:
+
+```csharp
+builder.Services.AddPurviewEventSourcingAdminSite(
+    enableRazorRuntimeCompilation: false,
+    configureClient: options =>
+    {
+        options.BaseUrl = new Uri("https://admin.example.com");
+        options.AccessToken = "optional-bearer-token";
+    }
+);
+```
+
+The generated client targets the Admin API route prefix from its OpenAPI document (by default `/admin/api`).
 
 ## Pages
 
@@ -60,26 +79,15 @@ The point-in-time projection viewer.
 
 ## Requirements
 
-The UI relies on the admin service contracts from `Purview.EventSourcing.Admin.Abstractions`:
-
-- `IAdminAggregateQueryService` - aggregate search
-- `IAdminEventQueryService` - event-range queries
-- `IAdminProjectionService` - point-in-time projections
-
-A storage adapter must be registered to provide these services. Supported adapters:
-
-- `Purview.EventSourcing.Admin.SqlServer`
-- `Purview.EventSourcing.Admin.MongoDB`
-- `Purview.EventSourcing.Admin.Postgres`
-- `Purview.EventSourcing.Admin.AzureStorage`
-- Any custom implementation of the abstraction contracts
+The UI consumes the Admin API through `Purview.EventSourcing.Admin.Client`, so the web application must also map the Admin API endpoints (`MapPurviewEventSourcingAdminAPI`) and register an admin storage adapter (for example `Purview.EventSourcing.Admin.SqlServer`).
 
 ## Authorization
 
-Authorization is enforced at the API layer using the policies defined in `Purview.EventSourcing.Admin.Security`. Ensure the policies are registered and your `IAdminPermissionProvider` grants the relevant `AdminFeature` permissions (search, aggregate view, event view, projection).
+Authorization is enforced at the API layer using the policies defined in `Purview.EventSourcing.Admin.Security`. Ensure the policies are registered and your `IAdminPermissionProvider` grants the relevant `AdminFeature` permissions (search, aggregate view, event view, projection, export). The UI's HTTP calls to the API are authorized the same way as any other caller.
 
 ## Related packages
 
 - [Admin abstractions](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Abstractions/README.md): `Purview.EventSourcing.Admin.Abstractions`
 - [Admin API](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.API/README.md): `Purview.EventSourcing.Admin.Api`
+- [Admin client](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Client/README.md): `Purview.EventSourcing.Admin.Client`
 - [Admin security](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Security/README.md): `Purview.EventSourcing.Admin.Security`

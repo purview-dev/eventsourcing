@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using ZodSharp;
+
 namespace Purview.EventSourcing.Admin.Api.Contracts;
 
 /// <summary>
@@ -12,14 +15,15 @@ namespace Purview.EventSourcing.Admin.Api.Contracts;
 /// <param name="Page">The one-based page number to return.</param>
 /// <param name="PageSize">The maximum number of aggregates to return per page.</param>
 /// <param name="Sort">The sort expression, for example <c>"LastUpdatedUtc desc"</c>.</param>
+[ZodSchema]
 public sealed record AggregateSearchRequest(
-	string? AggregateType,
-	string? AggregateId,
+	[property: StringLength(256)] string? AggregateType,
+	[property: StringLength(256)] string? AggregateId,
 	DateTimeOffset? FromUtc,
 	DateTimeOffset? ToUtc,
 	bool? IsDeleted,
 	bool? IsRestored,
-	int Page = 1,
-	int PageSize = 50,
-	string Sort = "LastUpdatedUtc desc"
+	[property: Range(1, int.MaxValue)] int Page = 1,
+	[property: Range(1, int.MaxValue)] int PageSize = 50,
+	[property: RegularExpression(@"^(?i)[A-Za-z][A-Za-z0-9_.]*\s+(asc|desc)$")] string Sort = "LastUpdatedUtc desc"
 );
