@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos;
+using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.CosmosDb;
 
@@ -6,19 +7,22 @@ partial class CosmosDbClient
 {
 	public sealed class CosmosSystemTextJsonSerializer : CosmosSerializer
 	{
+		static readonly System.Text.Json.JsonSerializerOptions _jsonSerializerOptions =
+			EventStoreSerializationHelpers.CreateJsonSerializerOptions();
+
 		public override T FromStream<T>(Stream stream)
 		{
 			if (typeof(Stream).IsAssignableFrom(typeof(T)))
 				return (T)(object)stream;
 
 			using (stream)
-				return System.Text.Json.JsonSerializer.Deserialize<T>(stream)!;
+				return System.Text.Json.JsonSerializer.Deserialize<T>(stream, _jsonSerializerOptions)!;
 		}
 
 		public override Stream ToStream<T>(T input)
 		{
 			var streamPayload = new MemoryStream();
-			System.Text.Json.JsonSerializer.Serialize(streamPayload, input);
+			System.Text.Json.JsonSerializer.Serialize(streamPayload, input, _jsonSerializerOptions);
 
 			streamPayload.Position = 0;
 			return streamPayload;

@@ -1,6 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
+		<!--
+			The shared provider-agnostic contract suites (Contracts/**) are compiled into this library
+			and consumed by the provider integration test projects through the existing assembly
+			reference. Their [Test] methods are picked up by the test projects' [InheritsTests] derived
+			classes. This library's own tests are skipped by the SDK's shared-testing [Skip] attribute.
+		-->
 		<PackageReference Include="Microsoft.Extensions.Hosting" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="TUnit.Assertions" />
 		<PackageReference Include="Testcontainers.Azurite" />
 		<PackageReference Include="Testcontainers.CosmosDb" />
 		<PackageReference Include="Testcontainers.MongoDb" />

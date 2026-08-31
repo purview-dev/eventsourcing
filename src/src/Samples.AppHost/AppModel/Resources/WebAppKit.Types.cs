@@ -8,6 +8,9 @@ partial class WebAppKit
 	public sealed class VariantConfiguration
 	{
 		[Required(AllowEmptyStrings = false)]
+		public string ResourceName { get; set; } = string.Empty;
+
+		[Required(AllowEmptyStrings = false)]
 		public string DisplayName { get; set; } = string.Empty;
 
 		[Required(AllowEmptyStrings = false)]

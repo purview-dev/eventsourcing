@@ -60,11 +60,13 @@
 		<PackageVersion Include="Verify.SourceGenerators" Version="2.2.0" />
 		<PackageVersion Include="TUnit" Version="$(TUnitVersion)" />
 		<PackageVersion Include="TUnit.Aspire" Version="$(TUnitVersion)" />
+		<PackageVersion Include="TUnit.Assertions" Version="$(TUnitVersion)" />
 		<PackageVersion Include="TUnit.Core" Version="$(TUnitVersion)" />
 		<PackageVersion Include="TUnit.Mocks" Version="$(TUnitVersion)" />
 		<PackageVersion Include="Azure.Storage.Blobs" Version="12.29.2" />
 		<PackageVersion Include="Azure.Data.Tables" Version="12.12.0" />
 		<PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.62.1" />
+		<PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.2" />
 		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
 		<PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />

@@ -23,11 +23,10 @@ public sealed class ValueObjectSourceGeneratorIncrementalTests
 
 		namespace Testing
 		{
-			[Scalar]
+			[Scalar(GenerateEmpty = false)]
 			public readonly partial record struct EmailAddress
 			{
 				public string Value { get; }
-				public string Domain { get; }
 			}
 		}
 		""";
@@ -37,7 +36,7 @@ public sealed class ValueObjectSourceGeneratorIncrementalTests
 
 		namespace Testing
 		{
-			[Scalar(PropertyName = "Amount")]
+			[Scalar("Amount")]
 			public readonly partial record struct Money
 			{
 				public decimal Amount { get; }

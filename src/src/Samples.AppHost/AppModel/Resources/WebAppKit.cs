@@ -18,13 +18,14 @@ sealed partial class WebAppKit
 		{
 			var webApp = builder
 				.AddProject<Projects.Samples_Web>(
-					variant.Key,
+					variant.Value.ResourceName,
 					c =>
 					{
 						//
 					}
 				)
-				.WithExternalHttpEndpoints();
+				.WithHttpEndpoint(name: "http", isProxied: false)
+				.WithHttpsEndpoint(name: "https", isProxied: false);
 
 			webApp.WithParentRelationship(resourceGroup);
 
@@ -41,7 +42,7 @@ sealed partial class WebAppKit
 		foreach (var variant in Options.Variants)
 		{
 			var webApp = _webAppVariants[variant.Key];
-			ConfigureVariant(webApp, Options.Variants[variant.Key]);
+			ConfigureVariant(webApp, variant.Key, Options.Variants[variant.Key]);
 		}
 
 		base.ConfigureResource();

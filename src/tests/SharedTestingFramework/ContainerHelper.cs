@@ -13,6 +13,10 @@ public static partial class ContainerHelper
 {
 	public static AzuriteContainer CreateAzurite(Action<AzuriteBuilder>? config = null)
 	{
+		// Note: Testcontainers.Azurite's default command already binds the emulator to 0.0.0.0 and
+		// WithCommand appends to that default. Do not repeat the --blobHost/--queueHost/--tableHost
+		// flags here: duplicated flags make Azurite fall back to binding 127.0.0.1, which is not
+		// reachable through Docker's published ports.
 		var builder = new AzuriteBuilder($"mcr.microsoft.com/azure-storage/azurite:{AzuriteImageTag}").WithCommand(
 			"--skipApiVersionCheck"
 		)
@@ -37,7 +41,9 @@ public static partial class ContainerHelper
 			)
 			//.WithAutoRemove(true)
 			//.WithCleanUp(true)
-			.WithEnvironment("PROTOCOL", "https")
+			// The emulator must serve plain HTTP: Testcontainers' connection string and the Cosmos SDK
+			// gateway reader both use http:// (the PROTOCOL=https emulator only serves HTTPS and is
+			// unreachable over the published port).
 			.WithEnvironment("AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE", "false");
 
 		config?.Invoke(builder);
@@ -52,12 +58,18 @@ public static partial class ContainerHelper
 	{
 		public async Task<bool> UntilAsync(IContainer container)
 		{
-			// Root endpoint — returns 401 (no auth) once data engine is ready, 503 before.
-			const string requestUri = "https://localhost/";
-			var httpClient = ((CosmosDbContainer)container).HttpClient;
+			// The emulator serves plain HTTP on the gateway; probe it the same way the Cosmos SDK's
+			// gateway reader connects (via the published port).
+			var endpoint = new UriBuilder(
+				Uri.UriSchemeHttp,
+				container.Hostname,
+				container.GetMappedPublicPort(CosmosDbBuilder.CosmosDbPort)
+			).Uri;
+
+			using var httpClient = new HttpClient();
 			try
 			{
-				using var httpResponse = await httpClient.GetAsync(requestUri).ConfigureAwait(false);
+				using var httpResponse = await httpClient.GetAsync(endpoint).ConfigureAwait(false);
 				return httpResponse.StatusCode != System.Net.HttpStatusCode.ServiceUnavailable;
 			}
 #pragma warning disable CA1031
@@ -65,10 +77,6 @@ public static partial class ContainerHelper
 #pragma warning restore CA1031
 			{
 				return false;
-			}
-			finally
-			{
-				httpClient.Dispose();
 			}
 		}
 	}

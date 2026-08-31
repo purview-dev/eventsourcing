@@ -14,6 +14,8 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 
 	string? _databaseConnectionString;
 
+	protected override AspireFixtureOptions Options => new() { RetainResourceLogs = true };
+
 	public AppHostFixture()
 	{
 		EventStoreOperationContext.RequiresValidPrincipalIdentifierDefault = false;
@@ -68,7 +70,7 @@ public sealed class AppHostFixture : AspireFixture<Projects.Samples_AppHost>, IS
 		"CA5399:Do not use HttpClientHandler.AllowAutoRedirect"
 	)]
 	public HttpClient CreateWebClient(bool followRedirects = false) =>
-		CreateWebClient(Platform.WebApp, followRedirects);
+		CreateWebClient(Platform.SqlWebApp, followRedirects);
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope")]
 	public HttpClient CreateWebClient(string resourceName, bool followRedirects = false)

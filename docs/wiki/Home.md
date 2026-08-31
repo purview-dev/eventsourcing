@@ -11,6 +11,7 @@ This wiki is the project documentation hub for framework features, provider capa
 - [Dependency Guardrails](Dependency-Guardrails.md)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
+- [Shared Testing Framework](Shared-Testing-Framework.md)
 - [Release Flow](Release-Flow.md)
 
 ## Feature highlights

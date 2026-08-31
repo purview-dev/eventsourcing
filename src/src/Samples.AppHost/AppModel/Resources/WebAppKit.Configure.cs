@@ -26,7 +26,11 @@ partial class WebAppKit
 	//	}
 	//}
 
-	void ConfigureVariant(IResourceBuilder<ProjectResource> variant, VariantConfiguration configuration)
+	void ConfigureVariant(
+		IResourceBuilder<ProjectResource> variant,
+		string variantKey,
+		VariantConfiguration configuration
+	)
 	{
 		ConfigureStoreReferences(variant, HostKit, configuration);
 
@@ -38,7 +42,7 @@ partial class WebAppKit
 
 		variant.WithEnvironment(
 			OptionsHelper.ForSet<SampleStoreOptions>(
-				c => c.CurrentKey = variant.Resource.Name,
+				c => c.CurrentKey = variantKey,
 				c => c.CurrentDisplayName = configuration.DisplayName,
 				c => c.CurrentDescription = configuration.Description,
 				c => c.EventStore = configuration.EventStore,

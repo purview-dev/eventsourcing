@@ -1,10 +1,12 @@
 using System.Globalization;
 using Microsoft.Data.SqlClient;
 using Purview.EventSourcing.Aggregates.Persistence;
+using Purview.EventSourcing.Fixtures.SqlServer;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
-partial class SqlServerEventStoreTests
+[ClassDataSource<SqlServerEventStoreFixture>(Shared = SharedType.PerTestSession)]
+public sealed class SqlServerEventStoreIndexCreationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]
 	public async Task SaveAsync_GivenDefaultIndexes_CreatesCoreIndexesWithQueryAlignedKeyColumns(
