@@ -57,17 +57,17 @@
 		<None
 			Include="$(MSBuildProjectDirectory)/README.md"
 			Pack="true"
-			PackagePath="/"
+			PackagePath="/Sdk/"
 			Condition="Exists('$(MSBuildProjectDirectory)/README.md')"
 		/>
 		<None
 			Include="$(MSBuildThisFileDirectory)../README.md"
 			Pack="true"
-			PackagePath="/"
+			PackagePath="/Sdk/"
 			Condition="!Exists('$(MSBuildProjectDirectory)/README.md')"
 		/>
-		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Pack="true" PackagePath="/" />
-		<None Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg" Pack="true" PackagePath="/" />
+		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Pack="true" PackagePath="/Sdk/" />
+		<None Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg" Pack="true" PackagePath="/Sdk/" />
 	</ItemGroup>
 
 	<PropertyGroup Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'">
