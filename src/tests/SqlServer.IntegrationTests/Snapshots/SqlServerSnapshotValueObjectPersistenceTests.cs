@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Fixtures.SqlServer;
 using Purview.EventSourcing.Samples.Domain;
@@ -9,6 +10,11 @@ namespace Purview.EventSourcing.SqlServer.Snapshots;
 public sealed class SqlServerSnapshotValueObjectPersistenceTests(SqlServerSnapshotEventStoreFixture fixture)
 {
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Provider integration scenario intentionally exercises the complete value-object graph."
+	)]
 	public async Task SaveAsync_GivenComplexValueObjects_PersistsEventSnapshotAndSupportsSnapshotLinqQueries(
 		CancellationToken cancellationToken
 	)

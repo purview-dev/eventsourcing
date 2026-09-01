@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.Domain;
 using Purview.EventSourcing.Samples.ValueObjects;
@@ -160,6 +161,11 @@ public sealed class OrderFulfilmentServiceTests
 	}
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Order fulfilment workflow test intentionally exercises the complete aggregate/service graph."
+	)]
 	public async Task PlaceOrderAsync_GivenValidData_OrderHasLineItemAndIsConfirmed(CancellationToken cancellationToken)
 	{
 		var customer = ActiveCustomer();

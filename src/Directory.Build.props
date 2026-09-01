@@ -53,21 +53,12 @@
 	</PropertyGroup>
 
 	<ItemGroup Label="NuGet package assets" Condition="'$(IsPackable)' == 'true'">
-		<!-- Prefer the project-local README when present, otherwise fall back to the repository README. -->
-		<None
-			Include="$(MSBuildProjectDirectory)/README.md"
-			Pack="true"
-			PackagePath="/Sdk/"
-			Condition="Exists('$(MSBuildProjectDirectory)/README.md')"
-		/>
-		<None
-			Include="$(MSBuildThisFileDirectory)../README.md"
-			Pack="true"
-			PackagePath="/Sdk/"
-			Condition="!Exists('$(MSBuildProjectDirectory)/README.md')"
-		/>
-		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Pack="true" PackagePath="/Sdk/" />
-		<None Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg" Pack="true" PackagePath="/Sdk/" />
+		<!-- Package assets live under each project's Sdk/ tree so the SDK's automatic Sdk folder packing derives the
+		     package paths. The project README is moved into Sdk/README.md (auto-packed to the package root by the
+		     Sdk/*.md rule); the shared LICENSE and logo are linked into Sdk/ so IncludeLinkedSdkFiles maps them to the
+		     package root. -->
+		<None Include="$(MSBuildThisFileDirectory)../LICENSE.md" Link="Sdk\LICENSE.md" />
+		<None Include="$(MSBuildThisFileDirectory)../assets/images/purview-logo.jpg" Link="Sdk\purview-logo.jpg" />
 	</ItemGroup>
 
 	<PropertyGroup Condition="'$(IsTestProject)' != 'true' AND '$(IsSharedTestingProject)' != 'true'">

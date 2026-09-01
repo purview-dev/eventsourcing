@@ -1,3 +1,8 @@
+#pragma warning disable CA1502, CA1506
+// The sample's composition root intentionally wires up every supported event store, query store, and admin
+// adapter so the whole surface is demonstrated. The generated <Main>$ method and Program class therefore exceed
+// the maintainability metrics thresholds; the suppressions are scoped to this file only. Previously this was a
+// project-wide NoWarn in Samples.Web.csproj.
 using System.Diagnostics.CodeAnalysis;
 using Azure;
 using Azure.Storage.Blobs;
@@ -37,7 +42,6 @@ builder.Services.AddSingleton(sampleStoreOptions);
 builder
 	.Services.AddOptions<SampleStoreOptions>()
 	.BindConfiguration(SampleStoreOptions.SectionName)
-	//.Validate(options => Purview.EventSourcing.Samples.Options.SampleStoreOptionsSchemaValidator)
 	.ValidateDataAnnotations()
 	.ValidateOnStart();
 
@@ -400,3 +404,4 @@ static string NormalizeKebab(string value)
 
 	return string.IsNullOrWhiteSpace(normalized) ? "sample" : normalized;
 }
+#pragma warning restore CA1502, CA1506

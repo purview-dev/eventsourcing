@@ -32,20 +32,19 @@ partial class AggregateEventNameMapperTests
 
 	[Test]
 	[Arguments(
-		"Purview.Services.UserProfile.Aggregates.UserProfile.Events.ClearProfileAttributesEvent, EventSourcing.UnitTests",
+		"Purview.Services.UserProfile.Aggregates.UserProfile.Events.ClearProfileAttributesEvent",
 		"clear-profile-attributes"
 	)]
-	[Arguments(
-		"Purview.Services.UserProfile.Aggregates.UserProfile.Events.ClearRolesEvent, EventSourcing.UnitTests",
-		"clear-roles"
-	)]
+	[Arguments("Purview.Services.UserProfile.Aggregates.UserProfile.Events.ClearRolesEvent", "clear-roles")]
 	public async Task GetName_GivenEventName_MatchesExpectation(string eventType, string expectation)
 	{
 		// Arrange
 		var mapper = CreateMapper<CorrectlyNamedAggregate>();
 
 		// Act
-		var aggregateEventType = Type.GetType(eventType, true);
+		var assemblyQualifiedName =
+			$"{eventType}, {typeof(Purview.Services.UserProfile.Aggregates.UserProfile.Events.ClearRolesEvent).Assembly.GetName().Name}";
+		var aggregateEventType = Type.GetType(assemblyQualifiedName, true);
 		await Assert.That(aggregateEventType).IsNotNull();
 
 		var result = mapper.GetName<CorrectlyNamedAggregate>(aggregateEventType!);

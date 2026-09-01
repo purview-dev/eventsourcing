@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.Domain;
@@ -237,6 +238,11 @@ public sealed class StockTransferServiceTests
 	}
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Stock transfer scenario intentionally exercises the full aggregate/service graph."
+	)]
 	public async Task TransferAsync_WhenDestinationInventoryMissing_CreatesNewInventoryAtDestination(
 		CancellationToken cancellationToken
 	)
@@ -321,6 +327,11 @@ public sealed class StockTransferServiceTests
 	}
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Compensation path scenario intentionally exercises the full aggregate/service graph."
+	)]
 	public async Task TransferAsync_WhenTransactionCommitFails_DoesNotApplyCompensation(
 		CancellationToken cancellationToken
 	)

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Fixtures.SqlServer;
 using Purview.EventSourcing.Samples.ValueObjects;
 
@@ -12,6 +13,11 @@ namespace Purview.EventSourcing.Samples.Domain;
 public sealed class MultiAggregateIntegrationTests(SqlServerEventStoreFixture fixture)
 {
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Cross-aggregate workflow integration test intentionally exercises the full aggregate graph."
+	)]
 	public async Task SaveAsync_GivenOrderFulfilmentWorkflow_AllAggregatesRestoreWithCoherentState(
 		CancellationToken cancellationToken
 	)

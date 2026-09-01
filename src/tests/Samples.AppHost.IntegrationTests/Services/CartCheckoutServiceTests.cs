@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Samples.Domain;
@@ -52,6 +53,11 @@ public sealed class CartCheckoutServiceTests(AppHostFixture fixture)
 	}
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Checkout atomicity scenario intentionally exercises the full aggregate/service graph."
+	)]
 	public async Task CheckoutAsync_WhenInventoryChangesBeforeCommit_RollsBackOrderAndPreservesAtomicity(
 		CancellationToken cancellationToken
 	)

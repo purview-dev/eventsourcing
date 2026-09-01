@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Fixtures.SqlServer;
 using Purview.EventSourcing.Samples.Domain.ReportUpload;
 using Purview.EventSourcing.Samples.ValueObjects;
@@ -49,6 +50,11 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 		);
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Provider integration scenario intentionally exercises the complete aggregate graph."
+	)]
 	public async Task SnapshotAsync_GivenReportUploadAggregateWithLineItems_QueriesByLineItemCount(
 		CancellationToken cancellationToken
 	)
