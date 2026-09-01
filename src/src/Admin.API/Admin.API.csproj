@@ -1,10 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup Label="NuGet Package Values">
 		<IsPackable>true</IsPackable>
 		<Title>Purview Event Sourcing Admin Portal API</Title>
 		<Description>ASP.NET Minimal API endpoints for Purview EventSourcing Admin Portal with OpenAPI documentation.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;api;openapi;</PackageTags>
-		<PackageId>Purview.EventSourcing.Admin.Api</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

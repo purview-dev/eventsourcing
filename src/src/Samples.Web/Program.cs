@@ -4,7 +4,7 @@ using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using MongoDB.Driver;
 using Npgsql;
-using Purview.EventSourcing.Admin.Api;
+using Purview.EventSourcing.Admin.API;
 using Purview.EventSourcing.Admin.AzureStorage;
 using Purview.EventSourcing.Admin.MongoDB;
 using Purview.EventSourcing.Admin.Postgres;

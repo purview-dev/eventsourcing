@@ -11,7 +11,7 @@ public static class AdminClientDefaults
 	public const string SectionName = "AdminClient";
 
 	/// <summary>
-	/// The name of the underlying <see cref="System.Net.Http.HttpClient"/> registration.
+	/// The name of the underlying <see cref="HttpClient"/> registration.
 	/// </summary>
 	public const string HttpClientName = "Purview.EventSourcing.Admin.Client";
 }

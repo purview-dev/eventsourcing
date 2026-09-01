@@ -16,7 +16,7 @@ using Purview.EventSourcing.Admin.Abstractions.Queries;
 using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.Admin.Security;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.API;
 
 public sealed class AdminApiEndpointTests
 {

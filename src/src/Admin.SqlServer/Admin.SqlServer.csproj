@@ -4,7 +4,6 @@
 		<Title>Purview Event Sourcing Admin Portal SQL Server</Title>
 		<Description>SQL Server query adapters for Purview EventSourcing Admin Portal.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;sqlserver;queries;</PackageTags>
-		<PackageId>Purview.EventSourcing.Admin.SqlServer</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

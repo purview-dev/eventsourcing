@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
 using Purview.EventSourcing.Admin.Abstractions.Services;
-using Purview.EventSourcing.Admin.Api;
+using Purview.EventSourcing.Admin.API;
 
 // Exports the Admin API OpenAPI document to a file so it can be committed and used to generate a typed client
 // (for example with NSwag). Usage:
@@ -15,10 +15,9 @@ var outputPath = ResolveOutputPath(args);
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddPurviewEventSourcingAdminApi(options =>
-{
 	// The exported document describes the full Admin API surface, so all feature-gated endpoints are enabled.
-	options.Features.ExportEvents = true;
-});
+	options.Features.ExportEvents = true
+);
 builder.Services.AddPurviewEventSourcingAdminOpenApi();
 
 // The query services are only required so minimal-API metadata inference succeeds while building the document;
@@ -61,7 +60,7 @@ static string ResolveOutputPath(string[] args)
 	// WebApplication.CreateBuilder changes the current directory to the content root, so relative paths are
 	// resolved against the repository root (found by walking up to the nearest nuget.config) instead.
 	var root = FindRepositoryRoot(Path.GetFullPath("."));
-	var relative = args.Length > 0 ? args[0] : "./src/src/Admin.Client/OpenApi/admin.openapi.json";
+	var relative = args.Length > 0 ? args[0] : "./src/src/Admin.Client/OpenAPI/admin.openapi.json";
 	return Path.GetFullPath(Path.Combine(root, relative));
 }
 

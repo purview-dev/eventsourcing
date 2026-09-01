@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.API;
 
 public sealed class OptionsValidationTests
 {

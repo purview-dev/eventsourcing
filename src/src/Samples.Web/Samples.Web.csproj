@@ -3,11 +3,6 @@
 		<RazorCompileOnBuild>true</RazorCompileOnBuild>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<!-- Temporarily disable the complexity rule until we can refactor the code -->
-		<NoWarn>$(NoWarn);CA1502;CA1506;</NoWarn>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="Aspire.Azure.Storage.Blobs" />
 		<PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" />

@@ -1,14 +1,5 @@
-<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<IsPackable>false</IsPackable>
-	</PropertyGroup>
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<ProjectReference Include="..\..\src\Admin.SqlServer\Admin.SqlServer.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="TUnit.Core" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
 	</ItemGroup>
 </Project>

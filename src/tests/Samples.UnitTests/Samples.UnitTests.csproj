@@ -1,13 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<!--<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>-->
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<!-- Temporarily disable the complexity rule until we can refactor the code -->
-		<NoWarn>$(NoWarn);CA1506;</NoWarn>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
 		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />

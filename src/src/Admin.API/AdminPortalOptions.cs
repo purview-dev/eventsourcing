@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using ZodSharp;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.API;
 
 /// <summary>
 /// Configures the Admin portal endpoint, paging and projection limits.

@@ -1,6 +1,6 @@
-using Purview.EventSourcing.Admin.Api.Contracts;
+using Purview.EventSourcing.Admin.API.Contracts;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.API;
 
 public sealed class AdminContractSchemaTests
 {

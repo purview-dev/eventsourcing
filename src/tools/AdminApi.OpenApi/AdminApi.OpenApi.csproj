@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<RootNamespace>Purview.EventSourcing.Tools.AdminApiOpenApi</RootNamespace>
+		<RootNamespace>Purview.EventSourcing.Tools.AdminAPI.OpenAPI</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>

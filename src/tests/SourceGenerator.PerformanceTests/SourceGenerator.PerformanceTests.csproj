@@ -5,12 +5,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\EventSourcing\EventSourcing.csproj" />
 		<ProjectReference Include="..\..\src\SourceGenerator\SourceGenerator.csproj" />
-		<!--<ProjectReference
-			Include="..\..\src\SourceGenerator\SourceGenerator.csproj"
-			PrivateAssets="all"
-			OutputItemType="Analyzer"
-			ReferenceOutputAssembly="true"
-		/>-->
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />

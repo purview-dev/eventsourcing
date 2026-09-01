@@ -1,8 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<!-- SQL Server-specific guard/translation tests exceed the CA1506 class-coupling threshold. -->
-		<NoWarn>$(NoWarn);CA1506;</NoWarn>
-	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
 	</ItemGroup>

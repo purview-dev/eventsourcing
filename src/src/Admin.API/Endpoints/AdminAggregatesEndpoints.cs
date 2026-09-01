@@ -10,12 +10,12 @@ using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
 using Purview.EventSourcing.Admin.Abstractions.Services;
-using Purview.EventSourcing.Admin.Api.Contracts;
-using Purview.EventSourcing.Admin.Api.Filters;
+using Purview.EventSourcing.Admin.API.Contracts;
+using Purview.EventSourcing.Admin.API.Filters;
 using Purview.EventSourcing.Admin.Security;
 using ZodSharp.Core;
 
-namespace Purview.EventSourcing.Admin.Api.Endpoints;
+namespace Purview.EventSourcing.Admin.API.Endpoints;
 
 /// <summary>
 /// Maps the Admin portal aggregate query endpoints onto a route group.

@@ -5,7 +5,7 @@
 		<Description>ZodSharp adapter for Purview EventSourcing — bridges FluentValidation IValidator&lt;T&gt; with IAggregateValidator&lt;T&gt;.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;validation;zod;zodsharp;</PackageTags>
 		<RootNamespace>Purview.EventSourcing.ZodSharp</RootNamespace>
-		<PackageId>Purview.EventSourcing.ZodSharp</PackageId>
+		<!--<PackageId>Purview.EventSourcing.ZodSharp</PackageId>-->
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="ZodSharp" PrivateAssets="contentfiles;build" />

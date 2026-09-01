@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Purview.EventSourcing.Admin.Api.Contracts;
+using Purview.EventSourcing.Admin.API.Contracts;
 using ZodSharp.AspNetCore;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.API;
 
 /// <summary>
 /// Registers the Admin API options and validation services.
@@ -27,10 +27,7 @@ public static class AdminApiServiceCollectionExtensions
 
 		// Register the ZodSharp schema factory and auto-discover the generated validators for the Admin API
 		// request contracts and options so endpoint filters and option validation can resolve them by type.
-		services.AddZodSharp(options =>
-		{
-			options.ScanAssemblies.Add(typeof(EventRangeRequest).Assembly);
-		});
+		services.AddZodSharp(options => options.ScanAssemblies.Add(typeof(EventRangeRequest).Assembly));
 
 		return services;
 	}

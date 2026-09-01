@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using ZodSharp.AspNetCore;
 using ZodSharp.Core;
 
-namespace Purview.EventSourcing.Admin.Api.Filters;
+namespace Purview.EventSourcing.Admin.API.Filters;
 
 /// <summary>
 /// Validates a bound request argument using the ZodSharp source-generated schema for

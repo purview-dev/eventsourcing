@@ -4,7 +4,6 @@
 		<Title>Purview Event Sourcing Admin Portal Postgres</Title>
 		<Description>Postgres query adapters for Purview EventSourcing Admin Portal.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;postgres;queries;</PackageTags>
-		<PackageId>Purview.EventSourcing.Admin.Postgres</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

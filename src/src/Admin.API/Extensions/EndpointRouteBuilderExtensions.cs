@@ -2,9 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Purview.EventSourcing.Admin.Api.Endpoints;
+using Purview.EventSourcing.Admin.API.Endpoints;
 
-namespace Purview.EventSourcing.Admin.Api;
+namespace Purview.EventSourcing.Admin.API;
 
 /// <summary>
 /// Maps the Admin portal minimal API endpoints onto the application's route table.

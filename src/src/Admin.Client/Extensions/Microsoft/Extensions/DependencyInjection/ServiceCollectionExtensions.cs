@@ -15,7 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class AdminClientServiceCollectionExtensions
 {
 	/// <summary>
-	/// Registers <see cref="AdminApiClient"/> as a typed <see cref="System.Net.Http.HttpClient"/>.
+	/// Registers <see cref="AdminApiClient"/> as a typed <see cref="HttpClient"/>.
 	/// </summary>
 	/// <param name="services">The service collection to configure.</param>
 	/// <param name="configure">Optional <see cref="AdminClientOptions"/> configuration.</param>
@@ -56,7 +56,7 @@ public static class AdminClientServiceCollectionExtensions
 						?? new Uri("http://admin.invalid/", UriKind.Absolute);
 				}
 			)
-			.AddTypedClient<AdminApiClient>(
+			.AddTypedClient(
 				(httpClient, serviceProvider) =>
 				{
 					var options = serviceProvider.GetRequiredService<IOptions<AdminClientOptions>>().Value;

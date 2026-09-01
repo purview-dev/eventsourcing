@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using ZodSharp;
 
-namespace Purview.EventSourcing.Admin.Api.Contracts;
+namespace Purview.EventSourcing.Admin.API.Contracts;
 
 /// <summary>
 /// The request contract for searching aggregates in the admin portal.

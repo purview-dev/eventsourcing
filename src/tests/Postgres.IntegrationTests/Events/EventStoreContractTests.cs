@@ -31,7 +31,7 @@ public sealed class EventStoreContractTests<TAggregate>(PostgresEventStoreFixtur
 		IAggregateChangeFeedNotifier<TAggregate>? changeFeedNotifier
 	)
 	{
-		var ctx = fixture.CreateEventStoreContext<TAggregate>(aggregateChangeNotifier: changeFeedNotifier);
+		var ctx = fixture.CreateEventStoreContext(aggregateChangeNotifier: changeFeedNotifier);
 		_ctx = ctx;
 		return ctx.EventStore;
 	}

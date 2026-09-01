@@ -1,8 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<IsPackable>false</IsPackable>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Admin.Abstractions\Admin.Abstractions.csproj" />
 		<ProjectReference Include="..\..\src\Admin.Security\Admin.Security.csproj" />
@@ -11,9 +7,5 @@
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="TUnit.Core" />
 	</ItemGroup>
 </Project>

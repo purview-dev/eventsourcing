@@ -6,6 +6,6 @@ static class JsonFormatter
 {
 	static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
 
-	public static string PrettyPrint(Purview.EventSourcing.Admin.Client.JsonElement element) =>
+	public static string PrettyPrint(Client.JsonElement element) =>
 		JsonSerializer.Serialize(element.AdditionalProperties, Indented);
 }
