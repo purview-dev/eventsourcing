@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.SqlServer.Events.Exceptions;
+namespace Purview.EventSourcing.SqlServer.Events.Exceptions;
 
 /// <summary>
 /// Thrown when an optimistic-concurrency violation is detected while saving events.
@@ -11,7 +11,8 @@
 public class ConcurrencyException(string aggregateId, string idempotencyId, int versionAttempted, int version)
 	: Exception(
 		$"Optimistic concurrency error:\n\tAggregateId: {aggregateId}\n\tIdempotencyId: {idempotencyId}\n\tVersionAttempted:{versionAttempted}\n\tVersionPresent:{version}"
-	)
+	),
+		IConcurrencyConflict
 #pragma warning restore CA1032 // Implement standard exception constructors
 {
 	/// <summary>

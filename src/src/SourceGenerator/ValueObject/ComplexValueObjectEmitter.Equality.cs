@@ -36,7 +36,7 @@ static partial class ComplexValueObjectEmitter
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					IsOverride = true,
-					Parameters = [new("obj", PurviewTypeLibrary.System.Object.AsTypeReference().Nullable())],
+					Parameters = [new("obj", PurviewTypeLibrary.System.Object.MakeNullable(writer))],
 					ExpressionBody = $"obj is {model.TypeName} other && Equals(other)",
 				}
 			);
@@ -97,7 +97,7 @@ static partial class ComplexValueObjectEmitter
 					[
 						new(
 							"other",
-							model.IsReferenceType ? ValueObjectType(model).Nullable() : ValueObjectType(model)
+							model.IsReferenceType ? ValueObjectType(model).Nullable(writer) : ValueObjectType(model)
 						),
 					],
 				},
@@ -129,7 +129,7 @@ static partial class ComplexValueObjectEmitter
 			writer.WriteMethod(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
-					Parameters = [new("obj", PurviewTypeLibrary.System.Object.AsTypeReference().Nullable())],
+					Parameters = [new("obj", PurviewTypeLibrary.System.Object.MakeNullable(writer))],
 				},
 				body =>
 				{

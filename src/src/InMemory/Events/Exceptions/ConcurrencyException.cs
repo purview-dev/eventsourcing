@@ -1,13 +1,13 @@
-namespace Purview.EventSourcing.AzureStorage.Exceptions;
+namespace Purview.EventSourcing.InMemory.Events.Exceptions;
 
-#pragma warning disable CA1032 // Implement standard exception constructors
 /// <summary>
-/// Thrown when an optimistic concurrency check fails while saving an aggregate.
+/// Thrown when an optimistic-concurrency violation is detected while saving events.
 /// </summary>
 /// <param name="aggregateId">The id of the aggregate.</param>
-/// <param name="idempotencyId">The idempotency id associated with the save attempt.</param>
-/// <param name="versionAttempted">The aggregate version that was attempted to be saved.</param>
-/// <param name="version">The aggregate version present in the store.</param>
+/// <param name="idempotencyId">The idempotency identifier of the save operation.</param>
+/// <param name="versionAttempted">The aggregate version that was attempted.</param>
+/// <param name="version">The version currently present in the store.</param>
+#pragma warning disable CA1032 // Implement standard exception constructors
 public class ConcurrencyException(string aggregateId, string idempotencyId, int versionAttempted, int version)
 	: Exception(
 		$"Optimistic concurrency error:\n\tAggregateId: {aggregateId}\n\tIdempotencyId: {idempotencyId}\n\tVersionAttempted:{versionAttempted}\n\tVersionPresent:{version}"
@@ -16,22 +16,22 @@ public class ConcurrencyException(string aggregateId, string idempotencyId, int 
 #pragma warning restore CA1032 // Implement standard exception constructors
 {
 	/// <summary>
-	/// Gets the id of the aggregate.
+	/// The id of the aggregate that failed the concurrency check.
 	/// </summary>
 	public string AggregateId { get; } = aggregateId ?? throw new ArgumentNullException(nameof(aggregateId));
 
 	/// <summary>
-	/// Gets the aggregate version that was attempted to be saved.
+	/// The aggregate version that was attempted.
 	/// </summary>
 	public int VersionAttempted { get; } = versionAttempted;
 
 	/// <summary>
-	/// Gets the idempotency id associated with the save attempt.
+	/// The idempotency identifier of the save operation.
 	/// </summary>
 	public string IdempotencyId { get; } = idempotencyId ?? throw new ArgumentNullException(nameof(idempotencyId));
 
 	/// <summary>
-	/// Gets the aggregate version present in the store.
+	/// The version currently present in the store.
 	/// </summary>
 	public int Version { get; } = version;
 }

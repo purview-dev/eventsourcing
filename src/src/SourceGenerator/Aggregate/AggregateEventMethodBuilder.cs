@@ -354,7 +354,12 @@ static class AggregateEventMethodBuilder
 			|| filePath.Contains("/obj/", StringComparison.Ordinal);
 	}
 
-	internal static TypeReference CreateTypeReference(ITypeSymbol typeSymbol)
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Purview.SourceGeneratorFramework",
+		"PSGFR16:Prefer the nullable-context overload",
+		Justification = "We work it out from the compilation"
+	)]
+	internal static TypeReference CreateTypeReference(ITypeSymbol typeSymbol, Compilation compilation)
 	{
 		if (
 			typeSymbol is INamedTypeSymbol namedType
@@ -362,7 +367,7 @@ static class AggregateEventMethodBuilder
 			&& namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
 		)
 		{
-			return TypeReference.Create(namedType.TypeArguments[0]).Nullable();
+			return TypeReference.Create(namedType.TypeArguments[0]).Nullable(compilation);
 		}
 
 		// If the type is a value type, we can return it as is. If it's a reference type, we should mark it as nullable.
@@ -403,6 +408,7 @@ static class AggregateEventMethodBuilder
 					collectionEventAttribute,
 					propertySymbolsByName,
 					diagnostics,
+					compilation,
 					out var collectionParameter,
 					out collectionEvent
 				)
@@ -492,7 +498,7 @@ static class AggregateEventMethodBuilder
 		var isNotNull = HasNotNullAttribute(parameter);
 		var isRequired = HasRequiredAttribute(parameter);
 		var isStringParameter = parameter.Type.SpecialType == SpecialType.System_String;
-		var parameterType = CreateTypeReference(parameter.Type);
+		var parameterType = CreateTypeReference(parameter.Type, compilation);
 
 		var metadata = MetadataAttributeData.FromAttributeData(parameter);
 
@@ -604,7 +610,7 @@ static class AggregateEventMethodBuilder
 			return false;
 		}
 
-		var propertyType = CreateTypeReference(propertySymbol.Type);
+		var propertyType = CreateTypeReference(propertySymbol.Type, compilation);
 		var conversionKind = ResolveParameterConversionKind(
 			compilation,
 			classSymbol,
@@ -1222,6 +1228,7 @@ static class AggregateEventMethodBuilder
 		CollectionEventAttributeData collectionEventAttribute,
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
 		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
+		Compilation compilation,
 		out EventPropertyInfo parameterInfo,
 		out CollectionEventInfo? collectionEvent
 	)
@@ -1286,13 +1293,13 @@ static class AggregateEventMethodBuilder
 		if (SymbolEqualityComparer.Default.Equals(parameter.Type, elementType))
 		{
 			parameterShape = CollectionParameterShape.Single;
-			parameterType = CreateTypeReference(elementType);
+			parameterType = CreateTypeReference(elementType, compilation);
 			eventPropertyType = parameterType;
 		}
 		else if (TypeHelpers.IsArray(parameter.Type))
 		{
 			parameterShape = CollectionParameterShape.Array;
-			parameterType = CreateTypeReference(elementType).MakeArray();
+			parameterType = CreateTypeReference(elementType, compilation).MakeArray();
 			eventPropertyType = parameterType;
 		}
 		else if (TryGetIEnumerableElementType(parameter.Type, out var enumerableElementType))
@@ -1315,7 +1322,7 @@ static class AggregateEventMethodBuilder
 			parameterType = TypeLibrary.System.Collections.Generic.IEnumerable.MakeGeneric(
 				new TypeIdentity(elementType)
 			);
-			eventPropertyType = CreateTypeReference(elementType).MakeArray();
+			eventPropertyType = CreateTypeReference(elementType, compilation).MakeArray();
 		}
 		else
 		{
@@ -1358,8 +1365,8 @@ static class AggregateEventMethodBuilder
 
 		collectionEvent = new CollectionEventInfo(
 			collectionProperty.Name,
-			CreateTypeReference(elementType),
-			CreateTypeReference(collectionProperty.Type),
+			CreateTypeReference(elementType, compilation),
+			CreateTypeReference(collectionProperty.Type, compilation),
 			isSet,
 			operation,
 			parameterShape,

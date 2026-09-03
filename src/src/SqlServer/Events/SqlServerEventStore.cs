@@ -20,6 +20,12 @@ namespace Purview.EventSourcing.SqlServer.Events;
 /// Persists stream versions, events, idempotency markers, and snapshots to a SQL Server (or Azure SQL) table,
 /// optionally maintaining a distributed cache of aggregate snapshots.
 /// </remarks>
+[SuppressMessage(
+	"Design",
+	"CA1506: Avoid excessive class coupling",
+	Justification = "SqlServerEventStore is a single logical store split across many partial files; the class-coupling metric is "
+		+ "unavoidably inflated for the public surface it must expose."
+)]
 public sealed partial class SqlServerEventStore<T> : ISqlServerEventStore<T>, ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {

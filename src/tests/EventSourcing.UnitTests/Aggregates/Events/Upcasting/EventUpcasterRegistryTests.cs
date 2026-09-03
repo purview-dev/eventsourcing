@@ -40,6 +40,18 @@ public sealed class EventUpcasterRegistryTests
 			new() { Details = source.Details, NewField = source.OldField + "_upgraded" };
 	}
 
+	sealed class CurrentEventToLegacyUpcaster : IEventUpcaster<CurrentEvent, LegacyEvent>
+	{
+		public LegacyEvent Upcast(CurrentEvent source) =>
+			new() { Details = source.Details, OldField = source.NewField + "_downgraded" };
+	}
+
+	sealed class InPlaceUpcaster : IEventUpcaster<LegacyEvent, LegacyEvent>
+	{
+		public LegacyEvent Upcast(LegacyEvent source) =>
+			new() { Details = source.Details, OldField = source.OldField + "_inplace" };
+	}
+
 	sealed class LegacyToIntermediateUpcaster : IEventUpcaster<LegacyEvent, IntermediateEvent>
 	{
 		public IntermediateEvent Upcast(LegacyEvent source) =>
@@ -245,6 +257,47 @@ public sealed class EventUpcasterRegistryTests
 		// LegacyEvent.OldField "source" → IntermediateEvent.MidField "source_mid" → V3Event.V3Field "source_mid_v3"
 		await Assert.That(((V3Event)result).V3Field).IsEqualTo("source_mid_v3");
 		await Assert.That(((V3Event)result).SchemaVersion).IsEqualTo(3);
+	}
+
+	[Test]
+	public async Task Upcast_GivenSameTypeUpcaster_AppliesOnceAndStops()
+	{
+		// Arrange
+		var descriptor = new EventUpcasterDescriptor<LegacyEvent, LegacyEvent>(new InPlaceUpcaster());
+		var registry = new EventUpcasterRegistry([descriptor]);
+		var legacyEvent = new LegacyEvent { OldField = "value" };
+
+		// Act
+		var result = registry.Upcast(legacyEvent);
+
+		// Assert — applied exactly once, not treated as a cycle
+		await Assert.That(result).IsTypeOf<LegacyEvent>();
+		await Assert.That(((LegacyEvent)result).OldField).IsEqualTo("value_inplace");
+	}
+
+	[Test]
+	public async Task Constructor_GivenCircularChain_ThrowsAtConstruction()
+	{
+		// Arrange
+		var legacyToCurrent = new EventUpcasterDescriptor<LegacyEvent, CurrentEvent>(new LegacyToCurrentUpcaster());
+		var currentToLegacy = new EventUpcasterDescriptor<CurrentEvent, LegacyEvent>(
+			new CurrentEventToLegacyUpcaster()
+		);
+
+		// Act & Assert
+		await Assert
+			.That(() => new EventUpcasterRegistry([legacyToCurrent, currentToLegacy]))
+			.Throws<InvalidOperationException>();
+	}
+
+	[Test]
+	public async Task Constructor_GivenSelfLoop_DoesNotThrow()
+	{
+		// Arrange
+		var descriptor = new EventUpcasterDescriptor<LegacyEvent, LegacyEvent>(new InPlaceUpcaster());
+
+		// Act & Assert
+		await Assert.That(() => new EventUpcasterRegistry([descriptor])).ThrowsNothing();
 	}
 
 	[Test]

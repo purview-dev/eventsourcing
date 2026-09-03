@@ -37,7 +37,7 @@ static class AggregateAttributeEmitter
 						"<c>{Aggregate-Type-Namespace}.{Aggregate-Name-Without-The-Aggregate-Suffix}</c>."
 					)
 					.WriteProperty(
-						new("EventNamespace", TypeLibrary.System.String.AsTypeReference().Nullable())
+						new("EventNamespace", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
 							HasSetter = true,
@@ -52,7 +52,7 @@ static class AggregateAttributeEmitter
 						"If not set, the generator falls back to the assembly default or <c>Event</c>."
 					)
 					.WriteProperty(
-						new("EventSuffix", TypeLibrary.System.String.AsTypeReference().Nullable())
+						new("EventSuffix", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
 							HasSetter = true,
@@ -116,7 +116,7 @@ static class AggregateAttributeEmitter
 						$"{CodeWriter.XmlSee($"{typeof(System.Diagnostics.CodeAnalysis.SuppressMessageAttribute).FullName}.Justification")}."
 					)
 					.WriteProperty(
-						new("Justification", TypeLibrary.System.String.AsTypeReference().Nullable())
+						new("Justification", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
 							IsInitOnly = true,
@@ -143,7 +143,7 @@ static class AggregateAttributeEmitter
 						"Defaults to <c>Event</c>."
 					)
 					.WriteProperty(
-						new("EventSuffix", TypeLibrary.System.String.AsTypeReference().Nullable())
+						new("EventSuffix", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
 							HasSetter = true,
@@ -153,7 +153,7 @@ static class AggregateAttributeEmitter
 					);
 				body.XmlSummary("Specifies the default base class for all aggregates in the assembly.")
 					.WriteProperty(
-						new("BaseType", PurviewTypeLibrary.System.Type.AsTypeReference().Nullable())
+						new("BaseType", PurviewTypeLibrary.System.Type.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
 							HasSetter = true,
@@ -241,7 +241,7 @@ static class AggregateAttributeEmitter
 						.WriteProperty(
 							new(
 								"EventName",
-								TypeLibrary.System.String.AsTypeReference().Nullable(),
+								TypeLibrary.System.String.MakeNullable(writer),
 								TypeDeclarationAccessibility.Public
 							)
 							{
@@ -257,7 +257,7 @@ static class AggregateAttributeEmitter
 						.WriteProperty(
 							new(
 								"EventNamespace",
-								TypeLibrary.System.String.AsTypeReference().Nullable(),
+								TypeLibrary.System.String.MakeNullable(writer),
 								TypeDeclarationAccessibility.Public
 							)
 							{
@@ -378,7 +378,7 @@ static class AggregateAttributeEmitter
 					.WriteProperty(
 						new(
 							"EventName",
-							TypeLibrary.System.String.AsTypeReference().Nullable(),
+							TypeLibrary.System.String.MakeNullable(writer),
 							TypeDeclarationAccessibility.Public
 						)
 						{
@@ -394,7 +394,7 @@ static class AggregateAttributeEmitter
 					.WriteProperty(
 						new(
 							"EventNamespace",
-							TypeLibrary.System.String.AsTypeReference().Nullable(),
+							TypeLibrary.System.String.MakeNullable(writer),
 							TypeDeclarationAccessibility.Public
 						)
 						{

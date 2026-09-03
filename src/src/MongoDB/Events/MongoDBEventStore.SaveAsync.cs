@@ -343,6 +343,17 @@ partial class MongoDBEventStore<T>
 
 			ClearCacheFireAndForget(aggregate);
 
+			// A duplicate key on the event/stream rows means another writer already persisted
+			// the same aggregate version. Surface this as a concurrency conflict so callers can
+			// apply the standard retry path instead of treating it as an opaque commit failure.
+			if (MongoDBClient.IsDuplicateKeyError(ex))
+				throw new ConcurrencyException(
+					aggregate.Id(),
+					idempotencyId,
+					aggregate.Details.CurrentVersion,
+					aggregate.Details.SavedVersion
+				);
+
 			throw new CommitException(
 				aggregate.Id(),
 				idempotencyId,

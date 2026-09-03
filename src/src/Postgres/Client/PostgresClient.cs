@@ -466,7 +466,10 @@ sealed partial class PostgresClient
 		foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
 			if (ShouldSkipJsonProperty(type, property))
+			{
+				builder.Ignore(property.Name);
 				continue;
+			}
 
 			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
@@ -551,7 +554,10 @@ sealed partial class PostgresClient
 		foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
 			if (ShouldSkipJsonProperty(type, property))
+			{
+				builder.Ignore(property.Name);
 				continue;
+			}
 
 			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 

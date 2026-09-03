@@ -13,7 +13,7 @@ static partial class ScalarValueObjectEmitter
 					[
 						new(
 							"other",
-							model.IsReferenceType ? ValueObjectType(model).Nullable() : ValueObjectType(model)
+							model.IsReferenceType ? ValueObjectType(model).Nullable(writer) : ValueObjectType(model)
 						),
 					],
 				},
@@ -38,7 +38,7 @@ static partial class ScalarValueObjectEmitter
 						new(
 							"other",
 							model.ScalarIsReferenceType
-								? model.ScalarTypeReference.Nullable()
+								? model.ScalarTypeReference.Nullable(writer)
 								: model.ScalarTypeReference
 						),
 					],
@@ -53,7 +53,7 @@ static partial class ScalarValueObjectEmitter
 			writer.WriteMethod(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
-					Parameters = [new("obj", PurviewTypeLibrary.System.Object.AsTypeReference().Nullable())],
+					Parameters = [new("obj", PurviewTypeLibrary.System.Object.MakeNullable(writer))],
 				},
 				body =>
 				{

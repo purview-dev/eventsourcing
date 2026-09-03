@@ -14,6 +14,10 @@ public static class IEventStoreCoreHistoryExtensions
 {
 	const int MaxAllowedPageSize = 1000;
 
+	// Keyset tokens are prefixed so they cannot be confused with the legacy integer
+	// continuation tokens produced by earlier versions.
+	const string KeysetTokenPrefix = "k";
+
 	/// <summary>
 	/// Enumerates the event history for the aggregate, honoring the paging, version, and time filters in
 	/// <paramref name="request"/>.
@@ -25,6 +29,17 @@ public static class IEventStoreCoreHistoryExtensions
 	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
 	/// <returns>A <see cref="ContinuationResponse{AggregateEventHistoryItem}"/> containing the requested history items
 	/// and a continuation token when more results are available.</returns>
+	/// <remarks>
+	/// <para>
+	/// Paging uses a keyset continuation: the token records the last returned aggregate version, so the next
+	/// page resumes scanning from that version rather than re-reading the entire range. This keeps each page
+	/// proportional to the page size rather than the total number of events in the stream.
+	/// </para>
+	/// <para>
+	/// Continuation tokens returned by earlier versions (a plain integer offset) are still accepted and
+	/// retain their original skip semantics for backward compatibility.
+	/// </para>
+	/// </remarks>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="aggregateId"/> is null or whitespace.</exception>
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="request"/> contains invalid paging or range values.</exception>
 	/// <exception cref="NotSupportedException">Thrown when the configured store does not implement <see cref="IAggregateEventHistoryStoreCore{T}"/>.</exception>
@@ -50,9 +65,13 @@ public static class IEventStoreCoreHistoryExtensions
 		}
 
 		var effectiveMaxRecords = request.MaxRecords;
-		var continuationOffset = ParseContinuationOffset(request.ContinuationToken);
+		var (legacyOffset, keysetVersion) = ParseContinuation(request.ContinuationToken);
 		var versionFrom = request.FromVersion ?? 1;
 		var versionTo = request.ToVersion;
+
+		// Keyset paging resumes from the version after the last returned event, so each page
+		// only scans the events it needs.
+		var scanFromVersion = keysetVersion.HasValue ? Math.Max(versionFrom, keysetVersion.Value + 1) : versionFrom;
 
 		List<AggregateEventHistoryItem> items = [];
 		var matchedCount = 0;
@@ -60,7 +79,7 @@ public static class IEventStoreCoreHistoryExtensions
 		await foreach (
 			var (@event, eventType) in historyStore.GetEventRangeAsync(
 				aggregateId,
-				versionFrom,
+				scanFromVersion,
 				versionTo,
 				cancellationToken
 			)
@@ -73,7 +92,8 @@ public static class IEventStoreCoreHistoryExtensions
 			if (request.ToUtc.HasValue && details.When > request.ToUtc.Value)
 				continue;
 
-			if (matchedCount < continuationOffset)
+			// Legacy offset tokens skip matched records rather than scanning from a keyset.
+			if (matchedCount < legacyOffset)
 			{
 				matchedCount++;
 				continue;
@@ -89,7 +109,7 @@ public static class IEventStoreCoreHistoryExtensions
 			matchedCount++;
 		}
 
-		var token = hasMore ? (continuationOffset + items.Count).ToString(CultureInfo.InvariantCulture) : null;
+		var token = hasMore ? $"{KeysetTokenPrefix}{items[^1].AggregateVersion}" : null;
 
 		return new ContinuationResponse<AggregateEventHistoryItem>
 		{
@@ -124,21 +144,39 @@ public static class IEventStoreCoreHistoryExtensions
 		};
 	}
 
-	static int ParseContinuationOffset(string? continuationToken)
+	static (int Offset, int? KeysetVersion) ParseContinuation(string? continuationToken)
 	{
 		if (string.IsNullOrWhiteSpace(continuationToken))
-			return 0;
+			return (0, null);
 
-		// Only process if we have a continuation token to retrieve.
-		return
+		// Keyset token: "k{lastVersion}".
+		if (
+			continuationToken.StartsWith(KeysetTokenPrefix, StringComparison.Ordinal)
+			&& int.TryParse(
+				continuationToken.AsSpan(KeysetTokenPrefix.Length),
+				NumberStyles.None,
+				CultureInfo.InvariantCulture,
+				out var version
+			)
+			&& version >= 0
+		)
+			return (0, version);
+
+		// Legacy offset token: an integer count of matched records to skip.
+		if (
 			int.TryParse(continuationToken, NumberStyles.None, CultureInfo.InvariantCulture, out var offset)
 			&& offset >= 0
-			? offset
-			: throw new ArgumentOutOfRangeException(
-				nameof(continuationToken),
-				continuationToken,
-				"Continuation token must be a non-negative integer offset."
-			);
+		)
+		{
+			return (offset, null);
+		}
+
+		// Invalid token format.
+		throw new ArgumentOutOfRangeException(
+			nameof(continuationToken),
+			continuationToken,
+			"Continuation token must be a keyset token (k{version}) or a non-negative integer offset."
+		);
 	}
 
 	static void ValidateRequest(AggregateEventHistoryRequest request)

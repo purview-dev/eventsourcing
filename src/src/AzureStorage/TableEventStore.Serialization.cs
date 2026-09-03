@@ -8,6 +8,16 @@ partial class TableEventStore<T>
 	static IEvent? DeserializeEvent(string eventContent, Type eventType) =>
 		EventStoreSerializationHelpers.Deserialize(eventContent, eventType) as IEvent;
 
+	static async Task<IEvent?> DeserializeEventAsync(
+		Stream eventStream,
+		Type eventType,
+		CancellationToken cancellationToken
+	)
+	{
+		var result = await EventStoreSerializationHelpers.DeserializeAsync(eventStream, eventType, cancellationToken);
+		return result as IEvent;
+	}
+
 	internal static string SerializeSnapshot(T aggregate) =>
 		EventStoreSerializationHelpers.Serialize(aggregate, aggregate.GetType());
 

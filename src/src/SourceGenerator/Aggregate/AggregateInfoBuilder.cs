@@ -45,11 +45,12 @@ static class AggregateInfoBuilder
 		);
 
 		List<AggregateStatePropertyInfo> properties = [];
-		Dictionary<string, IPropertySymbol> propertySymbolsByName = [with(StringComparer.Ordinal)];
+		Dictionary<string, IPropertySymbol> propertySymbolsByName = new(StringComparer.Ordinal);
 		List<IMethodSymbol> attributedMethods = [];
 
 		ScanProperties(
 			classSymbol,
+			compilation,
 			diagnostics,
 			properties,
 			propertySymbolsByName,
@@ -211,6 +212,7 @@ static class AggregateInfoBuilder
 
 	static void ScanProperties(
 		INamedTypeSymbol classSymbol,
+		Compilation compilation,
 		ImmutableArray<DiagnosticInfo>.Builder diagnostics,
 		List<AggregateStatePropertyInfo> properties,
 		Dictionary<string, IPropertySymbol> propertySymbolsByName,
@@ -281,7 +283,10 @@ static class AggregateInfoBuilder
 				}
 
 				properties.Add(
-					new(propertySymbol.Name, AggregateEventMethodBuilder.CreateTypeReference(propertySymbol.Type))
+					new(
+						propertySymbol.Name,
+						AggregateEventMethodBuilder.CreateTypeReference(propertySymbol.Type, compilation)
+					)
 				);
 				continue;
 			}

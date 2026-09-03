@@ -141,11 +141,8 @@ partial class TableEventStore<T>
 				if (eventStream == null)
 					return ReturnUnknownEvent(eventEntity, aggregateVersion);
 
-				string? eventContent;
-				using (StreamReader reader = new(eventStream))
-					eventContent = await reader.ReadToEndAsync(cancellationToken);
-
-				return DeserializeEvent(eventContent, blobEvent);
+				using (eventStream)
+					return await DeserializeEventAsync(eventStream, blobEvent, cancellationToken);
 			}
 
 			return @event;

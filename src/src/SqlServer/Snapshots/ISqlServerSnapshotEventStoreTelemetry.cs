@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Purview.Telemetry;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;

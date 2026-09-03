@@ -8,7 +8,7 @@ readonly partial record struct AggregateDefaultsAttributeData(string? EventSuffi
 
 [Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.CollectionEventAttribute))]
 readonly partial record struct CollectionEventAttributeData(
-	[Argument("propertyName")] string PropertyName,
+	[Argument("propertyName", defaultValue: "")] string PropertyName,
 	[Property(1)] int Version,
 	string? EventName,
 	string? EventNamespace,
@@ -28,4 +28,4 @@ readonly partial record struct EventAttributeData(
 readonly partial record struct MetadataAttributeData([Argument("store", true)] bool Store);
 
 [Generate(TypeLibrary.AggregateNamespace + "." + nameof(TypeLibrary.Attributes.PropertyAttribute))]
-readonly partial record struct PropertyAttributeData([Argument("propertyName")] string PropertyName);
+readonly partial record struct PropertyAttributeData([Argument("propertyName", defaultValue: "")] string PropertyName);

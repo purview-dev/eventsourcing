@@ -64,9 +64,79 @@ public sealed class EventHistoryExtensionsTests
 
 		// Assert
 		await Assert.That(first.Results).Count().IsEqualTo(2);
-		await Assert.That(first.ContinuationToken).IsEqualTo("2");
+		await Assert.That(first.ContinuationToken).IsEqualTo("k2");
 		await Assert.That(second.Results).Count().IsEqualTo(1);
 		await Assert.That(second.Results[0].AggregateVersion).IsEqualTo(3);
+		await Assert.That(second.ContinuationToken).IsNull();
+	}
+
+	[Test]
+	public async Task GetEventHistoryAsync_GivenLegacyOffsetToken_StillPaginates(CancellationToken cancellationToken)
+	{
+		// Arrange
+		var baseTime = DateTimeOffset.UtcNow.AddMinutes(-5);
+		var store = new HistoryEnabledStore([
+			CreateEvent("EventA", 1, baseTime),
+			CreateEvent("EventB", 2, baseTime.AddMinutes(1)),
+			CreateEvent("EventC", 3, baseTime.AddMinutes(2)),
+		]);
+
+		// A legacy integer token (produced by earlier versions) must skip matched records.
+		var second = await store.GetEventHistoryAsync(
+			"agg-1",
+			new AggregateEventHistoryRequest { MaxRecords = 2, ContinuationToken = "2" },
+			cancellationToken
+		);
+
+		// Assert
+		await Assert.That(second.Results).Count().IsEqualTo(1);
+		await Assert.That(second.Results[0].AggregateVersion).IsEqualTo(3);
+		await Assert.That(second.ContinuationToken).IsNull();
+	}
+
+	[Test]
+	public async Task GetEventHistoryAsync_GivenKeysetTokenWithTimeFilter_PaginatesCorrectly(
+		CancellationToken cancellationToken
+	)
+	{
+		// Arrange
+		var baseTime = DateTimeOffset.UtcNow.AddMinutes(-5);
+		var store = new HistoryEnabledStore([
+			CreateEvent("EventA", 1, baseTime),
+			CreateEvent("EventB", 2, baseTime.AddMinutes(1)),
+			CreateEvent("EventC", 3, baseTime.AddMinutes(2)),
+			CreateEvent("EventD", 4, baseTime.AddMinutes(3)),
+		]);
+
+		// Page 1 returns versions 1-2 (time filter keeps everything).
+		var first = await store.GetEventHistoryAsync(
+			"agg-1",
+			new AggregateEventHistoryRequest
+			{
+				MaxRecords = 2,
+				FromUtc = baseTime,
+				ToUtc = baseTime.AddMinutes(3),
+			},
+			cancellationToken
+		);
+
+		var second = await store.GetEventHistoryAsync(
+			"agg-1",
+			new AggregateEventHistoryRequest
+			{
+				MaxRecords = 2,
+				FromUtc = baseTime,
+				ToUtc = baseTime.AddMinutes(3),
+				ContinuationToken = first.ContinuationToken,
+			},
+			cancellationToken
+		);
+
+		// Assert
+		await Assert.That(first.Results).Count().IsEqualTo(2);
+		await Assert.That(first.ContinuationToken).IsEqualTo("k2");
+		await Assert.That(second.Results).Count().IsEqualTo(2);
+		await Assert.That(second.Results.Select(m => m.AggregateVersion)).IsEquivalentTo([3, 4]);
 		await Assert.That(second.ContinuationToken).IsNull();
 	}
 

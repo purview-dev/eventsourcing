@@ -38,7 +38,7 @@ static partial class ScalarValueObjectEmitter
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					IsOverride = true,
-					Parameters = [new("obj", PurviewTypeLibrary.System.Object.AsTypeReference().Nullable())],
+					Parameters = [new("obj", PurviewTypeLibrary.System.Object.MakeNullable(writer))],
 					ExpressionBody =
 						$"obj is {model.TypeName} other ? Equals(other) : obj is {model.ScalarTypeName} primitive && Equals(primitive)",
 				}

@@ -24,6 +24,12 @@ namespace Purview.EventSourcing.MongoDB;
 /// </remarks>
 /// <seealso cref="IMongoDBEventStore{T}"/>
 /// <seealso cref="MongoDBSnapshotEventStore{T}"/>
+[SuppressMessage(
+	"Design",
+	"CA1506: Avoid excessive class coupling",
+	Justification = "MongoDBEventStore is a single logical store split across many partial files; the class-coupling metric is "
+		+ "unavoidably inflated for the public surface it must expose."
+)]
 public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDisposable
 	where T : class, IAggregate, new()
 {
@@ -176,7 +182,11 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 				&& m.EntityType == EntityTypes.StreamVersionType
 				&& !m.IsDeleted;
 
-		var query = _eventClient.GetQueryEnumerableAsync(whereClause, cancellationToken: cancellationToken);
+		var query = _eventClient.GetQueryEnumerableAsync(
+			whereClause,
+			m => m.OrderBy(x => x.AggregateId),
+			cancellationToken: cancellationToken
+		);
 		await foreach (var entity in query)
 		{
 			if (includeDeleted || !entity.IsDeleted)

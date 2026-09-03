@@ -22,6 +22,12 @@ namespace Purview.EventSourcing.Postgres.Events;
 /// <see cref="IPostgresEventStore{T}"/> is registered for the store when
 /// <c>AddPostgresEventStore</c> is used.
 /// </remarks>
+[SuppressMessage(
+	"Design",
+	"CA1506: Avoid excessive class coupling",
+	Justification = "PostgresEventStore is a single logical store split across many partial files; the class-coupling metric is "
+		+ "unavoidably inflated for the public surface it must expose."
+)]
 public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {

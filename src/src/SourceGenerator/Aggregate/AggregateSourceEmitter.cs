@@ -31,7 +31,7 @@ static partial class AggregateSourceEmitter
 		// Generate the partial aggregate class in a block-scoped namespace.
 		using var nsBlock = writer.WriteBlockNamespaceScope(outputContext.Aggregate.AggregateClass);
 
-		List<IDisposable> containingScopes = [with(outputContext.Aggregate.ContainingTypes.Count)];
+		List<IDisposable> containingScopes = new(outputContext.Aggregate.ContainingTypes.Count);
 		foreach (var containingType in outputContext.Aggregate.ContainingTypes)
 		{
 			containingScopes.Add(
@@ -605,7 +605,11 @@ static partial class AggregateSourceEmitter
 			bodyWriter =>
 			{
 				bodyWriter.WriteMethod(
-					new("Read", outputContext.Aggregate.AggregateClass.Nullable(), TypeDeclarationAccessibility.Public)
+					new(
+						"Read",
+						outputContext.Aggregate.AggregateClass.Nullable(writer),
+						TypeDeclarationAccessibility.Public
+					)
 					{
 						IsOverride = true,
 						Parameters =
@@ -682,7 +686,7 @@ static partial class AggregateSourceEmitter
 				bodyWriter.WriteProperty(
 					new(
 						"Details",
-						TypeLibrary.Aggregates.AggregateDetails.MakeNullable(),
+						TypeLibrary.Aggregates.AggregateDetails.MakeNullable(bodyWriter),
 						TypeDeclarationAccessibility.Public
 					)
 					{

@@ -122,17 +122,32 @@ partial class SqlServerSnapshotEventStore<T>
 				)
 			)
 			{
-				var snapshotSaved = await _sqlServerClient.UpsertAsync(
-					aggregate,
-					aggregate.Details.Id,
-					GetAggregateTypeName(),
-					GetSqlConnection(connection),
-					GetSqlTransaction(transaction),
-					cancellationToken
-				);
+				// A query-snapshot write failure must NOT roll back the event commit: snapshots are
+				// replaceable read models that self-heal from the event stream on the next read.
+				try
+				{
+					var snapshotSaved = await _sqlServerClient.UpsertAsync(
+						aggregate,
+						aggregate.Details.Id,
+						GetAggregateTypeName(),
+						GetSqlConnection(connection),
+						GetSqlTransaction(transaction),
+						cancellationToken
+					);
 
-				if (!snapshotSaved)
-					throw new InvalidOperationException("Failed to persist the SQL Server query snapshot.");
+					if (!snapshotSaved)
+						_telemetry.SnapshotSaveFailed(
+							aggregate.Details.Id,
+							_aggregateName,
+							new InvalidOperationException("Failed to persist the SQL Server query snapshot.")
+						);
+				}
+#pragma warning disable CA1031
+				catch (Exception ex)
+				{
+					_telemetry.SnapshotSaveFailed(aggregate.Details.Id, _aggregateName, ex);
+				}
+#pragma warning restore CA1031
 			}
 
 			return new TransactionalSaveOperation<T>(

@@ -111,8 +111,21 @@ services.AddEventUpcaster<OrderCreatedV2, OrderCreated, OrderCreatedV2ToV3Upcast
 ### Upcaster Rules
 - **Direction:** Forward only (v1 → v2 → v3 → …). Downgrading events is not supported.
 - **Metadata:** Always copy `EventDetails` to the target event (idempotency, correlation, user, timestamp).
-- **Cycle detection:** The registry detects and rejects circular upcaster chains at runtime.
+- **Legacy type resolution:** Legacy (source) event types are registered automatically from the upcaster registry when an aggregate is initialized, so stored legacy event names resolve back to CLR types during replay. No extra registration is required.
+- **Same-type upcasters:** An upcaster whose source and target types are the same (an in-place transform) is applied exactly once; it is not treated as a cycle.
+- **Cycle detection:** The registry detects and rejects circular upcaster chains (for example v1 → v2 → v1) when it is constructed.
 - **Unknown target:** If an old event has no upcaster path to a known type, it remains `EventUnknown`.
+
+### Detecting Partial Replay
+
+Because old consumers reading newer events skip what they cannot apply, a replayed aggregate can be **partially stale** without an error being thrown. Replay records every skipped event on the aggregate instance:
+
+- `aggregate.SkippedEvents` (`IReadOnlyList<SkippedEventRecord>`) lists the versions, persisted event names, and whether each was unresolvable (`UnknownEvent`) or simply not applicable.
+- Callers that must not act on stale state should check `SkippedEvents` after a load and fail closed or rehydrate through a different path when it is non-empty.
+
+`SkippedEvents` is populated only while an aggregate is rehydrated from an event stream. It is not persisted in SQL Server/PostgreSQL EF-backed snapshot payloads, so always check it on the aggregate returned by an event-stream load.
+
+Downgrading (downcasting newer events into older shapes) remains unsupported; this signal exists so applications can detect and react to the mixed-version-fleet case explicitly.
 
 ## Replay Semantics (All Providers)
 

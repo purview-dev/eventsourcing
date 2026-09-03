@@ -23,6 +23,10 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
 	/// Initialises the registry.
 	/// </summary>
 	/// <param name="descriptors">All registered upcaster descriptors.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when a circular upcaster chain (for example v1 → v2 → v1) is detected. Same-type
+	/// (in-place) upcasters are permitted and applied exactly once.
+	/// </exception>
 	public EventUpcasterRegistry(IEnumerable<IEventUpcasterDescriptor> descriptors)
 	{
 		ArgumentNullException.ThrowIfNull(descriptors);
@@ -31,6 +35,32 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
 		_upcastersBySourceType = [];
 		foreach (var descriptor in descriptors)
 			_upcastersBySourceType[descriptor.SourceType] = descriptor;
+
+		ValidateUpcastChains();
+	}
+
+	void ValidateUpcastChains()
+	{
+		foreach (var sourceType in _upcastersBySourceType.Keys)
+		{
+			var visitedTypes = new HashSet<Type>();
+			var current = sourceType;
+
+			while (_upcastersBySourceType.TryGetValue(current, out var descriptor))
+			{
+				if (!visitedTypes.Add(current))
+					throw new InvalidOperationException(
+						$"Detected a circular upcaster chain involving event type '{current.FullName}'. "
+							+ $"Upcasters must form a forward-only (v1 → v2 → v3) chain."
+					);
+
+				var next = descriptor.TargetType;
+				if (next == current)
+					break; // Same-type (in-place) upcaster: applied once and stops.
+
+				current = next;
+			}
+		}
 	}
 
 	/// <inheritdoc/>
@@ -51,13 +81,20 @@ public sealed class EventUpcasterRegistry : IEventUpcasterRegistry
 		// Follow the chain: v1 → v2 → v3 …
 		while (_upcastersBySourceType.TryGetValue(current.GetType(), out var descriptor))
 		{
-			current = descriptor.Upcast(current);
+			var next = descriptor.Upcast(current);
+			var nextType = next.GetType();
 
-			var currentType = current.GetType();
-			if (!visitedTypes.Add(currentType))
+			// A same-type (in-place) upcaster transforms the event in place and must only
+			// be applied once, otherwise it would look like a degenerate cycle.
+			if (nextType == current.GetType())
+				return next;
+
+			if (!visitedTypes.Add(nextType))
 				throw new InvalidOperationException(
-					$"Detected a cycle or degenerate upcast chain involving event type '{currentType.FullName}'."
+					$"Detected a cycle or degenerate upcast chain involving event type '{nextType.FullName}'."
 				);
+
+			current = next;
 		}
 
 		return current;

@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.MongoDB.Events.Exceptions;
+namespace Purview.EventSourcing.MongoDB.Events.Exceptions;
 
 #pragma warning disable CA1032 // Implement standard exception constructors
 /// <summary>
@@ -11,7 +11,8 @@
 public class ConcurrencyException(string aggregateId, string idempotencyId, int versionAttempted, int version)
 	: Exception(
 		$"Optimistic concurrency error:\n\tAggregateId: {aggregateId}\n\tIdempotencyId: {idempotencyId}\n\tVersionAttempted:{versionAttempted}\n\tVersionPresent:{version}"
-	)
+	),
+		IConcurrencyConflict
 #pragma warning restore CA1032 // Implement standard exception constructors
 {
 	/// <summary>

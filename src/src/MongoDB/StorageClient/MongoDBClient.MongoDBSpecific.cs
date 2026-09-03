@@ -7,6 +7,15 @@ namespace Purview.EventSourcing.MongoDB.StorageClient;
 
 partial class MongoDBClient
 {
+	/// <summary>
+	/// Determines whether a <see cref="MongoWriteException"/> represents a duplicate-key write
+	/// (that is, another writer already persisted the same event/stream identity).
+	/// </summary>
+	/// <param name="ex">The exception raised by the write operation.</param>
+	/// <returns>True when the write failed with a duplicate-key error.</returns>
+	public static bool IsDuplicateKeyError(MongoWriteException ex) =>
+		ex.WriteError?.Category == ServerErrorCategory.DuplicateKey;
+
 	public async Task SubmitBatchAsync(BatchOperation operation, CancellationToken cancellationToken = default)
 	{
 		var collection = GetCollection<BsonDocument>().WithWriteConcern(WriteConcern.WMajority);

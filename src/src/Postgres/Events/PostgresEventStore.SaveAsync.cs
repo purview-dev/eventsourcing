@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Npgsql;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
+using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.Postgres.Events.Exceptions;
 using Purview.EventSourcing.Services;
@@ -198,7 +199,7 @@ partial class PostgresEventStore<T>
 		try
 		{
 			var previousAggregateVersion = aggregate.Details.SavedVersion;
-			var shouldSnapshot = ShouldSnapShot(aggregate, changeEvents);
+			var shouldSnapshot = ShouldSnapShot(aggregate, changeEvents, operationContext);
 			var now = DateTimeOffset.UtcNow;
 
 			var streamVersionId = streamEntity?.Id ?? CreateStreamVersionId(aggregate.Id());
@@ -368,9 +369,21 @@ partial class PostgresEventStore<T>
 			: await _validator.ValidateAsync(aggregate, cancellationToken);
 	}
 
-	static bool ShouldSnapShot(T aggregate, IEvent[] events)
+	static bool ShouldSnapShot(T aggregate, IEvent[] events, EventStoreOperationContext context)
 	{
-		return aggregate.Details.IsDeleted || events.OfType<Restored>().Any() || events.Length > 0;
+		// Deleted/restored transitions must always be reflected promptly.
+		if (aggregate.Details.IsDeleted || events.OfType<Restored>().Any())
+			return true;
+
+		// Default to a snapshot on every save (matching the historical behavior) while honoring
+		// any per-operation strategy override or selector, so operators can reduce snapshot
+		// write amplification on high-frequency aggregates.
+		return SnapshotStrategyResolver.ShouldSnapshot(
+			aggregate,
+			events.Length,
+			context,
+			new IntervalSnapshotStrategy<T>()
+		);
 	}
 
 	async Task SubmitBatchOperationsAsync(

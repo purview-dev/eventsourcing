@@ -11,7 +11,8 @@ namespace Purview.EventSourcing.Postgres.Events.Exceptions;
 public class ConcurrencyException(string aggregateId, string idempotencyId, int versionAttempted, int version)
 	: Exception(
 		$"Optimistic concurrency error:\n\tAggregateId: {aggregateId}\n\tIdempotencyId: {idempotencyId}\n\tVersionAttempted:{versionAttempted}\n\tVersionPresent:{version}"
-	)
+	),
+		IConcurrencyConflict
 #pragma warning restore CA1032 // Implement standard exception constructors
 {
 	/// <summary>

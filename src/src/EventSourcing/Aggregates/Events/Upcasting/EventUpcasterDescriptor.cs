@@ -27,6 +27,9 @@ public sealed class EventUpcasterDescriptor<TSource, TTarget> : IEventUpcasterDe
 	public Type SourceType => typeof(TSource);
 
 	/// <inheritdoc/>
+	public Type TargetType => typeof(TTarget);
+
+	/// <inheritdoc/>
 	public IEvent Upcast(IEvent source)
 	{
 		ArgumentNullException.ThrowIfNull(source);

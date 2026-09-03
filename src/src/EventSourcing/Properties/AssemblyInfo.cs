@@ -12,6 +12,7 @@ using Purview.Telemetry;
 [assembly: InternalsVisibleTo("Purview.EventSourcing.AzureStorage")]
 [assembly: InternalsVisibleTo("Purview.EventSourcing.CosmosDb")]
 [assembly: InternalsVisibleTo("Purview.EventSourcing.MongoDB")]
+[assembly: InternalsVisibleTo("Purview.EventSourcing.Postgres")]
 [assembly: InternalsVisibleTo("Purview.EventSourcing.SqlServer")]
 
 [assembly: ActivitySourceGeneration("Purview.EventSourcing")]

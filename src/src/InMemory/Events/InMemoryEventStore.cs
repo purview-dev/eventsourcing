@@ -142,10 +142,16 @@ public partial class InMemoryEventStore<T>(
 		var events = _events.GetOrAdd(aggregate.Id(), _ => new());
 		foreach (var @event in aggregate.GetUnsavedEvents().Concat(additionalEvents ?? []))
 		{
-			if (events.TryAdd(@event.Details.AggregateVersion, @event))
-			{
-				//
-			}
+			// A conflicting version means another write already persisted this aggregate
+			// version. Surface it as a concurrency conflict rather than silently dropping the
+			// event, which would lose data.
+			if (!events.TryAdd(@event.Details.AggregateVersion, @event))
+				throw new Exceptions.ConcurrencyException(
+					aggregate.Id(),
+					@event.Details.IdempotencyId ?? $"{Guid.NewGuid()}",
+					@event.Details.AggregateVersion,
+					!events.IsEmpty ? events.Keys.Max() : aggregate.Details.SavedVersion
+				);
 		}
 
 		aggregate.ClearUnsavedEvents();
@@ -384,6 +390,11 @@ public partial class InMemoryEventStore<T>(
 				);
 
 			await AddToCacheAsync(aggregate);
+
+			// Mirror the persistence providers: after a successful save the aggregate must
+			// reflect the persisted version so a subsequent mutation on the same instance
+			// records events at the correct version.
+			aggregate.Details.SavedVersion = aggregate.Details.CurrentVersion = previousAggregateVersion;
 
 			if (aggregateChangeNotifier != null)
 			{
