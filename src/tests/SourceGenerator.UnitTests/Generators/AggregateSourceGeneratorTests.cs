@@ -142,6 +142,65 @@ namespace Testing
 	}
 
 	[Test]
+	public async Task Generate_GivenInvalidAggregate_WithGeneratorOnly_ProducesNoOutputAndNoExceptions(
+		CancellationToken cancellationToken
+	)
+	{
+		// The generator consumes the same shared validation as the analyzer: when validation fails it
+		// must skip generation entirely rather than emit an invalid partial. Diagnostics are owned by
+		// the analyzer, so a generator-only run reports nothing but must not throw or generate.
+		const string source =
+			@"
+namespace Testing
+{
+	[Aggregate]
+	public class NonPartialAggregate : AggregateBase
+	{
+		protected override void RegisterEvents() { }
+	}
+}
+";
+
+		var generatorOnlyOptions = EventSourcingGeneratorTestOptions.Default with { AnalyzerTypes = [] };
+		var result = await GenerateAsync(source, generatorOnlyOptions, cancellationToken);
+
+		await Assert
+			.That(result.AllSyntaxTrees.Length)
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCount);
+		foreach (var genResult in result.DriverResult.Results)
+			await Assert.That(genResult.Exception).IsNull();
+		await Assert.That(result.Generated().HasClass("NonPartialAggregate", "Testing")).IsFalse();
+	}
+
+	[Test]
+	public async Task Generate_GivenInvalidAggregate_AnalyzerReportsAndGeneratorSkips(
+		CancellationToken cancellationToken
+	)
+	{
+		// The consistency contract: the analyzer surfaces the shared-validation diagnostic while the
+		// generator (driven by the same rules) emits no aggregate output.
+		const string source =
+			@"
+namespace Testing
+{
+	[Aggregate]
+	public class NonPartialAggregate : AggregateBase
+	{
+		protected override void RegisterEvents() { }
+	}
+}
+";
+
+		var result = await GenerateAsync(source, cancellationToken);
+
+		await Assert.That(result).HasDiagnostic(DiagnosticLibrary.AggregateMustBePartial);
+		await Assert
+			.That(result.AllSyntaxTrees.Length)
+			.IsEqualTo(EventSourcingGeneratorTestOptions.AggregateExpectedFileCount);
+		await Assert.That(result.Generated().HasClass("NonPartialAggregate", "Testing")).IsFalse();
+	}
+
+	[Test]
 	public async Task Generate_GivenMultipleParameters_GeneratesAllProperties(CancellationToken cancellationToken)
 	{
 		// Arrange
@@ -445,32 +504,39 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"partial void OnComputingCompletedEvent(ref global::Testing.ReportProcessingStatus status);"
-			);
-		await Assert
-			.That(generatedSource)
-			.Contains(
-				"partial void OnComputingCompletedEvent(\n"
-					+ "\t\t\tref string blob,\n"
-					+ "\t\t\tref object summary,\n"
-					+ "\t\t\tref global::Testing.ReportProcessingStatus status);"
-			);
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("partial void OnRaisingCompletedEvent(ref string blob, ref object summary);");
-		await Assert
-			.That(generatedSource)
-			.Contains(
-				"partial void OnRaisingCompletedEvent(\n"
-					+ "\t\t\tref string blob,\n"
-					+ "\t\t\tref object summary,\n"
-					+ "\t\t\tref global::Testing.ReportProcessingStatus status);"
-			);
+		var query = result.Generated();
+		var aggregate = query.GetClass("ReportUploadAggregate", "Testing");
+		var statusType = TypeRefs.Named("ReportProcessingStatus", "Testing");
+
+		var computingSingle = aggregate.GetMethod(query, "OnComputingCompletedEvent", statusType);
+		await Assert.That(computingSingle.Modifiers.ToString()).Contains("partial");
+
+		var computingAll = aggregate.GetMethod(
+			query,
+			"OnComputingCompletedEvent",
+			TypeRefs.String,
+			TypeRefs.Object,
+			statusType
+		);
+		await Assert.That(computingAll.Modifiers.ToString()).Contains("partial");
+
+		var raisingNonComputed = aggregate.GetMethod(
+			query,
+			"OnRaisingCompletedEvent",
+			TypeRefs.String,
+			TypeRefs.Object
+		);
+		await Assert.That(raisingNonComputed.Modifiers.ToString()).Contains("partial");
+
+		var raisingAll = aggregate.GetMethod(
+			query,
+			"OnRaisingCompletedEvent",
+			TypeRefs.String,
+			TypeRefs.Object,
+			statusType
+		);
+		await Assert.That(raisingAll.Modifiers.ToString()).Contains("partial");
 	}
 
 	[Test]
@@ -549,11 +615,36 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnComputingMarkAsCompletedEvent");
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnRaisingMarkAsCompletedEvent");
-		await Assert.That(generatedSource).DoesNotContain("OnComputingMarkAsCompleted2Event");
+		var query = result.Generated();
+		var aggregate = query.GetClass("ReportUploadAggregate", "Testing");
+		var statusType = TypeRefs.Named("ReportProcessingStatus", "Testing");
+		await Assert.That(aggregate.HasMethod(query, "OnComputingMarkAsCompletedEvent", statusType)).IsTrue();
+		await Assert
+			.That(
+				aggregate.HasMethod(
+					query,
+					"OnRaisingMarkAsCompletedEvent",
+					TypeRefs.String,
+					TypeRefs.Object,
+					statusType
+				)
+			)
+			.IsTrue();
+		await Assert
+			.That(aggregate.HasMethod(query, "OnRaisingMarkAsCompletedEvent", TypeRefs.String, TypeRefs.Object))
+			.IsTrue();
+		await Assert
+			.That(
+				aggregate.HasMethod(
+					query,
+					"OnComputingMarkAsCompletedEvent",
+					TypeRefs.String,
+					TypeRefs.Object,
+					statusType
+				)
+			)
+			.IsTrue();
 	}
 
 	[Test]
@@ -616,14 +707,11 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that event class uses the default namespace pattern
-		await Assert.That(generatedSource).ContainsGeneratedCode("namespace Testing.Order");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreated");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(": global::Purview.EventSourcing.Aggregates.Events.EventBase");
+		// Assert that event class uses the default namespace pattern and inherits EventBase
+		await Assert.That(result.Generated().HasNamespace("Testing.OrderEvents")).IsTrue();
+		var orderCreated = result.Generated().GetClass("OrderCreatedEvent", "Testing.OrderEvents");
+		await Assert.That(orderCreated.BaseList?.ToString()).Contains("EventBase");
 	}
 
 	[Test]
@@ -647,16 +735,19 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("JsonConverter(typeof(OrderAggregateJsonConverter))");
+		await Assert.That(result.Generated().HasClass("OrderAggregateJsonConverter", "Testing")).IsTrue();
+		await Assert.That(result.Generated().HasClass("OrderAggregateJsonModel", "Testing")).IsTrue();
+
+		var query = result.Generated();
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var createFromJsonModel = aggregate.GetMethod(query, "CreateFromJsonModel");
+		await Assert.That(createFromJsonModel.Modifiers.ToString()).Contains("static");
+		await Assert.That(createFromJsonModel.ParameterList.Parameters.Count).IsEqualTo(1);
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"internal static OrderAggregate CreateFromJsonModel(OrderAggregateJsonModel jsonModel)"
-			);
-		await Assert.That(generatedSource).ContainsGeneratedCode("sealed class OrderAggregateJsonConverter");
-		await Assert.That(generatedSource).ContainsGeneratedCode("sealed class OrderAggregateJsonModel");
+			.That(createFromJsonModel.ParameterList.Parameters[0].Type?.ToString())
+			.Contains("OrderAggregateJsonModel");
+		await Assert.That(aggregate.AttributeLists.ToString()).Contains("JsonConverter");
 	}
 
 	[Test]
@@ -683,11 +774,11 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that event properties are generated with PascalCase names
-		await Assert.That(generatedSource).ContainsGeneratedCode("public string CustomerId { get; set; }");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public decimal Total { get; set; }");
+		var query = result.Generated();
+		var orderCreated = query.GetClass("OrderCreatedEvent", "Testing.OrderEvents");
+		await Assert.That(orderCreated.HasProperty(query, "CustomerId", TypeRefs.String)).IsTrue();
+		await Assert.That(orderCreated.HasProperty(query, "Total", TypeRefs.Decimal)).IsTrue();
 	}
 
 	[Test]
@@ -714,14 +805,16 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that BuildEventHash adds each property
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("protected override void BuildEventHash(ref global::System.HashCode hash)");
-		await Assert.That(generatedSource).ContainsGeneratedCode("hash.Add(Name);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("hash.Add(Count);");
+		var query = result.Generated();
+		var orderSet = query.GetClass("OrderSetEvent", "Testing.OrderEvents");
+		var buildEventHash = orderSet.GetMethod(query, "BuildEventHash", TypeRefs.HashCode);
+		await Assert.That(buildEventHash.Modifiers.ToString()).Contains("override");
+
+		// BuildEventHash adds each stored event property
+		var hashBody = buildEventHash.Body?.ToString() ?? string.Empty;
+		await Assert.That(hashBody).Contains("hash.Add(Name);");
+		await Assert.That(hashBody).Contains("hash.Add(Count);");
 	}
 
 	[Test]
@@ -750,16 +843,17 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that RegisterEvents contains Register calls for each event
-		await Assert.That(generatedSource).ContainsGeneratedCode("protected override void RegisterEvents()");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderUpdatedEvent>(Apply);");
+		var query = result.Generated();
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var registerEvents = aggregate.GetMethod(query, "RegisterEvents");
+		var modifiers = registerEvents.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("override");
+		await Assert.That(modifiers).Contains("protected");
+
+		var registerBody = registerEvents.Body?.ToString() ?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.OrderUpdatedEvent>(Apply);");
 	}
 
 	[Test]
@@ -785,13 +879,15 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that Apply method is generated with property assignments from event
+		var query = result.Generated();
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
-		await Assert.That(generatedSource).ContainsGeneratedCode("CustomerId = @event.CustomerId;");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("OrderCreatedEvent", "Testing.OrderEvents")))
+			.IsTrue();
+
+		var apply = aggregate.GetMethod(query, "Apply", TypeRefs.Event("OrderCreatedEvent", "Testing.OrderEvents"));
+		await Assert.That(apply.Body?.ToString()).Contains("CustomerId = @event.CustomerId;");
 	}
 
 	[Test]
@@ -818,18 +914,19 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that command method calls RecordAndApply with a new event
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public partial void CreateOrder(string customerId, decimal total)");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var @event = new global::Testing.OrderEvents.OrderCreated");
-		await Assert.That(generatedSource).ContainsGeneratedCode("RecordAndApply(@event);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("CustomerId = customerId,");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Total = total,");
+		var query = result.Generated();
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var createOrder = aggregate.GetMethod(query, "CreateOrder", TypeRefs.String, TypeRefs.Decimal);
+		var modifiers = createOrder.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("partial");
+		await Assert.That(modifiers).Contains("public");
+
+		var body = createOrder.Body?.ToString() ?? string.Empty;
+		await Assert.That(body).Contains("var @event = new global::Testing.OrderEvents.OrderCreatedEvent");
+		await Assert.That(body).Contains("RecordAndApply(@event);");
+		await Assert.That(body).Contains("CustomerId = customerId,");
+		await Assert.That(body).Contains("Total = total,");
 	}
 
 	[Test]
@@ -853,14 +950,14 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("public partial void Rename(string name)");
+		var query = result.Generated();
+		var aggregate = query.GetClass("ProfileAggregate", "Testing");
+		var rename = aggregate.GetMethod(query, "Rename", TypeRefs.String);
+		await Assert.That(rename.Modifiers.ToString()).Contains("partial");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))"
-			);
+			.That(rename.Body?.ToString())
+			.Contains("if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))");
 	}
 
 	[Test]
@@ -885,14 +982,17 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
+		var query = result.Generated();
+		var aggregate = query.GetClass("ProductAggregate", "Testing");
+		var update = aggregate.GetMethod(query, "Update", TypeRefs.String, TypeRefs.Int);
+		var body = update.Body?.ToString() ?? string.Empty;
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
+			.That(body)
+			.Contains(
 				"global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal) && global::System.Collections.Generic.EqualityComparer<int>.Default.Equals(Quantity, quantity)"
 			);
-		await Assert.That(generatedSource).ContainsGeneratedCode("return;");
+		await Assert.That(body).Contains("return;");
 	}
 
 	[Test]
@@ -916,17 +1016,19 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
+		var query = result.Generated();
+		var aggregate = query.GetClass("ProfileAggregate", "Testing");
+		var rename = aggregate.GetMethod(query, "Rename", TypeRefs.String);
+		var modifiers = rename.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("partial");
+		await Assert.That(modifiers).Contains("public");
+		var returnType = rename.ReturnType.ToString();
+		await Assert.That(returnType).Contains("ProfileAggregate");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public partial global::Testing.ProfileAggregate Rename(string name)");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))"
-			);
-		await Assert.That(generatedSource).ContainsGeneratedCode("return this;");
+			.That(rename.Body?.ToString())
+			.Contains("if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))");
+		await Assert.That(rename.Body?.ToString()).Contains("return this;");
 	}
 
 	[Test]
@@ -950,16 +1052,19 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("public partial bool Rename(string name)");
+		var query = result.Generated();
+		var aggregate = query.GetClass("ProfileAggregate", "Testing");
+		var rename = aggregate.GetMethod(query, "Rename", TypeRefs.String);
+		var modifiers = rename.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("partial");
+		await Assert.That(modifiers).Contains("public");
+		await Assert.That(rename.ReturnType.ToString()).Contains("bool");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))"
-			);
-		await Assert.That(generatedSource).ContainsGeneratedCode("return false;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("return true;");
+			.That(rename.Body?.ToString())
+			.Contains("if (global::System.String.Equals(Name, name, global::System.StringComparison.Ordinal))");
+		await Assert.That(rename.Body?.ToString()).Contains("return false;");
+		await Assert.That(rename.Body?.ToString()).Contains("return true;");
 	}
 
 	[Test]
@@ -985,24 +1090,28 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
+		var query = result.Generated();
 		var errors = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Severity == DiagnosticSeverity.Error)
 			.ToArray();
 
-		// Assert that parameterless event uses () constructor
-		await Assert.That(generatedSource).ContainsGeneratedCode("public partial void Increment()");
+		var aggregate = query.GetClass("CounterAggregate", "Testing");
+		var increment = aggregate.GetMethod(query, "Increment");
+		await Assert.That(increment.Modifiers.ToString()).Contains("partial");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("private void Apply(global::Testing.CounterEvents.IncrementedEvent @event)");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("protected override void BuildEventHash(ref global::System.HashCode _)");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var @event = new global::Testing.CounterEvents.IncrementedEvent");
-		await Assert.That(generatedSource).ContainsGeneratedCode("RecordAndApply(@event);");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("IncrementedEvent", "Testing.CounterEvents")))
+			.IsTrue();
+
+		var incrementedEvent = query.GetClass("IncrementedEvent", "Testing.CounterEvents");
+		var buildEventHash = incrementedEvent.GetMethod(query, "BuildEventHash", TypeRefs.HashCode);
+		var modifiers = buildEventHash.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("override");
+		await Assert.That(modifiers).Contains("protected");
+
+		var body = increment.Body?.ToString() ?? string.Empty;
+		await Assert.That(body).Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
+		await Assert.That(body).Contains("RecordAndApply(@event);");
 		await Assert.That(errors).IsEmpty();
 	}
 
@@ -1036,11 +1145,13 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
+		var query = result.Generated();
+		var aggregate = query.GetClass("CustomerAggregate", "Testing");
+		var changeName = aggregate.GetMethod(query, "ChangeName", TypeRefs.String);
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
+			.That(changeName.Body?.ToString())
+			.Contains(
 				"global::System.Collections.Generic.EqualityComparer<global::Testing.Name>.Default.Equals(Name, __nameValue)"
 			);
 	}
@@ -1066,12 +1177,14 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("private partial global::Testing.ToggleAggregate ChangeIsActive(bool isActive)");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class IsActiveChanged");
+		var query = result.Generated();
+		var aggregate = query.GetClass("ToggleAggregate", "Testing");
+		var changeIsActive = aggregate.GetMethod(query, "ChangeIsActive", TypeRefs.Bool);
+		var modifiers = changeIsActive.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("partial");
+		await Assert.That(modifiers).Contains("private");
+		await Assert.That(result.Generated().HasClass("IsActiveChangedEvent", "Testing.ToggleEvents")).IsTrue();
 	}
 
 	[Test]
@@ -1093,12 +1206,14 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that RegisterEvents exists but has no Register calls
-		await Assert.That(generatedSource).ContainsGeneratedCode("protected override void RegisterEvents()");
-		// No Events namespace section should be generated
-		await Assert.That(generatedSource).DoesNotContain("namespace Testing.EmptyEvents");
+		var query = result.Generated();
+		var aggregate = query.GetClass("EmptyAggregate", "Testing");
+		var registerEvents = aggregate.GetMethod(query, "RegisterEvents");
+		var modifiers = registerEvents.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("override");
+		await Assert.That(modifiers).Contains("protected");
+		await Assert.That(query.HasNamespace("Testing.EmptyEvents")).IsFalse();
 	}
 
 	[Test]
@@ -1128,11 +1243,10 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that both event classes exist
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreated");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class TotalUpdated");
+		// Assert that both event classes exist in the default events namespace
+		await Assert.That(result.Generated().HasClass("OrderCreatedEvent", "Testing.OrderEvents")).IsTrue();
+		await Assert.That(result.Generated().HasClass("TotalUpdatedEvent", "Testing.OrderEvents")).IsTrue();
 	}
 
 	[Test]
@@ -1155,14 +1269,12 @@ public partial class NotAnAggregate
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		await Assert.That(result.DriverResult.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"public partial class NotAnAggregate : global::Purview.EventSourcing.Aggregates.AggregateBase"
-			);
+
+		var notAnAggregate = result.Generated().GetClass("NotAnAggregate", "Testing");
+		await Assert.That(notAnAggregate.Modifiers.ToString()).Contains("partial");
+		await Assert.That(notAnAggregate.BaseList?.ToString()).Contains("AggregateBase");
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.AggregateMustInheritAggregateBase);
 	}
 
@@ -1194,9 +1306,8 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, EventSourcingGeneratorTestOptions.NoValidation, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).DoesNotContain("NonPartialMethodEvent");
+		await Assert.That(result.Generated().HasClass("NonPartialMethodEvent", "Testing.MixedEvents")).IsFalse();
 		await Assert.That(result).HasDiagnostic("EVENTSTORE007");
 	}
 
@@ -1225,13 +1336,9 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.Contains(
-				"public partial class InterfaceOnlyAggregate : global::Purview.EventSourcing.Aggregates.AggregateBase"
-			);
+		var interfaceOnlyAggregate = result.Generated().GetClass("InterfaceOnlyAggregate", "Testing");
+		await Assert.That(interfaceOnlyAggregate.BaseList?.ToString()).Contains("AggregateBase");
 		await Assert.That(result).DoesNotHaveDiagnostic("EVENTSTORE002");
 
 		var errors = result
@@ -1264,10 +1371,11 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		// Assert that the generated partial class uses 'internal' access modifier
-		await Assert.That(generatedSource).ContainsGeneratedCode("internal partial class InternalAggregate");
+		var internalAggregate = result.Generated().GetClass("InternalAggregate", "Testing");
+		await Assert.That(internalAggregate.Modifiers.ToString()).Contains("internal");
+		await Assert.That(internalAggregate.Modifiers.ToString()).Contains("partial");
 	}
 
 	[Test]
@@ -1286,17 +1394,16 @@ namespace Testing
 		var result = await GenerateAsync(source, cancellationToken);
 
 		// Assert that attribute files are generated
-		var attributeSources = result.DriverResult.GeneratedTrees.Select(t => t.GetText().ToString()).ToList();
+		await Assert.That(result.DriverResult.GeneratedTrees).Count().IsEqualTo(ExpectedFileCount);
 
-		await Assert.That(attributeSources).Count().IsEqualTo(ExpectedFileCount);
-
-		var allAttributeSource = string.Join("\n", attributeSources);
-		await Assert.That(allAttributeSource).ContainsGeneratedCode("class EmbeddedAttribute");
-		await Assert.That(allAttributeSource).ContainsGeneratedCode("class PropertyAttribute");
-		await Assert.That(allAttributeSource).ContainsGeneratedCode("class AggregateAttribute");
-		await Assert.That(allAttributeSource).ContainsGeneratedCode("class AggregateDefaultsAttribute");
-		await Assert.That(allAttributeSource).ContainsGeneratedCode("class EventAttribute");
-		await Assert.That(allAttributeSource).ContainsGeneratedCode("class MetadataAttribute");
+		const string aggregateNamespace = "Purview.EventSourcing.Aggregates";
+		var query = result.Generated();
+		await Assert.That(query.HasClass("EmbeddedAttribute", "Microsoft.CodeAnalysis")).IsTrue();
+		await Assert.That(query.HasClass("PropertyAttribute", aggregateNamespace)).IsTrue();
+		await Assert.That(query.HasClass("AggregateAttribute", aggregateNamespace)).IsTrue();
+		await Assert.That(query.HasClass("AggregateDefaultsAttribute", aggregateNamespace)).IsTrue();
+		await Assert.That(query.HasClass("EventAttribute", aggregateNamespace)).IsTrue();
+		await Assert.That(query.HasClass("MetadataAttribute", aggregateNamespace)).IsTrue();
 	}
 
 	[Test]
@@ -1389,10 +1496,14 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		// Assert that default version is 1
-		await Assert.That(generatedSource).ContainsGeneratedCode("public override int SchemaVersion => 1;");
+		var query = result.Generated();
+		var schemaVersion = query
+			.GetClass("OrderCreatedEvent", "Testing.OrderEvents")
+			.GetProperty(query, "SchemaVersion", TypeRefs.Int);
+		await Assert.That(schemaVersion.Modifiers.ToString()).Contains("override");
+		await Assert.That(schemaVersion.ExpressionBody?.ToString()).Contains("1");
 	}
 
 	[Test]
@@ -1418,10 +1529,13 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		// Assert that explicit version 3
-		await Assert.That(generatedSource).ContainsGeneratedCode("public override int SchemaVersion => 3;");
+		var query = result.Generated();
+		var schemaVersion = query
+			.GetClass("OrderCreatedEvent", "Testing.OrderEvents")
+			.GetProperty(query, "SchemaVersion", TypeRefs.Int);
+		await Assert.That(schemaVersion.ExpressionBody?.ToString()).Contains("3");
 	}
 
 	[Test]
@@ -1451,16 +1565,19 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that both SchemaVersion overrides appear
-		var v1Index = generatedSource.IndexOf("public override int SchemaVersion => 1;", StringComparison.Ordinal);
-		var v2Index = generatedSource.IndexOf("public override int SchemaVersion => 2;", StringComparison.Ordinal);
+		var query = result.Generated();
+		var orderCreatedSchemaVersion = query
+			.GetClass("OrderCreatedEvent", "Testing.OrderEvents")
+			.GetProperty(query, "SchemaVersion", TypeRefs.Int);
+		var totalUpdatedSchemaVersion = query
+			.GetClass("TotalUpdatedEvent", "Testing.OrderEvents")
+			.GetProperty(query, "SchemaVersion", TypeRefs.Int);
 
-		await Assert.That(v1Index).IsGreaterThanOrEqualTo(0);
-		await Assert.That(v2Index).IsGreaterThanOrEqualTo(0);
+		await Assert.That(orderCreatedSchemaVersion.ExpressionBody?.ToString()).Contains("1");
+		await Assert.That(totalUpdatedSchemaVersion.ExpressionBody?.ToString()).Contains("2");
 		// They should appear in event-declaration order (OrderCreated before TotalUpdated)
-		await Assert.That(v1Index).IsLessThan(v2Index);
+		await Assert.That(orderCreatedSchemaVersion.SpanStart).IsLessThan(totalUpdatedSchemaVersion.SpanStart);
 	}
 
 	[Test]
@@ -1533,20 +1650,18 @@ namespace Testing
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
 
-		// Assert that the generated attribute file exposes a Version property
-		var attributeSource = result.GetSource("EventAttribute.g.cs", HintNameMatchMode.Exact);
+		const string aggregateNamespace = "Purview.EventSourcing.Aggregates";
+		var query = result.Generated();
+		var eventAttribute = query.GetClass("EventAttribute", aggregateNamespace);
+		var aggregateAttribute = query.GetClass("AggregateAttribute", aggregateNamespace);
+		var aggregateDefaultsAttribute = query.GetClass("AggregateDefaultsAttribute", aggregateNamespace);
 
-		await Assert.That(attributeSource).ContainsGeneratedCode("int Version");
-		await Assert.That(attributeSource).ContainsGeneratedCode("string? EventName");
-		await Assert.That(attributeSource).ContainsGeneratedCode("string? EventNamespace");
-
-		var aggregateAttributeSource = result.GetSource(TypeLibrary.Attributes.AggregateAttribute.Name);
-
-		await Assert.That(aggregateAttributeSource).ContainsGeneratedCode("string? EventNamespace");
-		await Assert.That(aggregateAttributeSource).ContainsGeneratedCode("string? EventSuffix");
-
-		var aggregateDefaultsAttributeSource = result.GetSource(TypeLibrary.Attributes.AggregateDefaultsAttribute.Name);
-		await Assert.That(aggregateDefaultsAttributeSource).ContainsGeneratedCode("string? EventSuffix");
+		await Assert.That(eventAttribute.HasProperty(query, "Version", TypeRefs.Int)).IsTrue();
+		await Assert.That(eventAttribute.HasProperty(query, "EventName", TypeRefs.String)).IsTrue();
+		await Assert.That(eventAttribute.HasProperty(query, "EventNamespace", TypeRefs.String)).IsTrue();
+		await Assert.That(aggregateAttribute.HasProperty(query, "EventNamespace", TypeRefs.String)).IsTrue();
+		await Assert.That(aggregateAttribute.HasProperty(query, "EventSuffix", TypeRefs.String)).IsTrue();
+		await Assert.That(aggregateDefaultsAttribute.HasProperty(query, "EventSuffix", TypeRefs.String)).IsTrue();
 	}
 
 	[Test]
@@ -1568,15 +1683,16 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreated");
+		var query = result.Generated();
+		await Assert.That(query.HasClass("OrderCreatedEvent", "Testing.OrderEvents")).IsTrue();
+
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var registerBody = aggregate.GetMethod(query, "RegisterEvents").Body?.ToString() ?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("void Apply(global::Testing.OrderEvents.OrderCreatedEvent @event)");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("OrderCreatedEvent", "Testing.OrderEvents")))
+			.IsTrue();
 	}
 
 	[Test]
@@ -1601,15 +1717,18 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreatedDomainEvent");
+		var query = result.Generated();
+		await Assert.That(query.HasClass("OrderCreatedDomainEvent", "Testing.OrderEvents")).IsTrue();
+
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var registerBody = aggregate.GetMethod(query, "RegisterEvents").Body?.ToString() ?? string.Empty;
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderCreatedDomainEvent>(Apply);");
+			.That(registerBody)
+			.Contains("Register<global::Testing.OrderEvents.OrderCreatedDomainEvent>(Apply);");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("void Apply(global::Testing.OrderEvents.OrderCreatedDomainEvent @event)");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("OrderCreatedDomainEvent", "Testing.OrderEvents")))
+			.IsTrue();
 	}
 
 	[Test]
@@ -1634,15 +1753,18 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreatedCustomEvent");
+		var query = result.Generated();
+		await Assert.That(query.HasClass("OrderCreatedCustomEvent", "Testing.OrderEvents")).IsTrue();
+
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var registerBody = aggregate.GetMethod(query, "RegisterEvents").Body?.ToString() ?? string.Empty;
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderCreatedCustomEvent>(Apply);");
+			.That(registerBody)
+			.Contains("Register<global::Testing.OrderEvents.OrderCreatedCustomEvent>(Apply);");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("void Apply(global::Testing.OrderEvents.OrderCreatedCustomEvent @event)");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("OrderCreatedCustomEvent", "Testing.OrderEvents")))
+			.IsTrue();
 	}
 
 	[Test]
@@ -1666,12 +1788,16 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("namespace Testing.Custom.Events");
+		var query = result.Generated();
+		await Assert.That(query.HasNamespace("Testing.Custom.Events")).IsTrue();
+
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var registerBody = aggregate.GetMethod(query, "RegisterEvents").Body?.ToString() ?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.Custom.Events.OrderCreatedEvent>(Apply);");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.Custom.Events.OrderCreatedEvent>(Apply);");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("OrderCreatedEvent", "Testing.Custom.Events")))
+			.IsTrue();
 	}
 
 	[Test]
@@ -1695,16 +1821,17 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).ContainsGeneratedCode("namespace Testing.Domain.Ordering");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreated");
+		var query = result.Generated();
+		await Assert.That(query.HasNamespace("Testing.Domain.Ordering")).IsTrue();
+		await Assert.That(query.HasClass("OrderCreated", "Testing.Domain.Ordering")).IsTrue();
+
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var registerBody = aggregate.GetMethod(query, "RegisterEvents").Body?.ToString() ?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.Domain.Ordering.OrderCreated>(Apply);");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.Domain.Ordering.OrderCreated>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("void Apply(global::Testing.Domain.Ordering.OrderCreated @event)");
+			.That(aggregate.HasMethod(query, "Apply", TypeRefs.Event("OrderCreated", "Testing.Domain.Ordering")))
+			.IsTrue();
 	}
 
 	[Test]
@@ -1962,18 +2089,21 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.EventParameterMustMapToWritableProperty);
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public partial void Rename(string initialPropertyToTest)");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public string InitialPropertyToTest { get; set; } = default!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnRaisingRenamedEvent(ref initialPropertyToTest);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("InitialPropertyToTest = initialPropertyToTest,");
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnRaisedRenamedEvent(@event);");
+
+		var query = result.Generated();
+		var aggregate = query.GetClass("MappingAggregate", "Testing");
+		var rename = aggregate.GetMethod(query, "Rename", TypeRefs.String);
+		await Assert.That(rename.Modifiers.ToString()).Contains("partial");
+
+		var renamedEvent = query.GetClass("RenamedEvent", "Testing.MappingEvents");
+		await Assert.That(renamedEvent.HasProperty(query, "InitialPropertyToTest", TypeRefs.String)).IsTrue();
+
+		var body = rename.Body?.ToString() ?? string.Empty;
+		await Assert.That(body).Contains("OnRaisingRenamedEvent(ref initialPropertyToTest);");
+		await Assert.That(body).Contains("InitialPropertyToTest = initialPropertyToTest,");
+		await Assert.That(body).Contains("OnRaisedRenamedEvent(@event);");
 		await Assert.That(result).DoesNotHaveDiagnostic("CS8795");
 	}
 
@@ -2001,32 +2131,31 @@ public partial class MappingAggregate
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.EventParameterMustMapToWritableProperty);
+
+		var query = result.Generated();
+		var aggregate = query.GetClass("MappingAggregate", "Testing");
+		var rename = aggregate.GetMethod(query, "Rename", TypeRefs.String, TypeRefs.String, TypeRefs.String);
+		await Assert.That(rename.Modifiers.ToString()).Contains("partial");
+
+		var onRaising = aggregate.GetMethod(
+			query,
+			"OnRaisingRenamedEvent",
+			TypeRefs.String,
+			TypeRefs.String,
+			TypeRefs.String
+		);
+		await Assert.That(onRaising.Modifiers.ToString()).Contains("partial");
+
+		var renamedEvent = query.GetClass("RenamedEvent", "Testing.MappingEvents");
+		await Assert.That(renamedEvent.HasProperty(query, "CorrelationId")).IsFalse();
+		await Assert.That(renamedEvent.HasProperty(query, "CorrelationToStoreImplicitId", TypeRefs.String)).IsTrue();
+		await Assert.That(renamedEvent.HasProperty(query, "CorrelationToStoreExplicitId", TypeRefs.String)).IsTrue();
+
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"public partial void Rename(string correlationId, string correlationToStoreImplicitId, string? correlationToStoreExplicitId)"
-			);
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"partial void OnRaisingRenamedEvent(\n"
-					+ "\t\t\tref string correlationId,\n"
-					+ "\t\t\tref string correlationToStoreImplicitId,\n"
-					+ "\t\t\tref string? correlationToStoreExplicitId);"
-			);
-		await Assert.That(generatedSource).DoesNotContain("public string CorrelationId { get; set; } = default!;");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public string CorrelationToStoreImplicitId { get; set; } = default!;");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public string? CorrelationToStoreExplicitId { get; set; } = default!;");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var @event = new global::Testing.MappingEvents.Renamed");
+			.That(rename.Body?.ToString())
+			.Contains("var @event = new global::Testing.MappingEvents.RenamedEvent");
 		await Assert.That(result).DoesNotHaveDiagnostic("CS8795");
 	}
 
@@ -2051,13 +2180,18 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("public int InitialQuantity { get; set; } = default!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("QuantityOnHand = @event.InitialQuantity;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnRaisingStockReceivedEvent(ref initialQuantity);");
+		var query = result.Generated();
+		var stockReceived = query.GetClass("StockReceivedEvent", "Testing.MappingEvents");
+		await Assert.That(stockReceived.HasProperty(query, "InitialQuantity", TypeRefs.Int)).IsTrue();
+
+		var aggregate = query.GetClass("MappingAggregate", "Testing");
+		var apply = aggregate.GetMethod(query, "Apply", TypeRefs.Event("StockReceivedEvent", "Testing.MappingEvents"));
+		await Assert.That(apply.Body?.ToString()).Contains("QuantityOnHand = @event.InitialQuantity;");
+
+		var receiveStock = aggregate.GetMethod(query, "ReceiveStock", TypeRefs.Int);
+		await Assert.That(receiveStock.Body?.ToString()).Contains("OnRaisingStockReceivedEvent(ref initialQuantity);");
+
 		await Assert
 			.That(
 				result
@@ -2200,31 +2334,26 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that all 5 event classes
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCreated");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class TotalUpdated");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class ShippingAddressSetEvent");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderConfirmedEvent");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class OrderCanceledEvent"); // US spelling
+		var query = result.Generated();
+		const string eventsNamespace = "Testing.OrderEvents";
+		await Assert.That(query.HasClass("OrderCreatedEvent", eventsNamespace)).IsTrue();
+		await Assert.That(query.HasClass("TotalUpdatedEvent", eventsNamespace)).IsTrue();
+		await Assert.That(query.HasClass("ShippingAddressSetEvent", eventsNamespace)).IsTrue();
+		await Assert.That(query.HasClass("OrderConfirmedEvent", eventsNamespace)).IsTrue();
+		await Assert.That(query.HasClass("OrderCanceledEvent", eventsNamespace)).IsTrue();
 
 		// Assert that all 5 Register calls
+		var registerBody =
+			query.GetClass("OrderAggregate", "Testing").GetMethod(query, "RegisterEvents").Body?.ToString()
+			?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.TotalUpdatedEvent>(Apply);");
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.TotalUpdatedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.ShippingAddressSetEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderConfirmedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.OrderEvents.OrderCanceledEvent>(Apply);");
+			.That(registerBody)
+			.Contains("Register<global::Testing.OrderEvents.ShippingAddressSetEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.OrderConfirmedEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.OrderEvents.OrderCanceledEvent>(Apply);");
 	}
 
 	[Test]
@@ -2253,25 +2382,28 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that all parameter types are represented as properties
-		await Assert.That(generatedSource).ContainsGeneratedCode("public string Name { get; set; }");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public decimal Price { get; set; }");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public int Quantity { get; set; }");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public bool IsAvailable { get; set; }");
+		var query = result.Generated();
+		var productUpdated = query.GetClass("ProductUpdatedEvent", "Testing.ProductEvents");
+		await Assert.That(productUpdated.HasProperty(query, "Name", TypeRefs.String)).IsTrue();
+		await Assert.That(productUpdated.HasProperty(query, "Price", TypeRefs.Decimal)).IsTrue();
+		await Assert.That(productUpdated.HasProperty(query, "Quantity", TypeRefs.Int)).IsTrue();
+		await Assert.That(productUpdated.HasProperty(query, "IsAvailable", TypeRefs.Bool)).IsTrue();
 
-		// Assert that Apply method sets all properties
-		await Assert.That(generatedSource).ContainsGeneratedCode("Name = @event.Name;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Price = @event.Price;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Quantity = @event.Quantity;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("IsAvailable = @event.IsAvailable;");
+		var aggregate = query.GetClass("ProductAggregate", "Testing");
+		var apply = aggregate.GetMethod(query, "Apply", TypeRefs.Event("ProductUpdatedEvent", "Testing.ProductEvents"));
+		var applyBody = apply.Body?.ToString() ?? string.Empty;
+		await Assert.That(applyBody).Contains("Name = @event.Name;");
+		await Assert.That(applyBody).Contains("Price = @event.Price;");
+		await Assert.That(applyBody).Contains("Quantity = @event.Quantity;");
+		await Assert.That(applyBody).Contains("IsAvailable = @event.IsAvailable;");
 
-		// Assert that BuildEventHash includes all properties
-		await Assert.That(generatedSource).ContainsGeneratedCode("hash.Add(Name);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("hash.Add(Price);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("hash.Add(Quantity);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("hash.Add(IsAvailable);");
+		var hashBody =
+			productUpdated.GetMethod(query, "BuildEventHash", TypeRefs.HashCode).Body?.ToString() ?? string.Empty;
+		await Assert.That(hashBody).Contains("hash.Add(Name);");
+		await Assert.That(hashBody).Contains("hash.Add(Price);");
+		await Assert.That(hashBody).Contains("hash.Add(Quantity);");
+		await Assert.That(hashBody).Contains("hash.Add(IsAvailable);");
 	}
 
 	[Test]
@@ -2305,11 +2437,12 @@ namespace Testing
 		// Assert that attribute files + 1 generated aggregate
 		await Assert.That(result.DriverResult.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
 
-		var generatedSource = result.GetSource();
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class AccountCreatedEvent");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.AccountEvents.AccountCreatedEvent>(Apply);");
+		var query = result.Generated();
+		await Assert.That(query.HasClass("AccountCreatedEvent", "Testing.AccountEvents")).IsTrue();
+		var registerBody =
+			query.GetClass("AccountAggregate", "Testing").GetMethod(query, "RegisterEvents").Body?.ToString()
+			?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.AccountEvents.AccountCreatedEvent>(Apply);");
 	}
 
 	[Test]
@@ -2341,13 +2474,15 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		await Assert.That(result.DriverResult.GeneratedTrees).Count().IsEqualTo(ExpectedFileCountPlusGen);
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class InvoiceCreatedEvent");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.InvoiceEvents.InvoiceCreatedEvent>(Apply);");
+
+		var query = result.Generated();
+		await Assert.That(query.HasClass("InvoiceCreatedEvent", "Testing.InvoiceEvents")).IsTrue();
+		var registerBody =
+			query.GetClass("InvoiceAggregate", "Testing").GetMethod(query, "RegisterEvents").Body?.ToString()
+			?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.InvoiceEvents.InvoiceCreatedEvent>(Apply);");
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.AggregateMustInheritAggregateBase);
 	}
 
@@ -2372,14 +2507,20 @@ namespace Company.Domain.Orders
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
+		var query = result.Generated();
 		// Assert that events namespace follows the pattern
-		await Assert.That(generatedSource).ContainsGeneratedCode("namespace Company.Domain.Orders.OrderEvents");
+		await Assert.That(query.HasNamespace("Company.Domain.Orders.OrderEvents")).IsTrue();
+		await Assert.That(query.HasNamespace("Company.Domain.Orders")).IsTrue();
+		var registerBody =
+			query
+				.GetClass("OrderAggregate", "Company.Domain.Orders")
+				.GetMethod(query, "RegisterEvents")
+				.Body?.ToString()
+			?? string.Empty;
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Company.Domain.Orders.OrderEvents.OrderCreatedEvent>(Apply);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("namespace Company.Domain.Orders");
+			.That(registerBody)
+			.Contains("Register<global::Company.Domain.Orders.OrderEvents.OrderCreatedEvent>(Apply);");
 	}
 
 	[Test]
@@ -2419,34 +2560,32 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
+
+		var query = result.Generated();
+		var aggregate = query.GetClass("CounterAggregate", "Testing");
 
 		// Assert that parameterless use () constructor, parameterized use { } initializer
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var @event = new global::Testing.CounterEvents.IncrementedEvent");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var @event = new global::Testing.CounterEvents.DecrementedEvent");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var @event = new global::Testing.CounterEvents.ResetEvent");
-		await Assert.That(generatedSource).ContainsGeneratedCode("RecordAndApply(@event);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Label = label,");
+		var incrementBody = aggregate.GetMethod(query, "Increment").Body?.ToString() ?? string.Empty;
+		await Assert.That(incrementBody).Contains("var @event = new global::Testing.CounterEvents.IncrementedEvent");
+		await Assert.That(incrementBody).Contains("RecordAndApply(@event);");
+
+		var decrementBody = aggregate.GetMethod(query, "Decrement").Body?.ToString() ?? string.Empty;
+		await Assert.That(decrementBody).Contains("var @event = new global::Testing.CounterEvents.DecrementedEvent");
+		await Assert.That(decrementBody).Contains("RecordAndApply(@event);");
+
+		var resetBody = aggregate.GetMethod(query, "Reset").Body?.ToString() ?? string.Empty;
+		await Assert.That(resetBody).Contains("var @event = new global::Testing.CounterEvents.ResetEvent");
+		await Assert.That(resetBody).Contains("RecordAndApply(@event);");
+
+		var setLabelBody = aggregate.GetMethod(query, "SetLabel", TypeRefs.String).Body?.ToString() ?? string.Empty;
+		await Assert.That(setLabelBody).Contains("Label = label,");
 
 		// Assert that all 4 Register calls
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.CounterEvents.IncrementedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.CounterEvents.DecrementedEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.CounterEvents.LabelSetEvent>(Apply);");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("Register<global::Testing.CounterEvents.ResetEvent>(Apply);");
+		var registerBody = aggregate.GetMethod(query, "RegisterEvents").Body?.ToString() ?? string.Empty;
+		await Assert.That(registerBody).Contains("Register<global::Testing.CounterEvents.IncrementedEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.CounterEvents.DecrementedEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.CounterEvents.LabelSetEvent>(Apply);");
+		await Assert.That(registerBody).Contains("Register<global::Testing.CounterEvents.ResetEvent>(Apply);");
 	}
 
 	[Test]
@@ -2470,14 +2609,17 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		// Assert that nullable parameter generates property and Apply method
-		await Assert.That(generatedSource).ContainsGeneratedCode("Bio");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Bio = @event.Bio;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public sealed class BioUpdated");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public string? Bio { get; set; } = default!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public partial void UpdateBio(string? bio)");
+		var query = result.Generated();
+		var bioUpdated = query.GetClass("BioUpdatedEvent", "Testing.ProfileEvents");
+		await Assert.That(bioUpdated.HasProperty(query, "Bio", TypeRefs.String)).IsTrue();
+
+		var aggregate = query.GetClass("ProfileAggregate", "Testing");
+		var apply = aggregate.GetMethod(query, "Apply", TypeRefs.Event("BioUpdatedEvent", "Testing.ProfileEvents"));
+		await Assert.That(apply.Body?.ToString()).Contains("Bio = @event.Bio;");
+
+		var updateBio = aggregate.GetMethod(query, "UpdateBio", TypeRefs.String);
+		await Assert.That(updateBio.Modifiers.ToString()).Contains("partial");
 	}
 
 	[Test]
@@ -2499,17 +2641,20 @@ public partial class ProfileAggregate
 """;
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(result).DoesNotHaveDiagnostic("CS8777");
-		await Assert.That(generatedSource).ContainsGeneratedCode("public string? Bio { get; set; } = default!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("var __bioValue = bio!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("if (bio is null)");
+		var query = result.Generated();
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("throw new global::System.ArgumentNullException(nameof(bio));");
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnBioChanging(ref __bioValue);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Bio = __bioValue!,");
+			.That(query.GetClass("BioUpdatedEvent", "Testing.ProfileEvents").HasProperty(query, "Bio", TypeRefs.String))
+			.IsTrue();
+
+		var aggregate = query.GetClass("ProfileAggregate", "Testing");
+		var body = aggregate.GetMethod(query, "UpdateBio", TypeRefs.String).Body?.ToString() ?? string.Empty;
+		await Assert.That(result).DoesNotHaveDiagnostic("CS8777");
+		await Assert.That(body).Contains("var __bioValue = bio!;");
+		await Assert.That(body).Contains("if (bio is null)");
+		await Assert.That(body).Contains("throw new global::System.ArgumentNullException(nameof(bio));");
+		await Assert.That(body).Contains("OnBioChanging(ref __bioValue);");
+		await Assert.That(body).Contains("Bio = __bioValue!,");
 	}
 
 	[Test]
@@ -2531,23 +2676,32 @@ public partial class ProfileAggregate
 """;
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 		var cs8777 = result
 			.CompilationResult.Compilation.GetDiagnostics(cancellationToken)
 			.Where(d => d.Id == "CS8777")
 			.ToArray();
 
-		await Assert.That(cs8777).IsEmpty();
-		await Assert.That(generatedSource).ContainsGeneratedCode("public string? Bio { get; set; } = default!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("var __bioValue = bio!;");
-		await Assert.That(generatedSource).ContainsGeneratedCode("if (global::System.String.IsNullOrWhiteSpace(bio))");
+		var query = result.Generated();
 		await Assert
-			.That(generatedSource)
+			.That(query.GetClass("BioUpdatedEvent", "Testing.ProfileEvents").HasProperty(query, "Bio", TypeRefs.String))
+			.IsTrue();
+
+		var body =
+			query
+				.GetClass("ProfileAggregate", "Testing")
+				.GetMethod(query, "UpdateBio", TypeRefs.String)
+				.Body?.ToString()
+			?? string.Empty;
+		await Assert.That(cs8777).IsEmpty();
+		await Assert.That(body).Contains("var __bioValue = bio!;");
+		await Assert.That(body).Contains("if (global::System.String.IsNullOrWhiteSpace(bio))");
+		await Assert
+			.That(body)
 			.Contains(
 				"throw new global::System.ArgumentException(\"Parameter 'bio' cannot be null or empty.\", nameof(bio));"
 			);
-		await Assert.That(generatedSource).ContainsGeneratedCode("OnBioChanging(ref __bioValue);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("Bio = __bioValue!,");
+		await Assert.That(body).Contains("OnBioChanging(ref __bioValue);");
+		await Assert.That(body).Contains("Bio = __bioValue!,");
 	}
 
 	[Test]
@@ -2569,10 +2723,12 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		// Assert
-		await Assert.That(generatedSource).ContainsGeneratedCode("public partial class PublicAggregate");
+		var publicAggregate = result.Generated().GetClass("PublicAggregate", "Testing");
+		var modifiers = publicAggregate.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("public");
+		await Assert.That(modifiers).Contains("partial");
 	}
 
 	[Test]
@@ -2598,12 +2754,13 @@ namespace Testing
 
 		// Act
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
+		var query = result.Generated();
 		// Assert that command method matches partial declaration
-		await Assert.That(generatedSource).ContainsGeneratedCode("public partial void SetContent(string content)");
+		var setContent = query.GetClass("NoteAggregate", "Testing").GetMethod(query, "SetContent", TypeRefs.String);
+		await Assert.That(setContent.Modifiers.ToString()).Contains("partial");
 		// Assert that RecordAndApply creates event with property
-		await Assert.That(generatedSource).ContainsGeneratedCode("Content = content,");
+		await Assert.That(setContent.Body?.ToString()).Contains("Content = content,");
 	}
 
 	[Test]
@@ -2627,17 +2784,21 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		var firstShouldApplyIndex = generatedSource.IndexOf(
+		var query = result.Generated();
+		var aggregate = query.GetClass("CustomerAggregate", "Testing");
+		var setCustomerIdBody =
+			aggregate.GetMethod(query, "SetCustomerId", TypeRefs.String).Body?.ToString() ?? string.Empty;
+
+		var firstShouldApplyIndex = setCustomerIdBody.IndexOf(
 			"if (!ShouldApplyCustomerIdSetEvent(@event))",
 			StringComparison.Ordinal
 		);
-		var onRaisingIndex = generatedSource.IndexOf(
+		var onRaisingIndex = setCustomerIdBody.IndexOf(
 			"OnRaisingCustomerIdSetEvent(ref customerId);",
 			StringComparison.Ordinal
 		);
-		var secondShouldApplyIndex = generatedSource.IndexOf(
+		var secondShouldApplyIndex = setCustomerIdBody.IndexOf(
 			"if (!ShouldApplyCustomerIdSetEvent(@event))",
 			firstShouldApplyIndex + 1,
 			StringComparison.Ordinal
@@ -2648,13 +2809,14 @@ namespace Testing
 		await Assert.That(secondShouldApplyIndex).IsGreaterThanOrEqualTo(0);
 		await Assert.That(firstShouldApplyIndex).IsLessThan(onRaisingIndex);
 		await Assert.That(onRaisingIndex).IsLessThan(secondShouldApplyIndex);
-		await Assert
-			.That(generatedSource)
-			.Contains(
-				"partial void OnShouldApplyCustomerIdSetEvent(\n"
-					+ "\t\t\tglobal::Testing.CustomerEvents.CustomerIdSetEvent @event,\n"
-					+ "\t\t\tref bool shouldApply);"
-			);
+
+		var onShouldApply = aggregate.GetMethod(
+			query,
+			"OnShouldApplyCustomerIdSetEvent",
+			TypeRefs.Event("CustomerIdSetEvent", "Testing.CustomerEvents"),
+			TypeRefs.Bool
+		);
+		await Assert.That(onShouldApply.Modifiers.ToString()).Contains("partial");
 	}
 
 	[Test]
@@ -2737,17 +2899,23 @@ namespace Testing
 			EventSourcingGeneratorTestOptions.Default.Compile(),
 			cancellationToken
 		);
-		var generatedSource = result.GetSource();
+		var query = result.Generated();
+		var setCustomerIdBody =
+			query
+				.GetClass("CustomerAggregate", "Testing")
+				.GetMethod(query, "SetCustomerId", TypeRefs.String)
+				.Body?.ToString()
+			?? string.Empty;
 
-		var onChangingIndex = generatedSource.IndexOf(
+		var onChangingIndex = setCustomerIdBody.IndexOf(
 			"OnCustomerIdChanging(ref customerId);",
 			StringComparison.Ordinal
 		);
-		var onRaisingIndex = generatedSource.IndexOf(
+		var onRaisingIndex = setCustomerIdBody.IndexOf(
 			"OnRaisingCustomerIdSetEvent(ref customerId);",
 			StringComparison.Ordinal
 		);
-		var noChangeIndex = generatedSource.IndexOf(
+		var noChangeIndex = setCustomerIdBody.IndexOf(
 			"if (global::System.String.Equals(CustomerId, customerId, global::System.StringComparison.Ordinal))",
 			StringComparison.Ordinal
 		);
@@ -3122,24 +3290,33 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.UnsupportedEventMethodSignature);
-		await Assert.That(generatedSource).ContainsGeneratedCode("partial void OnNormalizingAddTags(");
+
+		var query = result.Generated();
+		var aggregate = query.GetClass("ItemAggregate", "Testing");
+		var enumerableTags = TypeRefs.EnumerableOf(TypeRefs.String);
+		var onNormalizing = aggregate.GetMethod(query, "OnNormalizingAddTags", enumerableTags);
+		await Assert.That(onNormalizing.Modifiers.ToString()).Contains("partial");
+		await Assert.That(onNormalizing.ParameterList.Parameters[0].Modifiers.ToString()).Contains("ref");
+
+		var onValidating = aggregate.GetMethod(query, "OnValidatingAddTags", enumerableTags);
+		await Assert.That(onValidating.Modifiers.ToString()).Contains("partial");
+
+		var addTagBody = aggregate.GetMethod(query, "AddTag", TypeRefs.String).Body?.ToString() ?? string.Empty;
+		await Assert.That(addTagBody).Contains("if (Tags.Contains(__itemValue))");
+
+		var addTagsBody = aggregate.GetMethod(query, "AddTags", enumerableTags).Body?.ToString() ?? string.Empty;
+		await Assert.That(addTagsBody).Contains("var __eventItems = __itemsValue as string[] ?? [.. __itemsValue];");
+
+		var applyTagsAdded = aggregate.GetMethod(
+			query,
+			"Apply",
+			TypeRefs.Event("TagsAddedEvent", "Testing.ItemEvents")
+		);
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("ref global::System.Collections.Generic.IEnumerable<string> tags);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("partial void OnValidatingAddTags(");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("global::System.Collections.Generic.IEnumerable<string> tags);");
-		await Assert.That(generatedSource).ContainsGeneratedCode("if (Tags.Contains(__itemValue))");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("var __eventItems = __itemsValue as string[] ?? [.. __itemsValue];");
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("((global::System.Collections.Generic.ICollection<string>)Tags).Add(__item);");
+			.That(applyTagsAdded.Body?.ToString())
+			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Add(__item);");
 	}
 
 	[Test]
@@ -3167,14 +3344,19 @@ public partial class ManualAggregate
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"private partial void Apply(global::Testing.ManualEvents.ValueCommandAppliedEvent @event);"
-			);
-		await Assert.That(generatedSource).DoesNotContain("Value = @event.Input;");
+		var query = result.Generated();
+		var aggregate = query.GetClass("ManualAggregate", "Testing");
+		var apply = aggregate.GetMethod(
+			query,
+			"Apply",
+			TypeRefs.Event("ValueCommandAppliedEvent", "Testing.ManualEvents")
+		);
+		var modifiers = apply.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("partial");
+		await Assert.That(modifiers).Contains("private");
+		// The Apply method must remain a declaration only; no generated body.
+		await Assert.That(apply.Body).IsNull();
 	}
 
 	[Test]
@@ -3212,16 +3394,19 @@ public sealed partial class ManualCollectionAggregate
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"private partial void Apply(global::Testing.ManualCollectionEvents.TagAddedEvent @event);"
-			);
-		await Assert
-			.That(generatedSource)
-			.DoesNotContain("((global::System.Collections.Generic.ICollection<string>)Tags).Add(");
+		var query = result.Generated();
+		var aggregate = query.GetClass("ManualCollectionAggregate", "Testing");
+		var apply = aggregate.GetMethod(
+			query,
+			"Apply",
+			TypeRefs.Event("TagAddedEvent", "Testing.ManualCollectionEvents")
+		);
+		var modifiers = apply.Modifiers.ToString();
+		await Assert.That(modifiers).Contains("partial");
+		await Assert.That(modifiers).Contains("private");
+		// The Apply method must remain a declaration only; no generated body.
+		await Assert.That(apply.Body).IsNull();
 	}
 
 	[Test]
@@ -3245,17 +3430,20 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource("ItemAggregate", HintNameMatchMode.Partial);
-
-		await Assert.That(generatedSource).IsNotNull();
 
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.UnsupportedEventMethodSignature);
-		await Assert.That(generatedSource).ContainsGeneratedCode("if (!Tags.Contains(__itemValue))");
+
+		var query = result.Generated();
+		await Assert.That(query.HasClass("ItemAggregate", "Testing")).IsTrue();
+		var aggregate = query.GetClass("ItemAggregate", "Testing");
+
+		var removeTagBody = aggregate.GetMethod(query, "RemoveTag", TypeRefs.String).Body?.ToString() ?? string.Empty;
+		await Assert.That(removeTagBody).Contains("if (!Tags.Contains(__itemValue))");
+
+		var apply = aggregate.GetMethod(query, "Apply", TypeRefs.Event("TagRemovedEvent", "Testing.ItemEvents"));
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);"
-			);
+			.That(apply.Body?.ToString())
+			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);");
 	}
 
 	[Test]
@@ -3282,18 +3470,29 @@ namespace Testing
 ";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
 		await Assert.That(result).DoesNotHaveDiagnostic(DiagnosticLibrary.UnsupportedEventMethodSignature);
-		await Assert.That(generatedSource).ContainsGeneratedCode("if (!Tags.Contains(__itemValue))");
-		await Assert.That(generatedSource).ContainsGeneratedCode("if (Tags.Contains(__itemValue))");
+
+		var query = result.Generated();
+		var aggregate = query.GetClass("ItemAggregate", "Testing");
+		var archiveTagBody = aggregate.GetMethod(query, "ArchiveTag", TypeRefs.String).Body?.ToString() ?? string.Empty;
+		await Assert.That(archiveTagBody).Contains("if (!Tags.Contains(__itemValue))");
+
+		var deleteTagBody = aggregate.GetMethod(query, "DeleteTag", TypeRefs.String).Body?.ToString() ?? string.Empty;
+		await Assert.That(deleteTagBody).Contains("if (Tags.Contains(__itemValue))");
+
+		var archiveApply = aggregate.GetMethod(
+			query,
+			"Apply",
+			TypeRefs.Event("TagArchivedEvent", "Testing.ItemEvents")
+		);
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode(
-				"((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);"
-			);
+			.That(archiveApply.Body?.ToString())
+			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Remove(@event.Tag);");
+
+		var deleteApply = aggregate.GetMethod(query, "Apply", TypeRefs.Event("TagDeletedEvent", "Testing.ItemEvents"));
 		await Assert
-			.That(generatedSource)
-			.ContainsGeneratedCode("((global::System.Collections.Generic.ICollection<string>)Tags).Add(@event.Tag);");
+			.That(deleteApply.Body?.ToString())
+			.Contains("((global::System.Collections.Generic.ICollection<string>)Tags).Add(@event.Tag);");
 	}
 }

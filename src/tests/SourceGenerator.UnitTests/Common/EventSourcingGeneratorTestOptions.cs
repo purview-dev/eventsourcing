@@ -36,6 +36,7 @@ public record EventSourcingGeneratorTestOptions : SourceGeneratorTestOptions
 	public EventSourcingGeneratorTestOptions()
 	{
 		DisableSourceGeneratorPropertyName = PropertyLibrary.DisableSourceGenerator;
+		ValidateCodeWriterScopes = true;
 		AdditionalNamespaces =
 		[
 			typeof(EventStoreSet<>).Namespace!,

@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -73,47 +71,44 @@ public sealed class EventStoreAnalyzer : DiagnosticAnalyzer
 
 	static void RegisterNullableScalarComparisonDiagnostics(AnalysisContext context)
 	{
-		context.RegisterSyntaxNodeAction(
+		context.RegisterOperationAction(
 			static context =>
 			{
-				var binaryExpression = (BinaryExpressionSyntax)context.Node;
-
-				ExpressionSyntax? comparedExpression = null;
-
-				if (binaryExpression.Left.IsKind(SyntaxKind.NullLiteralExpression))
-				{
-					comparedExpression = binaryExpression.Right;
-				}
-				else if (binaryExpression.Right.IsKind(SyntaxKind.NullLiteralExpression))
-				{
-					comparedExpression = binaryExpression.Left;
-				}
-
-				if (comparedExpression is null)
+				var binaryOperation = (IBinaryOperation)context.Operation;
+				if (binaryOperation.OperatorKind is not (BinaryOperatorKind.Equals or BinaryOperatorKind.NotEquals))
 					return;
 
-				var comparedType = context
-					.SemanticModel.GetTypeInfo(comparedExpression, context.CancellationToken)
-					.Type;
+				IOperation? comparedOperand = null;
+				if (IsNullLiteral(binaryOperation.LeftOperand))
+					comparedOperand = binaryOperation.RightOperand;
+				else if (IsNullLiteral(binaryOperation.RightOperand))
+					comparedOperand = binaryOperation.LeftOperand;
 
+				if (comparedOperand is null)
+					return;
+
+				var comparedType = comparedOperand.Type;
 				if (comparedType is null || !IsScalarValueObject(comparedType))
 					return;
 
-				var replacement = binaryExpression.IsKind(SyntaxKind.EqualsExpression) ? "is null" : "is not null";
+				var replacement = binaryOperation.OperatorKind == BinaryOperatorKind.Equals ? "is null" : "is not null";
 
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						DiagnosticLibrary.NullableScalarEqualityNullComparisonShouldUsePatternMatching,
-						binaryExpression.GetLocation(),
-						binaryExpression.ToString(),
+						binaryOperation.Syntax.GetLocation(),
+						binaryOperation.Syntax.ToString(),
 						replacement
 					)
 				);
 			},
-			SyntaxKind.EqualsExpression,
-			SyntaxKind.NotEqualsExpression
+			OperationKind.BinaryOperator
 		);
 	}
+
+	static bool IsNullLiteral(IOperation operation) =>
+		operation.Syntax is Microsoft.CodeAnalysis.CSharp.Syntax.LiteralExpressionSyntax literal
+		&& literal.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.NullLiteralExpression);
 
 	static void RegisterManualEventTypeDiagnostics(AnalysisContext context)
 	{

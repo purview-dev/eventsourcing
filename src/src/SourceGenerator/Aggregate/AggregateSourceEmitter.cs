@@ -72,54 +72,32 @@ static partial class AggregateSourceEmitter
 			},
 			bodyWriter =>
 			{
-				if (outputContext.Aggregate.IsValid)
+				GenerateJsonSerializationSupport(outputContext, bodyWriter);
+
+				// Generate RegisterEvents override
+				GenerateRegisterEvents(outputContext, bodyWriter);
+
+				// Generate Apply methods
+				foreach (var method in outputContext.Aggregate.Methods)
+					GenerateApplyMethod(bodyWriter, method);
+
+				// Generate command method implementations
+				foreach (var method in outputContext.Aggregate.Methods)
 				{
-					GenerateJsonSerializationSupport(outputContext, bodyWriter);
-
-					// Generate RegisterEvents override
-					GenerateRegisterEvents(outputContext, bodyWriter);
-
-					// Generate Apply methods
-					foreach (var method in outputContext.Aggregate.Methods)
-						GenerateApplyMethod(bodyWriter, method);
-
-					// Generate command method implementations
-					foreach (var method in outputContext.Aggregate.Methods)
-					{
-						if (method.IsCollectionEvent)
-							CollectionCommandMethodEmitter.Generate(bodyWriter, method);
-						else
-							CommandMethodEmitter.Generate(outputContext, bodyWriter, method);
-					}
-
-					GenerateCollectionNormalizationValidationHookDeclarations(outputContext, bodyWriter);
-					GeneratePropertyHookDeclarations(outputContext, bodyWriter);
-
-					foreach (var method in outputContext.Aggregate.InvalidMethods)
-						GenerateInvalidCommandMethodStub(bodyWriter, method);
-
-					GenerateJsonConverter(outputContext, bodyWriter);
-					GenerateJsonModel(outputContext, bodyWriter);
+					if (method.IsCollectionEvent)
+						CollectionCommandMethodEmitter.Generate(bodyWriter, method);
+					else
+						CommandMethodEmitter.Generate(outputContext, bodyWriter, method);
 				}
-				else
-				{
-					if (
-						outputContext.Aggregate.InheritsAggregateBase
-						&& !outputContext.Aggregate.HasManualRegisterEvents
-					)
-					{
-						bodyWriter.WriteMethod(
-							new("RegisterEvents", TypeDeclarationAccessibility.Protected) { IsOverride = true },
-							_ => { }
-						);
-					}
 
-					foreach (var method in outputContext.Aggregate.Methods)
-						GenerateInvalidCommandMethodStub(bodyWriter, method);
+				GenerateCollectionNormalizationValidationHookDeclarations(outputContext, bodyWriter);
+				GeneratePropertyHookDeclarations(outputContext, bodyWriter);
 
-					foreach (var method in outputContext.Aggregate.InvalidMethods)
-						GenerateInvalidCommandMethodStub(bodyWriter, method);
-				}
+				foreach (var method in outputContext.Aggregate.InvalidMethods)
+					GenerateInvalidCommandMethodStub(bodyWriter, method);
+
+				GenerateJsonConverter(outputContext, bodyWriter);
+				GenerateJsonModel(outputContext, bodyWriter);
 			}
 		);
 
@@ -513,28 +491,6 @@ static partial class AggregateSourceEmitter
 			writer.WriteThrow($"new global::System.InvalidOperationException(\"{message}\")");
 		}
 		writer.NewLine();
-	}
-
-	static void GenerateInvalidCommandMethodStub(CodeWriter writer, AggregateEventMethodInfo method)
-	{
-		var signature = string.IsNullOrWhiteSpace(method.Signature)
-			? BuildSignatureFromMethodInfo(method)
-			: method.Signature;
-
-		using (writer.OpenBlockScope(signature))
-		{
-			writer.WriteThrow(
-				"new global::System.InvalidOperationException(\"The generated aggregate event method is unavailable because aggregate validation failed.\");"
-			);
-		}
-		writer.NewLine();
-	}
-
-	static string BuildSignatureFromMethodInfo(AggregateEventMethodInfo method)
-	{
-		var parameterList = BuildParameterList(method.AllParameters);
-		var accessModifier = GetAccessModifierString(method.MethodAccessibility);
-		return $"{accessModifier} partial {method.ReturnType} {method.MethodName}({parameterList})";
 	}
 
 	static string EscapeStringLiteral(string value) =>

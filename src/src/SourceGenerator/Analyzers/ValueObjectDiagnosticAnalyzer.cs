@@ -32,20 +32,28 @@ public sealed class ValueObjectDiagnosticAnalyzer : DiagnosticAnalyzer
 	{
 		var typeSymbol = (INamedTypeSymbol)context.Symbol;
 
+		var hasScalarAttribute = TypeHelpers.HasAttribute(typeSymbol, ValueObjectSymbolInspector.ScalarAttributeName);
+		var hasValueObjectAttribute = TypeHelpers.HasAttribute(
+			typeSymbol,
+			ValueObjectSymbolInspector.ValueObjectAttributeName
+		);
+		if (!hasScalarAttribute && !hasValueObjectAttribute)
+			return;
+
 		if (
 			typeSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(context.CancellationToken)
 			is not TypeDeclarationSyntax syntax
 		)
 			return;
 
-		if (TypeHelpers.HasAttribute(typeSymbol, ValueObjectSymbolInspector.ScalarAttributeName))
+		if (hasScalarAttribute)
 		{
 			var result = ScalarValueObjectModelBuilder.Build(typeSymbol, syntax, context.CancellationToken);
 
 			foreach (var diagnostic in result.Diagnostics)
 				context.ReportDiagnostic(diagnostic.ToDiagnostic());
 		}
-		else if (TypeHelpers.HasAttribute(typeSymbol, ValueObjectSymbolInspector.ValueObjectAttributeName))
+		else
 		{
 			var result = ComplexValueObjectModelBuilder.Build(
 				typeSymbol,

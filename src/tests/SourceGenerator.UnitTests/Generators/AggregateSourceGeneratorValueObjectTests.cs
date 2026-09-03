@@ -56,16 +56,20 @@ public sealed class AggregateSourceGeneratorValueObjectTests : AggregateSourceGe
 			""";
 
 		var result = await GenerateAsync(source, cancellationToken);
-		var generatedSource = result.GetSource();
 
-		await Assert.That(generatedSource).Contains("OnRaisingOrderConfirmedEvent(ref __statusValue);");
-		await Assert.That(generatedSource).Contains("OnRaisedOrderConfirmedEvent(@event);");
+		var query = result.Generated();
+		var aggregate = query.GetClass("OrderAggregate", "Testing");
+		var confirmOrder = aggregate.GetMethod(query, "ConfirmOrder", TypeRefs.Named("OrderStatusCode", "Testing"));
+		var body = confirmOrder.Body?.ToString() ?? string.Empty;
+
+		await Assert.That(body).Contains("OnRaisingOrderConfirmedEvent(ref __statusValue);");
+		await Assert.That(body).Contains("OnRaisedOrderConfirmedEvent(@event);");
 		await Assert
-			.That(generatedSource)
+			.That(body)
 			.Contains(
 				"OrderStatus.Create(status, new global::Purview.EventSourcing.ValueObjects.ValueObjectContext<global::Testing.OrderAggregate>(this, MemberName: nameof(Status), EventName: nameof(global::Testing.OrderEvents.OrderConfirmed)))"
 			);
-		await Assert.That(generatedSource).Contains("OnStatusChanging(ref __statusValue);");
+		await Assert.That(body).Contains("OnStatusChanging(ref __statusValue);");
 	}
 
 	[Test]

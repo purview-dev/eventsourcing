@@ -249,3 +249,27 @@ Common value-object diagnostic IDs:
 - `EVENTSTORE107` strict mode relies on a generated `Create`
 - `EVENTSTORE108` conflicting `[Scalar]` and `[ValueObject]` attributes
 - `EVENTSTORE109` scalar value objects should be record structs
+
+The analyzer and the generator share the same validation rules (the model builders are the single source
+of truth). When validation fails, the generator skips generation entirely — it never emits an invalid
+partial type — while the analyzer reports the diagnostic. A generator-only run therefore produces no
+output and no exception for invalid input; the diagnostics are always surfaced by the analyzer assets that
+ship in the same package.
+
+## Testing generated output
+
+Generator unit tests assert on the generated structure with the `CodeQuery` API from
+`Purview.SourceGeneratorFramework.Testing` rather than whole-file string matching:
+
+- `result.Generated()` returns a `CodeQuery` over the generated trees (backed by the output compilation).
+- Prefer `GetClass`/`GetRecord`/`GetStruct`/`GetEnum`/`HasNamespace`, `HasMethod`, `HasProperty`,
+  `HasConstructor`, and `TypeReference`-based parameter matching for member signatures.
+- Keep string assertions only for method-body statements that `CodeQuery` does not model (for example
+  `RecordAndApply(@event);`), scoped to the returned syntax node's body.
+- Operator declarations are `OperatorDeclarationSyntax`, not methods; assert them via the operator token.
+
+Incremental caching is tested with the framework's `GenerateIncrementalAsync`/`RunIncrementalAsync`, which
+reuse one driver and compilation across identical runs. The framework-named stages
+(`GetGenerationConfiguration`, `GetGenerationContext_{Capabilities}`, and the per-target
+`ForAttribute`/target stage) must stay `Cached`/`Unchanged` on identical reruns, and only the stage whose
+input actually changed reports `Modified`.
