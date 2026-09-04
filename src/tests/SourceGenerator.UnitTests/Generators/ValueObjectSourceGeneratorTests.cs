@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Purview.EventSourcing.SourceGenerator.Generators;
 
@@ -626,7 +627,7 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 		var ctor = address.GetConstructor(query, TypeRefs.String, TypeRefs.String);
 		await Assert.That(ctor.Modifiers.ToString()).Contains("private");
 		await Assert.That(address.HasMethod(query, "Equals", addressType)).IsTrue();
-		await Assert.That(address.HasOperator("==", "Address", "Address")).IsTrue();
+		await Assert.That(HasOperator(query, address, "==", "Address", "Address")).IsTrue();
 
 		var assembly = await Assert.That(result.CompilationResult.Assembly).IsNotNull();
 		var harnessType = assembly.GetType("Testing.AddressHarness")!;
@@ -861,38 +862,38 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 		var query = result.Generated();
 		var name = query.GetRecord("Name", "Testing");
 
-		await Assert.That(name.HasOperator("<", "Name", "Name")).IsTrue();
-		await Assert.That(name.HasOperator(">", "Name", "Name")).IsTrue();
-		await Assert.That(name.HasOperator("<=", "Name", "Name")).IsTrue();
-		await Assert.That(name.HasOperator(">=", "Name", "Name")).IsTrue();
+		await Assert.That(HasOperator(query, name, "<", "Name", "Name")).IsTrue();
+		await Assert.That(HasOperator(query, name, ">", "Name", "Name")).IsTrue();
+		await Assert.That(HasOperator(query, name, "<=", "Name", "Name")).IsTrue();
+		await Assert.That(HasOperator(query, name, ">=", "Name", "Name")).IsTrue();
 
 		await Assert
-			.That(name.GetOperator("<", "Name", "Name")?.Body?.ToString())
+			.That(GetOperator(query, name, "<", "Name", "Name")?.Body?.ToString())
 			.Contains("return left.CompareTo(right) < 0;");
 		await Assert
-			.That(name.GetOperator(">", "Name", "Name")?.Body?.ToString())
+			.That(GetOperator(query, name, ">", "Name", "Name")?.Body?.ToString())
 			.Contains("return left.CompareTo(right) > 0;");
 		await Assert
-			.That(name.GetOperator("<=", "Name", "Name")?.Body?.ToString())
+			.That(GetOperator(query, name, "<=", "Name", "Name")?.Body?.ToString())
 			.Contains("return left.CompareTo(right) <= 0;");
 		await Assert
-			.That(name.GetOperator(">=", "Name", "Name")?.Body?.ToString())
+			.That(GetOperator(query, name, ">=", "Name", "Name")?.Body?.ToString())
 			.Contains("return left.CompareTo(right) >= 0;");
 
-		await Assert.That(name.HasOperator("<", "Name", "string")).IsTrue();
-		await Assert.That(name.HasOperator(">", "Name", "string")).IsTrue();
-		await Assert.That(name.HasOperator("<=", "Name", "string")).IsTrue();
-		await Assert.That(name.HasOperator(">=", "Name", "string")).IsTrue();
+		await Assert.That(HasOperator(query, name, "<", "Name", "string")).IsTrue();
+		await Assert.That(HasOperator(query, name, ">", "Name", "string")).IsTrue();
+		await Assert.That(HasOperator(query, name, "<=", "Name", "string")).IsTrue();
+		await Assert.That(HasOperator(query, name, ">=", "Name", "string")).IsTrue();
 		await Assert.That(name.HasMethod(query, "Equals", TypeRefs.String)).IsTrue();
-		await Assert.That(name.HasOperator("==", "Name", "string")).IsTrue();
-		await Assert.That(name.HasOperator("!=", "Name", "string")).IsTrue();
-		await Assert.That(name.HasOperator("==", "string", "Name")).IsTrue();
-		await Assert.That(name.HasOperator("!=", "string", "Name")).IsTrue();
+		await Assert.That(HasOperator(query, name, "==", "Name", "string")).IsTrue();
+		await Assert.That(HasOperator(query, name, "!=", "Name", "string")).IsTrue();
+		await Assert.That(HasOperator(query, name, "==", "string", "Name")).IsTrue();
+		await Assert.That(HasOperator(query, name, "!=", "string", "Name")).IsTrue();
 
-		await Assert.That(name.HasOperator("<", "string", "Name")).IsFalse();
-		await Assert.That(name.HasOperator(">", "string", "Name")).IsFalse();
-		await Assert.That(name.HasOperator("<=", "string", "Name")).IsFalse();
-		await Assert.That(name.HasOperator(">=", "string", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, "<", "string", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, ">", "string", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, "<=", "string", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, ">=", "string", "Name")).IsFalse();
 	}
 
 	[Test]
@@ -937,10 +938,10 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 		var query = result.Generated();
 		var reportProcessingStatus = query.GetStruct("ReportProcessingStatus", "Testing");
 		await Assert
-			.That(reportProcessingStatus.HasOperator("==", "ReportProcessingStatus", "ReportProcessingStatus"))
+			.That(HasOperator(query, reportProcessingStatus, "==", "ReportProcessingStatus", "ReportProcessingStatus"))
 			.IsTrue();
 		await Assert
-			.That(reportProcessingStatus.HasOperator("!=", "ReportProcessingStatus", "ReportProcessingStatus"))
+			.That(HasOperator(query, reportProcessingStatus, "!=", "ReportProcessingStatus", "ReportProcessingStatus"))
 			.IsTrue();
 		await Assert.That(reportProcessingStatus.BaseList?.ToString()).Contains("IEquatable");
 
@@ -978,10 +979,10 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 		var nameType = TypeRefs.Named("Name", "Testing");
 		await Assert.That(name.HasMethod(query, "CompareTo", nameType)).IsTrue();
 		await Assert.That(name.HasMethod(query, "CompareTo", TypeRefs.String)).IsTrue();
-		await Assert.That(name.HasOperator("<", "Name", "Name")).IsFalse();
-		await Assert.That(name.HasOperator(">", "Name", "Name")).IsFalse();
-		await Assert.That(name.HasOperator("<=", "Name", "Name")).IsFalse();
-		await Assert.That(name.HasOperator(">=", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, "<", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, ">", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, "<=", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, ">=", "Name", "Name")).IsFalse();
 	}
 
 	[Test]
@@ -1007,10 +1008,10 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 		var nameType = TypeRefs.Named("Name", "Testing");
 		await Assert.That(name.HasMethod(query, "CompareTo", nameType)).IsTrue();
 		await Assert.That(name.HasMethod(query, "CompareTo", TypeRefs.String)).IsTrue();
-		await Assert.That(name.HasOperator("<", "Name", "Name")).IsFalse();
-		await Assert.That(name.HasOperator(">", "Name", "Name")).IsFalse();
-		await Assert.That(name.HasOperator("<=", "Name", "Name")).IsFalse();
-		await Assert.That(name.HasOperator(">=", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, "<", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, ">", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, "<=", "Name", "Name")).IsFalse();
+		await Assert.That(HasOperator(query, name, ">=", "Name", "Name")).IsFalse();
 	}
 
 	[Test]
@@ -1036,10 +1037,10 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 
 		var query = result.Generated();
 		var money = query.GetRecord("Money", "Testing");
-		await Assert.That(money.HasOperator("<", "Money", "Money")).IsTrue();
-		await Assert.That(money.HasOperator(">", "Money", "Money")).IsTrue();
-		await Assert.That(money.HasOperator("<=", "Money", "Money")).IsTrue();
-		await Assert.That(money.HasOperator(">=", "Money", "Money")).IsTrue();
+		await Assert.That(HasOperator(query, money, "<", "Money", "Money")).IsTrue();
+		await Assert.That(HasOperator(query, money, ">", "Money", "Money")).IsTrue();
+		await Assert.That(HasOperator(query, money, "<=", "Money", "Money")).IsTrue();
+		await Assert.That(HasOperator(query, money, ">=", "Money", "Money")).IsTrue();
 	}
 
 	[Test]
@@ -1403,5 +1404,48 @@ public sealed class ValueObjectSourceGeneratorTests : ValueObjectSourceGenerator
 			harnessType.GetMethod("ActiveBlankDisplayNameThrows")!.Invoke(null, null)!;
 
 		await Assert.That(activeBlankDisplayNameThrows).IsTrue();
+	}
+
+	static bool HasOperator(
+		CodeQuery query,
+		TypeDeclarationSyntax type,
+		string operatorToken,
+		params string[] parameterTypeContains
+	) => GetOperator(query, type, operatorToken, parameterTypeContains) is not null;
+
+	static OperatorDeclarationSyntax? GetOperator(
+		CodeQuery query,
+		TypeDeclarationSyntax type,
+		string operatorToken,
+		params string[] parameterTypeContains
+	)
+	{
+		foreach (var candidate in query.In(type).GetAll<OperatorDeclarationSyntax>())
+		{
+			if (candidate.OperatorToken.Text != operatorToken)
+				continue;
+
+			var parameters = candidate.ParameterList.Parameters;
+			if (parameters.Count != parameterTypeContains.Length)
+				continue;
+
+			var allMatch = true;
+			for (var index = 0; index < parameters.Count; index++)
+			{
+				if (
+					parameters[index].Type?.ToString().Contains(parameterTypeContains[index], StringComparison.Ordinal)
+					!= true
+				)
+				{
+					allMatch = false;
+					break;
+				}
+			}
+
+			if (allMatch)
+				return candidate;
+		}
+
+		return null;
 	}
 }

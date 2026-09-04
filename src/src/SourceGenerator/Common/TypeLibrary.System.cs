@@ -29,5 +29,7 @@ partial class TypeLibrary
 		public static readonly TypeIdentity TimeOnly = new("TimeOnly", "System");
 
 		public static readonly TypeIdentity HashCode = new("HashCode", "System");
+
+		public static readonly TypeIdentity InvalidOperationException = new("InvalidOperationException", "System");
 	}
 }

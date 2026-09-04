@@ -19,9 +19,9 @@ static class TypeRefs
 
 	public static readonly TypeReference Object = TypeReference.Create<object>();
 
-	public static readonly TypeReference Guid = TypeReference.Create<System.Guid>();
+	public static readonly TypeReference Guid = TypeReference.Create<Guid>();
 
-	public static readonly TypeReference HashCode = TypeReference.Create<System.HashCode>();
+	public static readonly TypeReference HashCode = TypeReference.Create<HashCode>();
 
 	public static TypeReference Event(string name, string @namespace) => Named(name, @namespace);
 

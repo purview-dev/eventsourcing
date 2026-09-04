@@ -5,13 +5,9 @@
 		<RoslynCompilerVersion>5.0.0</RoslynCompilerVersion>
 		<RoslynAnalyzersVersion>5.9.0</RoslynAnalyzersVersion>
 		<TUnitVersion>1.65.68</TUnitVersion>
-		<PurviewSGFrameworkVersion>1.0.0-prerelease.30</PurviewSGFrameworkVersion>
+		<PurviewSGFrameworkVersion>1.0.0-prerelease.33</PurviewSGFrameworkVersion>
 		<ModularPipelinesVersion>3.2.8</ModularPipelinesVersion>
 	</PropertyGroup>
-	<ItemGroup Label="Vulnerabilities">
-		<!--<PackageVersion Include="SSH.NET" Version="2026.0.0" />
-		<PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />-->
-	</ItemGroup>
 	<ItemGroup>
 		<PackageVersion Include="ModularPipelines" Version="$(ModularPipelinesVersion)" />
 		<PackageVersion Include="ModularPipelines.DotNet" Version="$(ModularPipelinesVersion)" />

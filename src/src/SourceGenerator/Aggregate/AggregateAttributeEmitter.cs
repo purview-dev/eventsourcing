@@ -26,7 +26,7 @@ static class AggregateAttributeEmitter
 			$"event classes based on methods decorated with <see cref=\"{TypeLibrary.Attributes.EventAttribute}\" />."
 		);
 
-		return writer.WriteAttributeClass(
+		return writer.AttributeClass(
 			new(TypeLibrary.Attributes.AggregateAttribute) { IsSealed = true },
 			AttributeTargets.Class,
 			body =>
@@ -36,7 +36,7 @@ static class AggregateAttributeEmitter
 						"When not set, namespaces default to:",
 						"<c>{Aggregate-Type-Namespace}.{Aggregate-Name-Without-The-Aggregate-Suffix}</c>."
 					)
-					.WriteProperty(
+					.Property(
 						new("EventNamespace", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
@@ -51,7 +51,7 @@ static class AggregateAttributeEmitter
 						$"Overrides <see cref=\"{TypeLibrary.Attributes.AggregateDefaultsAttribute}.EventSuffix\"/> for this aggregate.",
 						"If not set, the generator falls back to the assembly default or <c>Event</c>."
 					)
-					.WriteProperty(
+					.Property(
 						new("EventSuffix", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
@@ -106,7 +106,7 @@ static class AggregateAttributeEmitter
 				"is not a past-tense fact."
 			);
 
-		return writer.WriteAttributeClass(
+		return writer.AttributeClass(
 			new(TypeLibrary.Attributes.SentinelEventAttribute) { IsSealed = true },
 			AttributeTargets.Class | AttributeTargets.Struct,
 			body =>
@@ -115,7 +115,7 @@ static class AggregateAttributeEmitter
 						"recorded for audit and code-review purposes. Mirrors",
 						$"{CodeWriter.XmlSee($"{typeof(System.Diagnostics.CodeAnalysis.SuppressMessageAttribute).FullName}.Justification")}."
 					)
-					.WriteProperty(
+					.Property(
 						new("Justification", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
@@ -133,7 +133,7 @@ static class AggregateAttributeEmitter
 			"Aggregate-level options override these defaults."
 		);
 
-		return writer.WriteAttributeClass(
+		return writer.AttributeClass(
 			new(TypeLibrary.Attributes.AggregateDefaultsAttribute) { IsSealed = true },
 			AttributeTargets.Assembly,
 			body =>
@@ -142,7 +142,7 @@ static class AggregateAttributeEmitter
 						$"Appends a suffix to generated event type names when no explicit <see cref=\"{TypeLibrary.Attributes.EventAttribute}.EventName\"/> is provided.",
 						"Defaults to <c>Event</c>."
 					)
-					.WriteProperty(
+					.Property(
 						new("EventSuffix", TypeLibrary.System.String.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
@@ -152,7 +152,7 @@ static class AggregateAttributeEmitter
 						}
 					);
 				body.XmlSummary("Specifies the default base class for all aggregates in the assembly.")
-					.WriteProperty(
+					.Property(
 						new("BaseType", PurviewTypeLibrary.System.Type.MakeNullable(writer))
 						{
 							Accessibility = TypeDeclarationAccessibility.Public,
@@ -173,7 +173,7 @@ static class AggregateAttributeEmitter
 				"Indicates the type of collection operation that a method represents",
 				"when generating an event for a collection property."
 			)
-			.WriteEnum(
+			.Enum(
 				new(TypeLibrary.Attributes.CollectionEventOperation),
 				[
 					new("Auto", 0, "Automatically determine the operation type based on the method name."),
@@ -196,35 +196,38 @@ static class AggregateAttributeEmitter
 				"</list>",
 				"</para>"
 			)
-			.WriteAttributeClass(
+			.AttributeClass(
 				new(TypeLibrary.Attributes.CollectionEventAttribute) { IsSealed = true },
 				AttributeTargets.Method,
 				body =>
 				{
-					body.WriteConstructor(
-						new(TypeLibrary.Attributes.CollectionEventAttribute, TypeDeclarationAccessibility.Public)
-						{
-							Parameters = [new("propertyName", TypeLibrary.System.String)],
-						},
-						writeBody =>
-						{
-							writer.WriteIfBlock(
-								"string.IsNullOrWhiteSpace(propertyName)",
-								ifBody =>
-									ifBody.WriteThrow(
-										"new global::System.ArgumentException(\"Property name cannot be null or whitespace.\", nameof(propertyName))"
-									)
-							);
+					body.XmlSummary(
+							$"Constructs a new  {ToXmlCref(TypeLibrary.Attributes.CollectionEventAttribute)} with the specified collection property name."
+						)
+						.Constructor(
+							new(TypeLibrary.Attributes.CollectionEventAttribute, TypeDeclarationAccessibility.Public)
+							{
+								Parameters = [new("propertyName", TypeLibrary.System.String)],
+							},
+							writeBody =>
+							{
+								writer.IfBlock(
+									"string.IsNullOrWhiteSpace(propertyName)",
+									ifBody =>
+										ifBody.Throw(
+											"new global::System.ArgumentException(\"Property name cannot be null or whitespace.\", nameof(propertyName))"
+										)
+								);
 
-							writeBody.WriteAssignment("PropertyName", "propertyName");
-						}
-					);
+								writeBody.Assignment("PropertyName", "propertyName");
+							}
+						);
 
 					body.XmlSummary(
 							"The schema version of the generated event class. Defaults to 1.",
 							"Increment when the event's properties change in a <b>breaking</b> way."
 						)
-						.WriteProperty(
+						.Property(
 							new("Version", TypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 							{
 								HasSetter = true,
@@ -238,7 +241,7 @@ static class AggregateAttributeEmitter
 							"Defaults to a deterministic past-tense event name inferred from the method name.",
 							$"If not set, <see cref=\"AggregateAttribute.EventSuffix\"/> and <see cref=\"{TypeLibrary.Attributes.AggregateDefaultsAttribute}.EventSuffix\"/> may append a suffix."
 						)
-						.WriteProperty(
+						.Property(
 							new(
 								"EventName",
 								TypeLibrary.System.String.MakeNullable(writer),
@@ -254,7 +257,7 @@ static class AggregateAttributeEmitter
 							"Overrides the generated event namespace for this method.",
 							"Defaults to <c>{Aggregate-Namespace}.{Aggregate-Name-Without-Aggregate-Suffix}</c> unless overridden at aggregate level."
 						)
-						.WriteProperty(
+						.Property(
 							new(
 								"EventNamespace",
 								TypeLibrary.System.String.MakeNullable(writer),
@@ -269,7 +272,7 @@ static class AggregateAttributeEmitter
 					body.XmlSummary(
 							"The property name of the collection property on the aggregate that this method modifies."
 						)
-						.WriteProperty(
+						.Property(
 							new("PropertyName", TypeLibrary.System.String, TypeDeclarationAccessibility.Public)
 							{
 								HasSetter = true,
@@ -282,7 +285,7 @@ static class AggregateAttributeEmitter
 							"methods starting with <c>Add</c> are treated as add mutations and methods starting with",
 							"<c>Remove</c> or <c>Delete</c> are treated as remove mutations."
 						)
-						.WriteProperty(
+						.Property(
 							new(
 								"Operation",
 								TypeLibrary.Attributes.CollectionEventOperation,
@@ -305,7 +308,7 @@ static class AggregateAttributeEmitter
 							"An <c>Apply({Event-Name})</c> method must be implemented manually in the aggregate class to handle the event and update the aggregate's state, or",
 							"the source generator will create an error indicating that the apply method is missing."
 						)
-						.WriteProperty(
+						.Property(
 							new("Manual", TypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 							{
 								HasSetter = true,
@@ -328,7 +331,7 @@ static class AggregateAttributeEmitter
 			"before the event is recorded."
 		);
 
-		return writer.WriteAttributeClass(
+		return writer.AttributeClass(
 			new(TypeLibrary.Attributes.ComputedAttribute) { IsSealed = true },
 			AttributeTargets.Parameter,
 			bodyWriter => bodyWriter.Comment("Empty")
@@ -352,7 +355,7 @@ static class AggregateAttributeEmitter
 			"</para>"
 		);
 
-		return writer.WriteAttributeClass(
+		return writer.AttributeClass(
 			new(TypeLibrary.Attributes.EventAttribute) { IsSealed = true },
 			AttributeTargets.Method,
 			body =>
@@ -361,7 +364,7 @@ static class AggregateAttributeEmitter
 						"The schema version of the generated event class. Defaults to 1.",
 						"Increment when the event's properties change in a <b>breaking</b> way."
 					)
-					.WriteProperty(
+					.Property(
 						new("Version", TypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 						{
 							HasSetter = true,
@@ -375,7 +378,7 @@ static class AggregateAttributeEmitter
 						"Defaults to a deterministic past-tense event name inferred from the method name.",
 						$"If not set, <see cref=\"{TypeLibrary.Attributes.AggregateAttribute}.EventSuffix\"/> and <see cref=\"{TypeLibrary.Attributes.AggregateAttribute}\"/> are used."
 					)
-					.WriteProperty(
+					.Property(
 						new(
 							"EventName",
 							TypeLibrary.System.String.MakeNullable(writer),
@@ -391,7 +394,7 @@ static class AggregateAttributeEmitter
 						"Overrides the generated event namespace for this method.",
 						"Defaults to <c>{Aggregate-Namespace}.{Aggregate-Name-Without-Aggregate-Suffix}</c> unless overridden at aggregate level."
 					)
-					.WriteProperty(
+					.Property(
 						new(
 							"EventNamespace",
 							TypeLibrary.System.String.MakeNullable(writer),
@@ -411,7 +414,7 @@ static class AggregateAttributeEmitter
 						"An <c>Apply({Event-Name})</c> method must be implemented manually in the aggregate class to handle the event and update the aggregate's state, or",
 						"the source generator will create an error indicating that the apply method is missing."
 					)
-					.WriteProperty(
+					.Property(
 						new("Manual", TypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 						{
 							HasSetter = true,
@@ -426,24 +429,27 @@ static class AggregateAttributeEmitter
 	{
 		var writer = CreateCodeWriter(TypeLibrary.Attributes.MetadataAttribute);
 
-		writer.XmlSummary("Marks a parameter as metadata for the aggregate, indicating whether it should be stored.");
-
-		return writer.WriteAttributeClass(
-			new(TypeLibrary.Attributes.MetadataAttribute) { IsSealed = true },
-			AttributeTargets.Parameter,
-			body =>
-			{
-				body.WriteConstructor(
-					new(TypeLibrary.Attributes.MetadataAttribute, TypeDeclarationAccessibility.Public)
-					{
-						Parameters = [new("store", TypeLibrary.System.Boolean) { DefaultValue = "true" }],
-					},
-					writeBody => writeBody.WriteAssignment("Store", "store")
-				);
-				body.XmlSummary("Indicates whether the metadata should be stored on the generated event or not.")
-					.WriteProperty(new("Store", TypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public));
-			}
-		);
+		return writer
+			.XmlSummary("Marks a parameter as metadata for the aggregate, indicating whether it should be stored.")
+			.AttributeClass(
+				new(TypeLibrary.Attributes.MetadataAttribute) { IsSealed = true },
+				AttributeTargets.Parameter,
+				body =>
+				{
+					body.XmlSummary(
+							$"Constructs a new {ToXmlCref(TypeLibrary.Attributes.MetadataAttribute)} with the specified store value."
+						)
+						.Constructor(
+							new(TypeLibrary.Attributes.MetadataAttribute, TypeDeclarationAccessibility.Public)
+							{
+								Parameters = [new("store", TypeLibrary.System.Boolean) { DefaultValue = "true" }],
+							},
+							writeBody => writeBody.Assignment("Store", "store")
+						);
+					body.XmlSummary("Indicates whether the metadata should be stored on the generated event or not.")
+						.Property("Store", TypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public);
+				}
+			);
 	}
 
 	static SourceText PropertyAttribute()
@@ -455,40 +461,43 @@ static class AggregateAttributeEmitter
 			"The generator will create a matching property on the generated event class",
 			"and set it in the <c>Apply({EventName})</c> method."
 		);
-		return writer.WriteAttributeClass(
+		return writer.AttributeClass(
 			new(TypeLibrary.Attributes.PropertyAttribute) { IsSealed = true },
 			AttributeTargets.Parameter,
 			body =>
 			{
-				body.WriteConstructor(
-					new(TypeLibrary.Attributes.PropertyAttribute, TypeDeclarationAccessibility.Public)
-					{
-						Parameters = [new("propertyName", TypeLibrary.System.String)],
-					},
-					writeBody: writeBody =>
-					{
-						writer.WriteIfBlock(
-							"string.IsNullOrWhiteSpace(propertyName)",
-							ifBody =>
-								ifBody.WriteThrow(
-									"new global::System.ArgumentException(\"Property name cannot be null or whitespace.\", nameof(propertyName))"
-								)
-						);
+				body.XmlSummary(
+						$"Constructs a new {ToXmlCref(TypeLibrary.Attributes.PropertyAttribute)} with the specified property name."
+					)
+					.Constructor(
+						new(TypeLibrary.Attributes.PropertyAttribute, TypeDeclarationAccessibility.Public)
+						{
+							Parameters = [new("propertyName", TypeLibrary.System.String)],
+						},
+						writeBody: writeBody =>
+						{
+							writer.IfBlock(
+								"string.IsNullOrWhiteSpace(propertyName)",
+								ifBody =>
+									ifBody.Throw(
+										"new global::System.ArgumentException(\"Property name cannot be null or whitespace.\", nameof(propertyName))"
+									)
+							);
 
-						writeBody.WriteAssignment("PropertyName", "propertyName");
-					}
-				);
+							writeBody.Assignment("PropertyName", "propertyName");
+						}
+					);
 
 				body.XmlSummary("The name of the property on the aggregate that this event property corresponds to.")
-					.WriteProperty(new("PropertyName", TypeLibrary.System.String, TypeDeclarationAccessibility.Public));
+					.Property("PropertyName", TypeLibrary.System.String, TypeDeclarationAccessibility.Public);
 			}
 		);
 	}
 
 	static CodeWriter CreateCodeWriter(TypeIdentity namespaceType)
 	{
-		CodeWriter w = new(GenerationSettings.Create<AggregateSourceGenerator>());
+		CodeWriter w = new(SourceGenLibrary.CreateGenerationSettings<AggregateSourceGenerator>());
 
-		return w.WriteAutoGeneratedHeader().WriteFileScopedNamespace(namespaceType);
+		return w.AutoGeneratedHeader().FileScopedNamespace(namespaceType);
 	}
 }

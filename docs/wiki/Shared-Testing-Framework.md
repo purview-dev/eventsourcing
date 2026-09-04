@@ -22,7 +22,7 @@ boundaries, telemetry, storage layout) lives in per-provider guard tests in each
 
 | Path | Purpose |
 | --- | --- |
-| `src/tests/SharedTestingFramework/Contracts/` | The shared contract suites. These are compiled into the `SharedTestingFramework` assembly and consumed by the provider integration test projects through the existing project reference. |
+| `src/tests/SharedTestingFramework/Contracts/` | The shared contract suites. These are **not** compiled into the `SharedTestingFramework` assembly; each provider integration test project links them into its own compilation (see below). |
 | `src/tests/SharedTestingFramework/Fixtures/` | Provider Testcontainers fixtures. |
 | `src/tests/<Provider>.IntegrationTests/Events/` | The per-provider event-store wiring + guard tests. |
 | `src/tests/<Provider>.IntegrationTests/Snapshots/` | The per-provider snapshot-store wiring + guard tests. |
@@ -38,12 +38,18 @@ assembly. The shared suites achieve this with three TUnit features:
 2. `[ClassDataSource<TFixture>(Shared = SharedType.PerTestSession)]` injects the provider fixture
    (one container per test session).
 3. `[InheritsTests]` picks up the `[Test]` methods declared on the shared generic base class
-   (`EventStoreContractTestsBase<TAggregate>` / `SnapshotStoreContractTestsBase<TAggregate>`), which
-   lives in the referenced `SharedTestingFramework` assembly.
+   (`EventStoreContractTestsBase<TAggregate>` / `SnapshotStoreContractTestsBase<TAggregate>`).
 
-`SharedTestingFramework` carries the base `[Test]` methods but its own tests are skipped by the
-SDK's shared-testing `[Skip]` assembly attribute; the methods are only exercised through the
-concrete derived classes in the provider test projects.
+The contract sources under `Contracts/` are linked directly into each provider test project's
+compilation (via `<Compile Include="..\SharedTestingFramework\Contracts\...">` links) rather than
+consumed cross-assembly. This is deliberate: TUnit's `TestMetadataGenerator` reports error diagnostic
+`TUNIT0999` at the inherited method's source location when an internal generation error occurs, and
+Roslyn's `SourceProductionContext.ReportDiagnostic` rejects diagnostics whose location is not part of
+the compilation being analyzed (surfacing as `CS8785`). With a cross-assembly base class the location
+points into `SharedTestingFramework`'s sources, outside the provider compilation, so the warning is
+unavoidable. Linking the sources keeps every inherited `[Test]` method inside the provider compilation
+and eliminates the failure. `SharedTestingFramework` therefore no longer carries the base `[Test]`
+methods at all.
 
 Each provider test project therefore adds a small derived class such as:
 
@@ -80,7 +86,9 @@ notifications, event ranges, query results) and shared aggregates (`PersistenceA
 ## Adding a new provider
 
 1. Create the integration test project (see `project-placement-defaults`), referencing
-   `SharedTestingFramework` and `Samples`.
+   `SharedTestingFramework` and `Samples`, and link the contract sources that the provider needs
+   (the `EventStore*` and/or `SnapshotStore*` files under `Contracts/`) — see the `<Compile Include>`
+   links in the existing provider test projects.
 2. Add an `EventStoreContractTests` (and/or `SnapshotStoreContractTests`) derived class wired to the
    provider fixture.
 3. Implement the provider-specific seams (`MarkEventTypesAsUnknownAsync` for the unknown-event test,
@@ -91,8 +99,8 @@ notifications, event ranges, query results) and shared aggregates (`PersistenceA
 
 1. Add the `[Test]` method to the relevant shared base class under `Contracts/`.
 2. Add any data sources to the matching `*ContractTestData` static class.
-3. The test runs automatically for every provider that references `SharedTestingFramework` and
-   derives from the relevant base class.
+3. The test runs automatically for every provider whose integration project links the contract
+   sources and derives from the relevant base class.
 
 ## Environment notes
 

@@ -266,7 +266,7 @@ Generator unit tests assert on the generated structure with the `CodeQuery` API 
   `HasConstructor`, and `TypeReference`-based parameter matching for member signatures.
 - Keep string assertions only for method-body statements that `CodeQuery` does not model (for example
   `RecordAndApply(@event);`), scoped to the returned syntax node's body.
-- Operator declarations are `OperatorDeclarationSyntax`, not methods; assert them via the operator token.
+- Operator declarations are `OperatorDeclarationSyntax`, not methods; assert them via `CodeQuery.GetOperator`/`HasOperator`/`TryGetOperator` (optionally scoped with `CodeQuery.In(type)`), or `GetConversionOperator` for `implicit`/`explicit` conversions.
 
 Incremental caching is tested with the framework's `GenerateIncrementalAsync`/`RunIncrementalAsync`, which
 reuse one driver and compilation across identical runs. The framework-named stages

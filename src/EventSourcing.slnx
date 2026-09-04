@@ -74,6 +74,6 @@
 		<Project Path="tests/ZodSharpImpl.UnitTests/ZodSharpImpl.UnitTests.csproj" />
 	</Folder>
 	<Folder Name="/tools/">
-		<Project Path="tools/AdminApi.OpenApi/AdminApi.OpenApi.csproj" DisplayName="AdminAPI.OpenAPI" />
+		<Project Path="tools/AdminAPI.OpenAPI/AdminAPI.OpenAPI.csproj" DisplayName="AdminAPI.OpenAPI" />
 	</Folder>
 </Solution>

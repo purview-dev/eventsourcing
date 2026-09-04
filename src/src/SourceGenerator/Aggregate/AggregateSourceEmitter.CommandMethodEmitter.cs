@@ -6,7 +6,7 @@ static partial class CommandMethodEmitter
 	{
 		var hookSuffix = AggregateSourceEmitter.GetHookName(method.EventType);
 
-		writer.WriteMethod(
+		writer.Method(
 			new(method.MethodName, method.ReturnType)
 			{
 				Accessibility = method.MethodAccessibility.ToTypeDeclarationAccessibility(),
@@ -63,13 +63,13 @@ static partial class CommandMethodEmitter
 		{
 			if (prop.IsComputed)
 			{
-				writer.WriteAssignment("var", AggregateSourceEmitter.GetLocalValueName(prop), prop.ParameterName);
+				writer.Assignment("var", AggregateSourceEmitter.GetLocalValueName(prop), prop.ParameterName);
 				continue;
 			}
 
 			if (prop.ParameterConversionKind is not EventParameterConversionKind.None)
 			{
-				writer.WriteAssignment(
+				writer.Assignment(
 					"var",
 					AggregateSourceEmitter.GetLocalValueName(prop),
 					AggregateSourceEmitter.BuildPropertyValueExpression(outputContext, method, prop)
@@ -92,10 +92,10 @@ static partial class CommandMethodEmitter
 			var ifCondition =
 				$"!global::System.Collections.Generic.EqualityComparer<{prop.PropertyType}>.Default.Equals({prop.ParameterName}, default({prop.PropertyType}))";
 
-			writer.WriteIfBlock(
+			writer.IfBlock(
 				ifCondition,
 				ifBody =>
-					ifBody.WriteThrow(
+					ifBody.Throw(
 						$"new global::System.ArgumentException(\"Computed parameter '{prop.ParameterName}' cannot be set by callers.\", nameof({prop.ParameterName}))"
 					)
 			);
@@ -110,7 +110,7 @@ static partial class CommandMethodEmitter
 
 			writer
 				.Comment($"Invoke On{prop.AggregatePropertyName}Changing hook for parameter '{prop.ParameterName}'")
-				.WriteMethodCall(
+				.MethodCall(
 					$"On{prop.AggregatePropertyName}Changing",
 					[
 						new MethodCallArgumentOptions(
@@ -137,24 +137,23 @@ static partial class CommandMethodEmitter
 
 			if (prop.IsRequired && prop.IsString)
 			{
-				writer.WriteIfBlock(
+				writer.IfBlock(
 					$"global::System.String.IsNullOrWhiteSpace({prop.ParameterName})",
 					ifBody =>
-						ifBody.WriteThrow(
+						ifBody.Throw(
 							$"new global::System.ArgumentException(\"Parameter '{prop.ParameterName}' cannot be null or empty.\", nameof({prop.ParameterName}))"
 						)
 				);
 			}
 			else if (prop.IsRequired || prop.IsNotNull)
 			{
-				writer.WriteIfBlock(
+				writer.IfBlock(
 					$"{prop.ParameterName} is null",
-					ifBody =>
-						ifBody.WriteThrow($"new global::System.ArgumentNullException(nameof({prop.ParameterName}))")
+					ifBody => ifBody.Throw($"new global::System.ArgumentNullException(nameof({prop.ParameterName}))")
 				);
 			}
 
-			writer.WriteAssignment(
+			writer.Assignment(
 				"var",
 				AggregateSourceEmitter.GetLocalValueName(prop),
 				prop.ParameterName,
@@ -165,20 +164,20 @@ static partial class CommandMethodEmitter
 
 	static void EmitOnComputingBefore(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		writer.WriteMethodCall(
+		writer.MethodCall(
 			$"OnComputing{hookSuffix}",
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.ComputedParameters)
 		);
 
 		if (!method.NonComputedParameters.IsEmpty)
 		{
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				$"OnComputing{hookSuffix}",
 				AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.NonComputedParameters)
 			);
 		}
 
-		writer.WriteMethodCall(
+		writer.MethodCall(
 			$"OnComputing{hookSuffix}",
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.AllParameters)
 		);
@@ -193,7 +192,7 @@ static partial class CommandMethodEmitter
 	{
 		AggregateSourceEmitter.EmitEventCreation(writer, method, declareVariable);
 
-		writer.WriteIfBlock(
+		writer.IfBlock(
 			$"!ShouldApply{hookSuffix}(@event)",
 			ifBody => AggregateSourceEmitter.EmitNoChangeReturn(ifBody, method.ReturnKind)
 		);
@@ -203,27 +202,27 @@ static partial class CommandMethodEmitter
 	{
 		var onRaisingMethodName = $"OnRaising{hookSuffix}";
 		if (method.AllParameters.IsEmpty)
-			writer.WriteMethodCall(onRaisingMethodName);
+			writer.MethodCall(onRaisingMethodName);
 		else if (!method.ComputedParameters.IsEmpty)
 		{
 			if (method.NonComputedParameters.IsEmpty)
-				writer.WriteMethodCall(onRaisingMethodName);
+				writer.MethodCall(onRaisingMethodName);
 			else
 			{
-				writer.WriteMethodCall(
+				writer.MethodCall(
 					onRaisingMethodName,
 					AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.NonComputedParameters)
 				);
 			}
 
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				onRaisingMethodName,
 				AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.AllParameters)
 			);
 		}
 		else
 		{
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				onRaisingMethodName,
 				AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.AllParameters)
 			);
@@ -234,20 +233,20 @@ static partial class CommandMethodEmitter
 	{
 		var onComputingMethodName = $"OnComputing{hookSuffix}";
 
-		writer.WriteMethodCall(
+		writer.MethodCall(
 			onComputingMethodName,
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.ComputedParameters)
 		);
 
 		if (!method.NonComputedParameters.IsEmpty)
 		{
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				onComputingMethodName,
 				AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.NonComputedParameters)
 			);
 		}
 
-		writer.WriteMethodCall(
+		writer.MethodCall(
 			onComputingMethodName,
 			AggregateSourceEmitter.BuildOnCreatingCallArgumentList(method.AllParameters)
 		);
@@ -259,7 +258,7 @@ static partial class CommandMethodEmitter
 		List<EventPropertyInfo> mappedParameters
 	)
 	{
-		writer.WriteIfBlock(
+		writer.IfBlock(
 			AggregateSourceEmitter.BuildUnchangedCondition(mappedParameters),
 			ifBody => AggregateSourceEmitter.EmitNoChangeReturn(ifBody, method.ReturnKind)
 		);
@@ -267,8 +266,8 @@ static partial class CommandMethodEmitter
 
 	static void EmitFinalization(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 	{
-		writer.WriteMethodCall($"OnRaised{hookSuffix}", ["@event"]);
-		writer.WriteMethodCall($"RecordAndApply", ["@event"]);
+		writer.MethodCall($"OnRaised{hookSuffix}", ["@event"]);
+		writer.MethodCall($"RecordAndApply", ["@event"]);
 
 		AggregateSourceEmitter.EmitSuccessReturn(writer, method.ReturnKind);
 	}
@@ -280,7 +279,7 @@ static partial class CommandMethodEmitter
 		if (!method.ComputedParameters.IsEmpty)
 		{
 			var computingMethodName = $"OnComputing{hookSuffix}";
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new(computingMethodName)
 				{
 					Attributes = [suppression],
@@ -292,7 +291,7 @@ static partial class CommandMethodEmitter
 
 			if (!method.NonComputedParameters.IsEmpty)
 			{
-				writer.WritePartialMethod(
+				writer.PartialMethod(
 					new(computingMethodName)
 					{
 						Attributes = [suppression],
@@ -303,7 +302,7 @@ static partial class CommandMethodEmitter
 				);
 			}
 
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new(computingMethodName)
 				{
 					Attributes = [suppression],
@@ -315,15 +314,15 @@ static partial class CommandMethodEmitter
 		var raisingMethodName = $"OnRaising{hookSuffix}";
 		if (method.AllParameters.IsEmpty)
 		{
-			writer.WritePartialMethod(new(raisingMethodName) { Attributes = [suppression] });
+			writer.PartialMethod(new(raisingMethodName) { Attributes = [suppression] });
 		}
 		else if (!method.ComputedParameters.IsEmpty)
 		{
 			if (method.NonComputedParameters.IsEmpty)
-				writer.WritePartialMethod(new(raisingMethodName) { Attributes = [suppression] });
+				writer.PartialMethod(new(raisingMethodName) { Attributes = [suppression] });
 			else
 			{
-				writer.WritePartialMethod(
+				writer.PartialMethod(
 					new(raisingMethodName)
 					{
 						Attributes = [suppression],
@@ -334,7 +333,7 @@ static partial class CommandMethodEmitter
 				);
 			}
 
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new(raisingMethodName)
 				{
 					Attributes = [suppression],
@@ -344,7 +343,7 @@ static partial class CommandMethodEmitter
 		}
 		else
 		{
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new(raisingMethodName)
 				{
 					Attributes = [suppression],
@@ -353,20 +352,20 @@ static partial class CommandMethodEmitter
 			);
 		}
 
-		writer.WriteMethod(
+		writer.Method(
 			new("ShouldApply" + hookSuffix, PurviewTypeLibrary.System.Boolean)
 			{
 				Parameters = [new ParameterDeclarationOptions("@event", method.EventType)],
 			},
 			writeBody =>
 			{
-				writeBody.WriteAssignment("var", "shouldApply", "true");
-				writeBody.WriteMethodCall("OnShouldApply" + hookSuffix, ["@event", "ref shouldApply"]);
-				writeBody.WriteReturn("shouldApply");
+				writeBody.Assignment("var", "shouldApply", "true");
+				writeBody.MethodCall("OnShouldApply" + hookSuffix, ["@event", "ref shouldApply"]);
+				writeBody.Return("shouldApply");
 			}
 		);
 
-		writer.WritePartialMethod(
+		writer.PartialMethod(
 			new("OnShouldApply" + hookSuffix)
 			{
 				Attributes = [suppression],
@@ -378,11 +377,11 @@ static partial class CommandMethodEmitter
 			}
 		);
 
-		writer.WritePartialMethod(
+		writer.PartialMethod(
 			new("OnRaised" + hookSuffix) { Attributes = [suppression], Parameters = [new("@event", method.EventType)] }
 		);
 
-		writer.WritePartialMethod(
+		writer.PartialMethod(
 			new("OnApplied" + hookSuffix) { Attributes = [suppression], Parameters = [new("@event", method.EventType)] }
 		);
 	}

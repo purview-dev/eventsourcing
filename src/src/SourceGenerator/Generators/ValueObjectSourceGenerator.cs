@@ -15,10 +15,13 @@ public sealed partial class ValueObjectSourceGenerator : IIncrementalGenerator
 					ctx.AddSource(HintName, Source);
 			});
 
-		var generationContext = IncrementalPipeline.GenerationContextValueProvider<
-			EmptyCapabilities,
-			ValueObjectSourceGenerator
-		>(context, static (_, _, _, _) => EmptyCapabilities.Instance, PropertyLibrary.DisableSourceGenerator);
+		var generationContext = IncrementalPipeline.GenerationContextValueProvider(
+			context,
+			SourceGenLibrary.CreateGenerationSettings<ValueObjectSourceGenerator>(
+				PropertyLibrary.DisableSourceGenerator
+			),
+			static (_, _, _, _) => EmptyCapabilities.Instance
+		);
 
 		var scalarCandidates = context
 			.SyntaxProvider.ForAttributeWithMetadataName(

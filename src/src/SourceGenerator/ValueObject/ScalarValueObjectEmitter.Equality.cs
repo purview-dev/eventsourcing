@@ -6,8 +6,7 @@ static partial class ScalarValueObjectEmitter
 	{
 		if (!model.EqualsSelfExists)
 		{
-			ValueObjectEmitterHelpers.WriteExpressionMethod(
-				writer,
+			writer.MethodExpression(
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					Parameters = [new("other", ValueObjectType(model))],
@@ -20,8 +19,7 @@ static partial class ScalarValueObjectEmitter
 
 		if (!model.EqualsPrimitiveExists)
 		{
-			ValueObjectEmitterHelpers.WriteExpressionMethod(
-				writer,
+			writer.MethodExpression(
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					Parameters = [new("other", model.ScalarTypeReference)],
@@ -33,8 +31,7 @@ static partial class ScalarValueObjectEmitter
 
 		if (!model.EqualsObjectExists)
 		{
-			ValueObjectEmitterHelpers.WriteExpressionMethod(
-				writer,
+			writer.MethodExpression(
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					IsOverride = true,
@@ -47,8 +44,7 @@ static partial class ScalarValueObjectEmitter
 
 		if (!model.GetHashCodeExists)
 		{
-			ValueObjectEmitterHelpers.WriteExpressionMethod(
-				writer,
+			writer.MethodExpression(
 				new("GetHashCode", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					IsOverride = true,
@@ -61,12 +57,14 @@ static partial class ScalarValueObjectEmitter
 
 	static void EmitOperators(CodeWriter writer, ScalarValueObjectModel model)
 	{
+		var valueObjectType = ValueObjectType(model);
+
 		if (!model.SameTypeEqualityOperatorExists)
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.TypeName,
-				model.TypeName,
+				valueObjectType,
+				valueObjectType,
 				"==",
 				model.IsReferenceType ? "left is null ? right is null : left.Equals(right)" : "left.Equals(right)"
 			);
@@ -76,8 +74,8 @@ static partial class ScalarValueObjectEmitter
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.TypeName,
-				model.TypeName,
+				valueObjectType,
+				valueObjectType,
 				"!=",
 				"!(left == right)"
 			);
@@ -87,8 +85,8 @@ static partial class ScalarValueObjectEmitter
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.TypeName,
-				model.ScalarTypeName,
+				valueObjectType,
+				model.ScalarTypeReference,
 				"==",
 				model.IsReferenceType ? "left is null ? false : left.Equals(right)" : "left.Equals(right)"
 			);
@@ -98,8 +96,8 @@ static partial class ScalarValueObjectEmitter
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.TypeName,
-				model.ScalarTypeName,
+				valueObjectType,
+				model.ScalarTypeReference,
 				"!=",
 				"!(left == right)"
 			);
@@ -109,8 +107,8 @@ static partial class ScalarValueObjectEmitter
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.ScalarTypeName,
-				model.TypeName,
+				model.ScalarTypeReference,
+				valueObjectType,
 				"==",
 				model.IsReferenceType ? "right is not null && right.Equals(left)" : "right.Equals(left)"
 			);
@@ -120,8 +118,8 @@ static partial class ScalarValueObjectEmitter
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.ScalarTypeName,
-				model.TypeName,
+				model.ScalarTypeReference,
+				valueObjectType,
 				"!=",
 				"!(left == right)"
 			);
@@ -130,13 +128,27 @@ static partial class ScalarValueObjectEmitter
 
 	static void EmitConversions(CodeWriter writer, ScalarValueObjectModel model)
 	{
+		var valueObjectType = ValueObjectType(model);
+
 		if (model.Options.GenerateImplicitToPrimitive && !model.HasValueObjectToPrimitiveConversion)
 		{
-			writer
-				.Write(
-					$"public static implicit operator {model.ScalarTypeName}({model.TypeName} valueObject) => valueObject.{model.ScalarPropertyName};"
+			using (
+				writer.OperatorScope(
+					new OperatorDeclarationOptions(
+						"op_Implicit",
+						model.ScalarTypeReference,
+						new("valueObject", valueObjectType)
+					)
+					{
+						Accessibility = TypeDeclarationAccessibility.Public,
+						Kind = OperatorDeclarationKind.ImplicitConversion,
+						ExpressionBody = $"valueObject.{model.ScalarPropertyName}",
+					}
 				)
-				.NewLine();
+			)
+			{
+				//
+			}
 		}
 
 		if (
@@ -145,11 +157,23 @@ static partial class ScalarValueObjectEmitter
 			&& !model.HasPrimitiveToValueObjectConversion
 		)
 		{
-			writer
-				.Write(
-					$"public static implicit operator {model.TypeName}({model.ScalarTypeName} value) => Create(value);"
+			using (
+				writer.OperatorScope(
+					new OperatorDeclarationOptions(
+						"op_Implicit",
+						valueObjectType,
+						new("value", model.ScalarTypeReference)
+					)
+					{
+						Accessibility = TypeDeclarationAccessibility.Public,
+						Kind = OperatorDeclarationKind.ImplicitConversion,
+						ExpressionBody = "Create(value)",
+					}
 				)
-				.NewLine();
+			)
+			{
+				//
+			}
 		}
 	}
 
@@ -158,8 +182,7 @@ static partial class ScalarValueObjectEmitter
 		if (model.ToStringExists)
 			return;
 
-		ValueObjectEmitterHelpers.WriteExpressionMethod(
-			writer,
+		writer.MethodExpression(
 			new("ToString", PurviewTypeLibrary.System.String, TypeDeclarationAccessibility.Public)
 			{
 				IsOverride = true,
@@ -177,7 +200,7 @@ static partial class ScalarValueObjectEmitter
 		var factoryMethod =
 			model.Options.DeserializationMode == ValueObjectSymbolInspector.StrictModeName ? "Create" : "Hydrate";
 
-		writer.WriteClass(
+		writer.Class(
 			new($"{model.TypeModel.Name}JsonConverter")
 			{
 				IsPartial = false,
@@ -186,7 +209,7 @@ static partial class ScalarValueObjectEmitter
 			},
 			body =>
 			{
-				body.WriteMethod(
+				body.Method(
 					new("Read", valueObjectType, TypeDeclarationAccessibility.Public)
 					{
 						IsOverride = true,
@@ -199,33 +222,35 @@ static partial class ScalarValueObjectEmitter
 					},
 					methodBody =>
 					{
-						methodBody.WriteAssignment(
+						methodBody.Assignment(
 							"var",
 							"value",
 							writeValue =>
-								writeValue.WriteMethodCall(
-									TypeLibrary.System.TextJson.JsonSerializer.StaticMember("Deserialize"),
+								writeValue.MethodCall(
+									"Deserialize",
 									[new MethodCallArgumentOptions("reader", ParameterModifier.Ref), "options"],
+									receiver: $"{TypeLibrary.System.TextJson.JsonSerializer}",
 									genericArguments: [model.ScalarTypeReference]
 								)
 						);
 
 						if (model.ScalarCanBeNull)
 						{
-							methodBody.WriteIfBlock(
+							methodBody.IfBlock(
 								"value is null",
 								ifBody =>
-									ifBody.WriteThrow(
-										$"new {TypeLibrary.System.TextJson.JsonException}(\"{model.TypeModel.Name} cannot be null.\")"
+									ifBody.Throw(
+										TypeLibrary.System.TextJson.JsonException,
+										$"{model.TypeModel.Name} cannot be null."
 									)
 							);
 						}
 
-						methodBody.WriteReturn($"{factoryMethod}(value)");
+						methodBody.Return($"{factoryMethod}(value)");
 					}
 				);
 
-				body.WriteMethod(
+				body.Method(
 					new("Write", TypeDeclarationAccessibility.Public)
 					{
 						IsOverride = true,
@@ -237,9 +262,12 @@ static partial class ScalarValueObjectEmitter
 						],
 					},
 					methodBody =>
-						methodBody.WriteMethodCall(
-							TypeLibrary.System.TextJson.JsonSerializer.StaticMember("Serialize"),
-							["writer", $"value.{model.ScalarPropertyName}", "options"]
+						methodBody.MethodCallOn(
+							$"{TypeLibrary.System.TextJson.JsonSerializer}",
+							"Serialize",
+							"writer",
+							$"value.{model.ScalarPropertyName}",
+							"options"
 						)
 				);
 			}

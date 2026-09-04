@@ -2,37 +2,33 @@ namespace Purview.EventSourcing.SourceGenerator.ValueObject;
 
 static class ValueObjectEmitterHelpers
 {
-	public static void WriteExpressionMethod(CodeWriter writer, MethodDeclarationOptions declaration)
-	{
-		using (writer.WriteMethodScope(declaration))
-		{
-			//
-		}
-	}
-
 	public static void EmitBinaryOperator(
 		CodeWriter writer,
-		string leftTypeName,
-		string rightTypeName,
+		TypeReference leftType,
+		TypeReference rightType,
 		string operatorToken,
 		string expression
 	)
 	{
-		using (
-			writer.OpenBlockScope(
-				$"public static bool operator {operatorToken}({leftTypeName} left, {rightTypeName} right)"
+		writer.Operator(
+			new OperatorDeclarationOptions(
+				operatorToken,
+				PurviewTypeLibrary.System.Boolean,
+				new("left", leftType),
+				new("right", rightType)
 			)
-		)
-		{
-			writer.WriteReturn(expression);
-		}
+			{
+				Accessibility = TypeDeclarationAccessibility.Public,
+			},
+			body => body.Return(expression)
+		);
 	}
 
 	public static void EmitRelationalOperators(
 		CodeWriter writer,
 		EquatableArray<string> existingOperators,
-		string leftTypeName,
-		string rightTypeName,
+		TypeReference leftType,
+		TypeReference rightType,
 		string compareExpression
 	)
 	{
@@ -41,8 +37,8 @@ static class ValueObjectEmitterHelpers
 			existingOperators,
 			ValueObjectSymbolInspector.LessThanOperatorName,
 			"<",
-			leftTypeName,
-			rightTypeName,
+			leftType,
+			rightType,
 			compareExpression,
 			"< 0"
 		);
@@ -51,8 +47,8 @@ static class ValueObjectEmitterHelpers
 			existingOperators,
 			ValueObjectSymbolInspector.GreaterThanOperatorName,
 			">",
-			leftTypeName,
-			rightTypeName,
+			leftType,
+			rightType,
 			compareExpression,
 			"> 0"
 		);
@@ -61,8 +57,8 @@ static class ValueObjectEmitterHelpers
 			existingOperators,
 			ValueObjectSymbolInspector.LessThanOrEqualOperatorName,
 			"<=",
-			leftTypeName,
-			rightTypeName,
+			leftType,
+			rightType,
 			compareExpression,
 			"<= 0"
 		);
@@ -71,8 +67,8 @@ static class ValueObjectEmitterHelpers
 			existingOperators,
 			ValueObjectSymbolInspector.GreaterThanOrEqualOperatorName,
 			">=",
-			leftTypeName,
-			rightTypeName,
+			leftType,
+			rightType,
 			compareExpression,
 			">= 0"
 		);
@@ -83,8 +79,8 @@ static class ValueObjectEmitterHelpers
 		EquatableArray<string> existingOperators,
 		string operatorMethodName,
 		string operatorToken,
-		string leftTypeName,
-		string rightTypeName,
+		TypeReference leftType,
+		TypeReference rightType,
 		string compareExpression,
 		string comparisonSuffix
 	)
@@ -92,13 +88,17 @@ static class ValueObjectEmitterHelpers
 		if (existingOperators.Contains(operatorMethodName))
 			return;
 
-		using (
-			writer.OpenBlockScope(
-				$"public static bool operator {operatorToken}({leftTypeName} left, {rightTypeName} right)"
+		writer.Operator(
+			new OperatorDeclarationOptions(
+				operatorToken,
+				PurviewTypeLibrary.System.Boolean,
+				new("left", leftType),
+				new("right", rightType)
 			)
-		)
-		{
-			writer.WriteReturn($"left.{compareExpression} {comparisonSuffix}");
-		}
+			{
+				Accessibility = TypeDeclarationAccessibility.Public,
+			},
+			body => body.Return($"left.{compareExpression} {comparisonSuffix}")
+		);
 	}
 }

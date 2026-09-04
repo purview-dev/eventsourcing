@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Purview.Telemetry;
 
 namespace Purview.EventSourcing.ChangeFeed;

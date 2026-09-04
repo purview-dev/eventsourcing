@@ -14,7 +14,7 @@ partial class AggregateSourceEmitter
 
 		var hashParameterName = method.EventParameters.IsEmpty ? "_" : "hash";
 
-		writer.WriteClass(
+		writer.Class(
 			new(method.EventType.Identity.Name, TypeDeclarationAccessibility.Public)
 			{
 				IsSealed = true,
@@ -27,7 +27,7 @@ partial class AggregateSourceEmitter
 				{
 					var propertyType = prop.PropertyType;
 
-					bodyWriter.WriteProperty(
+					bodyWriter.Property(
 						new(prop.PropertyName, propertyType, TypeDeclarationAccessibility.Public)
 						{
 							HasSetter = true,
@@ -36,7 +36,7 @@ partial class AggregateSourceEmitter
 					);
 				}
 
-				bodyWriter.WriteProperty(
+				bodyWriter.Property(
 					new("SchemaVersion", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 					{
 						IsOverride = true,
@@ -44,7 +44,7 @@ partial class AggregateSourceEmitter
 					}
 				);
 
-				bodyWriter.WriteMethod(
+				bodyWriter.Method(
 					new("BuildEventHash", TypeDeclarationAccessibility.Protected)
 					{
 						IsOverride = true,
@@ -53,10 +53,7 @@ partial class AggregateSourceEmitter
 					methodBodyWriter =>
 					{
 						foreach (var prop in method.EventParameters)
-							methodBodyWriter
-								.Write(hashParameterName)
-								.Write('.')
-								.WriteMethodCall("Add", prop.PropertyName);
+							methodBodyWriter.MethodCallOn(hashParameterName, "Add", prop.PropertyName);
 					}
 				);
 			}

@@ -6,7 +6,7 @@ static partial class ComplexValueObjectEmitter
 	{
 		if (!model.EqualsSelfExists)
 		{
-			writer.WriteMethod(
+			writer.Method(
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					Parameters = [new("other", ValueObjectType(model))],
@@ -14,25 +14,24 @@ static partial class ComplexValueObjectEmitter
 				body =>
 				{
 					if (model.IsReferenceType)
-						body.WriteIfBlock("other is null", ifBody => ifBody.WriteReturn("false"));
+						body.IfBlock("other is null", ifBody => ifBody.Return("false"));
 
 					foreach (var property in model.Properties)
 					{
-						body.WriteIfBlock(
+						body.IfBlock(
 							$"!global::System.Collections.Generic.EqualityComparer<{property.TypeName}>.Default.Equals({property.Name}, other.{property.Name})",
-							ifBody => ifBody.WriteReturn("false")
+							ifBody => ifBody.Return("false")
 						);
 					}
 
-					body.WriteReturn("true");
+					body.Return("true");
 				}
 			);
 		}
 
 		if (!model.EqualsObjectExists)
 		{
-			ValueObjectEmitterHelpers.WriteExpressionMethod(
-				writer,
+			writer.MethodExpression(
 				new("Equals", PurviewTypeLibrary.System.Boolean, TypeDeclarationAccessibility.Public)
 				{
 					IsOverride = true,
@@ -44,18 +43,18 @@ static partial class ComplexValueObjectEmitter
 
 		if (!model.GetHashCodeExists)
 		{
-			writer.WriteMethod(
+			writer.Method(
 				new("GetHashCode", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					IsOverride = true,
 				},
 				body =>
 				{
-					body.WriteAssignment("var", "hash", "new global::System.HashCode()");
+					body.Assignment("var", "hash", "new global::System.HashCode()");
 					foreach (var property in model.Properties)
-						body.WriteMethodCall("hash.Add", property.Name);
+						body.MethodCallOn("hash", "Add", property.Name);
 
-					body.WriteReturn("hash.ToHashCode()");
+					body.Return("hash.ToHashCode()");
 				}
 			);
 		}
@@ -63,12 +62,14 @@ static partial class ComplexValueObjectEmitter
 
 	static void EmitOperators(CodeWriter writer, ComplexValueObjectModel model)
 	{
+		var valueObjectType = ValueObjectType(model);
+
 		if (!model.EqualityOperatorExists)
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.TypeName,
-				model.TypeName,
+				valueObjectType,
+				valueObjectType,
 				"==",
 				model.IsReferenceType ? "left is null ? right is null : left.Equals(right)" : "left.Equals(right)"
 			);
@@ -78,8 +79,8 @@ static partial class ComplexValueObjectEmitter
 		{
 			ValueObjectEmitterHelpers.EmitBinaryOperator(
 				writer,
-				model.TypeName,
-				model.TypeName,
+				valueObjectType,
+				valueObjectType,
 				"!=",
 				"!(left == right)"
 			);
@@ -90,7 +91,7 @@ static partial class ComplexValueObjectEmitter
 	{
 		if (!model.CompareToSelfExists)
 		{
-			writer.WriteMethod(
+			writer.Method(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					Parameters =
@@ -104,41 +105,41 @@ static partial class ComplexValueObjectEmitter
 				body =>
 				{
 					if (model.IsReferenceType)
-						body.WriteIfBlock("other is null", ifBody => ifBody.WriteReturn("1"));
+						body.IfBlock("other is null", ifBody => ifBody.Return("1"));
 
 					foreach (var property in model.Properties)
 					{
-						body.WriteAssignment(
+						body.Assignment(
 							"var",
 							$"compare{property.Name}",
 							$"global::System.Collections.Generic.Comparer<{property.TypeName}>.Default.Compare({property.Name}, other.{property.Name})"
 						);
-						body.WriteIfBlock(
+						body.IfBlock(
 							$"compare{property.Name} != 0",
-							ifBody => ifBody.WriteReturn($"compare{property.Name}")
+							ifBody => ifBody.Return($"compare{property.Name}")
 						);
 					}
 
-					body.WriteReturn("0");
+					body.Return("0");
 				}
 			);
 		}
 
 		if (!model.CompareToObjectExists)
 		{
-			writer.WriteMethod(
+			writer.Method(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					Parameters = [new("obj", PurviewTypeLibrary.System.Object.MakeNullable(writer))],
 				},
 				body =>
 				{
-					body.WriteIfBlock("obj is null", ifBody => ifBody.WriteReturn("1"));
-					body.WriteIfBlock(
+					body.IfBlock("obj is null", ifBody => ifBody.Return("1"));
+					body.IfBlock(
 						$"obj is {model.TypeName} otherValueObject",
-						ifBody => ifBody.WriteReturn("CompareTo(otherValueObject)")
+						ifBody => ifBody.Return("CompareTo(otherValueObject)")
 					);
-					body.WriteThrow(
+					body.Throw(
 						$"new global::System.ArgumentException($\"Object must be of type {{nameof({model.TypeModel.Name})}}.\", nameof(obj))"
 					);
 				}
@@ -150,8 +151,8 @@ static partial class ComplexValueObjectEmitter
 			ValueObjectEmitterHelpers.EmitRelationalOperators(
 				writer,
 				model.ExistingRelationalOperators,
-				model.TypeName,
-				model.TypeName,
+				ValueObjectType(model),
+				ValueObjectType(model),
 				"CompareTo(right)"
 			);
 		}

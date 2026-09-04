@@ -5,19 +5,25 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 
 static partial class SourceGenLibrary
 {
+	public static GenerationSettings CreateGenerationSettings<TGenerator>(string? disablePropertyName = null) =>
+		GenerationSettings.Create<TGenerator>(disablePropertyName) with
+		{
+			DefaultMethodAccessibility = null,
+		};
+
 	public static IncrementalValueProvider<GenerationContext<AggregateGenerationCapabilities>> GetGenerationContext(
 		IncrementalGeneratorInitializationContext context
 	) =>
-		IncrementalPipeline.GenerationContextValueProvider<AggregateGenerationCapabilities, AggregateSourceGenerator>(
+		IncrementalPipeline.GenerationContextValueProvider<AggregateGenerationCapabilities>(
 			context,
+			CreateGenerationSettings<AggregateSourceGenerator>(PropertyLibrary.DisableSourceGenerator),
 			static (compilation, settings, logger, _) =>
 			{
 				var hasAggregateBase =
 					compilation.GetTypeByMetadataName(TypeLibrary.Aggregates.AggregateBase.MetadataFullName)
 					is not null;
 				return new(hasAggregateBase);
-			},
-			PropertyLibrary.DisableSourceGenerator
+			}
 		);
 
 	public static IncrementalValuesProvider<GeneratorResult<AggregateInfo>> GetAggregateTargets(

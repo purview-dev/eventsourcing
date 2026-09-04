@@ -10,24 +10,49 @@ static partial class AggregateSourceEmitter
 			var parameter = method.AllParameters[0];
 			var hookSuffix = GetHookName(method.EventType);
 			var normalizeValidateSuffix = collectionEvent.NormalizeValidateHookSuffix;
-			var methodAccessModifier = GetAccessModifierString(method.MethodAccessibility);
-			var parameterList = BuildParameterList(method.AllParameters);
 
-			writer.WriteLine(
-				$"{methodAccessModifier} partial {method.ReturnType} {method.MethodName}({parameterList})"
+			writer.Method(
+				new(method.MethodName, method.ReturnType)
+				{
+					Accessibility = method.MethodAccessibility.ToTypeDeclarationAccessibility(),
+					IsPartial = true,
+					Parameters =
+					[
+						.. method.AllParameters.Select(static p => new ParameterDeclarationOptions(
+							p.ParameterName,
+							p.ParameterType
+						)
+						{
+							IsParams = p.IsParams,
+						}),
+					],
+				},
+				writeBody =>
+				{
+					EmitCollectionGuard(writeBody, collectionEvent);
+
+					if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
+						EmitSingleItemBody(
+							writeBody,
+							method,
+							collectionEvent,
+							parameter,
+							hookSuffix,
+							normalizeValidateSuffix
+						);
+					else
+						EmitEnumerableBody(
+							writeBody,
+							method,
+							collectionEvent,
+							parameter,
+							hookSuffix,
+							normalizeValidateSuffix
+						);
+
+					EmitCollectionFinalization(writeBody, method, hookSuffix);
+				}
 			);
-
-			using (writer.OpenBlockScope())
-			{
-				EmitCollectionGuard(writer, collectionEvent);
-
-				if (collectionEvent.ParameterShape == CollectionParameterShape.Single)
-					EmitSingleItemBody(writer, method, collectionEvent, parameter, hookSuffix, normalizeValidateSuffix);
-				else
-					EmitEnumerableBody(writer, method, collectionEvent, parameter, hookSuffix, normalizeValidateSuffix);
-
-				EmitCollectionFinalization(writer, method, hookSuffix);
-			}
 
 			writer.NewLine();
 
@@ -36,11 +61,12 @@ static partial class AggregateSourceEmitter
 
 		static void EmitCollectionGuard(CodeWriter writer, CollectionEventInfo collectionEvent)
 		{
-			writer.WriteBlock(
+			writer.Block(
 				$"if ({collectionEvent.PropertyName} is null)",
 				block =>
-					block.WriteThrow(
-						$"new global::System.InvalidOperationException(\"Collection property '{collectionEvent.PropertyName}' cannot be null.\")"
+					block.Throw(
+						TypeLibrary.System.InvalidOperationException,
+						$"Collection property '{collectionEvent.PropertyName}' cannot be null."
 					)
 			);
 			writer.NewLine();
@@ -55,12 +81,12 @@ static partial class AggregateSourceEmitter
 			string normalizeValidateSuffix
 		)
 		{
-			writer.WriteAssignment("var", "__itemValue", parameter.ParameterName);
-			writer.WriteMethodCall(
+			writer.Assignment("var", "__itemValue", parameter.ParameterName);
+			writer.MethodCall(
 				$"OnNormalizing{normalizeValidateSuffix}",
 				[new MethodCallArgumentOptions("__itemValue", ParameterModifier.Ref)]
 			);
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				$"OnValidating{normalizeValidateSuffix}",
 				[new MethodCallArgumentOptions("__itemValue", ParameterModifier.Ref)]
 			);
@@ -68,32 +94,33 @@ static partial class AggregateSourceEmitter
 			var isAddOperation = collectionEvent.Operation == CollectionMutationOperation.Add;
 			if (isAddOperation && collectionEvent.IsSet)
 			{
-				writer.WriteIfBlock(
+				writer.IfBlock(
 					$"{collectionEvent.PropertyName}.Contains(__itemValue)",
 					ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 				);
 			}
 			else if (!isAddOperation)
 			{
-				writer.WriteIfBlock(
+				writer.IfBlock(
 					$"!{collectionEvent.PropertyName}.Contains(__itemValue)",
 					ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 				);
 			}
 
-			writer.Write("var @event = new ").Write(method.EventType);
-			using (writer.OpenBlockScope())
-			{
-				writer.WriteLine($"{parameter.PropertyName} = __itemValue,");
-			}
-			writer.Write(";").NewLine();
+			writer.Assignment(
+				"var @event",
+				new ObjectCreationOptions(method.EventType)
+				{
+					InitializerMembers = [new(parameter.PropertyName, "__itemValue")],
+				}
+			);
 
-			writer.WriteIfBlock(
+			writer.IfBlock(
 				$"!ShouldApply{hookSuffix}(@event)",
 				ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 			);
 
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				$"OnRaising{hookSuffix}",
 				[new MethodCallArgumentOptions("__itemValue", ParameterModifier.Ref)]
 			);
@@ -112,75 +139,72 @@ static partial class AggregateSourceEmitter
 				collectionEvent.ElementType
 			);
 
-			writer.WriteAssignment(
-				$"global::System.Collections.Generic.IEnumerable<{collectionEvent.ElementType}>",
-				"__itemsValue",
-				parameter.ParameterName
-			);
-			writer.WriteMethodCall(
+			writer.Assignment(enumerableType, "__itemsValue", parameter.ParameterName);
+			writer.MethodCall(
 				$"OnNormalizing{normalizeValidateSuffix}",
 				[new MethodCallArgumentOptions("__itemsValue", ParameterModifier.Ref)]
 			);
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				$"OnValidating{normalizeValidateSuffix}",
 				[new MethodCallArgumentOptions("__itemsValue", ParameterModifier.Ref)]
 			);
-			writer.WriteAssignment(
+			writer.Assignment(
 				"var",
 				"__eventItems",
 				$"__itemsValue as {collectionEvent.ElementType}[] ?? [.. __itemsValue]"
 			);
-			writer.WriteIfBlock("__eventItems.Length == 0", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
+			writer.IfBlock("__eventItems.Length == 0", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
 
 			var isAddOperation = collectionEvent.Operation == CollectionMutationOperation.Add;
 			if (isAddOperation && collectionEvent.IsSet)
 			{
-				writer.WriteAssignment("var", "__hasNewValues", "false");
-				writer.WriteBlock(
+				writer.Assignment("var", "__hasNewValues", "false");
+				writer.Block(
 					"foreach (var __item in __eventItems)",
 					block =>
-						block.WriteIfBlock(
+						block.IfBlock(
 							$"!{collectionEvent.PropertyName}.Contains(__item)",
 							ifBody =>
 							{
-								ifBody.WriteAssignment("__hasNewValues", "true");
-								ifBody.WriteLine("break;");
+								ifBody.Assignment("__hasNewValues", "true");
+								ifBody.Line("break;");
 							}
 						)
 				);
-				writer.WriteIfBlock("!__hasNewValues", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
+				writer.IfBlock("!__hasNewValues", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
 			}
 			else if (!isAddOperation)
 			{
-				writer.WriteAssignment("var", "__hasExistingValues", "false");
-				writer.WriteBlock(
+				writer.Assignment("var", "__hasExistingValues", "false");
+				writer.Block(
 					"foreach (var __item in __eventItems)",
 					block =>
-						block.WriteIfBlock(
+						block.IfBlock(
 							$"{collectionEvent.PropertyName}.Contains(__item)",
 							ifBody =>
 							{
-								ifBody.WriteAssignment("__hasExistingValues", "true");
-								ifBody.WriteLine("break;");
+								ifBody.Assignment("__hasExistingValues", "true");
+								ifBody.Line("break;");
 							}
 						)
 				);
-				writer.WriteIfBlock("!__hasExistingValues", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
+				writer.IfBlock("!__hasExistingValues", ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind));
 			}
 
-			writer.Write("var @event = new ").Write(method.EventType);
-			using (writer.OpenBlockScope())
-			{
-				writer.WriteLine($"{parameter.PropertyName} = __eventItems,");
-			}
-			writer.Write(";").NewLine();
+			writer.Assignment(
+				"var @event",
+				new ObjectCreationOptions(method.EventType)
+				{
+					InitializerMembers = [new(parameter.PropertyName, "__eventItems")],
+				}
+			);
 
-			writer.WriteIfBlock(
+			writer.IfBlock(
 				$"!ShouldApply{hookSuffix}(@event)",
 				ifBody => EmitNoChangeReturn(ifBody, method.ReturnKind)
 			);
 
-			writer.WriteMethodCall(
+			writer.MethodCall(
 				$"OnRaising{hookSuffix}",
 				[new MethodCallArgumentOptions("__itemsValue", ParameterModifier.Ref)]
 			);
@@ -189,8 +213,8 @@ static partial class AggregateSourceEmitter
 		static void EmitCollectionFinalization(CodeWriter writer, AggregateEventMethodInfo method, string hookSuffix)
 		{
 			writer.NewLine();
-			writer.WriteMethodCall($"OnRaised{hookSuffix}", ["@event"]);
-			writer.WriteMethodCall("RecordAndApply", ["@event"]);
+			writer.MethodCall($"OnRaised{hookSuffix}", ["@event"]);
+			writer.MethodCall("RecordAndApply", ["@event"]);
 			EmitSuccessReturn(writer, method.ReturnKind);
 		}
 
@@ -215,11 +239,11 @@ static partial class AggregateSourceEmitter
 				Modifier = ParameterModifier.Ref,
 			};
 
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new($"OnRaising{hookSuffix}") { Attributes = [suppression], Parameters = [normalizingParam] }
 			);
 
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new($"OnRaised{hookSuffix}")
 				{
 					Attributes = [suppression],
@@ -227,20 +251,20 @@ static partial class AggregateSourceEmitter
 				}
 			);
 
-			writer.WriteMethod(
+			writer.Method(
 				new($"ShouldApply{hookSuffix}", PurviewTypeLibrary.System.Boolean)
 				{
 					Parameters = [new("@event", method.EventType)],
 				},
 				writeBody =>
 				{
-					writeBody.WriteAssignment("var", "shouldApply", "true");
-					writeBody.WriteMethodCall($"OnShouldApply{hookSuffix}", ["@event", "ref shouldApply"]);
-					writeBody.WriteReturn("shouldApply");
+					writeBody.Assignment("var", "shouldApply", "true");
+					writeBody.MethodCall($"OnShouldApply{hookSuffix}", ["@event", "ref shouldApply"]);
+					writeBody.Return("shouldApply");
 				}
 			);
 
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new($"OnShouldApply{hookSuffix}")
 				{
 					Attributes = [suppression],
@@ -252,7 +276,7 @@ static partial class AggregateSourceEmitter
 				}
 			);
 
-			writer.WritePartialMethod(
+			writer.PartialMethod(
 				new($"OnApplied{hookSuffix}")
 				{
 					Attributes = [suppression],

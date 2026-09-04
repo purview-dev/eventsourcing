@@ -6,7 +6,7 @@ static partial class ScalarValueObjectEmitter
 	{
 		if (!model.CompareToSelfExists)
 		{
-			writer.WriteMethod(
+			writer.Method(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					Parameters =
@@ -20,17 +20,16 @@ static partial class ScalarValueObjectEmitter
 				body =>
 				{
 					if (model.IsReferenceType)
-						body.WriteIfBlock("other is null", ifBody => ifBody.WriteReturn("1"));
+						body.IfBlock("other is null", ifBody => ifBody.Return("1"));
 
-					body.WriteReturn($"CompareTo(other.{model.ScalarPropertyName})");
+					body.Return($"CompareTo(other.{model.ScalarPropertyName})");
 				}
 			);
 		}
 
 		if (!model.CompareToPrimitiveExists)
 		{
-			ValueObjectEmitterHelpers.WriteExpressionMethod(
-				writer,
+			writer.MethodExpression(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					Parameters =
@@ -50,23 +49,23 @@ static partial class ScalarValueObjectEmitter
 
 		if (!model.CompareToObjectExists)
 		{
-			writer.WriteMethod(
+			writer.Method(
 				new("CompareTo", PurviewTypeLibrary.System.Int32, TypeDeclarationAccessibility.Public)
 				{
 					Parameters = [new("obj", PurviewTypeLibrary.System.Object.MakeNullable(writer))],
 				},
 				body =>
 				{
-					body.WriteIfBlock("obj is null", ifBody => ifBody.WriteReturn("1"));
-					body.WriteIfBlock(
+					body.IfBlock("obj is null", ifBody => ifBody.Return("1"));
+					body.IfBlock(
 						$"obj is {model.TypeName} otherValueObject",
-						ifBody => ifBody.WriteReturn("CompareTo(otherValueObject)")
+						ifBody => ifBody.Return("CompareTo(otherValueObject)")
 					);
-					body.WriteIfBlock(
+					body.IfBlock(
 						$"obj is {model.ScalarTypeName} primitive",
-						ifBody => ifBody.WriteReturn("CompareTo(primitive)")
+						ifBody => ifBody.Return("CompareTo(primitive)")
 					);
-					body.WriteThrow(
+					body.Throw(
 						$"new global::System.ArgumentException($\"Object must be of type {{nameof({model.TypeModel.Name})}} or {model.ScalarTypeName}.\", nameof(obj))"
 					);
 				}
@@ -78,8 +77,8 @@ static partial class ScalarValueObjectEmitter
 			ValueObjectEmitterHelpers.EmitRelationalOperators(
 				writer,
 				model.ExistingSelfRelationalOperators,
-				model.TypeName,
-				model.TypeName,
+				ValueObjectType(model),
+				ValueObjectType(model),
 				"CompareTo(right)"
 			);
 
@@ -88,8 +87,8 @@ static partial class ScalarValueObjectEmitter
 				ValueObjectEmitterHelpers.EmitRelationalOperators(
 					writer,
 					model.ExistingScalarRelationalOperators,
-					model.TypeName,
-					model.ScalarTypeName,
+					ValueObjectType(model),
+					model.ScalarTypeReference,
 					"CompareTo(right)"
 				);
 			}
