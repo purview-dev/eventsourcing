@@ -19,7 +19,7 @@
     "nswag.consolecore": {
       "version": "14.7.1",
       "commands": [
-        "nswag"
+        "dotnet-nswag"
       ],
       "rollForward": false
     }
