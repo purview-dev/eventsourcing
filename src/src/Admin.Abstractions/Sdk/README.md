@@ -34,7 +34,7 @@ Permissions are expressed as `AdminPermission` records combining an `AdminFeatur
 
 ## Related packages
 
-- [Admin API](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.API/README.md): `Purview.EventSourcing.Admin.Api`
-- [Admin security](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Security/README.md): `Purview.EventSourcing.Admin.Security`
-- [Admin UI](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Site/README.md): `Purview.EventSourcing.Admin.Site`
-- [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
+- [Admin API](https://github.com/purview-dev/eventsourcing/blob/main/src/src/Admin.API/Sdk/README.md): `Purview.EventSourcing.Admin.Api`
+- [Admin security](https://github.com/purview-dev/eventsourcing/blob/main/src/src/Admin.Security/Sdk/README.md): `Purview.EventSourcing.Admin.Security`
+- [Admin UI](https://github.com/purview-dev/eventsourcing/blob/main/src/src/Admin.Site/Sdk/README.md): `Purview.EventSourcing.Admin.Site`
+- [Provider feature matrix](https://github.com/purview-dev/eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)

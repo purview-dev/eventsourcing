@@ -47,5 +47,5 @@ await store.SaveAsync(order, cancellationToken);
 
 ## Related packages
 
-- [Core package](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/EventSourcing/README.md): `Purview.EventSourcing`
-- [ZodSharp integration](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/ZodSharpImpl/README.md): `Purview.EventSourcing.ZodSharp`
+- [Core package](https://github.com/purview-dev/eventsourcing/blob/main/src/src/EventSourcing/Sdk/README.md): `Purview.EventSourcing`
+- [ZodSharp integration](https://github.com/purview-dev/eventsourcing/blob/main/src/src/ZodSharpImpl/Sdk/README.md): `Purview.EventSourcing.ZodSharp`

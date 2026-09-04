@@ -35,6 +35,6 @@ builder.Services.AddPurviewEventSourcingAdminSqlServer();
 
 ## Related packages
 
-- [Admin abstractions](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.Abstractions/README.md): `Purview.EventSourcing.Admin.Abstractions`
-- [Admin API](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/Admin.API/README.md): `Purview.EventSourcing.Admin.Api`
-- [SQL Server guide](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/SQL-Server-Guide.md)
+- [Admin abstractions](https://github.com/purview-dev/eventsourcing/blob/main/src/src/Admin.Abstractions/Sdk/README.md): `Purview.EventSourcing.Admin.Abstractions`
+- [Admin API](https://github.com/purview-dev/eventsourcing/blob/main/src/src/Admin.API/Sdk/README.md): `Purview.EventSourcing.Admin.Api`
+- [SQL Server guide](https://github.com/purview-dev/eventsourcing/blob/main/docs/wiki/SQL-Server-Guide.md)

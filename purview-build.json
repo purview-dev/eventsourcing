@@ -1,0 +1,21 @@
+{
+	"Build": {
+		"Solution": "src/EventSourcing.slnx",
+		"TestRoot": "src/tests",
+		"TestPatterns": "*UnitTests.csproj",
+		"TestFilter": "/*/*/*/*/"
+	},
+	"PackValidation": {
+		"RequireSymbolPackage": true,
+		"RequireSymbolFiles": true,
+		"RequiredContent": {
+			"purview.eventsourcing.zodsharp": [
+				"buildTransitive/Purview.EventSourcing.ZodSharp.targets"
+			]
+		},
+		"ForbiddenContent": {}
+	},
+	"Release": {
+		"Mode": "None"
+	}
+}

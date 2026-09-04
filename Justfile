@@ -5,7 +5,6 @@ root_folder := "./src"
 test_root := root_folder + "/tests"
 
 solution_file := root_folder + "/EventSourcing.slnx"
-sg_solution_file := root_folder + "/SourceGeneration.slnf"
 
 sg_perf_tests := test_root + "/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj"
 sql_perf_tests := test_root + "/SqlServer.PerformanceTests/SqlServer.PerformanceTests.csproj"
@@ -13,8 +12,9 @@ sql_perf_tests := test_root + "/SqlServer.PerformanceTests/SqlServer.Performance
 build_configuration := "Release"
 artifacts_folder := "./artifacts"
 
-pipeline_solution := "build/Pipeline.slnx"
-pipeline_project := "build/PipelineCLI/PipelineCLI.csproj"
+pipeline_version := "0.2.1"
+pipeline_feed := "https://api.nuget.org/v3/index.json"
+pipeline_tool := ".tools/purview-build/purview-build"
 
 current_version := `node -p "require('./package.json').version"`
 
@@ -22,23 +22,33 @@ current_version := `node -p "require('./package.json').version"`
 default:
     just --list
 
+# Install the shared Purview.Build tool if not present
+[private]
+ensure-pipeline-tool:
+    if [ ! -x "{{ pipeline_tool }}" ]; then \
+        dotnet tool install Purview.Build --tool-path .tools/purview-build --add-source "{{ pipeline_feed }}" --version "{{ pipeline_version }}"; \
+    fi
+
 # Run the PR pipeline (restore, build, lint, tests)
 [group('Pipeline')]
 pipeline-pr *args:
+    just ensure-pipeline-tool
     echo "Running PR pipeline..."
-    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} {{ args }}
+    "{{ pipeline_tool }}" {{ args }}
 
 # Run the build pipeline (restore, build, lint)
 [group('Pipeline')]
 pipeline-build *args:
+    just ensure-pipeline-tool
     echo "Running build pipeline..."
-    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Build:RunTests=false --Release:Mode=None {{ args }} 
+    "{{ pipeline_tool }}" --Build:RunTests=false --Release:Mode=None {{ args }}
 
 # Run the release pipeline (restore, build, lint, tests, pack, publish, GitHub release)
 [group('Pipeline')]
 pipeline-release *args:
+    just ensure-pipeline-tool
     echo "Running release pipeline..."
-    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Release:Mode=NuGet {{ args }}
+    "{{ pipeline_tool }}" --Release:Mode=NuGet {{ args }}
 
 # Run the release pipeline (restore, build, lint, tests, pack, local nuget publish)
 # Note: `just` runs recipes through the shell, which strips backslashes from unquoted arguments.
@@ -46,29 +56,21 @@ pipeline-release *args:
 # just pipeline-local-release --PublishLocalNuGet:LocalFeedPath=p:/_sync-projects/.local-nuget/
 [group('Pipeline')]
 pipeline-local-release *args:
+    just ensure-pipeline-tool
     echo "Running local release pipeline..."
-    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Release:Mode=LocalNuGet {{ args }}
+    "{{ pipeline_tool }}" --Release:Mode=LocalNuGet {{ args }}
 
 # Run the pipeline with tests enabled
 [group('Pipeline')]
 pipeline-tests *args:
+    just ensure-pipeline-tool
     echo "Running tests pipeline..."
-    dotnet run --project {{ pipeline_project }} --configuration {{ build_configuration }} -- --Build:RunTests=true --Release:Mode=None {{ args }}
+    "{{ pipeline_tool }}" --Build:RunTests=true --Release:Mode=None {{ args }}
 
 # Open the solution in Visual Studio/ Registered application
 [group('Utilities')]
 vs:
     open {{ solution_file }}
-
-# Open the solution in Visual Studio/ Registered application
-[group('Utilities')]
-vs-pipeline:
-    open {{ pipeline_solution }}
-
-# Open the solution in Visual Studio
-[group('Utilities')]
-vs-sg:
-    open "{{ sg_solution_file }}"
 
 # Export the Admin API OpenAPI document to src/src/Admin.Client/OpenApi/admin.openapi.json
 [group('Utilities')]
@@ -138,9 +140,9 @@ pack artifact_folder=artifacts_folder *args:
 # Format the code with CSharpier
 [group('Utilities')]
 lint-fix:
-    dotnet csharpier format {{ root_folder }}
+    dotnet csharpier format .
 
 # Check formatting with CSharpier
 [group('Utilities')]
 lint-check:
-    dotnet csharpier check {{ root_folder }}
+    dotnet csharpier check .

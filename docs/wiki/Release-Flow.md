@@ -1,33 +1,26 @@
 # Release flow
 
-This repository uses a reusable GitHub Actions release architecture with separate PR validation and manual release workflows:
+This repository uses the shared [Purview.Build](https://github.com/purview-dev/build) pipeline for both PR validation and releases. Consuming repositories own configuration (through `purview-build.json`) but not pipeline source code.
 
-- `.github/workflows/pr.yml`
-- `.github/workflows/release.yml`
-- `.github/workflows/reusable-dotnet-validate.yml`
-- `.github/workflows/reusable-dotnet-pack.yml`
+- `.github/workflows/pr.yml` — PR validation
+- `.github/workflows/release.yml` — release on push to `main`
+- `purview-build.json` — pipeline configuration
 
 ## PR validation
 
-`pr.yml` runs on pull requests targeting `main` and only validates code quality and correctness.
+`pr.yml` runs on pull requests targeting `main` and delegates to the shared `purview-build.yml` workflow. It runs:
 
-It runs:
+1. `dotnet restore` of `src/EventSourcing.slnx`
+2. `dotnet build --no-restore --configuration Release`
+3. CSharpier lint across the repository
+4. Unit tests (discovered under `src/tests` matching `*UnitTests.csproj`, run with a TUnit tree-node filter)
+5. `dotnet pack` and package-content validation
 
-1. Node dependency install with detected package manager (`npm`, `pnpm`, or `yarn` lockfile detection)
-2. `dotnet restore`
-3. `dotnet build --no-restore --configuration Release`
-4. `dotnet test --no-build --configuration Release` (with TUnit treenode unit-test filter)
-5. publish TRX test results into PR checks and upload raw test artifacts
+Integration tests are never discovered in CI: `purview-build.json` sets `Build:TestPatterns` to `*UnitTests.csproj`, so provider integration tests (which require Docker/Testcontainers) run only locally via `just test`.
 
-The PR workflow does not tag, release, or publish packages. It uses read-only permissions by default, with a dedicated test-results publishing job that requests only `checks: write` and `pull-requests: write`.
+The PR workflow does not tag, release, or publish packages.
 
-`reusable-dotnet-validate.yml` always runs tests with a treenode filter. If `test-treenode-filter` is unset or empty, it falls back to:
-
-```text
-/*/*/*/*
-```
-
-## Changesets and versioning model
+## Versioning model
 
 `package.json` is the authoritative release version source. The release workflow reads:
 
@@ -35,164 +28,45 @@ The PR workflow does not tag, release, or publish packages. It uses read-only pe
 node -p "require('./package.json').version"
 ```
 
-This flow assumes version prep already happened before release (for example with `@changesets/cli` versioning and changelog updates merged to `main`).
+This flow assumes version prep already happened before release (for example with `@changesets/cli` versioning and changelog updates merged to `main`). The release pipeline does not invent or auto-bump versions.
 
-The release workflow does not invent or auto-bump versions.
+## Release on push to main
+
+`release.yml` triggers on push to `main` and delegates to the shared `purview-release.yml` workflow with `release-mode: NuGet`.
+
+The shared workflow:
+
+1. Reads `package.json` `version` and computes the `v<version>` tag.
+2. Skips the entire release if `v<version>` already exists (so re-merging to `main`, or merging `main` into a `release` branch, releases exactly once).
+3. Restores, builds, lints, runs unit tests, packs, and validates packages.
+4. Pushes every `.nupkg` to nuget.org (`--skip-duplicate`).
+5. Creates the `v<version>` GitHub release with generated release notes and attaches the package artifacts.
+
+A release is therefore produced simply by bumping `package.json` (via changesets) and merging to `main`. Do not create release tags manually.
 
 ## Prerelease support
 
-Any SemVer containing a hyphen (`-`) is treated as a prerelease, for example:
+Prerelease versions (any SemVer containing a hyphen, for example `2.0.0-prerelease.29`) release through the same push-to-`main` flow. The `v<version>` tag and GitHub release are still created and packages published; the shared pipeline does not mark the GitHub release with the prerelease flag.
 
-- `1.2.3-alpha.0`
-- `1.2.3-beta.1`
-- `1.2.3-rc.0`
+## NuGet publishing
 
-Prerelease versions create GitHub prereleases. Stable versions create standard GitHub releases.
+NuGet publishing uses the shared workflow's API-key path with the organization `NUGET__APIKEY` secret (available through `secrets: inherit`). The pipeline also accepts `NUGET_APIKEY`. No long-lived repository-level API key secrets are required.
 
-## Simplified deployment process
+To use NuGet Trusted Publishing (OIDC) instead, the consuming repository would need to mint the federated credential before the shared pipeline runs; the shared workflow itself does not perform the `NuGet/login` step.
 
-Use this end-to-end flow for prerelease and stable deployments:
+## Shared pipeline configuration
 
-1. Create a changeset:
-   - `npx @changesets/cli add --empty --message "<change summary>"`
-   - update generated `.changeset/*.md` frontmatter with package bump (for this repo: `"purview-eventsourcing": patch`)
-2. Apply version bump/changelog updates:
-   - `npx @changesets/cli version`
-3. Push to a branch and open a PR:
-   - `git push -u origin <branch>`
-   - `gh pr create --base main --head <branch> --title "<title>" --body "<body>"`
-4. Merge PR to `main` after checks pass:
-   - `gh pr merge --squash --delete-branch`
-5. Trigger release workflow from `main`:
-   - `gh workflow run release.yml --ref main`
-6. Workflow handles:
-   - tag creation (`v<version>`)
-   - GitHub release/prerelease creation
-   - package publish to NuGet via OIDC trusted publishing
+`purview-build.json` at the repository root drives the pipeline:
 
-```mermaid
-flowchart TD
-  A[Create changeset<br/>npx changeset add] --> B[Apply version bump<br/>npx changeset version]
-  B --> C[Commit and push branch]
-  C --> D[Create PR to main]
-  D --> E[PR validation workflow]
-  E --> F[Merge PR]
-  F --> G[Run release.yml]
-  G --> H[Create Git tag vX.Y.Z]
-  G --> I[Create GitHub Release]
-  G --> J[Publish NuGet packages via OIDC]
-```
+| Key | Value | Purpose |
+| --- | --- | --- |
+| `Build:Solution` | `src/EventSourcing.slnx` | Solution passed to restore/build/pack |
+| `Build:TestRoot` | `src/tests` | Test project discovery root |
+| `Build:TestPatterns` | `*UnitTests.csproj` | Restricts CI tests to unit test projects |
+| `Build:TestFilter` | `/*/*/*/*/` | TUnit tree-node filter |
+| `PackValidation:RequireSymbolPackage` | `true` | Every `.nupkg` needs a matching `.snupkg` |
+| `PackValidation:RequireSymbolFiles` | `true` | Every `.snupkg` must contain PDBs |
+| `PackValidation:RequiredContent` | ZodSharp `buildTransitive` target | Guards the `Purview.EventSourcing.ZodSharp` direct-reference guardrail ships in the package |
+| `Release:Mode` | `None` | Publishing is enabled only by the release workflow |
 
-## Manual release workflow
-
-`release.yml` is `workflow_dispatch` only and enforces release from `main`.
-
-High-level stages:
-
-1. **prepare/guard**
-   - verify branch is `main`
-   - read version from `package.json`
-   - compute `v<version>` tag
-   - fail if tag exists on `origin`
-   - fail if GitHub Release already exists for the tag
-   - extract release notes for the version from `CHANGELOG.md` (fallback note if missing)
-2. **validate**
-   - restore/build/test through reusable `.NET validate` workflow
-3. **pack**
-   - pack through reusable `.NET pack` workflow to `artifacts/package` from a configurable solution/project target
-4. **guard-nuget-duplicates**
-   - inspect every generated `.nupkg` in `artifacts/package`
-   - fail if any package ID + version already exists on NuGet
-5. **create-release**
-   - create and push Git tag (after validate + pack succeed)
-   - if tag already exists, only continue when it points at the same commit (safe rerun)
-   - create GitHub Release and attach `.nupkg`/`.snupkg` artifacts
-6. **publish-nuget**
-   - OIDC login to NuGet
-   - publish all `.nupkg` artifacts from `artifacts/package` to nuget.org
-
-## Release identity for tags and GitHub releases
-
-To support protected tag rules, `release.yml` supports using a GitHub App token for tag/release operations.
-
-Configure repository secrets:
-
-- `RELEASE_BOT_APP_ID`
-- `RELEASE_BOT_PRIVATE_KEY`
-
-When these secrets are present, the workflow uses `actions/create-github-app-token` and uses that token for:
-
-- pushing `refs/tags/v<version>`
-- creating the GitHub release
-
-The installation token is scoped to the current repository via the action's `repositories:` input instead of inheriting access to every repository covered by the org installation.
-
-If the secrets are not configured, workflow falls back to `GITHUB_TOKEN`.
-
-## Duplicate release protection
-
-Before release/publish, duplicate guard checks:
-
-- remote Git tag state (`git ls-remote --tags origin refs/tags/v<version>`) and commit alignment
-- GitHub Release existence (`gh release view v<version>`)
-- NuGet package/version existence for each generated package via:
-  - `https://api.nuget.org/v3-flatcontainer/<package-id-lower>/index.json`
-
-If any duplicate state is detected, the workflow fails early.
-
-## NuGet Trusted Publishing (OIDC)
-
-This flow uses NuGet Trusted Publishing with GitHub OIDC and **does not use long-lived `NUGET_API_KEY` secrets**.
-
-Publishing job permissions are scoped to:
-
-```yaml
-permissions:
-  id-token: write
-  contents: read
-```
-
-The login step is:
-
-```yaml
-- name: NuGet login
-  uses: NuGet/login@v1
-  id: nuget-login
-```
-
-The temporary API key output from that step is used with `dotnet nuget push`.
-
-### nuget.org setup requirements
-
-Configure a NuGet trusted publisher policy that matches:
-
-- GitHub owner: `kjldev`
-- GitHub repository: `purview-eventsourcing`
-- workflow file: `.github/workflows/release.yml`
-
-Keep `release.yml` filename stable after policy setup, because trusted publishing binds to that workflow identity.
-
-## Why API keys are not used
-
-OIDC trusted publishing removes long-lived credential management risk:
-
-- no static NuGet API key secrets in repository settings
-- short-lived token exchange at publish time
-- scoped, auditable CI identity-based access
-
-## Reusable architecture for other project types
-
-The reusable architecture is intentionally split into generic phases:
-
-1. validate (install/restore, build/validate, test)
-2. package (artifact creation)
-3. release (guards, tag, release notes, release artifact attach, publish/deploy)
-
-To adapt later:
-
-- NuGet multi-package: add additional pack/publish reusable workflows
-- npm package: replace package/publish stage with `npm pack` / `npm publish`
-- React/static site: replace package stage with build output artifact and deploy stage
-- containerized service: package as image and publish to registry, then deploy
-
-The same guard/tag/release-notes/release orchestration pattern remains reusable.
+Configuration precedence is command line, environment variables, `purview-build.json`, then the tool's built-in defaults. Nested environment keys use `__`, for example `Release__Mode=NuGet`.

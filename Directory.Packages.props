@@ -6,15 +6,8 @@
 		<RoslynAnalyzersVersion>5.9.0</RoslynAnalyzersVersion>
 		<TUnitVersion>1.65.68</TUnitVersion>
 		<PurviewSGFrameworkVersion>1.0.0-prerelease.33</PurviewSGFrameworkVersion>
-		<ModularPipelinesVersion>3.2.8</ModularPipelinesVersion>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageVersion Include="ModularPipelines" Version="$(ModularPipelinesVersion)" />
-		<PackageVersion Include="ModularPipelines.DotNet" Version="$(ModularPipelinesVersion)" />
-		<PackageVersion Include="ModularPipelines.Git" Version="$(ModularPipelinesVersion)" />
-		<PackageVersion Include="ModularPipelines.GitHub" Version="$(ModularPipelinesVersion)" />
-		<PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
-		<PackageVersion Include="NuGet.Versioning" Version="7.9.0" />
 		<PackageVersion Include="Aspire.Azure.Storage.Blobs" Version="13.5.3" />
 		<PackageVersion Include="AspireC4.Hosting" Version="13.3.5" />
 		<PackageVersion Include="Bogus" Version="35.6.5" />
@@ -38,7 +31,7 @@
 			Include="Purview.SourceGeneratorFramework.Testing.TUnit"
 			Version="$(PurviewSGFrameworkVersion)"
 		/>
-		<PackageVersion Include="Purview.Telemetry.SourceGenerator" Version="5.0.0-prerelease.3" />
+		<PackageVersion Include="Purview.Telemetry.SourceGenerator" Version="5.0.0-prerelease.4" />
 		<PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
 		<PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="$(RoslynAnalyzersVersion)" />
 		<PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="$(RoslynCompilerVersion)" />

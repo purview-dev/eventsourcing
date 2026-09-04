@@ -593,4 +593,4 @@ coverage/
 !src/src/EventSourcing/build
 !assets/packages/*
 
-!build/
+.tools/

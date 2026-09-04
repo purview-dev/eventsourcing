@@ -1,7 +1,9 @@
 {
 	"name": "purview-eventsourcing",
 	"version": "2.0.0-prerelease.29",
-	"devDependencies": {
-		"@changesets/cli": "^2.6.0"
-	}
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/purview-dev/eventsourcing.git"
+	},
+	"homepage": "https://github.com/purview-dev/eventsourcing"
 }

@@ -52,5 +52,5 @@ if (order is null)
 
 ## Related packages
 
-- [Core package](https://github.com/kjldev/purview-eventsourcing/blob/main/src/src/EventSourcing/README.md): `Purview.EventSourcing`
-- [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
+- [Core package](https://github.com/purview-dev/eventsourcing/blob/main/src/src/EventSourcing/Sdk/README.md): `Purview.EventSourcing`
+- [Provider feature matrix](https://github.com/purview-dev/eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
