@@ -5,6 +5,7 @@ namespace Purview.EventSourcing.MongoDB;
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<bool> DeleteAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,

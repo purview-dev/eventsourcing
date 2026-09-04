@@ -31,6 +31,7 @@ public class SnapshotStoreDbContext(
 	public SnapshotStoreDbContext(DbContextOptions<SnapshotStoreDbContext> options)
 		: this(options, "public", "EventStoreSnapshots") { }
 
+	///<inheritdoc/>
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		ArgumentNullException.ThrowIfNull(modelBuilder);

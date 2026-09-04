@@ -1,25 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageReference
-			Include="Microsoft.Extensions.Caching.Abstractions"
-			GeneratePathProperty="true"
-			PrivateAssets="all"
-		/>
-	</ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
 		<ProjectReference Include="..\..\src\Samples.Web\Samples.Web.csproj" />
-		<!--<ProjectReference Include="..\..\src\Samples.AppHost\Samples.AppHost.csproj" />-->
 	</ItemGroup>
-	<Target Name="CopyCachingAbstractionsForTestHost" AfterTargets="Build">
-		<Copy
-			SourceFiles="$(PkgMicrosoft_Extensions_Caching_Abstractions)\lib\net10.0\Microsoft.Extensions.Caching.Abstractions.dll"
-			DestinationFolder="$(OutDir)"
-			SkipUnchangedFiles="true"
-		/>
-	</Target>
 </Project>

@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.MongoDB;
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<bool> RestoreAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,

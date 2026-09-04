@@ -1,10 +1,15 @@
+#pragma warning disable CA1502, CA1506
+// The sample's composition root intentionally wires up every supported event store, query store, and admin
+// adapter so the whole surface is demonstrated. The generated <Main>$ method and Program class therefore exceed
+// the maintainability metrics thresholds; the suppressions are scoped to this file only. Previously this was a
+// project-wide NoWarn in Samples.Web.csproj.
 using System.Diagnostics.CodeAnalysis;
 using Azure;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using MongoDB.Driver;
 using Npgsql;
-using Purview.EventSourcing.Admin.Api;
+using Purview.EventSourcing.Admin.API;
 using Purview.EventSourcing.Admin.AzureStorage;
 using Purview.EventSourcing.Admin.MongoDB;
 using Purview.EventSourcing.Admin.Postgres;
@@ -15,6 +20,7 @@ using Purview.EventSourcing.AzureStorage;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Snapshots;
 using Purview.EventSourcing.Samples;
+using Purview.EventSourcing.Samples.Options;
 using Purview.EventSourcing.Samples.Services;
 using Purview.EventSourcing.Samples.Web.Services;
 using AzureCommitException = Purview.EventSourcing.AzureStorage.Exceptions.CommitException;
@@ -33,6 +39,11 @@ builder.AddServiceDefaults();
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton(sampleStoreOptions);
+builder
+	.Services.AddOptions<SampleStoreOptions>()
+	.BindConfiguration(SampleStoreOptions.SectionName)
+	.ValidateDataAnnotations()
+	.ValidateOnStart();
 
 // Use Redis when available (e.g. via Aspire AppHost); fall back to in-memory for standalone dev runs
 if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString(Platform.Redis)))
@@ -106,6 +117,7 @@ app.UseSession();
 
 if (sampleStoreOptions.AdminAPIAvailable)
 {
+	app.MapOpenApi();
 	app.MapPurviewEventSourcingAdminAPI();
 	app.MapPurviewEventSourcingAdminSite();
 }
@@ -257,6 +269,7 @@ static void ConfigureStoreOptions(
 	SampleStoreOptions sampleStoreOptions
 )
 {
+#pragma warning disable IDE0010 // Add missing cases
 	switch (sampleStoreOptions.EventStore)
 	{
 		case SampleEventStoreKind.MongoDb:
@@ -283,6 +296,7 @@ static void ConfigureStoreOptions(
 			);
 			break;
 	}
+#pragma warning restore IDE0010 // Add missing cases
 
 	if (sampleStoreOptions.QueryStore == SampleQueryStoreKind.MongoDb)
 	{
@@ -346,8 +360,14 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 		);
 	services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
 	services.AddPurviewEventSourcingAdminSecurity(new SampleAdminPermissionProvider());
-	services.AddPurviewEventSourcingAdminApi(options => options.RoutePrefix = sampleStoreOptions.AdminAPIPath);
+	services.AddPurviewEventSourcingAdminApi(options =>
+	{
+		options.RoutePrefix = sampleStoreOptions.AdminAPIPath;
+		options.Features.ExportEvents = true;
+	});
+	services.AddPurviewEventSourcingAdminOpenApi();
 
+#pragma warning disable IDE0010 // Add missing cases
 	switch (sampleStoreOptions.AdminStore)
 	{
 		case SampleAdminStoreKind.SqlServer:
@@ -370,6 +390,7 @@ static void RegisterAdmin(IServiceCollection services, SampleStoreOptions sample
 		default:
 			throw new InvalidOperationException($"Unsupported admin store '{sampleStoreOptions.AdminStore}'.");
 	}
+#pragma warning restore IDE0010 // Add missing cases
 }
 
 static string NormalizeAlphaNumeric(string value) => new([.. value.Where(char.IsLetterOrDigit)]);
@@ -383,3 +404,4 @@ static string NormalizeKebab(string value)
 
 	return string.IsNullOrWhiteSpace(normalized) ? "sample" : normalized;
 }
+#pragma warning restore CA1502, CA1506

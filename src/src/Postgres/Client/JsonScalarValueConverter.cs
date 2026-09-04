@@ -6,11 +6,20 @@ using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.Postgres.Client;
 
+/// <summary>
+/// Converts a <see cref="ScalarAttribute"/>-annotated value object whose scalar property is a complex type
+/// to and from its JSON-serialized string representation for storage in PostgreSQL.
+/// </summary>
+/// <typeparam name="TScalarObject">The value object type annotated with <see cref="ScalarAttribute"/>.</typeparam>
+/// <typeparam name="TScalar">The scalar property type of <typeparamref name="TScalarObject"/>.</typeparam>
 sealed class JsonScalarValueConverter<TScalarObject, TScalar> : ValueConverter<TScalarObject, string>
 {
 	static readonly PropertyInfo ScalarProperty = GetScalarProperty();
 	static readonly Func<TScalar, TScalarObject> Creator = BuildCreator();
 
+	/// <summary>
+	/// Creates a new <see cref="JsonScalarValueConverter{TScalarObject, TScalar}"/>.
+	/// </summary>
 	public JsonScalarValueConverter()
 		: base(BuildToProviderExpression(), BuildFromProviderExpression()) { }
 

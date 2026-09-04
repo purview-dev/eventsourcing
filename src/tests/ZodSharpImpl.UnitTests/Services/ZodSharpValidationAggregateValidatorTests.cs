@@ -24,7 +24,7 @@ public sealed class ZodSharpAggregateValidatorTests
 		"Performance",
 		"CA1849:Call async methods when in an async method"
 	)]
-	public async Task Validate_UsesNonAsyncRules()
+	public void Validate_UsesNonAsyncRules()
 	{
 		TestAggregate aggregate = new() { Name = "valid" };
 		var validator = IZodSchemaValidator<TestAggregate>.Mock();
@@ -59,8 +59,8 @@ public sealed class ZodSharpAggregateValidatorTests
 		var result = adapter.Validate(aggregate);
 
 		await Assert.That(result.IsValid).IsFalse();
-		await Assert.That(result.Errors).Count().IsEqualTo(1);
-		await Assert.That(result.Errors[0].PropertyName).IsEqualTo(nameof(TestAggregate.Name));
+		await Assert.That(result.Failures).Count().IsEqualTo(1);
+		await Assert.That(result.Failures[0].PropertyName).IsEqualTo(nameof(TestAggregate.Name));
 	}
 
 	[Test]
@@ -81,8 +81,8 @@ public sealed class ZodSharpAggregateValidatorTests
 		var result = await adapter.ValidateAsync(aggregate);
 
 		await Assert.That(result.IsValid).IsFalse();
-		await Assert.That(result.Errors).Count().IsEqualTo(1);
-		await Assert.That(result.Errors[0].PropertyName).IsEqualTo(nameof(TestAggregate.Name));
+		await Assert.That(result.Failures).Count().IsEqualTo(1);
+		await Assert.That(result.Failures[0].PropertyName).IsEqualTo(nameof(TestAggregate.Name));
 	}
 
 	sealed class TestAggregate : AggregateBase

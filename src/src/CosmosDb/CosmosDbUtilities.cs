@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Dynamic;
 using System.Reflection;
 using System.Text.Json.Serialization;
@@ -115,7 +115,7 @@ static class CosmosDbUtilities
 
 		public string GetId(object document)
 		{
-			object? currentItem = document;
+			var currentItem = document;
 			for (var i = 0; i < _idProperties.Length; i++)
 			{
 				var idProperty = _idProperties[i];

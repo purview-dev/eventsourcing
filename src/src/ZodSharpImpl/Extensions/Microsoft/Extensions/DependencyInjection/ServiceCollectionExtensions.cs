@@ -6,6 +6,14 @@ using ZodSharp.Core;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Extension methods for registering ZodSharp aggregate-validator adapters with the dependency injection
+/// container.
+/// </summary>
+/// <remarks>
+/// The members of this type are hidden from IntelliSense as the type is only intended to be consumed
+/// through the <see langword="static"/> using for the <c>Microsoft.Extensions.DependencyInjection</c> namespace.
+/// </remarks>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {

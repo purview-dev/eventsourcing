@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Services;
@@ -8,9 +9,19 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
+/// <summary>
+/// Projects aggregate state at a point in time from Azure Table Storage for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service replays the stored events of an aggregate and produces a <see cref="ProjectionResponse"/> that
+/// captures the projected state, the highest version reached and a <see cref="ProjectionProvenance"/> describing
+/// which event versions were applied and which were skipped.
+/// </remarks>
+/// <param name="options">The configured <see cref="AzureStorageEventStoreOptions"/>.</param>
 public sealed class AzureStorageAdminProjectionService(IOptions<AzureStorageEventStoreOptions> options)
 	: IAdminProjectionService
 {
+	///<inheritdoc/>
 	public async Task<ProjectionResponse?> ProjectAtVersionAsync(
 		string aggregateType,
 		string aggregateId,
@@ -34,6 +45,7 @@ public sealed class AzureStorageAdminProjectionService(IOptions<AzureStorageEven
 		return BuildProjection(aggregateType, aggregateId, events, $"Events projected up to version {targetVersion}");
 	}
 
+	///<inheritdoc/>
 	public async Task<ProjectionResponse?> ProjectAtTimeAsync(
 		string aggregateType,
 		string aggregateId,
@@ -149,19 +161,34 @@ public sealed class AzureStorageAdminProjectionService(IOptions<AzureStorageEven
 				versionTo: null
 			);
 
-			await foreach (
-				var row in table.QueryAsync<EventEntity>(filter, maxPerPage: 100, cancellationToken: cancellationToken)
-			)
+			try
 			{
-				if (
-					!AzureStorageAdminTableHelpers.TryParseEventVersion(row.RowKey, config.EventPrefix, out var version)
+				await foreach (
+					var row in table.QueryAsync<EventEntity>(
+						filter,
+						maxPerPage: 100,
+						cancellationToken: cancellationToken
+					)
 				)
-					continue;
+				{
+					if (
+						!AzureStorageAdminTableHelpers.TryParseEventVersion(
+							row.RowKey,
+							config.EventPrefix,
+							out var version
+						)
+					)
+						continue;
 
-				if (!eventPredicate(version, row.Timestamp))
-					continue;
+					if (!eventPredicate(version, row.Timestamp))
+						continue;
 
-				rows.Add((version, row));
+					rows.Add((version, row));
+				}
+			}
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			{
+				continue;
 			}
 		}
 

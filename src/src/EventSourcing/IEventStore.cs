@@ -12,7 +12,7 @@ namespace Purview.EventSourcing;
 public interface IEventStore
 {
 	/// <summary>
-	/// <para>Creates a new <see cref="IAggregate"/> of <typeparamref name="T"/> with the given <paramref name="aggregateId"/> as it's Id.</para>
+	/// <para>Creates a new <see cref="IAggregate"/> of <typeparamref name="T"/> with the given <paramref name="aggregateId"/> as its Id.</para>
 	/// <para>
 	/// If <paramref name="aggregateId"/> is not valid, then <see cref="Services.IAggregateIdFactory.CreateAsync{T}(CancellationToken)"/>
 	/// is called to generate a new id based on the <typeparamref name="T"/> provided.
@@ -108,8 +108,8 @@ public interface IEventStore
 	/// </summary>
 	/// <param name="aggregateId">The Id of the deleted aggregate to get.</param>
 	/// <param name="cancellationToken">The stopping token.</param>
-	/// <returns>If the aggregate is not found, returns null. If the aggregate was found, but is not deleted am
-	/// exception is thrown. Otherwise, returns the aggregate.</returns>
+	/// <returns>If the aggregate is not found, returns null. If the aggregate was found, but is not deleted
+	/// an exception is thrown. Otherwise, returns the aggregate.</returns>
 	Task<T?> GetDeletedAsync<T>(string aggregateId, CancellationToken cancellationToken = default)
 		where T : class, IAggregate, new();
 

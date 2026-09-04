@@ -2,6 +2,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 partial class PostgresEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<T?> GetOrCreateAsync(
 		string? aggregateId,
 		EventStoreOperationContext? operationContext,

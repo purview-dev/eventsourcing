@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.Postgres.Events;
 
 partial class PostgresEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<bool> DeleteAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,

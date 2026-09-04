@@ -1,42 +1,75 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Abstractions.Queries;
-using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Client;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
-public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
+/// <summary>
+/// Page model for the admin portal event history page.
+/// </summary>
+/// <param name="adminApiClient">The generated Admin API client used to load event ranges.</param>
+public class EventsModel(AdminApiClient adminApiClient) : PageModel
 {
-	readonly IAdminEventQueryService _eventQueryService =
-		eventQueryService ?? throw new ArgumentNullException(nameof(eventQueryService));
+	readonly AdminApiClient _adminApiClient = adminApiClient ?? throw new ArgumentNullException(nameof(adminApiClient));
 
+	/// <summary>
+	/// Gets or sets the aggregate type whose events are displayed.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateType { get; set; }
+	public string AggregateType { get; set; } = default!;
 
+	/// <summary>
+	/// Gets or sets the aggregate identifier whose events are displayed.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateId { get; set; }
+	public string AggregateId { get; set; } = default!;
 
+	/// <summary>
+	/// Gets or sets the inclusive lower bound of the stream version to display.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public long? VersionFrom { get; set; }
 
+	/// <summary>
+	/// Gets or sets the inclusive upper bound of the stream version to display.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public long? VersionTo { get; set; }
 
+	/// <summary>
+	/// Gets or sets the inclusive lower bound of the event timestamp (UTC) to display.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public DateTime? TimeFromUtc { get; set; }
 
+	/// <summary>
+	/// Gets or sets the inclusive upper bound of the event timestamp (UTC) to display.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public DateTime? TimeToUtc { get; set; }
 
-	[BindProperty(SupportsGet = true, Name = "page")]
+	/// <summary>
+	/// Gets or sets the one-based page number to display.
+	/// </summary>
+	[BindProperty(SupportsGet = true, Name = "pageNo")]
 	public int PageNo { get; set; } = 1;
 
+	/// <summary>
+	/// Gets or sets the number of events to show per page.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public int PageSize { get; set; } = 25;
 
-	public PagedResult<EventEnvelopeResponse>? EventRange { get; set; }
+	/// <summary>
+	/// Gets or sets the event range to render on the page.
+	/// </summary>
+	public PagedResultOfEventEnvelopeResponse? EventRange { get; set; }
 
+	/// <summary>
+	/// Handles GET requests for the page by loading the requested event range through the Admin API client.
+	/// </summary>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>The page result, or a bad request when the required parameters are missing.</returns>
 	public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrWhiteSpace(AggregateType) || string.IsNullOrWhiteSpace(AggregateId))
@@ -46,25 +79,27 @@ public class EventsModel(IAdminEventQueryService eventQueryService) : PageModel
 
 		try
 		{
-			var query = new EventRangeQuery(
+			EventRange = await _adminApiClient.GetAggregateEventRangeAsync(
+				AggregateType,
+				AggregateId,
 				VersionFrom,
 				VersionTo,
 				TimeFromUtc is not null ? new DateTimeOffset(TimeFromUtc.Value, TimeSpan.Zero) : null,
 				TimeToUtc is not null ? new DateTimeOffset(TimeToUtc.Value, TimeSpan.Zero) : null,
 				PageNo,
 				PageSize,
-				"Version asc"
+				"Version asc",
+				cancellationToken
 			);
 
-			EventRange = await _eventQueryService.GetRangeAsync(AggregateType, AggregateId, query, cancellationToken);
 			return Page();
 		}
-		catch (InvalidOperationException ex)
+		catch (AdminApiException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load events: {ex.Message}");
 			return Page();
 		}
-		catch (ArgumentException ex)
+		catch (HttpRequestException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load events: {ex.Message}");
 			return Page();

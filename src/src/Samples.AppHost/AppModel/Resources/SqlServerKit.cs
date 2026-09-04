@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Purview.Aspire.ResourceKit;
 
 namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
@@ -6,8 +6,8 @@ namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 [ResourceDefinition<SqlServerServerResource>(Platform.SqlServer)]
 sealed partial class SqlServerKit
 {
-	public IResourceBuilder<SqlServerDatabaseResource> Database { get; private set; } = default!;
-	public IResourceBuilder<SqlServerDatabaseResource> SharedQueryDatabase { get; private set; } = default!;
+	public IResourceBuilder<SqlServerDatabaseResource> Database { get; private set; }
+	public IResourceBuilder<SqlServerDatabaseResource> SharedQueryDatabase { get; private set; }
 
 	protected override IResourceBuilder<SqlServerServerResource> BuildResource(IDistributedApplicationBuilder builder)
 	{

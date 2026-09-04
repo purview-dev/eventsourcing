@@ -1,55 +1,74 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Abstractions.Queries;
-using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Client;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
-public class AdminIndexModel(IAdminAggregateQueryService aggregateQueryService) : PageModel
+/// <summary>
+/// Page model for the admin portal home page that searches for aggregates.
+/// </summary>
+/// <param name="adminApiClient">The generated Admin API client used to search aggregates.</param>
+public class AdminIndexModel(AdminApiClient adminApiClient) : PageModel
 {
-	readonly IAdminAggregateQueryService _aggregateQueryService =
-		aggregateQueryService ?? throw new ArgumentNullException(nameof(aggregateQueryService));
+	readonly AdminApiClient _adminApiClient = adminApiClient ?? throw new ArgumentNullException(nameof(adminApiClient));
 
+	/// <summary>
+	/// Gets or sets the aggregate type filter for the search.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public string? AggregateType { get; set; }
 
+	/// <summary>
+	/// Gets or sets the aggregate identifier filter for the search.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public string? AggregateId { get; set; }
 
-	[BindProperty(SupportsGet = true, Name = "page")]
+	/// <summary>
+	/// Gets or sets the one-based page number to display.
+	/// </summary>
+	[BindProperty(SupportsGet = true, Name = "pageNo")]
 	public int PageNo { get; set; } = 1;
 
+	/// <summary>
+	/// Gets or sets the number of results to show per page.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public int PageSize { get; set; } = 25;
 
-	public PagedResult<AggregateSummaryResponse>? SearchResults { get; set; }
+	/// <summary>
+	/// Gets or sets the search results to render on the page.
+	/// </summary>
+	public PagedResultOfAggregateSummaryResponse? SearchResults { get; set; }
 
+	/// <summary>
+	/// Handles GET requests for the page by executing an aggregate search through the Admin API client.
+	/// </summary>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>The page result.</returns>
 	public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
 	{
 		try
 		{
-			var query = new AggregateSearchQuery(
-				AggregateType,
-				AggregateId,
-				null,
-				null,
-				null,
-				null,
-				PageNo,
-				PageSize,
-				"LastUpdatedUtc desc"
+			SearchResults = await _adminApiClient.SearchAggregatesAsync(
+				new AggregateSearchRequest
+				{
+					AggregateType = string.IsNullOrWhiteSpace(AggregateType) ? null : AggregateType,
+					AggregateId = string.IsNullOrWhiteSpace(AggregateId) ? null : AggregateId,
+					Page = PageNo,
+					PageSize = PageSize,
+				},
+				cancellationToken
 			);
 
-			SearchResults = await _aggregateQueryService.SearchAsync(query, cancellationToken);
 			return Page();
 		}
-		catch (InvalidOperationException ex)
+		catch (AdminApiException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Search failed: {ex.Message}");
 			return Page();
 		}
-		catch (ArgumentException ex)
+		catch (HttpRequestException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Search failed: {ex.Message}");
 			return Page();

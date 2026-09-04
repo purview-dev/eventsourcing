@@ -1,5 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<!--
+		The shared provider-agnostic contract suites (Contracts/**) are linked from SharedTestingFramework into
+		this compilation rather than consumed cross-assembly through [InheritsTests]. TUnit's
+		TestMetadataGenerator reports error diagnostic TUNIT0999 at the inherited method's source location when
+		an internal generation error occurs, and Roslyn's SourceProductionContext.ReportDiagnostic rejects
+		diagnostics whose location is not part of the compilation being analyzed (surfacing as CS8785). With a
+		cross-assembly base class the location points into SharedTestingFramework's sources, which are not part
+		of this compilation, so the warning is unavoidable there. Linking the contract sources keeps every
+		inherited [Test] method inside this compilation and eliminates the failure.
+	-->
 	<ItemGroup>
+		<Compile
+			Include="..\SharedTestingFramework\Contracts\EventStore*.cs"
+			Link="Contracts\%(Filename)%(Extension)"
+		/>
+		<Compile
+			Include="..\SharedTestingFramework\Contracts\SnapshotStore*.cs"
+			Link="Contracts\%(Filename)%(Extension)"
+		/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Samples\Samples.csproj" />
 		<ProjectReference Include="..\SharedTestingFramework\SharedTestingFramework.csproj" />
 	</ItemGroup>
 </Project>

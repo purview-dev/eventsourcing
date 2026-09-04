@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Test;
 
 namespace Purview.EventSourcing.Services;

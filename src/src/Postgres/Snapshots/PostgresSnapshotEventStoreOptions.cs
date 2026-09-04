@@ -27,17 +27,35 @@ public sealed class PostgresSnapshotAggregateTableOverride
 	public string? TableName { get; set; }
 }
 
+/// <summary>
+/// Options for the PostgreSQL queryable snapshot event store.
+/// </summary>
+/// <remarks>
+/// These options are bound from the <see cref="PostgresEventStore"/> configuration section.
+/// </remarks>
 public sealed class PostgresSnapshotEventStoreOptions
 {
+	/// <summary>
+	/// The configuration section name used to bind these options.
+	/// </summary>
 	public const string PostgresEventStore = "EventStore:PostgresSnapshot";
 
+	/// <summary>
+	/// The connection string to the PostgreSQL instance.
+	/// </summary>
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	/// <summary>
+	/// The name of the table that stores snapshots.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreSnapshots";
 
+	/// <summary>
+	/// The name of the schema that contains the snapshot table.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "public";
@@ -81,8 +99,10 @@ public sealed class PostgresSnapshotEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<string, PostgresSnapshotAggregateTableOverride> AggregateTableOverrides { get; init; } =
-	[with(StringComparer.OrdinalIgnoreCase)];
+	public Dictionary<string, PostgresSnapshotAggregateTableOverride
+#pragma warning disable format
+	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
+#pragma warning restore format
 
 	/// <summary>
 	/// Configures runtime-managed PostgreSQL indexes over the snapshot payload JSON column.

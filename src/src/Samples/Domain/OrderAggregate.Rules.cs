@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Samples.ValueObjects;
+using Purview.EventSourcing.Samples.ValueObjects;
 
 namespace Purview.EventSourcing.Samples.Domain;
 
@@ -14,6 +14,7 @@ partial class OrderAggregate
 
 	partial void OnStatusChanging(ref OrderStatus status)
 	{
+#pragma warning disable IDE0010 // Add missing cases
 		switch (status.Value)
 		{
 			case OrderStatusCode.Confirmed when Status != OrderStatus.Draft:
@@ -22,6 +23,7 @@ partial class OrderAggregate
 			case OrderStatusCode.Cancelled when Status == OrderStatus.Shipped:
 				throw new InvalidOperationException($"Invalid status transition from {Status} to {status}.");
 		}
+#pragma warning restore IDE0010 // Add missing cases
 	}
 
 	partial void OnRaisingLineItemAddedEvent(ref EventStoreList<OrderLineItem> lineItems, ref decimal totalAmount)

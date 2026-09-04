@@ -23,6 +23,7 @@ public class OrderAggregateTests
 			order.AddLineItem("prod-2", "Widget B", 1, 25.00m);
 		}
 
+#pragma warning disable IDE0010 // Add missing cases
 		switch (statusCode)
 		{
 			case OrderStatusCode.Confirmed:
@@ -35,6 +36,7 @@ public class OrderAggregateTests
 				order.CancelOrder();
 				break;
 		}
+#pragma warning restore IDE0010 // Add missing cases
 
 		return order;
 	}

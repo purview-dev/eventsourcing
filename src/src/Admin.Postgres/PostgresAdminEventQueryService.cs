@@ -10,9 +10,19 @@ using Purview.EventSourcing.Postgres.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.Postgres;
 
+/// <summary>
+/// Provides event range queries against PostgreSQL for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service resolves the table that holds the requested aggregate type via <c>PostgresAdminTableResolver</c>
+/// and translates the version, time and paging filters into Entity Framework Core queries executed against the
+/// database.
+/// </remarks>
+/// <param name="options">The configured <see cref="PostgresEventStoreOptions"/>.</param>
 public sealed class PostgresAdminEventQueryService(IOptions<PostgresEventStoreOptions> options)
 	: IAdminEventQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
 		string aggregateId,
@@ -52,11 +62,11 @@ public sealed class PostgresAdminEventQueryService(IOptions<PostgresEventStoreOp
 		rows = directionDesc ? rows.OrderByDescending(x => x.Version) : rows.OrderBy(x => x.Version);
 
 		var totalCount = await rows.LongCountAsync(cancellationToken);
-		if (totalCount == 0)
-			return null;
-
 		var page = Math.Max(1, query.Page);
 		var pageSize = Math.Max(1, query.PageSize);
+		if (totalCount == 0)
+			return new PagedResult<EventEnvelopeResponse>([], page, pageSize, 0);
+
 		var pageRows = await rows.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
 
 		var items = pageRows

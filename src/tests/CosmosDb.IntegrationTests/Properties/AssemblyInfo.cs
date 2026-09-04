@@ -1,1 +1,2 @@
-﻿[assembly: Skip("CosmosDb tests using the emulator as super flakey")]
+//[assembly: Skip("CosmosDb tests using the emulator as super flakey")]
+[assembly: NotInParallel("cosmosdb")]

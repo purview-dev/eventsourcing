@@ -4,7 +4,6 @@
 		<Title>Purview Event Store for Azure Table and Blob Storage</Title>
 		<Description>Azure Table Storage and Blob Storage event store provider for Purview EventSourcing, including snapshot and large-payload support.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;azure-storage;azure-table-storage;azure-blob-storage;tables;blobs;</PackageTags>
-		<PackageId>Purview.EventSourcing.AzureStorage</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -17,9 +16,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
-		<ProjectReference
-			Include="..\ImplementationShared\ImplementationShared.csproj"
-			PrivateAssets="All"
-		/>
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" PrivateAssets="All" />
 	</ItemGroup>
 </Project>

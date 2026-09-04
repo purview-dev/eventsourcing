@@ -1,29 +1,51 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Purview.EventSourcing.Admin.Abstractions.Models;
-using Purview.EventSourcing.Admin.Abstractions.Services;
+using Purview.EventSourcing.Admin.Client;
 
 namespace Purview.EventSourcing.Admin.Site.Pages;
 
-public class ProjectionModel(IAdminProjectionService projectionService) : PageModel
+/// <summary>
+/// Page model for the admin portal point-in-time projection page.
+/// </summary>
+/// <param name="adminApiClient">The generated Admin API client used to build projections.</param>
+public class ProjectionModel(AdminApiClient adminApiClient) : PageModel
 {
-	readonly IAdminProjectionService _projectionService =
-		projectionService ?? throw new ArgumentNullException(nameof(projectionService));
+	readonly AdminApiClient _adminApiClient = adminApiClient ?? throw new ArgumentNullException(nameof(adminApiClient));
 
+	/// <summary>
+	/// Gets or sets the aggregate type to project.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateType { get; set; }
+	public string AggregateType { get; set; } = default!;
 
+	/// <summary>
+	/// Gets or sets the aggregate identifier to project.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
-	public required string AggregateId { get; set; }
+	public string AggregateId { get; set; } = default!;
 
+	/// <summary>
+	/// Gets or sets the stream version to project at, when a version-based projection is requested.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public long? Version { get; set; }
 
+	/// <summary>
+	/// Gets or sets the UTC timestamp to project at, when a time-based projection is requested.
+	/// </summary>
 	[BindProperty(SupportsGet = true)]
 	public DateTime? AsOfUtc { get; set; }
 
+	/// <summary>
+	/// Gets or sets the projected aggregate state to render on the page.
+	/// </summary>
 	public ProjectionResponse? Projection { get; set; }
 
+	/// <summary>
+	/// Handles GET requests for the page by building the requested projection through the Admin API client.
+	/// </summary>
+	/// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+	/// <returns>The page result, or a bad request when the required parameters are missing.</returns>
 	public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
 	{
 		if (string.IsNullOrWhiteSpace(AggregateType) || string.IsNullOrWhiteSpace(AggregateId))
@@ -35,20 +57,20 @@ public class ProjectionModel(IAdminProjectionService projectionService) : PageMo
 		{
 			Projection =
 				Version.HasValue && Version.Value > 0
-					? await _projectionService.ProjectAtVersionAsync(
+					? await _adminApiClient.GetAggregateProjectionAtVersionAsync(
 						AggregateType,
 						AggregateId,
-						Version.Value,
+						Version,
 						cancellationToken
 					)
 				: AsOfUtc.HasValue
-					? await _projectionService.ProjectAtTimeAsync(
+					? await _adminApiClient.GetAggregateProjectionAtTimeAsync(
 						AggregateType,
 						AggregateId,
 						new DateTimeOffset(AsOfUtc.Value, TimeSpan.Zero),
 						cancellationToken
 					)
-				: await _projectionService.ProjectAtVersionAsync(
+				: await _adminApiClient.GetAggregateProjectionAtVersionAsync(
 					AggregateType,
 					AggregateId,
 					long.MaxValue,
@@ -57,12 +79,12 @@ public class ProjectionModel(IAdminProjectionService projectionService) : PageMo
 
 			return Page();
 		}
-		catch (InvalidOperationException ex)
+		catch (AdminApiException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load projection: {ex.Message}");
 			return Page();
 		}
-		catch (ArgumentException ex)
+		catch (HttpRequestException ex)
 		{
 			ModelState.AddModelError(string.Empty, $"Failed to load projection: {ex.Message}");
 			return Page();

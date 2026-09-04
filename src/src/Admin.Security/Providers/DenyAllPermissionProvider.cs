@@ -10,6 +10,7 @@ namespace Purview.EventSourcing.Admin.Security.Providers;
 /// </summary>
 public sealed class DenyAllPermissionProvider : IAdminPermissionProvider
 {
+	///<inheritdoc/>
 	public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(
 		ClaimsPrincipal user,
 		CancellationToken cancellationToken

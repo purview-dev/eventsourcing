@@ -2,6 +2,7 @@
 
 partial class SqlServerEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<T?> GetDeletedAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		var aggregate = await GetCoreAsync(

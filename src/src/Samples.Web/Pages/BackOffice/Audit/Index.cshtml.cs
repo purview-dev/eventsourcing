@@ -53,7 +53,7 @@ sealed class IndexModel(IAggregateAuditService auditService) : PageModel
 			return Page();
 		}
 
-		if (PageSize < 1 || PageSize > 1000)
+		if (PageSize is < 1 or > 1000)
 			PageSize = DefaultPageSize;
 
 		AggregateId = AggregateId?.Trim();
@@ -65,7 +65,7 @@ sealed class IndexModel(IAggregateAuditService auditService) : PageModel
 		{
 			var response = await auditService.GetHistoryAsync(
 				AggregateType,
-				AggregateId!,
+				AggregateId,
 				new AggregateEventHistoryRequest
 				{
 					FromVersion = FromVersion,

@@ -61,7 +61,7 @@ sealed class IndexModel(
 				var best = g.OrderByDescending(i => i.AvailableQuantity).First();
 				var totalAvailable = g.Sum(i => i.AvailableQuantity);
 				var unitPrice = Math.Round(
-					9.99m + (Math.Abs(g.Key.GetHashCode(StringComparison.Ordinal)) % 9000) / 100m,
+					9.99m + (Math.Abs(g.Key.GetHashCode(StringComparison.Ordinal)) % 9000 / 100m),
 					2
 				);
 				return (

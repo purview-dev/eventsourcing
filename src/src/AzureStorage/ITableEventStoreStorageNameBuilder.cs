@@ -2,6 +2,14 @@
 
 namespace Purview.EventSourcing.AzureStorage;
 
+/// <summary>
+/// Generates the storage names used by the <see cref="ITableEventStore{T}"/> implementation.
+/// </summary>
+/// <remarks>
+/// Implementations can use configuration or the aggregate type to generate deterministic storage names that
+/// are unique to the process and aggregate. When an implementation is not registered, the event store falls
+/// back to default names derived from the configured table and container.
+/// </remarks>
 public interface ITableEventStoreStorageNameBuilder
 {
 	/// <summary>

@@ -1,10 +1,22 @@
-﻿<Project>
+<Project>
 	<Import Sdk="Purview.DotNetProjectSdk" Project="Sdk.targets" />
 
+	<!-- Enforce XML documentation on public API for packable projects. IsPackable is only known after the
+	     project body has been evaluated, so this cannot live in Directory.Build.props. The SDK re-adds CS1591
+	     to NoWarn for library projects (Sdk.props), so it is stripped here. Severity is then governed by the
+	     repo .editorconfig ([*.{cs,vb}] = error, [*.g.cs] = none) so generated code is exempt; elevating via
+	     WarningsAsErrors instead would override that per-file scoping. -->
 	<Target
-		Name="CopyProjectReferencesToPackage"
-		DependsOnTargets="BuildOnlySettings;ResolveReferences"
+		Name="EnforcePublicApiDocumentation"
+		BeforeTargets="CoreCompile"
+		Condition="'$(IsPackable)' == 'true' AND '$(IsCSharpProject)' == 'true'"
 	>
+		<PropertyGroup>
+			<NoWarn>$(NoWarn.Replace('CS1591;', ''))</NoWarn>
+		</PropertyGroup>
+	</Target>
+
+	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="BuildOnlySettings;ResolveReferences">
 		<ItemGroup>
 			<!-- This filter is the key - only PrivateAssets=All references are bundled -->
 			<_ReferenceCopyLocalPaths Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('PrivateAssets', 'All'))" />

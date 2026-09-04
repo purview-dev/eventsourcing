@@ -9,6 +9,9 @@ using Purview.EventSourcing.Postgres.Snapshots;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Extension methods for registering the PostgreSQL event stores with the dependency-injection container.
+/// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {
@@ -44,6 +47,14 @@ public static class ServiceCollectionExtensions
 
 	extension(IServiceCollection services)
 	{
+		/// <summary>
+		/// Registers the PostgreSQL event store and its dependencies.
+		/// </summary>
+		/// <param name="connectionStringName">
+		/// Optional name of the connection string to use; when null, the first of the well-known
+		/// event-store connection string names is used, falling back to the default connection string.
+		/// </param>
+		/// <returns>The <see cref="IServiceCollection"/> for chaining.</returns>
 		public IServiceCollection AddPostgresEventStore(string? connectionStringName = null)
 		{
 			services.AddEventSourcing();
@@ -85,6 +96,18 @@ public static class ServiceCollectionExtensions
 			return services;
 		}
 
+		/// <summary>
+		/// Registers the PostgreSQL queryable snapshot event store and its dependencies.
+		/// </summary>
+		/// <param name="connectionStringName">
+		/// Optional name of the connection string to use; when null, the first of the well-known
+		/// snapshot connection string names is used, falling back to the default connection string.
+		/// </param>
+		/// <param name="registerAsIEventStore">
+		/// When <see langword="true"/>, the snapshot store is also registered as an <see cref="IEventStore"/>,
+		/// allowing it to be resolved for event-store operations.
+		/// </param>
+		/// <returns>The <see cref="IServiceCollection"/> for chaining.</returns>
 		public IServiceCollection AddPostgresSnapshotQueryableEventStore(
 			string? connectionStringName = null,
 			bool registerAsIEventStore = false

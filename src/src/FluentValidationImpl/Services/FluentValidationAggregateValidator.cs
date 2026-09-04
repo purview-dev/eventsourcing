@@ -10,14 +10,18 @@ namespace Purview.EventSourcing.FluentValidation.Services;
 /// <see cref="IAggregateValidator{TAggregate}"/> interface, mapping FluentValidation
 /// results to <see cref="ValidationResult"/>.
 /// </summary>
+/// <typeparam name="TAggregate">The aggregate type to validate.</typeparam>
+/// <param name="validator">The <see cref="IValidator{TAggregate}"/> to adapt.</param>
 public sealed class FluentValidationAggregateValidator<TAggregate>(IValidator<TAggregate> validator)
 	: IAggregateValidator<TAggregate>
 	where TAggregate : IAggregate
 {
 	readonly IValidator<TAggregate> _validator = validator;
 
+	///<inheritdoc/>
 	public ValidationResult Validate(TAggregate aggregate) => Map(_validator.Validate(aggregate));
 
+	///<inheritdoc/>
 	public async Task<ValidationResult> ValidateAsync(
 		TAggregate aggregate,
 		CancellationToken cancellationToken = default
@@ -33,6 +37,6 @@ public sealed class FluentValidationAggregateValidator<TAggregate>(IValidator<TA
 			return ValidationResult.Success;
 
 		var failures = result.Errors.Select(e => new ValidationFailure(e.PropertyName, e.ErrorMessage));
-		return new ValidationResult(failures);
+		return new(failures);
 	}
 }

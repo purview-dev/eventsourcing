@@ -1,0 +1,46 @@
+{
+  "runtime": "Net100",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "OpenApi/admin.openapi.json",
+      "output": null,
+      "newLineBehavior": "LF"
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "className": "AdminApiClient",
+      "generateClientClasses": true,
+      "generateClientInterfaces": false,
+      "injectHttpClient": true,
+      "disposeHttpClient": true,
+      "generateExceptionClasses": true,
+      "exceptionClass": "AdminApiException",
+      "wrapDtoExceptions": true,
+      "useHttpClientCreationMethod": false,
+      "httpClientType": "System.Net.Http.HttpClient",
+      "useBaseUrl": true,
+      "generateBaseUrlProperty": true,
+      "generateSyncMethods": false,
+      "generatePrepareRequest": true,
+      "prepareRequestMethodName": "PrepareRequest",
+      "generateUpdateJsonSerializerSettingsMethod": true,
+      "useRequestAndResponseSerializationSettings": false,
+      "clientNamespace": "Purview.EventSourcing.Admin.Client",
+      "dtoNamespace": "Purview.EventSourcing.Admin.Client",
+      "namespace": "Purview.EventSourcing.Admin.Client",
+      "operationGenerationMode": "SingleClientFromOperationId",
+      "generateOptionalParameters": true,
+      "parameterDateTimeFormat": "s",
+      "parameterDateFormat": "yyyy-MM-dd",
+      "generateNullableReferenceTypes": true,
+      "generateJsonMethods": false,
+      "typeNameGeneratorType": "NSwag.CodeGeneration.CSharp.TypeNames.CSharpTypeNameGenerator, NSwag.CodeGeneration.CSharp",
+      "generateDataAnnotations": false,
+      "generateResponseClasses": false,
+      "jsonLibrary": "SystemTextJson",
+      "output": "Generated/AdminApiClient.g.cs"
+    }
+  }
+}

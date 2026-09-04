@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
@@ -94,6 +95,11 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlSe
 	}
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "SQL Server transaction integration scenario intentionally touches the full transaction surface."
+	)]
 	public async Task CommitAsync_GivenEnlistedSqlOperationThrows_RollsBackAggregateAndSqlInsert(
 		CancellationToken cancellationToken
 	)
@@ -348,7 +354,7 @@ public sealed partial class SqlServerEventStoreTransactionIntegrationTests(SqlSe
 		return new SqlServerSnapshotEventStore<PersistenceAggregate>(
 			backingStore,
 			Options.Create(options),
-			Purview.EventSourcing.TestHelpers.CreateSqlServerSnapshotEventStoreTelemetry()
+			TestHelpers.CreateSqlServerSnapshotEventStoreTelemetry()
 		);
 	}
 }

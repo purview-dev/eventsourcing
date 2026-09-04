@@ -45,8 +45,8 @@ public sealed class FluentValidationAggregateValidatorTests
 		var result = adapter.Validate(aggregate);
 
 		await Assert.That(result.IsValid).IsFalse();
-		await Assert.That(result.Errors).Count().IsEqualTo(1);
-		await Assert.That(result.Errors[0].PropertyName).IsEqualTo("Name");
+		await Assert.That(result.Failures).Count().IsEqualTo(1);
+		await Assert.That(result.Failures[0].PropertyName).IsEqualTo("Name");
 	}
 
 	sealed class TestAggregate : AggregateBase

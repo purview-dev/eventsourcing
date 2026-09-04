@@ -5,9 +5,21 @@ using Purview.EventSourcing.Admin.Security.Requirements;
 
 namespace Purview.EventSourcing.Admin.Security.Handlers;
 
+/// <summary>
+/// Authorization handler that verifies the user has general aggregate access.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This handler delegates the actual aggregate-type checks to endpoint-level logic which has access to route
+/// parameters. It only verifies that the user holds at least one granted permission (or no explicit denials),
+/// while deny-by-default and per-aggregate-type checks are enforced by the endpoint layer.
+/// </para>
+/// </remarks>
+/// <param name="permissionProvider">The permission provider used to resolve the current user's permissions.</param>
 public sealed class AggregateTypeAccessHandler(IAdminPermissionProvider permissionProvider)
 	: AuthorizationHandler<AggregateTypeAccessRequirement>
 {
+	///<inheritdoc/>
 	protected override async Task HandleRequirementAsync(
 		[NotNull] AuthorizationHandlerContext context,
 		AggregateTypeAccessRequirement requirement

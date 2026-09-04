@@ -70,12 +70,26 @@ public class ContinuationResponse<T>
 	/// <returns></returns>
 	public ContinuationRequest ToRequest() => CreateRequest<ContinuationRequest>();
 
+	/// <summary>
+	/// Creates a <see cref="ContinuationRequest"/> from the current response, preserving the continuation token
+	/// and requested count for the next page.
+	/// </summary>
+	/// <typeparam name="TRequest">The continuation request type to create.</typeparam>
+	/// <returns>A continuation request ready to be issued for the next page.</returns>
 	protected TRequest CreateRequest<TRequest>()
 		where TRequest : ContinuationRequest, new()
 	{
 		return new() { ContinuationToken = ContinuationToken, MaxRecords = RequestedCount };
 	}
 
+	/// <summary>
+	/// Creates a converted continuation response whose results are projected through the <paramref name="convert"/>
+	/// function, preserving the paging state.
+	/// </summary>
+	/// <typeparam name="TRequest">The response type to create.</typeparam>
+	/// <typeparam name="TTo">The new result model type.</typeparam>
+	/// <param name="convert">The converter applied to each result.</param>
+	/// <returns>A continuation response with the converted results and the same paging state.</returns>
 	protected TRequest CreateResponse<TRequest, TTo>(Func<T, TTo?> convert)
 		where TRequest : ContinuationResponse<TTo>, new()
 		where TTo : class

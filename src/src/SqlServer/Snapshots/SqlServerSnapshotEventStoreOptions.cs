@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
@@ -27,17 +27,37 @@ public sealed class SqlServerSnapshotAggregateTableOverride
 	public string? TableName { get; set; }
 }
 
+/// <summary>
+/// Options that configure the SQL Server snapshot (queryable) event store.
+/// </summary>
+/// <remarks>
+/// Bound from the <c>EventStore:SqlServerSnapshot</c> configuration section; the connection string can also be
+/// resolved from the configured connection-string names when it is not supplied directly.
+/// </remarks>
 public sealed class SqlServerSnapshotEventStoreOptions
 {
+	/// <summary>
+	/// The configuration section name used to bind <see cref="SqlServerSnapshotEventStoreOptions"/>.
+	/// </summary>
 	public const string SqlServerEventStore = "EventStore:SqlServerSnapshot";
 
+	/// <summary>
+	/// The connection string used to access the SQL Server (or Azure SQL) database.
+	/// </summary>
+	/// <remarks>Required; do not embed credentials in source control.</remarks>
 	[Required]
 	public string ConnectionString { get; set; } = default!;
 
+	/// <summary>
+	/// The name of the table that stores aggregate snapshots.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string TableName { get; set; } = "EventStoreSnapshots";
 
+	/// <summary>
+	/// The schema that owns the snapshot table.
+	/// </summary>
 	[Required(AllowEmptyStrings = false)]
 	[RegularExpression(@"^[\w\-.]+$")]
 	public string SchemaName { get; set; } = "dbo";
@@ -81,8 +101,10 @@ public sealed class SqlServerSnapshotEventStoreOptions
 	/// </code>
 	/// </example>
 	/// </remarks>
-	public Dictionary<string, SqlServerSnapshotAggregateTableOverride> AggregateTableOverrides { get; init; } =
-	[with(StringComparer.OrdinalIgnoreCase)];
+	public Dictionary<string, SqlServerSnapshotAggregateTableOverride
+#pragma warning disable format
+	> AggregateTableOverrides { get; init; } = [with(StringComparer.OrdinalIgnoreCase)];
+#pragma warning restore format
 
 	/// <summary>
 	/// Configures runtime-managed SQL Server indexes over the snapshot payload JSON column.

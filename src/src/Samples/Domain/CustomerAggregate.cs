@@ -9,7 +9,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// Simple aggregate demonstrating basic customer management.
 /// Shows: single-property events, string manipulation, validation.
 /// </summary>
-[GenerateAggregate]
+[Aggregate]
 [ZodSchema]
 public sealed partial class CustomerAggregate : AggregateBase
 {
@@ -43,21 +43,21 @@ public sealed partial class CustomerAggregate : AggregateBase
 
 	// Generated methods.
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate Deactivate();
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate Reactivate();
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate RegisterCustomer(string name, string email, bool isActive = true);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate ChangeName(string name);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate ChangeEmail(string email);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial CustomerAggregate ChangePhoneNumber(string? phoneNumber);
 }

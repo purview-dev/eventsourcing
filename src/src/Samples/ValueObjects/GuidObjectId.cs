@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Serialization;
+using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.Samples.ValueObjects;
 

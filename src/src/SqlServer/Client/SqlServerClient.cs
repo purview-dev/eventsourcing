@@ -64,6 +64,7 @@ sealed partial class SqlServerClient
 		where T : class
 	{
 		await EnsureTableIfEnabledAsync(cancellationToken);
+
 		await using var queryContext = CreateQueryContext<T>();
 		return await UpsertAsync(aggregate, id, aggregateType, queryContext, cancellationToken);
 	}
@@ -227,7 +228,7 @@ sealed partial class SqlServerClient
 	}
 
 	[GeneratedRegex(@"^[\w\-\.]+$")]
-	private static partial System.Text.RegularExpressions.Regex IdentifierRegex();
+	private static partial Regex IdentifierRegex();
 
 	sealed class SnapshotStorageDbContext : DbContext
 	{
@@ -400,7 +401,10 @@ sealed partial class SqlServerClient
 		foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
 			if (ShouldSkipJsonProperty(type, property))
+			{
+				builder.Ignore(property.Name);
 				continue;
+			}
 
 			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
@@ -413,6 +417,12 @@ sealed partial class SqlServerClient
 			if (propertyType.GetCustomAttribute<ScalarAttribute>() is not null)
 			{
 				MapReadOnlyConstructorBoundProperty(builder, type, property, propertyType);
+				continue;
+			}
+
+			if (HasEfOpaqueAttribute(property))
+			{
+				MapOpaqueJsonProperty(builder, propertyType, property.Name);
 				continue;
 			}
 
@@ -433,7 +443,7 @@ sealed partial class SqlServerClient
 					builder.ComplexCollection(
 						propertyType,
 						property.Name,
-						nested => ConfigureComplexGraphRecursive(nested, elementType, visited)
+						nested => ConfigureComplexGraphRecursive(nested, elementType, [with(visited)])
 					);
 				else
 					throw CreateUnsupportedShapeException(type, property);
@@ -455,7 +465,7 @@ sealed partial class SqlServerClient
 				builder.ComplexProperty(
 					propertyType,
 					property.Name,
-					nested => ConfigureComplexGraphRecursive(nested, propertyType, visited)
+					nested => ConfigureComplexGraphRecursive(nested, propertyType, [with(visited)])
 				);
 				continue;
 			}
@@ -479,7 +489,10 @@ sealed partial class SqlServerClient
 		foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
 		{
 			if (ShouldSkipJsonProperty(type, property))
+			{
+				builder.Ignore(property.Name);
 				continue;
+			}
 
 			var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
@@ -492,6 +505,12 @@ sealed partial class SqlServerClient
 			if (propertyType.GetCustomAttribute<ScalarAttribute>() is not null)
 			{
 				MapReadOnlyConstructorBoundProperty(builder, type, property, propertyType);
+				continue;
+			}
+
+			if (HasEfOpaqueAttribute(property))
+			{
+				MapOpaqueJsonProperty(builder, propertyType, property.Name);
 				continue;
 			}
 
@@ -512,7 +531,7 @@ sealed partial class SqlServerClient
 					builder.ComplexCollection(
 						propertyType,
 						property.Name,
-						nested => ConfigureComplexGraphRecursive(nested, elementType, visited)
+						nested => ConfigureComplexGraphRecursive(nested, elementType, [with(visited)])
 					);
 				else
 					throw CreateUnsupportedShapeException(type, property);
@@ -534,7 +553,7 @@ sealed partial class SqlServerClient
 				builder.ComplexProperty(
 					propertyType,
 					property.Name,
-					nested => ConfigureComplexGraphRecursive(nested, propertyType, visited)
+					nested => ConfigureComplexGraphRecursive(nested, propertyType, [with(visited)])
 				);
 				continue;
 			}
@@ -596,6 +615,9 @@ sealed partial class SqlServerClient
 			if (propertyType.GetCustomAttribute<ScalarAttribute>() is not null)
 				continue;
 
+			if (HasEfOpaqueAttribute(property))
+				continue;
+
 			if (TryGetEnumerableElementType(propertyType, out var elementType))
 			{
 				if (!IsEventStoreCollectionType(propertyType))
@@ -638,6 +660,23 @@ sealed partial class SqlServerClient
 
 	static bool IsStructValueObjectType(Type type) =>
 		type.IsValueType && type.GetCustomAttribute<ValueObjectAttribute>() is not null;
+
+	static bool HasEfOpaqueAttribute(MemberInfo member) =>
+		member.CustomAttributes.Any(attribute =>
+			attribute.AttributeType.FullName == "Purview.EventSourcing.EntityFrameworkCore.EfOpaqueAttribute"
+		);
+
+	static void MapOpaqueJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		propertyBuilder.HasConversion(typeof(OpaqueJsonValueConverter<>).MakeGenericType(propertyType));
+	}
+
+	static void MapOpaqueJsonProperty(ComplexCollectionBuilder builder, Type propertyType, string propertyName)
+	{
+		var propertyBuilder = builder.Property(propertyType, propertyName);
+		propertyBuilder.HasConversion(typeof(OpaqueJsonValueConverter<>).MakeGenericType(propertyType));
+	}
 
 	static void MapCollectionAsJsonProperty(ComplexPropertyBuilder builder, Type propertyType, string propertyName)
 	{
@@ -724,6 +763,7 @@ sealed partial class SqlServerClient
 		|| type.IsEnum
 		|| type == typeof(string)
 		|| type == typeof(decimal)
+		|| type == typeof(Uri)
 		|| type == typeof(Guid)
 		|| type == typeof(DateTime)
 		|| type == typeof(DateTimeOffset)
@@ -836,11 +876,11 @@ sealed partial class SqlServerClient
 		where T : class
 	{
 		var aggregateTypeVisitor = new AggregateTypeExpressionVisitor(aggregateType);
-		var rewritten = (Expression<Func<T, bool>>)aggregateTypeVisitor.Visit(whereClause)!;
+		var rewritten = (Expression<Func<T, bool>>)aggregateTypeVisitor.Visit(whereClause);
 		var invariantCasingVisitor = new InvariantStringMethodNormalizationVisitor();
-		rewritten = (Expression<Func<T, bool>>)invariantCasingVisitor.Visit(rewritten)!;
+		rewritten = (Expression<Func<T, bool>>)invariantCasingVisitor.Visit(rewritten);
 		var scalarVisitor = new ScalarValueMemberAccessPredicateVisitor();
-		return (Expression<Func<T, bool>>)scalarVisitor.Visit(rewritten)!;
+		return (Expression<Func<T, bool>>)scalarVisitor.Visit(rewritten);
 	}
 
 	sealed class AggregateTypeExpressionVisitor(string aggregateType) : ExpressionVisitor

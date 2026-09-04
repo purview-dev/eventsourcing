@@ -5,6 +5,7 @@ namespace Purview.EventSourcing.CosmosDb.Snapshot;
 
 partial class CosmosDbSnapshotEventStore<T>
 {
+	/// <inheritdoc/>
 	public IAsyncEnumerable<T> GetQueryEnumerableAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -25,6 +26,7 @@ partial class CosmosDbSnapshotEventStore<T>
 			.SelectAsync(FulfilRequirements);
 	}
 
+	/// <inheritdoc/>
 	public IAsyncEnumerable<T> GetListEnumerableAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = ContinuationRequest.DefaultMaxRecords,
@@ -36,6 +38,7 @@ partial class CosmosDbSnapshotEventStore<T>
 			.SelectAsync(FulfilRequirements);
 	}
 
+	/// <inheritdoc/>
 	public async Task<ContinuationResponse<T>> QueryAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -62,6 +65,7 @@ partial class CosmosDbSnapshotEventStore<T>
 		return results;
 	}
 
+	/// <inheritdoc/>
 	public async Task<ContinuationResponse<T>> ListAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		ContinuationRequest request,
@@ -86,6 +90,7 @@ partial class CosmosDbSnapshotEventStore<T>
 		return results;
 	}
 
+	/// <inheritdoc/>
 	public async Task<T?> SingleOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		CancellationToken cancellationToken = default
@@ -96,6 +101,7 @@ partial class CosmosDbSnapshotEventStore<T>
 		return query.SingleOrDefault();
 	}
 
+	/// <inheritdoc/>
 	public async Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -106,6 +112,7 @@ partial class CosmosDbSnapshotEventStore<T>
 		return query.FirstOrDefault();
 	}
 
+	/// <inheritdoc/>
 	public Task<long> CountAsync(Expression<Func<T, bool>>? whereClause, CancellationToken cancellationToken = default)
 	{
 		var expressionToRun = BuildQueryExpression(whereClause);

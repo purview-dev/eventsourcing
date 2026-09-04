@@ -1,32 +1,72 @@
+using System.Collections.Immutable;
+
 namespace Purview.EventSourcing.Validation;
 
 /// <summary>
 /// Represents the result of validating an aggregate.
 /// </summary>
-/// <remarks>
-/// Constructs a new <see cref="ValidationResult"/> with the given failures.
-/// </remarks>
-/// <param name="failures">The validation failures. Pass an empty collection for a successful result.</param>
-public sealed class ValidationResult(IEnumerable<ValidationFailure> failures)
+public sealed class ValidationResult
 {
 	/// <summary>
-	/// A static instance representing a successful validation with no errors.
+	/// A static instance representing successful validation with no failures.
 	/// </summary>
-	public static ValidationResult Success { get; } = new([]);
+	public static ValidationResult Success { get; } = new();
 
 	/// <summary>
-	/// Constructs a new successful <see cref="ValidationResult"/> with no errors.
+	/// Constructs a successful validation result.
 	/// </summary>
 	public ValidationResult()
-		: this([]) { }
+	{
+		Failures = [];
+	}
 
 	/// <summary>
-	/// <see langword="true"/> when there are no <see cref="Errors"/>; otherwise <see langword="false"/>.
+	/// Constructs a validation result containing the specified failures.
 	/// </summary>
-	public bool IsValid => Errors.Count == 0;
+	/// <param name="failures">The validation failures.</param>
+	public ValidationResult(ImmutableArray<ValidationFailure> failures)
+	{
+		Failures = failures.IsDefault ? [] : failures;
+	}
 
 	/// <summary>
-	/// The collection of <see cref="ValidationFailure"/>s produced during validation.
+	/// Constructs a validation result containing the specified failures.
 	/// </summary>
-	public IReadOnlyList<ValidationFailure> Errors { get; } = [.. failures];
+	/// <param name="failures">The validation failures.</param>
+	/// <exception cref="ArgumentNullException">
+	/// Thrown when <paramref name="failures"/> is <see langword="null"/>.
+	/// </exception>
+	public ValidationResult(IEnumerable<ValidationFailure> failures)
+	{
+		ArgumentNullException.ThrowIfNull(failures);
+
+		Failures = [.. failures];
+	}
+
+	/// <summary>
+	/// <see langword="true"/> when there are no validation failures;
+	/// otherwise <see langword="false"/>.
+	/// </summary>
+	public bool IsValid => Failures.IsEmpty;
+
+	/// <summary>
+	/// <see langword="true"/> when there are one or more validation failures;
+	/// otherwise <see langword="false"/>.
+	/// </summary>
+	public bool HasFailures => !Failures.IsEmpty;
+
+	/// <summary>
+	/// <see langword="true"/> when there are one or more aggregate-wide validation failures;
+	/// </summary>
+	public bool HasAggregateFailures => Failures.Any(f => f.IsAggregateFailure);
+
+	/// <summary>
+	/// <see langword="true"/> when there are one or more property-specific validation failures;
+	/// </summary>
+	public bool HasPropertyFailures => Failures.Any(f => !f.IsAggregateFailure);
+
+	/// <summary>
+	/// The validation failures produced during validation.
+	/// </summary>
+	public ImmutableArray<ValidationFailure> Failures { get; }
 }

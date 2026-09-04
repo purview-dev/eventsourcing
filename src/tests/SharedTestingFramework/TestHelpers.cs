@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.ChangeFeed;
 using Purview.EventSourcing.SqlServer.Events;
@@ -94,7 +94,7 @@ public static class TestHelpers
 	{
 		TAggregate aggregate = new()
 		{
-			Details = { Id = aggregateId?.ToString() ?? typeof(TAggregate).Name + $"_{Guid.NewGuid()}" },
+			Details = { Id = aggregateId?.ToString() ?? (typeof(TAggregate).Name + $"_{Guid.NewGuid()}") },
 		};
 
 		creator?.Invoke(aggregate);

@@ -3,6 +3,9 @@ using Purview.EventSourcing.Fixtures.SqlServer;
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
+// Holds the fixture and shared helpers for SQL Server-specific snapshot tests (index creation,
+// unsupported payloads). The provider-agnostic snapshot contract suite lives in
+// SnapshotStoreContractTests.
 [ClassDataSource<SqlServerSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 public partial class SqlServerSnapshotEventStoreTests(SqlServerSnapshotEventStoreFixture fixture)
 {

@@ -1,8 +1,12 @@
-namespace Purview.EventSourcing.Admin.Api;
+using System.ComponentModel.DataAnnotations;
+using ZodSharp;
+
+namespace Purview.EventSourcing.Admin.API;
 
 /// <summary>
 /// Configures the Admin portal endpoint, paging and projection limits.
 /// </summary>
+[ZodSchema]
 public sealed class AdminPortalOptions
 {
 	/// <summary>
@@ -18,6 +22,8 @@ public sealed class AdminPortalOptions
 	/// <summary>
 	/// Gets or sets the route prefix used by the Admin portal.
 	/// </summary>
+	[Required(AllowEmptyStrings = false)]
+	[StringLength(128)]
 	public string RoutePrefix { get; set; } = "/admin/api";
 
 	/// <summary>
@@ -56,6 +62,7 @@ public sealed class AdminPortalOptions
 /// <summary>
 /// Feature toggles for Admin portal capabilities.
 /// </summary>
+[ZodSchema]
 public sealed class AdminFeatureOptions
 {
 	/// <summary>
@@ -96,16 +103,19 @@ public sealed class AdminFeatureOptions
 /// <summary>
 /// Paging constraints for Admin list and search queries.
 /// </summary>
+[ZodSchema]
 public sealed class AdminPagingOptions
 {
 	/// <summary>
 	/// Gets or sets the default page size.
 	/// </summary>
+	[Range(1, int.MaxValue)]
 	public int DefaultPageSize { get; set; } = 50;
 
 	/// <summary>
 	/// Gets or sets the maximum page size.
 	/// </summary>
+	[Range(1, int.MaxValue)]
 	public int MaxPageSize { get; set; } = 500;
 
 	/// <summary>
@@ -127,11 +137,13 @@ public sealed class AdminPagingOptions
 /// <summary>
 /// Projection query limits for Admin projection endpoints.
 /// </summary>
+[ZodSchema]
 public sealed class AdminProjectionOptions
 {
 	/// <summary>
 	/// Gets or sets the maximum number of versions to request in a single projection query.
 	/// </summary>
+	[Range(1, int.MaxValue)]
 	public int MaxVersionsPerQuery { get; set; } = 10000;
 
 	/// <summary>

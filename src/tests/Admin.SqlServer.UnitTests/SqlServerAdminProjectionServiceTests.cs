@@ -9,7 +9,7 @@ public class SqlServerAdminProjectionServiceTests
 	public async Task ProjectionService_IsRegisterable_InDependencyContainer()
 	{
 		// Arrange
-		var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+		var services = new ServiceCollection();
 		var options = Microsoft.Extensions.Options.Options.Create(
 			new EventSourcing.SqlServer.Events.SqlServerEventStoreOptions { ConnectionString = "test" }
 		);

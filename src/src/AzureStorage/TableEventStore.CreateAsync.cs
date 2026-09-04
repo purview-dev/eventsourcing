@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))

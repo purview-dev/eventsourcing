@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.MongoDB.Events.Entities;
 
@@ -68,16 +68,15 @@ partial class MongoDBEventStore<T>
 		);
 
 		await foreach (var eventEntity in query)
-			yield return eventEntity!;
+			yield return eventEntity;
 	}
 
 	/// <param name="eventEntity"></param>
 	/// <param name="aggregateVersion">Only used when an unknown event is found.</param>
 	IEvent? DeserializeEvent(EventEntity eventEntity, int aggregateVersion)
 	{
-		static EventUnknown ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion)
-		{
-			return new EventUnknown
+		static UnknownEvent ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion) =>
+			new()
 			{
 				Details =
 				{
@@ -87,7 +86,6 @@ partial class MongoDBEventStore<T>
 				},
 				Payload = eventEntity.Payload,
 			};
-		}
 
 		try
 		{

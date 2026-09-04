@@ -160,7 +160,7 @@ The sample solution demonstrates how the framework is intended to be consumed:
 - `EventSourcing.Samples.Web` uses the non-generic `IEventStore` and `IQueryableEventStore` facades.
 - `EventSourcing.Samples.QuickStart` is a console app that demonstrates related aggregates, multi-aggregate transactions, and rollback-on-failure behavior without external infrastructure.
 - `EventSourcing.Samples.AppHost` wires up SQL Server, Redis, Azurite, and the web app for Aspire-driven local runs.
-- Sample services such as `CartCheckoutService`, `OrderFulfillmentService`, and `StockTransferService` demonstrate multi-aggregate workflows.
+- Sample services such as `CartCheckoutService`, `OrderFulfilmentService`, and `StockTransferService` demonstrate multi-aggregate workflows.
 
 ## Repository layout
 
@@ -175,8 +175,8 @@ The sample solution demonstrates how the framework is intended to be consumed:
 
 ```text
 dotnet tool restore
-dotnet restore src/Purview.EventSourcing.slnx
-dotnet build src/Purview.EventSourcing.slnx --configuration Release
+dotnet restore src/EventSourcing.slnx
+dotnet build src/EventSourcing.slnx --configuration Release
 dotnet csharpier check src
 dotnet test --project src/tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj --configuration Release
 ```

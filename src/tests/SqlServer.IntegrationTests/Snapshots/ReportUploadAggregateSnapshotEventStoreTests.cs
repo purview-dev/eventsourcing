@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Fixtures.SqlServer;
 using Purview.EventSourcing.Samples.Domain.ReportUpload;
 using Purview.EventSourcing.Samples.ValueObjects;
@@ -49,6 +50,11 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 		);
 
 	[Test]
+	[SuppressMessage(
+		"Maintainability",
+		"CA1506",
+		Justification = "Provider integration scenario intentionally exercises the complete aggregate graph."
+	)]
 	public async Task SnapshotAsync_GivenReportUploadAggregateWithLineItems_QueriesByLineItemCount(
 		CancellationToken cancellationToken
 	)
@@ -67,6 +73,7 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 		await Assert.That(restored.ReportSummary!.Value.ParserDetails.TotalLines).IsEqualTo(10);
 		await Assert.That(restored.ReportSummary.Value.ParserDetails.FailedLines).IsEqualTo(5);
 		await Assert.That(restored.ReportSummary.Value.Projects.Count()).IsEqualTo(2);
+		await Assert.That(restored.ReportSummary.Value.AssetDetails.OperatingSystemDistribution).Count().IsEqualTo(3);
 		await Assert.That(restored.ReportSummaryScalar!.ParserDetails.TotalLines).IsEqualTo(10);
 		await Assert.That(restored.ReportSummaryScalar.ParserDetails.FailedLines).IsEqualTo(5);
 		await Assert.That(restored.ReportSummaryScalar.Projects.Count()).IsEqualTo(2);
@@ -105,7 +112,7 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 	}
 
 	[Test]
-	public async Task QueryAsync_GivenFilterOnComplexScalarValueInnerMember_ThrowsButMirrorPropertyTranslates(
+	public async Task QueryAsync_GivenFilterOnComplexValueInnerMember_AndMirrorProperty_Translate(
 		CancellationToken cancellationToken
 	)
 	{
@@ -115,15 +122,12 @@ public sealed class ReportUploadAggregateSnapshotEventStoreTests(SqlServerSnapsh
 
 		await store.SaveAsync(aggregate, cancellationToken);
 
-		async Task<ContinuationResponse<ReportUploadAggregate>?> UnsupportedAct() =>
-			await store.QueryAsync(
-				a => a.ReportSummary!.Value.ParserDetails.FailedLines > 0,
-				cancellationToken: cancellationToken
-			);
+		var canonicalQuery = await store.QueryAsync(
+			a => a.ReportSummary!.Value.ParserDetails.FailedLines > 0,
+			cancellationToken: cancellationToken
+		);
 
-		var unsupportedException = await Assert.That(UnsupportedAct).Throws<InvalidOperationException>();
-		await Assert.That(unsupportedException).IsNotNull();
-		await Assert.That(unsupportedException!.Message).Contains("could not be translated");
+		await Assert.That(canonicalQuery.Results).Count().IsEqualTo(1);
 
 		var supportedQuery = await store.QueryAsync(
 			a => a.ReportSummaryScalar!.ParserDetails.FailedLines > 0,

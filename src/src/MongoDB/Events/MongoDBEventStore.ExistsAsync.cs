@@ -2,6 +2,7 @@
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<ExistsState> ExistsAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId, nameof(aggregateId));

@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.Samples;
+namespace Purview.EventSourcing.Samples;
 
 public static class Platform
 {
@@ -22,11 +22,11 @@ public static class Platform
 	public const string AzureStorageTable = "eventstore-tables";
 	public const string AzureStorageBlob = "eventstore-snapshots";
 
-	public const string WebApp = "sample-web-app";
-	public const string SqlWebApp = "sample-web-sql";
-	public const string PostgresWebApp = "sample-web-postgres";
-	public const string MongoDbWebApp = "sample-web-mongo";
-	public const string AzureSqlWebApp = "sample-web-azure-sql";
-	public const string AzurePostgresWebApp = "sample-web-azure-postgres";
-	public const string AzureMongoDbWebApp = "sample-web-azure-mongo";
+	public const string WebApp = "web-app";
+	public const string SqlWebApp = "web-app-sql";
+	public const string PostgresWebApp = "web-app-postgres";
+	public const string MongoDbWebApp = "web-app-mongo";
+	public const string AzureSqlWebApp = "web-app-azure-sql";
+	public const string AzurePostgresWebApp = "web-app-azure-postgres";
+	public const string AzureMongoDbWebApp = "web-app-azure-mongo";
 }

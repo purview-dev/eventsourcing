@@ -1,19 +1,36 @@
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
 using Purview.EventSourcing.Admin.Abstractions.Services;
-using Purview.EventSourcing.Admin.Api.Contracts;
+using Purview.EventSourcing.Admin.API.Contracts;
+using Purview.EventSourcing.Admin.API.Filters;
 using Purview.EventSourcing.Admin.Security;
+using ZodSharp.Core;
 
-namespace Purview.EventSourcing.Admin.Api.Endpoints;
+namespace Purview.EventSourcing.Admin.API.Endpoints;
 
+/// <summary>
+/// Maps the Admin portal aggregate query endpoints onto a route group.
+/// </summary>
 public static class AdminAggregatesEndpoints
 {
+	const string AdminPortalTag = "AdminPortal";
+
+	// The event export stream follows the same JSON naming as the rest of the Admin API (camelCase).
+	static readonly JsonSerializerOptions ExportJsonOptions = new(JsonSerializerDefaults.Web);
+
+	/// <summary>
+	/// Maps the <c>POST /aggregates/search</c> endpoint used to search for aggregates.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapSearchAggregates(RouteGroupBuilder group)
 	{
 		group
@@ -21,9 +38,49 @@ public static class AdminAggregatesEndpoints
 			.WithName("SearchAggregates")
 			.WithSummary("Search for aggregates")
 			.WithDescription("Search aggregates by type, id, date range, or status flags with pagination support.")
-			.RequireAuthorization(AdminPortalPolicies.SearchAggregates);
+			.WithTags(AdminPortalTag)
+			.Produces<PagedResult<AggregateSummaryResponse>>()
+			.ProducesValidationProblem()
+			.RequireAuthorization(AdminPortalPolicies.SearchAggregates)
+			.AddEndpointFilterFactory(
+				(routeHandlerContext, next) =>
+				{
+					var factory = routeHandlerContext.ApplicationServices.GetRequiredService<IZodSchemaFactory>();
+					var filter = new ZodSchemaValidationEndpointFilter<AggregateSearchRequest>(
+						factory,
+						request =>
+							AdminContractRefinements.InvalidTimeRange(
+								request.FromUtc,
+								request.ToUtc,
+								nameof(AggregateSearchRequest.FromUtc)
+							)
+					);
+					return invocation => filter.InvokeAsync(invocation, next);
+				}
+			);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}</c> endpoint used to view a single aggregate.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
+	public static void MapViewAggregate(RouteGroupBuilder group)
+	{
+		group
+			.MapGet("/aggregates/{aggregateType}/{aggregateId}", GetAggregateAsync)
+			.WithName("GetAggregate")
+			.WithSummary("Get aggregate")
+			.WithDescription("Returns a single aggregate summary by type and identifier.")
+			.WithTags(AdminPortalTag)
+			.Produces<AggregateSummaryResponse>()
+			.ProducesProblem(StatusCodes.Status404NotFound)
+			.RequireAuthorization(AdminPortalPolicies.ViewAggregate);
+	}
+
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/events</c> endpoint used to read an aggregate's event stream.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapEventRange(RouteGroupBuilder group)
 	{
 		group
@@ -31,9 +88,28 @@ public static class AdminAggregatesEndpoints
 			.WithName("GetAggregateEventRange")
 			.WithSummary("Get aggregate event range")
 			.WithDescription("Returns the aggregate event stream within version and timestamp bounds.")
-			.RequireAuthorization(AdminPortalPolicies.ViewEvents);
+			.WithTags(AdminPortalTag)
+			.Produces<PagedResult<EventEnvelopeResponse>>()
+			.ProducesProblem(StatusCodes.Status404NotFound)
+			.ProducesValidationProblem()
+			.RequireAuthorization(AdminPortalPolicies.ViewEvents)
+			.AddEndpointFilterFactory(
+				(routeHandlerContext, next) =>
+				{
+					var factory = routeHandlerContext.ApplicationServices.GetRequiredService<IZodSchemaFactory>();
+					var filter = new ZodSchemaValidationEndpointFilter<EventRangeRequest>(
+						factory,
+						RefineEventRangeRequest
+					);
+					return invocation => filter.InvokeAsync(invocation, next);
+				}
+			);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/projection</c> endpoint used to project state at a version.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapProjectionAtVersion(RouteGroupBuilder group)
 	{
 		group
@@ -41,9 +117,17 @@ public static class AdminAggregatesEndpoints
 			.WithName("GetAggregateProjectionAtVersion")
 			.WithSummary("Get aggregate projection at version")
 			.WithDescription("Projects aggregate state at a specific version.")
+			.WithTags(AdminPortalTag)
+			.Produces<ProjectionResponse>()
+			.ProducesProblem(StatusCodes.Status404NotFound)
+			.ProducesProblem(StatusCodes.Status400BadRequest)
 			.RequireAuthorization(AdminPortalPolicies.ProjectPointInTime);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/projection/time</c> endpoint used to project state at a timestamp.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
 	public static void MapProjectionAtTime(RouteGroupBuilder group)
 	{
 		group
@@ -51,7 +135,40 @@ public static class AdminAggregatesEndpoints
 			.WithName("GetAggregateProjectionAtTime")
 			.WithSummary("Get aggregate projection at time")
 			.WithDescription("Projects aggregate state at a specific UTC timestamp.")
+			.WithTags(AdminPortalTag)
+			.Produces<ProjectionResponse>()
+			.ProducesProblem(StatusCodes.Status404NotFound)
+			.ProducesProblem(StatusCodes.Status400BadRequest)
 			.RequireAuthorization(AdminPortalPolicies.ProjectPointInTime);
+	}
+
+	/// <summary>
+	/// Maps the <c>GET /aggregates/{aggregateType}/{aggregateId}/events/export</c> endpoint used to export an aggregate's event stream.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
+	public static void MapExportEvents(RouteGroupBuilder group)
+	{
+		group
+			.MapGet("/aggregates/{aggregateType}/{aggregateId}/events/export", ExportEventsAsync)
+			.WithName("ExportAggregateEvents")
+			.WithSummary("Export aggregate events")
+			.WithDescription("Streams the aggregate event stream as JSON Lines (application/x-ndjson).")
+			.WithTags(AdminPortalTag)
+			.Produces<byte[]>(StatusCodes.Status200OK, contentType: "application/x-ndjson")
+			.ProducesProblem(StatusCodes.Status404NotFound)
+			.ProducesValidationProblem()
+			.RequireAuthorization(AdminPortalPolicies.ExportEvents)
+			.AddEndpointFilterFactory(
+				(routeHandlerContext, next) =>
+				{
+					var factory = routeHandlerContext.ApplicationServices.GetRequiredService<IZodSchemaFactory>();
+					var filter = new ZodSchemaValidationEndpointFilter<EventRangeRequest>(
+						factory,
+						RefineEventRangeRequest
+					);
+					return invocation => filter.InvokeAsync(invocation, next);
+				}
+			);
 	}
 
 	static async Task<Ok<PagedResult<AggregateSummaryResponse>>> SearchAggregatesAsync(
@@ -61,9 +178,7 @@ public static class AdminAggregatesEndpoints
 		CancellationToken cancellationToken
 	)
 	{
-		// Clamp page size to max
-		var pageSize = Math.Min(request.PageSize, options.Value.Paging.MaxPageSize);
-		pageSize = Math.Max(pageSize, 1);
+		var pageSize = ClampPageSize(request.PageSize, options.Value.Paging.MaxPageSize);
 
 		var query = new AggregateSearchQuery(
 			request.AggregateType,
@@ -72,7 +187,7 @@ public static class AdminAggregatesEndpoints
 			request.ToUtc,
 			request.IsDeleted,
 			request.IsRestored,
-			request.Page,
+			Math.Max(request.Page, 1),
 			pageSize,
 			request.Sort
 		);
@@ -81,21 +196,41 @@ public static class AdminAggregatesEndpoints
 		return TypedResults.Ok(result);
 	}
 
-	static async Task<Results<Ok<PagedResult<EventEnvelopeResponse>>, NotFound>> GetEventRangeAsync(
+	static async Task<Results<Ok<AggregateSummaryResponse>, NotFound, ValidationProblem>> GetAggregateAsync(
+		string aggregateType,
+		string aggregateId,
+		IAdminAggregateQueryService queryService,
+		CancellationToken cancellationToken
+	)
+	{
+		var routeValidation = ValidateRouteParameters(aggregateType, aggregateId);
+		if (routeValidation is not null)
+			return routeValidation;
+
+		var result = await queryService.GetAsync(aggregateType, aggregateId, cancellationToken);
+		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
+	}
+
+	static async Task<Results<Ok<PagedResult<EventEnvelopeResponse>>, NotFound, ValidationProblem>> GetEventRangeAsync(
 		string aggregateType,
 		string aggregateId,
 		[AsParameters] EventRangeRequest request,
 		IAdminEventQueryService queryService,
+		IOptions<AdminPortalOptions> options,
 		CancellationToken cancellationToken
 	)
 	{
+		var routeValidation = ValidateRouteParameters(aggregateType, aggregateId);
+		if (routeValidation is not null)
+			return routeValidation;
+
 		var query = new EventRangeQuery(
 			request.VersionFrom,
 			request.VersionTo,
 			request.TimeFromUtc,
 			request.TimeToUtc,
-			request.Page,
-			request.PageSize,
+			Math.Max(request.Page, 1),
+			ClampPageSize(request.PageSize, options.Value.Paging.MaxPageSize),
 			request.Sort
 		);
 
@@ -103,7 +238,7 @@ public static class AdminAggregatesEndpoints
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
 	}
 
-	static async Task<Results<Ok<ProjectionResponse>, NotFound>> GetProjectionAtVersionAsync(
+	static async Task<Results<Ok<ProjectionResponse>, NotFound, ValidationProblem>> GetProjectionAtVersionAsync(
 		string aggregateType,
 		string aggregateId,
 		[FromQuery] long? version,
@@ -111,8 +246,14 @@ public static class AdminAggregatesEndpoints
 		CancellationToken cancellationToken
 	)
 	{
+		var routeValidation = ValidateRouteParameters(aggregateType, aggregateId);
+		if (routeValidation is not null)
+			return routeValidation;
+
 		if (version is null or <= 0)
-			return TypedResults.NotFound();
+			return TypedResults.ValidationProblem(
+				new Dictionary<string, string[]> { ["version"] = ["version must be a positive integer."] }
+			);
 
 		var result = await projectionService.ProjectAtVersionAsync(
 			aggregateType,
@@ -124,24 +265,156 @@ public static class AdminAggregatesEndpoints
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
 	}
 
-	static async Task<Results<Ok<ProjectionResponse>, NotFound>> GetProjectionAtTimeAsync(
+	static async Task<Results<Ok<ProjectionResponse>, NotFound, ValidationProblem>> GetProjectionAtTimeAsync(
 		string aggregateType,
 		string aggregateId,
-		[FromQuery] DateTime? asOfUtc,
+		[FromQuery] DateTimeOffset? asOfUtc,
 		IAdminProjectionService projectionService,
 		CancellationToken cancellationToken
 	)
 	{
+		var routeValidation = ValidateRouteParameters(aggregateType, aggregateId);
+		if (routeValidation is not null)
+			return routeValidation;
+
 		if (asOfUtc is null)
-			return TypedResults.NotFound();
+		{
+			return TypedResults.ValidationProblem(
+				new Dictionary<string, string[]> { ["asOfUtc"] = ["asOfUtc is required."] }
+			);
+		}
+
+		if (asOfUtc.Value.Offset != TimeSpan.Zero)
+		{
+			return TypedResults.ValidationProblem(
+				new Dictionary<string, string[]> { ["asOfUtc"] = ["asOfUtc must be expressed in UTC (no offset)."] }
+			);
+		}
 
 		var result = await projectionService.ProjectAtTimeAsync(
 			aggregateType,
 			aggregateId,
-			new DateTimeOffset(asOfUtc.Value, TimeSpan.Zero),
+			asOfUtc.Value,
 			cancellationToken
 		);
 
 		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
+	}
+
+	static async Task<Results<FileStreamHttpResult, NotFound, ValidationProblem>> ExportEventsAsync(
+		string aggregateType,
+		string aggregateId,
+		[AsParameters] EventRangeRequest request,
+		IAdminEventQueryService queryService,
+		IOptions<AdminPortalOptions> options,
+		CancellationToken cancellationToken
+	)
+	{
+		var routeValidation = ValidateRouteParameters(aggregateType, aggregateId);
+		if (routeValidation is not null)
+			return routeValidation;
+
+		var batchSize = ClampPageSize(request.PageSize, options.Value.Paging.MaxPageSize);
+		var remaining = (long)options.Value.Projections.MaxVersionsPerQuery;
+		var page = 1;
+
+		var firstPage = await queryService.GetRangeAsync(
+			aggregateType,
+			aggregateId,
+			BuildExportQuery(request, page, batchSize),
+			cancellationToken
+		);
+
+		if (firstPage is null)
+			return TypedResults.NotFound();
+
+		var stream = new MemoryStream();
+		await using (
+			var writer = new StreamWriter(
+				stream,
+				new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+				bufferSize: 4096,
+				leaveOpen: true
+			)
+		)
+		{
+			var current = firstPage;
+			while (remaining > 0)
+			{
+				foreach (var envelope in current.Items)
+				{
+					if (remaining <= 0)
+						break;
+
+					remaining--;
+					await writer.WriteLineAsync(
+						JsonSerializer.Serialize(envelope, ExportJsonOptions).AsMemory(),
+						cancellationToken
+					);
+				}
+
+				if (!current.HasNextPage || remaining <= 0)
+					break;
+
+				page++;
+				var next = await queryService.GetRangeAsync(
+					aggregateType,
+					aggregateId,
+					BuildExportQuery(request, page, batchSize),
+					cancellationToken
+				);
+				if (next is null)
+					break;
+
+				current = next;
+			}
+
+			await writer.FlushAsync(cancellationToken);
+		}
+
+		stream.Position = 0;
+		return TypedResults.Stream(stream, "application/x-ndjson");
+	}
+
+	static EventRangeQuery BuildExportQuery(EventRangeRequest request, int page, int pageSize) =>
+		new(
+			request.VersionFrom,
+			request.VersionTo,
+			request.TimeFromUtc,
+			request.TimeToUtc,
+			page,
+			pageSize,
+			"Version asc"
+		);
+
+	static int ClampPageSize(int requested, int maxPageSize) => Math.Clamp(requested, 1, Math.Max(maxPageSize, 1));
+
+	static IEnumerable<ValidationError> RefineEventRangeRequest(EventRangeRequest request) =>
+		AdminContractRefinements
+			.InvalidVersionRange(request.VersionFrom, request.VersionTo, nameof(EventRangeRequest.VersionFrom))
+			.Concat(
+				AdminContractRefinements.InvalidVersionBound(request.VersionFrom, nameof(EventRangeRequest.VersionFrom))
+			)
+			.Concat(
+				AdminContractRefinements.InvalidVersionBound(request.VersionTo, nameof(EventRangeRequest.VersionTo))
+			)
+			.Concat(
+				AdminContractRefinements.InvalidTimeRange(
+					request.TimeFromUtc,
+					request.TimeToUtc,
+					nameof(EventRangeRequest.TimeFromUtc)
+				)
+			);
+
+	static ValidationProblem? ValidateRouteParameters(string aggregateType, string aggregateId)
+	{
+		var errors = new Dictionary<string, string[]>();
+		if (string.IsNullOrWhiteSpace(aggregateType) || aggregateType.Length > 256)
+			errors["aggregateType"] = ["aggregateType must be a non-empty value of at most 256 characters."];
+
+		if (string.IsNullOrWhiteSpace(aggregateId) || aggregateId.Length > 256)
+			errors["aggregateId"] = ["aggregateId must be a non-empty value of at most 256 characters."];
+
+		return errors.Count == 0 ? null : TypedResults.ValidationProblem(errors);
 	}
 }

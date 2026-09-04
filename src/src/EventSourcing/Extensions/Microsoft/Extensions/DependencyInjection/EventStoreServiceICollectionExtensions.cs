@@ -8,6 +8,14 @@ using Purview.EventSourcing.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Registers the Purview EventSourcing framework services and optional store implementations.
+/// </summary>
+/// <remarks>
+/// These extension methods register the core services such as the event-name mapper, aggregate requirements
+/// manager, change-feed notifier, upcaster registry, correlation ID provider, and transaction factory. They
+/// are hidden from IntelliSense because they are invoked through the <see cref="IServiceCollection"/>.
+/// </remarks>
 [EditorBrowsable(EditorBrowsableState.Never)]
 [System.Diagnostics.DebuggerStepThrough]
 public static class EventStoreServiceICollectionExtensions
@@ -33,6 +41,11 @@ public static class EventStoreServiceICollectionExtensions
 			return services;
 		}
 
+		/// <summary>
+		/// Registers a null (non-persisting) queryable event store and its facade, useful for development and
+		/// testing scenarios.
+		/// </summary>
+		/// <returns>The <paramref name="services"/> passed in.</returns>
 		public IServiceCollection AddNullQueryableEventStore()
 		{
 			services

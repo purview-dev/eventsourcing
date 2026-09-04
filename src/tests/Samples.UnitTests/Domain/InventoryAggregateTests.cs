@@ -229,9 +229,9 @@ public class InventoryAggregateTests
 	#region Multi-Aggregate Workflow Test
 
 	[Test]
-	public async Task FullOrderFulfillmentWorkflow_TracksCorrectState()
+	public async Task FullOrderFulfilmentWorkflow_TracksCorrectState()
 	{
-		// Simulate order fulfillment across inventory
+		// Simulate order Fulfilment across inventory
 		var inv = CreateInventory("inv-1", initialQty: 100);
 
 		// Reserve for order

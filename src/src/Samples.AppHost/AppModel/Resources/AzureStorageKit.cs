@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Aspire.Hosting.Azure;
 using Purview.Aspire.ResourceKit;
 
@@ -7,9 +7,11 @@ namespace Purview.EventSourcing.Samples.AppHost.AppModel.Resources;
 [ResourceDefinition<AzureStorageResource>(Platform.AzureStorage)]
 sealed partial class AzureStorageKit
 {
-	public IResourceBuilder<AzureStorageResource> Storage { get; private set; } = default!;
-	public IResourceBuilder<AzureTableStorageResource> TableStorage { get; private set; } = default!;
-	public IResourceBuilder<AzureBlobStorageContainerResource> SnapshotBlob { get; set; } = default!;
+	public IResourceBuilder<AzureStorageResource> Storage { get; private set; }
+
+	public IResourceBuilder<AzureTableStorageResource> TableStorage { get; private set; }
+
+	public IResourceBuilder<AzureBlobStorageContainerResource> SnapshotBlob { get; set; }
 
 	protected override IResourceBuilder<AzureStorageResource> BuildResource(IDistributedApplicationBuilder builder)
 	{

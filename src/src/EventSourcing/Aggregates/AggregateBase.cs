@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Aggregates.Exceptions;
@@ -14,12 +14,32 @@ public abstract class AggregateBase : IAggregate
 
 	ConcurrentBag<IEvent> _unsavedEvents = [];
 
+	readonly List<SkippedEventRecord> _skippedEvents = [];
+
+	/// <summary>
+	/// Gets the events that were skipped during replay because they could not be resolved
+	/// (<see cref="UnknownEvent"/>) or applied by this aggregate.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// When an old consumer replays a stream that contains events it does not understand
+	/// (for example a newer schema version written by a different application generation),
+	/// those events are skipped but the aggregate version is still advanced. The resulting
+	/// aggregate is therefore only partially reconstructed.
+	/// </para>
+	/// <para>
+	/// This collection lets callers detect that replay was incomplete so they can fail
+	/// closed or rehydrate through a different path instead of acting on stale state.
+	/// </para>
+	/// </remarks>
+	public IReadOnlyList<SkippedEventRecord> SkippedEvents => _skippedEvents;
+
 	/// <summary>
 	/// Initializes the base-class.
 	/// </summary>
-	/// <param name="aggregateType">Specifies the <see cref="AggregateType"/>, if not value is specified
+	/// <param name="aggregateType">Specifies the <see cref="AggregateType"/>, if no value is specified
 	/// <see cref="TypeNameHelper.GetName(Type, string, bool)"/> is called, with 'Aggregate' being trimmed if it's a suffix
-	/// of the type na,e.</param>
+	/// of the type name.</param>
 	protected AggregateBase(string? aggregateType = null)
 	{
 		AggregateType = aggregateType ?? TypeNameHelper.GetName(GetType(), "Aggregate");
@@ -117,6 +137,11 @@ public abstract class AggregateBase : IAggregate
 	{
 		if (!HasUnsavedEvents())
 			RecordAndApply(new ForceSaved());
+	}
+
+	internal void RecordSkippedEvent(int aggregateVersion, string? eventTypeName, bool isUnknown)
+	{
+		_skippedEvents.Add(new SkippedEventRecord(aggregateVersion, eventTypeName, isUnknown));
 	}
 
 	/// <summary>

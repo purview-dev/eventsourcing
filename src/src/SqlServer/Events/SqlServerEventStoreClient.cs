@@ -395,6 +395,7 @@ sealed partial class SqlServerEventStoreClient
 		var aggregateIds = context
 			.EventStoreEntities.AsNoTracking()
 			.Where(x => x.AggregateType == aggregateType && x.EntityType == 0 && (includeDeleted || !x.IsDeleted))
+			.OrderBy(x => x.AggregateId)
 			.Select(x => x.AggregateId)
 			.AsAsyncEnumerable();
 

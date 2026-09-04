@@ -4,7 +4,6 @@
 		<Title>Purview Event Store for Azure SQL and SQL Server</Title>
 		<Description>Azure SQL and SQL Server event stream storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;sql-server;azure-sql;events;</PackageTags>
-		<PackageId>Purview.EventSourcing.SqlServer</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,9 +21,12 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" PrivateAssets="All" />
 		<ProjectReference
-			Include="..\ImplementationShared\ImplementationShared.csproj"
-			PrivateAssets="All"
+			Include="..\EntityFrameworkCore.SourceGenerator\EntityFrameworkCore.SourceGenerator.csproj"
+			PrivateAssets="all"
+			ReferenceOutputAssembly="false"
+			OutputItemType="Analyzer"
 		/>
 	</ItemGroup>
 </Project>

@@ -7,6 +7,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<bool> DeleteAsync(
 		T aggregate,
 		EventStoreOperationContext? operationContext,
@@ -33,7 +34,12 @@ partial class TableEventStore<T>
 		};
 		aggregate.ApplyEvent(deleteAggregateEvent);
 
-		var result = await SaveCoreAsync(aggregate, operationContext, cancellationToken, deleteAggregateEvent);
+		var result = await _saveOperation.SaveCoreAsync(
+			aggregate,
+			operationContext,
+			cancellationToken,
+			deleteAggregateEvent
+		);
 
 		return result.Saved;
 	}

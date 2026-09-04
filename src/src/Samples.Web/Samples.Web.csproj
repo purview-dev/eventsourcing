@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<RazorCompileOnBuild>true</RazorCompileOnBuild>
 	</PropertyGroup>
@@ -19,11 +19,11 @@
 		<ProjectReference Include="..\Admin.MongoDB\Admin.MongoDB.csproj" />
 		<ProjectReference Include="..\Admin.Postgres\Admin.Postgres.csproj" />
 		<ProjectReference Include="..\Admin.Security\Admin.Security.csproj" />
+		<ProjectReference Include="..\Admin.Site\Admin.Site.csproj" />
+		<ProjectReference Include="..\Admin.SqlServer\Admin.SqlServer.csproj" />
 		<ProjectReference Include="..\Samples.Shared\Samples.Shared.csproj" />
 		<ProjectReference Include="..\Samples\Samples.csproj" />
 		<ProjectReference Include="..\Samples.ServiceDefaults\Samples.ServiceDefaults.csproj" />
-		<ProjectReference Include="..\Admin.Site\Admin.Site.csproj" />
-		<ProjectReference Include="..\Admin.SqlServer\Admin.SqlServer.csproj" />
 		<ProjectReference Include="..\AzureStorage\AzureStorage.csproj" />
 		<ProjectReference Include="..\MongoDB\MongoDB.csproj" />
 		<ProjectReference Include="..\Postgres\Postgres.csproj" />

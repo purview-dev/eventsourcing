@@ -2,6 +2,14 @@
 
 namespace Purview.EventSourcing.SqlServer.Snapshots;
 
+/// <summary>
+/// Provider-facing contract for the SQL Server snapshot (queryable) event store.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Extends <see cref="IQueryableEventStoreCore{T}"/> with the ability to force a snapshot upsert of an aggregate.
+/// </remarks>
+/// <seealso cref="IQueryableEventStoreCore{T}"/>
 public interface ISqlServerSnapshotEventStore<T> : IQueryableEventStoreCore<T>
 	where T : class, IAggregate, new()
 {

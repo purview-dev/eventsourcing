@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Purview.EventSourcing.SourceGenerator.Generators;
 
 namespace Purview.EventSourcing.SourceGenerator;
 
@@ -49,13 +50,13 @@ static class SourceGeneratorPerformanceScenarios
 				public interface IAggregate { }
 
 				[System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-				public sealed class GenerateAggregateAttribute : System.Attribute
+				public sealed class AggregateAttribute : System.Attribute
 				{
 					public string? EventNamespace { get; set; }
 				}
 
 				[System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-				public sealed class GenerateAggregateEventAttribute : System.Attribute
+				public sealed class EventAttribute : System.Attribute
 				{
 					public int Version { get; set; } = 1;
 					public string? EventName { get; set; }
@@ -160,16 +161,16 @@ static class SourceGeneratorPerformanceScenarios
 		public const string AggregateSimple = """
 			namespace Testing
 			{
-				[Purview.EventSourcing.Aggregates.GenerateAggregate]
+				[Purview.EventSourcing.Aggregates.Aggregate]
 				public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 				{
 					public string CustomerId { get; private set; } = string.Empty;
 					public decimal Total { get; private set; }
 
-					[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+					[Purview.EventSourcing.Aggregates.Event]
 					public partial void CreateOrder(string customerId, decimal total);
 
-					[Purview.EventSourcing.Aggregates.GenerateAggregateEvent]
+					[Purview.EventSourcing.Aggregates.Event]
 					public partial void UpdateTotal(decimal total);
 				}
 			}
@@ -193,13 +194,13 @@ static class SourceGeneratorPerformanceScenarios
 					public static OrderStatus Hydrate(OrderStatusCode value) => new(value);
 				}
 
-				[Purview.EventSourcing.Aggregates.GenerateAggregate]
+				[Purview.EventSourcing.Aggregates.Aggregate]
 				public partial class OrderAggregate : Purview.EventSourcing.Aggregates.AggregateBase
 				{
 					public OrderStatus Status { get; private set; } = OrderStatus.Hydrate(OrderStatusCode.Draft);
 					public int LineItems { get; private set; }
 
-					[Purview.EventSourcing.Aggregates.GenerateAggregateEvent(EventName = "OrderConfirmed")]
+					[Purview.EventSourcing.Aggregates.Event(EventName = "OrderConfirmed")]
 					public partial void ConfirmOrder(OrderStatusCode status);
 				}
 			}

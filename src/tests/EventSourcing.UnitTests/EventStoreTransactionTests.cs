@@ -837,6 +837,8 @@ public sealed class EventStoreTransactionTests
 			[System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken _ = default
 		)
 		{
+			await Task.CompletedTask;
+
 			yield break;
 		}
 

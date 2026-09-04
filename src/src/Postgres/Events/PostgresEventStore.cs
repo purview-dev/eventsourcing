@@ -13,6 +13,21 @@ namespace Purview.EventSourcing.Postgres.Events;
 // SQL strings are built from validated identifiers at construction time, not from user input.
 #pragma warning disable CA2100
 
+/// <summary>
+/// A PostgreSQL-backed event store for <typeparamref name="T"/> aggregates.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Events, stream versions, idempotency markers, and snapshots are stored in a single table.
+/// <see cref="IPostgresEventStore{T}"/> is registered for the store when
+/// <c>AddPostgresEventStore</c> is used.
+/// </remarks>
+[SuppressMessage(
+	"Design",
+	"CA1506: Avoid excessive class coupling",
+	Justification = "PostgresEventStore is a single logical store split across many partial files; the class-coupling metric is "
+		+ "unavoidably inflated for the public surface it must expose."
+)]
 public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
@@ -36,6 +51,18 @@ public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITra
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
 
+	/// <summary>
+	/// Creates a new <see cref="PostgresEventStore{T}"/>.
+	/// </summary>
+	/// <param name="eventNameMapper">Maps aggregate and event types to their persisted names.</param>
+	/// <param name="sqlServerOptions">The event-store options.</param>
+	/// <param name="distributedCache">The distributed cache used to cache aggregate snapshots.</param>
+	/// <param name="eventStoreTelemetry">The telemetry sink for event-store operations.</param>
+	/// <param name="aggregateChangeNotifier">Notifies listeners of aggregate changes.</param>
+	/// <param name="aggregateRequirementsManager">Fulfils aggregate requirements after materialization.</param>
+	/// <param name="validator">Optional validator used before saving aggregates.</param>
+	/// <param name="aggregateIdFactory">Optional factory used to generate aggregate ids.</param>
+	/// <param name="eventUpcasterRegistry">Optional registry used to upcast historical events.</param>
 	public PostgresEventStore(
 		IAggregateEventNameMapper eventNameMapper,
 		[NotNull] IOptions<PostgresEventStoreOptions> sqlServerOptions,
@@ -69,6 +96,7 @@ public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITra
 		_client = new PostgresEventStoreClient(clientOptions);
 	}
 
+	///<inheritdoc/>
 	public T FulfilRequirements(T aggregate)
 	{
 		_aggregateRequirementsManager.Fulfil(aggregate);
@@ -112,6 +140,7 @@ public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITra
 	DistributedCacheEntryOptions GetCacheEntryOptions(DistributedCacheEntryOptions? cacheEntryOptions) =>
 		cacheEntryOptions ?? new() { SlidingExpiration = _eventStoreOptions.Value.DefaultCacheSlidingDuration };
 
+	///<inheritdoc/>
 	public async IAsyncEnumerable<string> GetAggregateIdsAsync(
 		bool includeDeleted,
 		[EnumeratorCancellation] CancellationToken cancellationToken = default
@@ -206,6 +235,7 @@ public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITra
 	{
 		if (isDeleted)
 		{
+#pragma warning disable IDE0010 // Add missing cases
 			switch (context.DeleteMode)
 			{
 				case DeleteHandlingMode.ThrowsException:
@@ -213,6 +243,7 @@ public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITra
 				case DeleteHandlingMode.ReturnsNull:
 					return false;
 			}
+#pragma warning restore IDE0010 // Add missing cases
 		}
 
 		return true;
@@ -228,13 +259,18 @@ public sealed partial class PostgresEventStore<T> : IPostgresEventStore<T>, ITra
 
 	string CreateSnapshotId(string aggregateId) => $"snap_{_aggregateTypeShortName}_{aggregateId}";
 
+	/// <summary>
+	/// Creates the distributed-cache key for the given aggregate id.
+	/// </summary>
+	/// <param name="aggregateId">The id of the aggregate.</param>
+	/// <returns>The cache key used for <paramref name="aggregateId"/>.</returns>
 	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToUpperInvariant();
 
-	async Task EnsureConfiguredAsync(CancellationToken cancellationToken)
-	{
-		if (_eventStoreOptions.Value.AutoCreateTable)
-			await _client.EnsureTableExistsAsync(cancellationToken);
-	}
+	//async Task EnsureConfiguredAsync(CancellationToken cancellationToken)
+	//{
+	//	if (_eventStoreOptions.Value.AutoCreateTable)
+	//		await _client.EnsureTableExistsAsync(cancellationToken);
+	//}
 
 	/// <summary>
 	/// Merges global options with any per-aggregate-type table override.

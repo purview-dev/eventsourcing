@@ -1,4 +1,4 @@
-﻿namespace Purview.EventSourcing.Aggregates.Events;
+namespace Purview.EventSourcing.Aggregates.Events;
 
 /// <summary>
 /// Base <see cref="IEvent"/> implementation.
@@ -16,7 +16,7 @@ public abstract class EventBase : IEvent
 	/// <remarks>
 	/// Defaults to 1. Override in a derived class to declare a higher version.
 	/// The source generator will emit the correct override when
-	/// <c>[GenerateAggregateEvent(Version = N)]</c> is used.
+	/// <c>[Event(Version = N)]</c> is used.
 	/// </remarks>
 	public virtual int SchemaVersion => 1;
 
@@ -30,6 +30,7 @@ public abstract class EventBase : IEvent
 
 		hashCode.Add(GetType().FullName);
 		hashCode.Add(Details);
+		hashCode.Add(SchemaVersion);
 
 		BuildEventHash(ref hashCode);
 
@@ -70,5 +71,6 @@ public abstract class EventBase : IEvent
 	///		}
 	/// }
 	/// </example>
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1045:Do not pass types by reference")]
 	protected abstract void BuildEventHash(ref HashCode hash);
 }

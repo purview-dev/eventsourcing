@@ -4,6 +4,5 @@
 		<Title>Purview Event Sourcing Admin Portal Abstractions</Title>
 		<Description>Core abstractions and contracts for Purview EventSourcing Admin Portal — query services, permission models, and DTOs.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;abstractions;</PackageTags>
-		<PackageId>Purview.EventSourcing.Admin.Abstractions</PackageId>
 	</PropertyGroup>
 </Project>

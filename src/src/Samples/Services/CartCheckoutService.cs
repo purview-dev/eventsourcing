@@ -88,7 +88,7 @@ public sealed class CartCheckoutService(IEventStoreTransactionFactory transactio
 			return cached;
 
 		var hash = Math.Abs(productId.GetHashCode(StringComparison.Ordinal));
-		var price = Math.Round(9.99m + (hash % 9000) / 100m, 2);
+		var price = Math.Round(9.99m + (hash % 9000 / 100m), 2);
 		return UnitPrices.GetOrAdd(productId, price);
 	}
 

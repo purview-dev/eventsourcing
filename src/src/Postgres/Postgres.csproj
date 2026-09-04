@@ -1,10 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup Label="NuGet Package Values">
 		<IsPackable>true</IsPackable>
 		<Title>Purview Event Store for PostgreSQL</Title>
 		<Description>PostgreSQL event stream and queryable snapshot storage provider for Purview EventSourcing.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;event-store;postgres;postgresql;events;</PackageTags>
-		<PackageId>Purview.EventSourcing.Postgres</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,9 +22,12 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference Include="..\ImplementationShared\ImplementationShared.csproj" PrivateAssets="All" />
 		<ProjectReference
-			Include="..\ImplementationShared\ImplementationShared.csproj"
-			PrivateAssets="All"
+			Include="..\EntityFrameworkCore.SourceGenerator\EntityFrameworkCore.SourceGenerator.csproj"
+			PrivateAssets="all"
+			ReferenceOutputAssembly="false"
+			OutputItemType="Analyzer"
 		/>
 	</ItemGroup>
 </Project>

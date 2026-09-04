@@ -3,24 +3,15 @@ namespace Purview.EventSourcing.Validation;
 /// <summary>
 /// Represents a single validation failure.
 /// </summary>
-public sealed record ValidationFailure
+/// <param name="PropertyName">
+/// The property that failed validation, or <see langword="null"/> for an
+/// aggregate-wide failure.
+/// </param>
+/// <param name="ErrorMessage">The error message describing the failure.</param>
+public sealed record ValidationFailure(string? PropertyName, string ErrorMessage)
 {
 	/// <summary>
-	/// The name of the property that failed validation, or <see langword="null"/> if the failure is aggregate-wide.
+	/// <see langword="true"/> if this failure is an aggregate-wide failure (not tied to a specific property);
 	/// </summary>
-	public string? PropertyName { get; init; }
-
-	/// <summary>
-	/// The error message describing the failure.
-	/// </summary>
-	public string? ErrorMessage { get; init; }
-
-	/// <summary>
-	/// Constructs a new <see cref="ValidationFailure"/>.
-	/// </summary>
-	public ValidationFailure(string? propertyName, string? errorMessage)
-	{
-		PropertyName = propertyName;
-		ErrorMessage = errorMessage;
-	}
+	public bool IsAggregateFailure => PropertyName is null;
 }

@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.MongoDB;
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<T> CreateAsync(string? aggregateId = null, CancellationToken cancellationToken = default)
 	{
 		if (string.IsNullOrWhiteSpace(aggregateId))

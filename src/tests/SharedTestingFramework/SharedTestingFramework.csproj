@@ -1,6 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
+		<!--
+			The shared provider-agnostic contract suites (Contracts/**) are NOT compiled into this library.
+			Each provider integration test project links them into its own compilation instead (see the
+			Compile Include links in those projects). TUnit's TestMetadataGenerator reports error diagnostic
+			TUNIT0999 at the inherited method's source location when an internal generation error occurs, and
+			Roslyn's SourceProductionContext.ReportDiagnostic rejects diagnostics whose location is not part of
+			the compilation being analyzed (surfacing as CS8785). When an abstract [Test] base is consumed
+			cross-assembly through [InheritsTests], the method location points into this library's sources,
+			outside the provider compilation, so the warning cannot be avoided. Linking the contract sources
+			keeps every inherited [Test] method inside the provider compilation and eliminates the failure.
+			TUnit.Assertions was only needed by the contract suites and is therefore no longer referenced here;
+			the provider test projects receive the full TUnit package (including assertions) from the SDK.
+		-->
+		<Compile Remove="Contracts\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Hosting" />
+		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Testcontainers.Azurite" />
 		<PackageReference Include="Testcontainers.CosmosDb" />
 		<PackageReference Include="Testcontainers.MongoDb" />

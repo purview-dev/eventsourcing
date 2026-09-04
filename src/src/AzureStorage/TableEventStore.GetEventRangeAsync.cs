@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Azure.Data.Tables;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.AzureStorage.Entities;
@@ -7,14 +7,7 @@ namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
-	/// <summary>
-	/// Gets a range of <see cref="IEvent"/>s for a given aggregate, as specified by it's <paramref name="aggregateId"/>.
-	/// </summary>
-	/// <param name="aggregateId">The id of the <see cref="Interfaces.Aggregates.IAggregate"/>.</param>
-	/// <param name="versionFrom">The inclusive event number to start the range at.</param>
-	/// <param name="versionTo">Optional, the inclusive event number to finish the range at.</param>
-	/// <param name="cancellationToken">The stopping token.</param>
-	/// <returns>If no <paramref name="versionFrom"/> is specified all available events greater than <paramref name="versionFrom"/> are returned.</returns>
+	///<inheritdoc/>
 	public async IAsyncEnumerable<(IEvent @event, string eventType)> GetEventRangeAsync(
 		string aggregateId,
 		int versionFrom,
@@ -61,7 +54,7 @@ partial class TableEventStore<T>
 			$"({nameof(ITableEntity.PartitionKey)} eq '{aggregateId}') and (({nameof(ITableEntity.RowKey)} ge '{CreateEventRowKey(versionFrom)}') and ({nameof(ITableEntity.RowKey)} le '{CreateEventRowKey(versionTo ?? int.MaxValue)}'))";
 		var query = _tableClient.QueryEnumerableAsync<EventEntity>(filter, cancellationToken: cancellationToken);
 		await foreach (var eventEntity in query)
-			yield return eventEntity!;
+			yield return eventEntity;
 	}
 
 	async Task<IEvent?> DeserializeEventAsync(
@@ -72,9 +65,8 @@ partial class TableEventStore<T>
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		static EventUnknown ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion)
-		{
-			return new()
+		static UnknownEvent ReturnUnknownEvent(EventEntity eventEntity, int aggregateVersion) =>
+			new()
 			{
 				Details =
 				{
@@ -84,7 +76,6 @@ partial class TableEventStore<T>
 				},
 				Payload = eventEntity.Payload,
 			};
-		}
 
 		try
 		{
@@ -150,11 +141,8 @@ partial class TableEventStore<T>
 				if (eventStream == null)
 					return ReturnUnknownEvent(eventEntity, aggregateVersion);
 
-				string? eventContent;
-				using (StreamReader reader = new(eventStream))
-					eventContent = await reader.ReadToEndAsync(cancellationToken);
-
-				return DeserializeEvent(eventContent, blobEvent);
+				using (eventStream)
+					return await DeserializeEventAsync(eventStream, blobEvent, cancellationToken);
 			}
 
 			return @event;

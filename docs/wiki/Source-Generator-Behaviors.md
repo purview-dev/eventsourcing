@@ -150,12 +150,44 @@ public partial class ReportAggregate : AggregateBase
 }
 ```
 
+### Parameter nullability and required guards
+
+The generator honors two standard attributes on event parameters to tighten command-time validation and the shape of the generated event class:
+
+- `[NotNull]` (`System.Diagnostics.CodeAnalysis`) on a nullable parameter generates an `ArgumentNullException` guard and emits the event property as non-nullable.
+- `[Required]` (`System.ComponentModel.DataAnnotations`) on a nullable `string` parameter generates an `ArgumentException` guard for null or whitespace and emits the event property as non-nullable.
+
+Both attributes also cause the generator to use a local copy of the parameter value when calling `On...Changing` hooks and when creating the event. This keeps the original parameter unmodified so the compiler does not require it to be assigned after a `throw` path.
+
+```csharp
+[GenerateAggregate]
+public partial class ProfileAggregate : AggregateBase
+{
+    public string? Bio { get; private set; }
+
+    [GenerateAggregateEvent]
+    public partial void UpdateBio([NotNull] string? bio);
+}
+```
+
+For the event above, the generator produces a property typed as `string` rather than `string?`:
+
+```csharp
+public sealed class BioUpdatedEvent : global::Purview.EventSourcing.Aggregates.Events.EventBase
+{
+    public string Bio { get; set; } = default!;
+}
+```
+
 ## Value-object conversion behavior
 
 - Generated mapping paths use `Create(...)` semantics for strict command-time conversion/validation.
 - Contextual `Create(TValue, in ValueObjectContext<TAggregate>)` is used when available.
 - Replay/hydration paths apply event payloads through generated `Apply(...)` logic.
 - Snapshot-query translation depends on how the provider maps the resulting property graph, not only on the value-object generator behavior.
+- Projects compiled with the SQL Server or PostgreSQL EF analyzer can mark a property `[EfOpaque]`. The EF-only generator emits this internal marker into the consuming compilation; it does not add a runtime attribute API.
+- `EVENTSTOREEF001` reports dictionary-like members reachable from an aggregate unless they are explicitly opaque. Prefer a collection of domain entry objects when structural querying is required; the generator does not synthesize those domain types.
+- `EVENTSTOREEF002` reports uses of an opaque member in recognized snapshot query expressions. Opaque values round-trip through JSON but their contents are not part of EF's queryable complex model.
 - A `[Scalar]` value object that wraps a complex CLR type may serialize correctly while still requiring a separate directly mapped complex mirror property for deep SQL predicates.
 
 ### Value-object conversion examples
@@ -188,7 +220,13 @@ public readonly partial record struct OrderStatus
 
 ## Diagnostics to expect
 
-Common diagnostic IDs:
+Validation diagnostics are produced by `Purview.EventSourcing.SourceGenerator` analyzers
+(`AggregateDiagnosticAnalyzer`, `ValueObjectDiagnosticAnalyzer`, and `EventStoreAnalyzer`), not by the
+source generators themselves. The generators consume the same validation internally to decide whether to
+emit source, but they never report diagnostics. Analyzer diagnostics can be suppressed or configured
+through the usual `#pragma warning` / `.editorconfig` mechanisms.
+
+Common aggregate diagnostic IDs:
 
 - `EVENTSTORE001` aggregate must be partial
 - `EVENTSTORE002` aggregate must inherit `AggregateBase` (or have no base so generator can add it)
@@ -196,5 +234,42 @@ Common diagnostic IDs:
 - `EVENTSTORE004` generic aggregates unsupported
 - `EVENTSTORE005` manual `RegisterEvents` unsupported
 - `EVENTSTORE007` generated event method must be partial
+- `EVENTSTORE009` duplicate generated event names
 - `EVENTSTORE010` parameter must map to writable property
 - `EVENTSTORE018` unsupported aggregate collection property type
+- `EVENTSTORE021` event schema version must be positive
+- `EVENTSTORE022` duplicate event schema version on aggregate
+
+Common value-object diagnostic IDs:
+
+- `EVENTSTORE101` value object must be partial
+- `EVENTSTORE102` nested value objects unsupported
+- `EVENTSTORE103` generic value objects unsupported
+- `EVENTSTORE104` scalar property missing
+- `EVENTSTORE107` strict mode relies on a generated `Create`
+- `EVENTSTORE108` conflicting `[Scalar]` and `[ValueObject]` attributes
+- `EVENTSTORE109` scalar value objects should be record structs
+
+The analyzer and the generator share the same validation rules (the model builders are the single source
+of truth). When validation fails, the generator skips generation entirely — it never emits an invalid
+partial type — while the analyzer reports the diagnostic. A generator-only run therefore produces no
+output and no exception for invalid input; the diagnostics are always surfaced by the analyzer assets that
+ship in the same package.
+
+## Testing generated output
+
+Generator unit tests assert on the generated structure with the `CodeQuery` API from
+`Purview.SourceGeneratorFramework.Testing` rather than whole-file string matching:
+
+- `result.Generated()` returns a `CodeQuery` over the generated trees (backed by the output compilation).
+- Prefer `GetClass`/`GetRecord`/`GetStruct`/`GetEnum`/`HasNamespace`, `HasMethod`, `HasProperty`,
+  `HasConstructor`, and `TypeReference`-based parameter matching for member signatures.
+- Keep string assertions only for method-body statements that `CodeQuery` does not model (for example
+  `RecordAndApply(@event);`), scoped to the returned syntax node's body.
+- Operator declarations are `OperatorDeclarationSyntax`, not methods; assert them via `CodeQuery.GetOperator`/`HasOperator`/`TryGetOperator` (optionally scoped with `CodeQuery.In(type)`), or `GetConversionOperator` for `implicit`/`explicit` conversions.
+
+Incremental caching is tested with the framework's `GenerateIncrementalAsync`/`RunIncrementalAsync`, which
+reuse one driver and compilation across identical runs. The framework-named stages
+(`GetGenerationConfiguration`, `GetGenerationContext_{Capabilities}`, and the per-target
+`ForAttribute`/target stage) must stay `Cached`/`Unchanged` on identical reruns, and only the stage whose
+input actually changed reports `Modified`.

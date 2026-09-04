@@ -1,7 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<AssemblyName>Samples.Shared</AssemblyName>
-		<PackageId>Purview.EventSourcing.Samples.Shared</PackageId>
-		<RootNamespace>$(NamespacePrefix).Samples</RootNamespace>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+		<!-- The SDK strips the 'Shared' suffix from the root namespace, so the derived assembly name would collide
+		     with the Samples project (Purview.EventSourcing.Samples.dll). Keep the assemblies distinct. -->
+		<AssemblyName>Purview.EventSourcing.Samples.Shared</AssemblyName>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ZodSharpImpl\ZodSharpImpl.csproj" />
+	</ItemGroup>
 </Project>

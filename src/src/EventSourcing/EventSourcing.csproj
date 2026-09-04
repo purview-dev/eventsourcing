@@ -4,48 +4,16 @@
 		<Title>Purview Event Sourcing</Title>
 		<Description>Core abstractions, aggregate types, facades, transactions, and dependency injection extensions for building event-sourced .NET applications.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;eventstore;event-store;aggregate;domain-driven-design;</PackageTags>
-		<PackageId>Purview.EventSourcing</PackageId>
-		<!-- Enable our own agent skills to be packed with the NuGet package -->
-		<EnabledAgentFolderInPackage>true</EnabledAgentFolderInPackage>
-		<ProjectAgentFolder>src/ProjectAgent</ProjectAgentFolder>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<EventStoreSourceGeneratorProject>$(MSBuildThisFileDirectory)..\SourceGenerator\SourceGenerator.csproj</EventStoreSourceGeneratorProject>
-		<EventStoreSourceGeneratorTargetFramework>netstandard2.0</EventStoreSourceGeneratorTargetFramework>
-		<EventStoreSourceGeneratorAssembly>$(MSBuildThisFileDirectory)..\SourceGenerator\bin\$(Configuration)\$(EventStoreSourceGeneratorTargetFramework)\Purview.EventSourcing.SourceGeneration.dll</EventStoreSourceGeneratorAssembly>
-		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeEventStoreSourceGenerator</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference
-			Include="$(EventStoreSourceGeneratorProject)"
+			Include="..\SourceGenerator\SourceGenerator.csproj"
 			PrivateAssets="all"
 			ReferenceOutputAssembly="false"
 			OutputItemType="Analyzer"
 		/>
 	</ItemGroup>
-
-	<ItemGroup>
-		<None
-			Include="buildTransitive\Purview.EventSourcing.targets"
-			Pack="true"
-			PackagePath="buildTransitive\Purview.EventSourcing.targets"
-		/>
-	</ItemGroup>
-
-	<Target Name="IncludeEventStoreSourceGenerator" DependsOnTargets="Build">
-		<Error
-			Condition="!Exists('$(EventStoreSourceGeneratorAssembly)')"
-			Text="The Event Souring source generator was not found at '$(EventStoreSourceGeneratorAssembly)'."
-		/>
-
-		<ItemGroup>
-			<TfmSpecificPackageFile Include="$(EventStoreSourceGeneratorAssembly)">
-				<PackagePath>analyzers/dotnet/cs/</PackagePath>
-			</TfmSpecificPackageFile>
-		</ItemGroup>
-	</Target>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />

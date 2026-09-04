@@ -9,9 +9,19 @@ using Purview.EventSourcing.SqlServer.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.SqlServer;
 
+/// <summary>
+/// Projects aggregate state at a point in time from SQL Server for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service replays the stored events of an aggregate and produces a <see cref="ProjectionResponse"/> that
+/// captures the projected state, the highest version reached and a <see cref="ProjectionProvenance"/> describing
+/// which event versions were applied and which were skipped.
+/// </remarks>
+/// <param name="options">The configured <see cref="SqlServerEventStoreOptions"/>.</param>
 public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStoreOptions> options)
 	: IAdminProjectionService
 {
+	///<inheritdoc/>
 	public async Task<ProjectionResponse?> ProjectAtVersionAsync(
 		string aggregateType,
 		string aggregateId,
@@ -91,6 +101,7 @@ public sealed class SqlServerAdminProjectionService(IOptions<SqlServerEventStore
 		);
 	}
 
+	///<inheritdoc/>
 	public async Task<ProjectionResponse?> ProjectAtTimeAsync(
 		string aggregateType,
 		string aggregateId,

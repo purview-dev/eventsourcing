@@ -7,6 +7,14 @@ using Purview.EventSourcing.Postgres.Snapshots;
 
 namespace Purview.EventSourcing.Postgres.Snapshot;
 
+/// <summary>
+/// A PostgreSQL queryable snapshot event store that combines an event store with snapshot querying for <typeparamref name="T"/> aggregates.
+/// </summary>
+/// <typeparam name="T">An <see cref="IAggregate"/> implementation.</typeparam>
+/// <remarks>
+/// Aggregates are saved through the enlisted event store and snapshots are upserted into the
+/// PostgreSQL snapshot table, enabling JSON payload querying via <see cref="IPostgresSnapshotEventStore{T}"/>.
+/// </remarks>
 public sealed partial class PostgresSnapshotEventStore<T> : IPostgresSnapshotEventStore<T>, ITransactionalEventStore<T>
 	where T : class, IAggregate, new()
 {
@@ -23,6 +31,14 @@ public sealed partial class PostgresSnapshotEventStore<T> : IPostgresSnapshotEve
 
 	static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, string> AggregateTypeNames = new();
 
+	/// <summary>
+	/// Creates a new <see cref="PostgresSnapshotEventStore{T}"/>.
+	/// </summary>
+	/// <param name="eventStore">The non-queryable event store used to persist aggregates.</param>
+	/// <param name="sqlServerEventStoreOptions">The snapshot event-store options.</param>
+	/// <param name="telemetry">The telemetry sink for snapshot operations.</param>
+	/// <param name="snapshotStrategy">Optional strategy controlling when snapshots are written; defaults to snapshotting always.</param>
+	/// <param name="snapshotStrategySelector">Optional selector used to pick a snapshot strategy per aggregate.</param>
 	public PostgresSnapshotEventStore(
 		// Explicitly request a non-queryable event store.
 		INonQueryableEventStore<T> eventStore,

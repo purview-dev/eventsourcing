@@ -7,7 +7,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// Demonstrates inventory management with stock tracking at a specific location.
 /// Shows: validation guards, computed state, concurrency-safe operations.
 /// </summary>
-[GenerateAggregate]
+[Aggregate]
 public sealed partial class InventoryAggregate : AggregateBase
 {
 	public string ProductId { get; private set; } = default!;
@@ -100,42 +100,42 @@ public sealed partial class InventoryAggregate : AggregateBase
 		return this;
 	}
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate Create(
 		string productId,
 		string productName,
 		string locationId,
 		string locationName,
-		[AggregateProperty(nameof(QuantityOnHand))] int initialQuantity = 0,
+		[Property(nameof(QuantityOnHand))] int initialQuantity = 0,
 		int reservedQuantity = 0
 	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate ReceiveStock(int quantityOnHand, int reservedQuantity);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate ReserveStock(
 		int quantityOnHand,
 		int reservedQuantity,
 		[Metadata] string? orderId
 	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate ReleaseStockReservation(
 		int quantityOnHand,
 		int reservedQuantity,
 		[Metadata] string? orderId
 	);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate ShipStock(int quantityOnHand, int reservedQuantity, [Metadata] string? orderId);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate AdjustStock(int quantityOnHand, int reservedQuantity);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate UpdateProductName(string productName);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial InventoryAggregate UpdateLocationName(string locationName);
 }

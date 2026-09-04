@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
@@ -9,9 +10,19 @@ using Purview.EventSourcing.AzureStorage.Entities;
 
 namespace Purview.EventSourcing.Admin.AzureStorage;
 
+/// <summary>
+/// Provides event range queries against Azure Table Storage for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service reads the event rows written by the Azure Storage event store and exposes them as
+/// <see cref="EventEnvelopeResponse"/> values. Event versions are decoded from each row's
+/// <see cref="Azure.Data.Tables.TableEntity.RowKey"/> using the configured event prefix.
+/// </remarks>
+/// <param name="options">The configured <see cref="AzureStorageEventStoreOptions"/>.</param>
 public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEventStoreOptions> options)
 	: IAdminEventQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
 		string aggregateType,
 		string aggregateId,
@@ -44,26 +55,43 @@ public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEven
 				query.VersionTo is null ? null : (int)query.VersionTo.Value
 			);
 
-			await foreach (
-				var row in table.QueryAsync<EventEntity>(filter, maxPerPage: 100, cancellationToken: cancellationToken)
-			)
+			try
 			{
-				if (
-					!AzureStorageAdminTableHelpers.TryParseEventVersion(row.RowKey, config.EventPrefix, out var version)
+				await foreach (
+					var row in table.QueryAsync<EventEntity>(
+						filter,
+						maxPerPage: 100,
+						cancellationToken: cancellationToken
+					)
 				)
-					continue;
+				{
+					if (
+						!AzureStorageAdminTableHelpers.TryParseEventVersion(
+							row.RowKey,
+							config.EventPrefix,
+							out var version
+						)
+					)
+						continue;
 
-				if (query.TimeFromUtc is not null && row.Timestamp < query.TimeFromUtc)
-					continue;
-				if (query.TimeToUtc is not null && row.Timestamp > query.TimeToUtc)
-					continue;
+					if (query.TimeFromUtc is not null && row.Timestamp < query.TimeFromUtc)
+						continue;
+					if (query.TimeToUtc is not null && row.Timestamp > query.TimeToUtc)
+						continue;
 
-				rows.Add((aggregateType, version, row));
+					rows.Add((aggregateType, version, row));
+				}
+			}
+			catch (RequestFailedException ex) when (ex.Status == 404 && ex.ErrorCode == "TableNotFound")
+			{
+				continue;
 			}
 		}
 
+		var page = Math.Max(1, query.Page);
+		var pageSize = Math.Max(1, query.PageSize);
 		if (rows.Count == 0)
-			return null;
+			return new PagedResult<EventEnvelopeResponse>([], page, pageSize, 0);
 
 		var directionDesc = query.Sort.Contains("desc", StringComparison.OrdinalIgnoreCase);
 		var ordered = directionDesc
@@ -71,8 +99,6 @@ public sealed class AzureStorageAdminEventQueryService(IOptions<AzureStorageEven
 			: rows.OrderBy(x => x.Version).ToList();
 
 		var totalCount = ordered.Count;
-		var page = Math.Max(1, query.Page);
-		var pageSize = Math.Max(1, query.PageSize);
 		var pageRows = ordered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
 		var items = pageRows

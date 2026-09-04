@@ -4,7 +4,6 @@
 		<Title>Purview Event Sourcing Admin Portal MongoDB Adapter</Title>
 		<Description>MongoDB storage adapter for Purview EventSourcing Admin Portal. Enables aggregate search, event inspection, and point-in-time projection queries on MongoDB event stores.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;mongodb;</PackageTags>
-		<PackageId>Purview.EventSourcing.Admin.MongoDB</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

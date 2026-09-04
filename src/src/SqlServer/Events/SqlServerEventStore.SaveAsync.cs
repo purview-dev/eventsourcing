@@ -6,15 +6,18 @@ using System.Security.Claims;
 using Microsoft.Data.SqlClient;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
+using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.Services;
 using Purview.EventSourcing.SqlServer.Events.Exceptions;
+using Purview.EventSourcing.Storage;
 using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.SqlServer.Events;
 
 partial class SqlServerEventStore<T>
 {
+	///<inheritdoc/>
 	[DebuggerStepThrough]
 	public async Task<SaveResult<T>> SaveAsync(
 		[NotNull] T aggregate,
@@ -69,23 +72,18 @@ partial class SqlServerEventStore<T>
 		var idempotencyId = operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
-		static SaveResult<T> ReturnSaveResult(
-			T aggregate,
-			bool success,
-			bool skipped,
-			ValidationResult? validationResult = null
-		) => new(aggregate, validationResult ?? new ValidationResult(), success, skipped);
-
 		if (!validationResult.IsValid)
 		{
-			return new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, false, false, validationResult));
+			return new TransactionalSaveOperation<T>(
+				SaveResultBuilder.Create(aggregate, false, false, validationResult)
+			);
 		}
 
 		if (aggregate.Details.Locked)
 		{
 			return operationContext.LockMode is LockHandlingMode.ThrowsException
 				? throw new AggregateLockedException(idempotencyId)
-				: new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, false, false));
+				: new TransactionalSaveOperation<T>(SaveResultBuilder.Create(aggregate, false, false));
 		}
 
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
@@ -103,7 +101,7 @@ partial class SqlServerEventStore<T>
 			);
 			activity?.Dispose();
 
-			return new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, false, true));
+			return new TransactionalSaveOperation<T>(SaveResultBuilder.Create(aggregate, false, true));
 		}
 
 		var isNew = aggregate.IsNew();
@@ -132,7 +130,7 @@ partial class SqlServerEventStore<T>
 				{
 					_eventStoreTelemetry.EventsAlreadyApplied(aggregate.Id(), idempotencyId);
 					activity?.Dispose();
-					return new TransactionalSaveOperation<T>(ReturnSaveResult(aggregate, true, true));
+					return new TransactionalSaveOperation<T>(SaveResultBuilder.Create(aggregate, true, true));
 				}
 			}
 #pragma warning disable CA1031
@@ -143,6 +141,35 @@ partial class SqlServerEventStore<T>
 			}
 		}
 
+		return await PersistAndNotifyAsync(
+			aggregate,
+			operationContext,
+			idempotencyId,
+			changeEvents,
+			isNew,
+			connection,
+			transaction,
+			idempotencyIdAsString,
+			idempotencyMarkerId,
+			activity,
+			cancellationToken
+		);
+	}
+
+	async Task<TransactionalSaveOperation<T>> PersistAndNotifyAsync(
+		T aggregate,
+		EventStoreOperationContext operationContext,
+		string idempotencyId,
+		IEvent[] changeEvents,
+		bool isNew,
+		SqlConnection? connection,
+		SqlTransaction? transaction,
+		string idempotencyIdAsString,
+		string idempotencyMarkerId,
+		Activity? activity,
+		CancellationToken cancellationToken
+	)
+	{
 		if (
 			operationContext.NotificationMode.HasFlag(NotificationModes.BeforeDelete)
 			&& changeEvents.OfType<Deleted>().Any()
@@ -172,7 +199,7 @@ partial class SqlServerEventStore<T>
 		try
 		{
 			var previousAggregateVersion = aggregate.Details.SavedVersion;
-			var shouldSnapshot = ShouldSnapShot(aggregate, changeEvents);
+			var shouldSnapshot = ShouldSnapShot(aggregate, changeEvents, operationContext);
 			var now = DateTimeOffset.UtcNow;
 
 			var streamVersionId = streamEntity?.Id ?? CreateStreamVersionId(aggregate.Id());
@@ -247,7 +274,7 @@ partial class SqlServerEventStore<T>
 			if (shouldSnapshot)
 				await CreateSnapshotAsync(aggregate, connection, transaction, cancellationToken);
 
-			var result = ReturnSaveResult(aggregate, true, false);
+			var result = SaveResultBuilder.Create(aggregate, true, false);
 
 			return new TransactionalSaveOperation<T>(
 				result,
@@ -313,13 +340,23 @@ partial class SqlServerEventStore<T>
 			activity?.Dispose();
 			ClearCacheFireAndForget(aggregate);
 
-			if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
-			{
-				var deleteRequested = changeEvents.OfType<Deleted>().Any();
-				await _aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, ex);
-			}
+			await HandleSaveFailureAsync(aggregate, operationContext, changeEvents, ex);
 
 			throw;
+		}
+	}
+
+	async Task HandleSaveFailureAsync(
+		T aggregate,
+		EventStoreOperationContext operationContext,
+		IEvent[] changeEvents,
+		Exception exception
+	)
+	{
+		if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
+		{
+			var deleteRequested = changeEvents.OfType<Deleted>().Any();
+			await _aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, exception);
 		}
 	}
 
@@ -332,9 +369,21 @@ partial class SqlServerEventStore<T>
 			: await _validator.ValidateAsync(aggregate, cancellationToken);
 	}
 
-	static bool ShouldSnapShot(T aggregate, IEvent[] events)
+	static bool ShouldSnapShot(T aggregate, IEvent[] events, EventStoreOperationContext context)
 	{
-		return aggregate.Details.IsDeleted || events.OfType<Restored>().Any() || events.Length > 0;
+		// Deleted/restored transitions must always be reflected promptly.
+		if (aggregate.Details.IsDeleted || events.OfType<Restored>().Any())
+			return true;
+
+		// Default to a snapshot on every save (matching the historical behavior) while honoring
+		// any per-operation strategy override or selector, so operators can reduce snapshot
+		// write amplification on high-frequency aggregates.
+		return SnapshotStrategyResolver.ShouldSnapshot(
+			aggregate,
+			events.Length,
+			context,
+			new IntervalSnapshotStrategy<T>()
+		);
 	}
 
 	async Task SubmitBatchOperationsAsync(
@@ -394,7 +443,7 @@ partial class SqlServerEventStore<T>
 
 			if (ex.Number is 2627 or 2601)
 			{
-				throw new Exceptions.ConcurrencyException(
+				throw new ConcurrencyException(
 					aggregate.Id(),
 					idempotencyId,
 					aggregate.Details.CurrentVersion,
@@ -402,7 +451,7 @@ partial class SqlServerEventStore<T>
 				);
 			}
 
-			throw new Exceptions.CommitException(
+			throw new CommitException(
 				aggregate.Id(),
 				idempotencyId,
 				aggregate.Details.CurrentVersion,

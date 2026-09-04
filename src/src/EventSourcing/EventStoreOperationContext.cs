@@ -62,6 +62,20 @@ public sealed record class EventStoreOperationContext
 	public SnapshotCachingOptions SnapshotCacheMode { get; set; } = SnapshotCachingOptions.GetAndStore;
 
 	/// <summary>
+	/// When true, a cached aggregate is validated against the aggregate's persisted stream version
+	/// before it is returned, so a stale cache entry is never served.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// Defaults to <see langword="false"/> because the check adds a storage read per cache hit.
+	/// The distributed cache is normally kept consistent by writing it after a successful commit and
+	/// invalidating on failure and permanent deletes; enable this only when cache invalidation cannot be
+	/// guaranteed (for example a replicated cache with lag across regions).
+	/// </para>
+	/// </remarks>
+	public bool ValidateCachedSnapshot { get; set; }
+
+	/// <summary>
 	/// Manages caching operations for the operation.
 	/// </summary>
 	public DistributedCacheEntryOptions? CacheOptions { get; set; }

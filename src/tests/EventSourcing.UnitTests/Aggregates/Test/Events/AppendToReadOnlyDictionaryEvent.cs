@@ -1,4 +1,4 @@
-﻿using Purview.EventSourcing.Aggregates.Events;
+using Purview.EventSourcing.Aggregates.Events;
 
 namespace Purview.EventSourcing.Aggregates.Test.Events;
 
@@ -13,7 +13,7 @@ public class AppendToReadOnlyDictionaryEvent : EventBase
 		hash.Add(Key);
 		if (Values is not null)
 		{
-			foreach (string value in Values)
+			foreach (var value in Values)
 				hash.Add(value);
 		}
 	}

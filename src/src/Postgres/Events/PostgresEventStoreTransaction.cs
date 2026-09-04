@@ -144,14 +144,43 @@ sealed class PostgresEventStoreTransaction(string? correlationId = null) : IPost
 		}
 
 		await using var connection = _enlisted[0].CreateTransactionConnection();
-		await connection.OpenAsync(cancellationToken);
-
-		foreach (var enlisted in _enlisted)
-			await enlisted.EnsureTransactionConfiguredAsync(connection, cancellationToken);
+		await PrepareTransactionConnectionAsync(connection, cancellationToken);
 
 		await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
 		List<IProcessedSaveOperation> processed = [with(_enlisted.Count)];
+		var (failedEnlisted, failure) = await ExecuteEnlistedSavesAsync(
+			connection,
+			transaction,
+			processed,
+			cancellationToken
+		);
+
+		if (failedEnlisted is null && failure is null)
+			failure = await ExecuteAdditionalSqlOperationsAsync(connection, transaction, cancellationToken);
+
+		if (failedEnlisted is null && failure is null)
+			return await CommitAndNotifyAsync(transaction, processed, cancellationToken);
+
+		// Rollback the transaction and build a result indicating which aggregate failed to save.
+		return await RollbackAndBuildResultAsync(transaction, processed, failedEnlisted, failure, cancellationToken);
+	}
+
+	async Task PrepareTransactionConnectionAsync(DbConnection connection, CancellationToken cancellationToken)
+	{
+		await connection.OpenAsync(cancellationToken);
+
+		foreach (var enlisted in _enlisted)
+			await enlisted.EnsureTransactionConfiguredAsync(connection, cancellationToken);
+	}
+
+	async Task<(IEnlistedAggregate? failedEnlisted, Exception? failure)> ExecuteEnlistedSavesAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		List<IProcessedSaveOperation> processed,
+		CancellationToken cancellationToken
+	)
+	{
 		IEnlistedAggregate? failedEnlisted = null;
 		Exception? failure = null;
 
@@ -184,57 +213,88 @@ sealed class PostgresEventStoreTransaction(string? correlationId = null) : IPost
 #pragma warning restore CA1031
 		}
 
-		if (failedEnlisted is null && failure is null)
-		{
-			var sqlConnection = GetNpgsqlConnection(connection);
-			var sqlTransaction = GetNpgsqlTransaction(transaction);
+		return (failedEnlisted, failure);
+	}
 
-			foreach (var operation in _sqlOperations)
-			{
+	async Task<Exception?> ExecuteAdditionalSqlOperationsAsync(
+		DbConnection connection,
+		DbTransaction transaction,
+		CancellationToken cancellationToken
+	)
+	{
+		var sqlConnection = GetNpgsqlConnection(connection);
+		var sqlTransaction = GetNpgsqlTransaction(transaction);
+		Exception? failure = null;
+
+		foreach (var operation in _sqlOperations)
+		{
 #pragma warning disable CA1031
-				try
-				{
-					await operation(sqlConnection, sqlTransaction, cancellationToken);
-				}
-				catch (Exception ex)
-				{
-					failure = ex;
-					break;
-				}
-#pragma warning restore CA1031
+			try
+			{
+				await operation(sqlConnection, sqlTransaction, cancellationToken);
 			}
+			catch (Exception ex)
+			{
+				failure = ex;
+				break;
+			}
+#pragma warning restore CA1031
 		}
 
-		if (failedEnlisted is null && failure is null)
-		{
-			await transaction.CommitAsync(cancellationToken);
+		return failure;
+	}
 
-			List<TransactionAggregateResult> committedResults = [with(processed.Count)];
-			foreach (var operation in processed)
-			{
-				Exception? postCommitError = null;
+	static async Task<TransactionResult> CommitAndNotifyAsync(
+		DbTransaction transaction,
+		List<IProcessedSaveOperation> processed,
+		CancellationToken cancellationToken
+	)
+	{
+		await transaction.CommitAsync(cancellationToken);
+
+		List<TransactionAggregateResult> committedResults = [with(processed.Count)];
+		foreach (var operation in processed)
+		{
+			Exception? postCommitError = null;
 #pragma warning disable CA1031
-				try
-				{
-					await operation.AfterCommitAsync(cancellationToken);
-				}
-				catch (Exception ex)
-				{
-					postCommitError = ex;
-				}
+			try
+			{
+				await operation.AfterCommitAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				postCommitError = ex;
+			}
 #pragma warning restore CA1031
 
-				committedResults.Add(new(operation.Aggregate, operation.Saved, operation.Skipped, postCommitError));
-			}
-
-			return new TransactionResult(committedResults);
+			committedResults.Add(new(operation.Aggregate, operation.Saved, operation.Skipped, postCommitError));
 		}
 
+		return new TransactionResult(committedResults);
+	}
+
+	static async Task<TransactionResult> RollbackAndBuildResultAsync(
+		DbTransaction transaction,
+		List<IProcessedSaveOperation> processed,
+		IEnlistedAggregate? failedEnlisted,
+		Exception? failure,
+		CancellationToken cancellationToken
+	)
+	{
 		await transaction.RollbackAsync(cancellationToken);
 
 		foreach (var operation in processed)
 			await operation.AfterRollbackAsync(cancellationToken);
 
+		return BuildRollbackResult(processed, failedEnlisted, failure);
+	}
+
+	static TransactionResult BuildRollbackResult(
+		List<IProcessedSaveOperation> processed,
+		IEnlistedAggregate? failedEnlisted,
+		Exception? failure
+	)
+	{
 		var rollbackResults = new List<TransactionAggregateResult>(processed.Count + 1);
 		var rollbackError =
 			failure

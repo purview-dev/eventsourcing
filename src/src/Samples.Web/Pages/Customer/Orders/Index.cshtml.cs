@@ -32,7 +32,7 @@ sealed class IndexModel(IQueryableEventStore customerStore, IQueryableEventStore
 
 		if (Page < 1)
 			Page = 1;
-		if (PageSize < 5 || PageSize > 100)
+		if (PageSize is < 5 or > 100)
 			PageSize = DefaultPageSize;
 
 		var ct = HttpContext.RequestAborted;

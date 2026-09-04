@@ -4,7 +4,6 @@
 		<Title>Purview Event Sourcing Admin Portal Azure Storage</Title>
 		<Description>Azure Storage query adapters for Purview EventSourcing Admin Portal.</Description>
 		<PackageTags>$(PackageTags);purview;dotnet;event-sourcing;admin;azurestorage;queries;</PackageTags>
-		<PackageId>Purview.EventSourcing.Admin.AzureStorage</PackageId>
 	</PropertyGroup>
 
 	<ItemGroup>

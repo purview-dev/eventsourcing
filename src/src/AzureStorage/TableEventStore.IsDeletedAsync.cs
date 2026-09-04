@@ -2,6 +2,7 @@
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	public async Task<bool> IsDeletedAsync(string aggregateId, CancellationToken cancellationToken = default)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(aggregateId, nameof(aggregateId));

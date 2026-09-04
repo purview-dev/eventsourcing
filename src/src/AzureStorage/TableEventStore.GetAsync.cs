@@ -1,11 +1,14 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
+using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.AzureStorage.Entities;
+using Purview.EventSourcing.Serialization;
 
 namespace Purview.EventSourcing.AzureStorage;
 
 partial class TableEventStore<T>
 {
+	///<inheritdoc/>
 	[System.Diagnostics.DebuggerStepThrough]
 	public Task<T?> GetAsync(
 		string aggregateId,
@@ -31,13 +34,48 @@ partial class TableEventStore<T>
 				? await GetFromCacheAsync(aggregateId, cancellationToken)
 				: null;
 
-			if (aggregate != null)
+			if (
+				aggregate != null
+				&& (
+					!operationContext.ValidateCachedSnapshot
+					|| await IsCacheHitFreshAsync(aggregate, aggregateId, cancellationToken)
+				)
+			)
 			{
 				_eventStoreTelemetry.AggregateRetrievedFromCache(aggregateId, _aggregateTypeFullName);
 
 				return ReturnAggregate(aggregate.Details.IsDeleted, aggregateId, operationContext)
 					? PrepareAggregateForReturn(aggregate, _aggregateRequirementsManager)
 					: null;
+			}
+
+			// Single-flight: when the aggregate will be written back to the cache, serialize
+			// rehydration per stream so concurrent first-reads of a cold aggregate do not each
+			// replay the stream and stampede the cache.
+			await using var singleFlight = operationContext.SnapshotCacheMode.HasFlag(
+				SnapshotCachingOptions.StoreInCache
+			)
+				? await AggregateWriteLock.AcquireAsync(_aggregateTypeShortName, aggregateId, cancellationToken)
+				: null;
+
+			// Another caller may have rehydrated and populated the cache while we waited.
+			if (singleFlight != null && operationContext.SnapshotCacheMode.HasFlag(SnapshotCachingOptions.GetFromCache))
+			{
+				var cached = await GetFromCacheAsync(aggregateId, cancellationToken);
+				if (
+					cached != null
+					&& (
+						!operationContext.ValidateCachedSnapshot
+						|| await IsCacheHitFreshAsync(cached, aggregateId, cancellationToken)
+					)
+				)
+				{
+					_eventStoreTelemetry.AggregateRetrievedFromCache(aggregateId, _aggregateTypeFullName);
+
+					return ReturnAggregate(cached.Details.IsDeleted, aggregateId, operationContext)
+						? PrepareAggregateForReturn(cached, _aggregateRequirementsManager)
+						: null;
+				}
 			}
 
 			var streamVersion = await GetStreamVersionAsync(aggregateId, true, cancellationToken);
@@ -88,6 +126,12 @@ partial class TableEventStore<T>
 			);
 		}
 
+		async Task<bool> IsCacheHitFreshAsync(T aggregate, string aggregateId, CancellationToken cancellationToken)
+		{
+			var streamVersion = await GetStreamVersionAsync(aggregateId, false, cancellationToken);
+			return streamVersion != null && aggregate.Details.CurrentVersion >= streamVersion.Version;
+		}
+
 		static T PrepareAggregateForReturn(
 			T aggregate,
 			Services.IAggregateRequirementsManager aggregateRequirementsManager
@@ -123,10 +167,11 @@ partial class TableEventStore<T>
 		await foreach (var eventResult in everQuery)
 		{
 			var @event = eventResult.@event;
-			if (@event is EventUnknown || !aggregate.CanApplyEvent(@event))
+			if (@event is UnknownEvent || !aggregate.CanApplyEvent(@event))
 			{
 				var eventType = @event.GetType();
-				if (@event is EventUnknown)
+				if (@event is UnknownEvent)
+				{
 					_eventStoreTelemetry.SkippedUnknownEvent(
 						aggregateId,
 						_aggregateTypeFullName,
@@ -134,7 +179,15 @@ partial class TableEventStore<T>
 						eventResult.eventType,
 						@event.Details.AggregateVersion
 					);
+
+					(aggregate as AggregateBase)?.RecordSkippedEvent(
+						@event.Details.AggregateVersion,
+						eventResult.eventType,
+						isUnknown: true
+					);
+				}
 				else
+				{
 					_eventStoreTelemetry.CannotApplyEvent(
 						aggregateId,
 						_aggregateTypeFullName,
@@ -143,6 +196,13 @@ partial class TableEventStore<T>
 						eventType.FullName ?? eventType.Name,
 						@event.Details.AggregateVersion
 					);
+
+					(aggregate as AggregateBase)?.RecordSkippedEvent(
+						@event.Details.AggregateVersion,
+						eventResult.eventType,
+						isUnknown: false
+					);
+				}
 
 				// Without doing this, you won't be able to write to this aggregate anymore.
 				aggregate.Details.CurrentVersion = @event.Details.AggregateVersion;
@@ -180,10 +240,8 @@ partial class TableEventStore<T>
 			if (blobStream == null)
 				return null;
 
-			using StreamReader reader = new(blobStream);
-			var aggregateContent = await reader.ReadToEndAsync(cancellationToken);
-
-			return DeserializeSnapshot(aggregateContent);
+			// We don't need to worry about the stream being disposed, because the deserializer will read it all into memory before returning.
+			return await EventStoreSerializationHelpers.DeserializeAsync<T>(blobStream, cancellationToken);
 		}
 #pragma warning disable CA1031
 		catch (Exception ex)

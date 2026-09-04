@@ -5,11 +5,28 @@ using Purview.EventSourcing.Internal;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+/// <summary>
+/// Extension methods for registering the in-memory event stores with the dependency injection container.
+/// </summary>
+/// <remarks>
+/// The members of this type are hidden from IntelliSense as the type is only intended to be consumed
+/// through the <see langword="static"/> using for the <c>Microsoft.Extensions.DependencyInjection</c> namespace.
+/// </remarks>
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class ServiceCollectionExtensions
 {
 	extension(IServiceCollection services)
 	{
+		/// <summary>
+		/// Registers the <see cref="InMemoryEventStore{T}"/> implementation against the non-queryable
+		/// store contracts.
+		/// </summary>
+		/// <returns>The same <paramref name="services"/> instance for chaining.</returns>
+		/// <remarks>
+		/// Registers <see cref="IEventStoreCore{T}"/>, <see cref="INonQueryableEventStore{T}"/> and
+		/// <see cref="IInMemoryEventStore{T}"/> as transient services, along with the non-generic
+		/// <see cref="IEventStore"/> facade. Call this once during application startup.
+		/// </remarks>
 		public IServiceCollection AddInMemoryEventStore()
 		{
 			services.AddEventSourcing();
@@ -23,6 +40,18 @@ public static class ServiceCollectionExtensions
 			return services;
 		}
 
+		/// <summary>
+		/// Registers the <see cref="InMemorySnapshotStore{T}"/> implementation against both the
+		/// non-queryable and queryable store contracts.
+		/// </summary>
+		/// <returns>The same <paramref name="services"/> instance for chaining.</returns>
+		/// <remarks>
+		/// Registers <see cref="IEventStoreCore{T}"/>, <see cref="INonQueryableEventStore{T}"/>,
+		/// <see cref="IInMemoryEventStore{T}"/>, <see cref="IQueryableEventStoreCore{T}"/> and
+		/// <see cref="IInMemorySnapshotStore{T}"/> as transient services, along with the non-generic
+		/// <see cref="IEventStore"/> and <see cref="IQueryableEventStore"/> facades. Call this once
+		/// during application startup.
+		/// </remarks>
 		public IServiceCollection AddInMemorySnapshotEventStore()
 		{
 			services.AddEventSourcing();

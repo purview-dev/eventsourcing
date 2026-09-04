@@ -9,12 +9,14 @@ using Purview.EventSourcing.MongoDB.Events.Entities;
 using Purview.EventSourcing.MongoDB.Events.Exceptions;
 using Purview.EventSourcing.MongoDB.StorageClient;
 using Purview.EventSourcing.Services;
+using Purview.EventSourcing.Storage;
 using Purview.EventSourcing.Validation;
 
 namespace Purview.EventSourcing.MongoDB;
 
 partial class MongoDBEventStore<T>
 {
+	///<inheritdoc/>
 	[DebuggerStepThrough]
 	public Task<SaveResult<T>> SaveAsync(
 		[NotNull] T aggregate,
@@ -29,6 +31,18 @@ partial class MongoDBEventStore<T>
 		params IEvent[] additionalEvents
 	)
 	{
+		var preparation = await PrepareSaveAsync(aggregate, operationContext, additionalEvents, cancellationToken);
+
+		return preparation.Terminal ?? await PersistAndNotifyAsync(preparation, cancellationToken);
+	}
+
+	async Task<MongoSavePreparation> PrepareSaveAsync(
+		T aggregate,
+		EventStoreOperationContext? operationContext,
+		IEvent[]? additionalEvents,
+		CancellationToken cancellationToken
+	)
+	{
 		operationContext ??= EventStoreOperationContext.DefaultContext();
 
 		FulfilRequirements(aggregate);
@@ -36,21 +50,30 @@ partial class MongoDBEventStore<T>
 		var idempotencyId = operationContext.CorrelationId ?? Activity.Current?.Id ?? $"{Guid.NewGuid()}";
 		var validationResult = await GuardAsync(aggregate, cancellationToken);
 
-		static SaveResult<T> ReturnSaveResult(
-			T a,
-			bool success,
-			bool skipped,
-			ValidationResult? validationResult = null
-		) => new(a, validationResult ?? new ValidationResult(), success, skipped);
-
 		if (!validationResult.IsValid)
-			return ReturnSaveResult(aggregate, false, false, validationResult);
+			return new MongoSavePreparation(
+				SaveResultBuilder.Create(aggregate, false, false, validationResult),
+				aggregate,
+				operationContext,
+				idempotencyId,
+				[],
+				isNew: false,
+				marker: null
+			);
 
 		if (aggregate.Details.Locked)
 		{
 			return operationContext.LockMode is LockHandlingMode.ThrowsException
 				? throw new AggregateLockedException(idempotencyId)
-				: ReturnSaveResult(aggregate, false, false);
+				: new MongoSavePreparation(
+					SaveResultBuilder.Create(aggregate, false, false),
+					aggregate,
+					operationContext,
+					idempotencyId,
+					[],
+					isNew: false,
+					marker: null
+				);
 		}
 
 		if (string.IsNullOrWhiteSpace(aggregate.Details.Id))
@@ -65,7 +88,15 @@ partial class MongoDBEventStore<T>
 				aggregate.AggregateType
 			);
 
-			return ReturnSaveResult(aggregate, false, true);
+			return new MongoSavePreparation(
+				SaveResultBuilder.Create(aggregate, false, true),
+				aggregate,
+				operationContext,
+				idempotencyId,
+				[],
+				isNew: false,
+				marker: null
+			);
 		}
 
 		var isNew = aggregate.IsNew();
@@ -90,9 +121,40 @@ partial class MongoDBEventStore<T>
 			if (exists)
 			{
 				_eventStoreTelemetry.EventsAlreadyApplied(aggregate.Id(), idempotencyId);
-				return ReturnSaveResult(aggregate, true, true);
+				return new MongoSavePreparation(
+					SaveResultBuilder.Create(aggregate, true, true),
+					aggregate,
+					operationContext,
+					idempotencyId,
+					changeEvents,
+					isNew,
+					idempotencyMarkerOperation
+				);
 			}
 		}
+
+		return new MongoSavePreparation(
+			terminal: null,
+			aggregate,
+			operationContext,
+			idempotencyId,
+			changeEvents,
+			isNew,
+			idempotencyMarkerOperation
+		);
+	}
+
+	async Task<SaveResult<T>> PersistAndNotifyAsync(
+		MongoSavePreparation preparation,
+		CancellationToken cancellationToken
+	)
+	{
+		var aggregate = preparation.Aggregate;
+		var operationContext = preparation.OperationContext;
+		var idempotencyId = preparation.IdempotencyId;
+		var changeEvents = preparation.ChangeEvents;
+		var isNew = preparation.IsNew;
+		var idempotencyMarkerOperation = preparation.Marker!;
 
 		if (
 			operationContext.NotificationMode.HasFlag(NotificationModes.BeforeDelete)
@@ -139,7 +201,6 @@ partial class MongoDBEventStore<T>
 				);
 
 			var idempotencyIdAsString = idempotencyId.ToUpperInvariant();
-			Dictionary<string, IEvent> largeChangeEvents = [];
 			for (var i = 0; i < changeEvents.Length; i++)
 			{
 				var changeEvent = changeEvents[i];
@@ -181,13 +242,19 @@ partial class MongoDBEventStore<T>
 			);
 
 			// Do not pass in the cancellation token. We want this to carry on as long as possible.
-			await UpdateCacheAsync(aggregate, operationContext.CacheOptions);
+			await UpdateCacheAsync(aggregate, operationContext.CacheOptions, cancellationToken);
 
 			// ...or here.
 			if (aggregate.Details.IsDeleted && operationContext.NotificationMode.HasFlag(NotificationModes.AfterDelete))
-				await _aggregateChangeNotifier.AfterDeleteAsync(aggregate);
+				await _aggregateChangeNotifier.AfterDeleteAsync(aggregate, cancellationToken);
 			else if (operationContext.NotificationMode.HasFlag(NotificationModes.AfterSave))
-				await _aggregateChangeNotifier.AfterSaveAsync(aggregate, previousAggregateVersion, isNew, changeEvents);
+				await _aggregateChangeNotifier.AfterSaveAsync(
+					aggregate,
+					previousAggregateVersion,
+					isNew,
+					changeEvents,
+					cancellationToken
+				);
 		}
 		catch (Exception ex)
 		{
@@ -196,13 +263,32 @@ partial class MongoDBEventStore<T>
 			if (operationContext.NotificationMode.HasFlag(NotificationModes.OnFailure))
 			{
 				var deleteRequested = changeEvents.OfType<Deleted>().Any();
-				await _aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, ex);
+				await _aggregateChangeNotifier.FailureAsync(aggregate, deleteRequested, ex, cancellationToken);
 			}
 
 			throw;
 		}
 
-		return ReturnSaveResult(aggregate, true, false);
+		return SaveResultBuilder.Create(aggregate, true, false);
+	}
+
+	sealed class MongoSavePreparation(
+		SaveResult<T>? terminal,
+		T aggregate,
+		EventStoreOperationContext operationContext,
+		string idempotencyId,
+		IEvent[] changeEvents,
+		bool isNew,
+		IdempotencyMarkerEntity? marker
+	)
+	{
+		public SaveResult<T>? Terminal => terminal;
+		public T Aggregate => aggregate;
+		public EventStoreOperationContext OperationContext => operationContext;
+		public string IdempotencyId => idempotencyId;
+		public IEvent[] ChangeEvents => changeEvents;
+		public bool IsNew => isNew;
+		public IdempotencyMarkerEntity? Marker => marker;
 	}
 
 	async Task<ValidationResult> GuardAsync(T aggregate, CancellationToken cancellationToken = default)
@@ -256,6 +342,17 @@ partial class MongoDBEventStore<T>
 			_eventStoreTelemetry.SaveFailedAtStorage(aggregate.Id(), _aggregateTypeFullName, ex);
 
 			ClearCacheFireAndForget(aggregate);
+
+			// A duplicate key on the event/stream rows means another writer already persisted
+			// the same aggregate version. Surface this as a concurrency conflict so callers can
+			// apply the standard retry path instead of treating it as an opaque commit failure.
+			if (MongoDBClient.IsDuplicateKeyError(ex))
+				throw new ConcurrencyException(
+					aggregate.Id(),
+					idempotencyId,
+					aggregate.Details.CurrentVersion,
+					aggregate.Details.SavedVersion
+				);
 
 			throw new CommitException(
 				aggregate.Id(),

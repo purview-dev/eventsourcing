@@ -47,7 +47,7 @@
 
 		<button type="submit" class="btn btn-primary">Project</button>
 		<a href="/admin/events?aggregateType=@Uri.EscapeDataString(Model.AggregateType)&aggregateId=@Uri.EscapeDataString(Model.AggregateId)" class="btn btn-secondary">View Events</a>
-		<a href="/" class="btn btn-secondary">Back to Aggregates</a>
+		<a href="/admin" class="btn btn-secondary">Back to Aggregates</a>
 	</form>
 
 	@if (!ModelState.IsValid)
@@ -123,7 +123,7 @@
 
 			<details class="state-details">
 				<summary>Aggregate State</summary>
-				<pre><code>@Model.Projection.State.ToString()</code></pre>
+				<pre><code>@JsonFormatter.PrettyPrint(Model.Projection.State)</code></pre>
 			</details>
 		</div>
 	}

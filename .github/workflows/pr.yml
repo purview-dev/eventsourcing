@@ -19,7 +19,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/reusable-dotnet-validate.yml
     with:
-      solution-path: src/Purview.EventSourcing.slnx
+      solution-path: src/EventSourcing.slnx
       configuration: Release
       install-node-deps: true
       node-version: "24"

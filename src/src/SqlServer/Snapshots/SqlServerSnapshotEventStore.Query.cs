@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.SqlServer.Snapshot;
 
 partial class SqlServerSnapshotEventStore<T>
 {
+	///<inheritdoc/>
 	public async IAsyncEnumerable<T> GetQueryEnumerableAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -23,6 +24,7 @@ partial class SqlServerSnapshotEventStore<T>
 		} while (response.HasMoreRecords);
 	}
 
+	///<inheritdoc/>
 	public async IAsyncEnumerable<T> GetListEnumerableAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = ContinuationRequest.DefaultMaxRecords,
@@ -41,6 +43,7 @@ partial class SqlServerSnapshotEventStore<T>
 		} while (response.HasMoreRecords);
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> QueryAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -53,6 +56,7 @@ partial class SqlServerSnapshotEventStore<T>
 		return await ExecuteQueryAsync(whereClause, orderByClause, request, cancellationToken);
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> ListAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		ContinuationRequest request,
@@ -64,6 +68,7 @@ partial class SqlServerSnapshotEventStore<T>
 		return await ExecuteQueryAsync(null, orderByClause, request, cancellationToken);
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> SingleOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		CancellationToken cancellationToken = default
@@ -74,6 +79,7 @@ partial class SqlServerSnapshotEventStore<T>
 		return query.SingleOrDefault();
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -84,16 +90,13 @@ partial class SqlServerSnapshotEventStore<T>
 		return query.FirstOrDefault();
 	}
 
+	///<inheritdoc/>
 	public async Task<long> CountAsync(
 		Expression<Func<T, bool>>? whereClause,
 		CancellationToken cancellationToken = default
 	)
 	{
-		return await _sqlServerClient.CountByAggregateTypeAsync<T>(
-			GetAggregateTypeName(),
-			whereClause,
-			cancellationToken
-		);
+		return await _sqlServerClient.CountByAggregateTypeAsync(GetAggregateTypeName(), whereClause, cancellationToken);
 	}
 
 	async Task<IEnumerable<T>> GetSpecificNumberAsync(
@@ -134,7 +137,7 @@ partial class SqlServerSnapshotEventStore<T>
 				? await _sqlServerClient.CountByAggregateTypeAsync<T>(aggregateTypeName, whereClause, cancellationToken)
 				: null;
 
-			var results = await _sqlServerClient.QueryByAggregateTypeAsync<T>(
+			var results = await _sqlServerClient.QueryByAggregateTypeAsync(
 				aggregateTypeName,
 				whereClause,
 				orderByClause,

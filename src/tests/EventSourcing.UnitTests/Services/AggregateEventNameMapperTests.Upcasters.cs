@@ -1,0 +1,66 @@
+using Purview.EventSourcing.Aggregates.Events;
+using Purview.EventSourcing.Aggregates.Events.Upcasting;
+using Purview.EventSourcing.Services;
+
+namespace Purview.EventSourcing;
+
+partial class AggregateEventNameMapperTests
+{
+	sealed class LegacyEventV1 : EventBase
+	{
+		public string OldField { get; set; } = default!;
+
+		protected override void BuildEventHash(ref HashCode hash) => hash.Add(OldField);
+	}
+
+	sealed class CurrentEventV2 : EventBase
+	{
+		public string NewField { get; set; } = default!;
+
+		public override int SchemaVersion => 2;
+
+		protected override void BuildEventHash(ref HashCode hash) => hash.Add(NewField);
+	}
+
+	sealed class LegacyEventV1ToCurrentEventV2Upcaster : IEventUpcaster<LegacyEventV1, CurrentEventV2>
+	{
+		public CurrentEventV2 Upcast(LegacyEventV1 source) =>
+			new() { Details = source.Details, NewField = source.OldField + "_upgraded" };
+	}
+
+	[Test]
+	public async Task GetTypeName_GivenLegacyUpcasterSourceType_ResolvesStoredName()
+	{
+		// Arrange
+		var upcaster = new EventUpcasterDescriptor<LegacyEventV1, CurrentEventV2>(
+			new LegacyEventV1ToCurrentEventV2Upcaster()
+		);
+		var mapper = new AggregateEventNameMapper([upcaster]);
+		var aggregateName = mapper.InitializeAggregate<CorrectlyNamedAggregate>();
+
+		// The stored event name is what the store would have persisted when LegacyEventV1
+		// was a current event type on this aggregate.
+		var legacyName = TypeNameHelper.GetName(typeof(LegacyEventV1), "Event", true);
+		if (legacyName != typeof(LegacyEventV1).FullName)
+			legacyName = $"{aggregateName}.{legacyName}";
+
+		// Act
+		var result = mapper.GetTypeName<CorrectlyNamedAggregate>(legacyName);
+
+		// Assert
+		await Assert.That(result).IsEqualTo(typeof(LegacyEventV1).AssemblyQualifiedName);
+	}
+
+	[Test]
+	public async Task GetTypeName_GivenNoUpcasterRegistered_ReturnsNull()
+	{
+		// Arrange
+		var mapper = CreateMapper<CorrectlyNamedAggregate>();
+
+		// Act
+		var result = mapper.GetTypeName<CorrectlyNamedAggregate>("correctly-named.legacy-event-v1");
+
+		// Assert
+		await Assert.That(result).IsNull();
+	}
+}

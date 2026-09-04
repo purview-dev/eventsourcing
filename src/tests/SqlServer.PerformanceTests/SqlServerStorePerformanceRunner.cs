@@ -219,80 +219,43 @@ sealed class SqlServerStorePerformanceRunner
 		const int customerAggregateCount = 90;
 		const string matchingCustomerName = "complex customer";
 		const string matchingCustomerEmail = "complex.customer@test.com";
-		var expectedCustomerMatches = 0;
 
-		for (var i = 0; i < customerAggregateCount; i++)
-		{
-			var matches = i % 3 == 0;
-			if (matches)
-				expectedCustomerMatches++;
-
-			var aggregate = new CustomerAggregate { Details = { Id = $"{Guid.NewGuid():D}" } };
-			aggregate.RegisterCustomer(
-				matches ? matchingCustomerName : $"other customer {i}",
-				matches ? matchingCustomerEmail : $"other-{i}@test.com",
-				isActive: i % 2 == 0
-			);
-
-			if (matches)
-				aggregate.Reactivate();
-			else if (i % 2 != 0)
-				aggregate.Deactivate();
-
-			await customerStore.SnapshotAsync(aggregate, cancellationToken);
-		}
-
-		var customerMatchCount = await customerStore.CountAsync(
-			aggregate =>
-				aggregate.IsActive
-				&& (aggregate.Name == matchingCustomerName || aggregate.Email == matchingCustomerEmail),
+		var expectedCustomerMatches = await SeedCustomerAggregatesAsync(
+			customerStore,
+			customerAggregateCount,
+			matchingCustomerName,
+			matchingCustomerEmail,
 			cancellationToken
 		);
-		if (customerMatchCount != expectedCustomerMatches)
-		{
-			throw new InvalidOperationException(
-				$"Customer snapshot count mismatch. Expected {expectedCustomerMatches}, got {customerMatchCount}."
-			);
-		}
+		await VerifyCustomerSnapshotCountAsync(
+			customerStore,
+			matchingCustomerName,
+			matchingCustomerEmail,
+			expectedCustomerMatches,
+			cancellationToken
+		);
 
 		const int valueObjectAggregateCount = 60;
 		const string matchingDisplayName = "snapshot-user";
 		const string matchingDisplayName2Prefix = "snapshot-v2-";
 		var matchingUserId = Guid.Parse("33333333-3333-3333-3333-333333333333");
-		var expectedValueObjectMatches = 0;
 
-		for (var i = 0; i < valueObjectAggregateCount; i++)
-		{
-			var matches = i % 2 == 0;
-			if (matches)
-				expectedValueObjectMatches++;
-
-			var aggregate = new SnapshotValueObjectsAggregate { Details = { Id = $"{Guid.NewGuid():D}" } };
-			var userId = matches ? matchingUserId : Guid.Parse("44444444-4444-4444-4444-444444444444");
-
-			aggregate.CaptureUserDetails(
-				UserDetails.Create(userId, matches ? matchingDisplayName : $"other-user-{i}", true),
-				UserDetails2.Create(userId, matches ? $"{matchingDisplayName2Prefix}{i}" : $"other-v2-{i}")
-			);
-
-			await valueObjectStore.SnapshotAsync(aggregate, cancellationToken);
-		}
-
-		var valueObjectMatchCount = await valueObjectStore.CountAsync(
-			aggregate =>
-				aggregate.UserDetails.Id == matchingUserId
-				&& aggregate.UserDetails.IsActive
-				&& aggregate.UserDetails.DisplayName == matchingDisplayName
-				&& aggregate.UserDetails2.DisplayName.StartsWith(matchingDisplayName2Prefix),
+		var expectedValueObjectMatches = await SeedValueObjectAggregatesAsync(
+			valueObjectStore,
+			valueObjectAggregateCount,
+			matchingDisplayName,
+			matchingDisplayName2Prefix,
+			matchingUserId,
 			cancellationToken
 		);
-
-		if (valueObjectMatchCount != expectedValueObjectMatches)
-		{
-			throw new InvalidOperationException(
-				$"Value-object snapshot count mismatch. Expected {expectedValueObjectMatches}, got {valueObjectMatchCount}."
-			);
-		}
+		await VerifyValueObjectSnapshotCountAsync(
+			valueObjectStore,
+			matchingUserId,
+			matchingDisplayName,
+			matchingDisplayName2Prefix,
+			expectedValueObjectMatches,
+			cancellationToken
+		);
 
 		// Valid up to this point, so run the test...
 		return await MeasureAsync(
@@ -349,6 +312,118 @@ sealed class SqlServerStorePerformanceRunner
 			},
 			cancellationToken
 		);
+	}
+
+	async Task<int> SeedCustomerAggregatesAsync(
+		SqlServerSnapshotEventStore<CustomerAggregate> customerStore,
+		int customerAggregateCount,
+		string matchingCustomerName,
+		string matchingCustomerEmail,
+		CancellationToken cancellationToken
+	)
+	{
+		var expectedCustomerMatches = 0;
+
+		for (var i = 0; i < customerAggregateCount; i++)
+		{
+			var matches = i % 3 == 0;
+			if (matches)
+				expectedCustomerMatches++;
+
+			var aggregate = new CustomerAggregate { Details = { Id = $"{Guid.NewGuid():D}" } };
+			aggregate.RegisterCustomer(
+				matches ? matchingCustomerName : $"other customer {i}",
+				matches ? matchingCustomerEmail : $"other-{i}@test.com",
+				isActive: i % 2 == 0
+			);
+
+			if (matches)
+				aggregate.Reactivate();
+			else if (i % 2 != 0)
+				aggregate.Deactivate();
+
+			await customerStore.SnapshotAsync(aggregate, cancellationToken);
+		}
+
+		return expectedCustomerMatches;
+	}
+
+	async Task VerifyCustomerSnapshotCountAsync(
+		SqlServerSnapshotEventStore<CustomerAggregate> customerStore,
+		string matchingCustomerName,
+		string matchingCustomerEmail,
+		int expectedCustomerMatches,
+		CancellationToken cancellationToken
+	)
+	{
+		var customerMatchCount = await customerStore.CountAsync(
+			aggregate =>
+				aggregate.IsActive
+				&& (aggregate.Name == matchingCustomerName || aggregate.Email == matchingCustomerEmail),
+			cancellationToken
+		);
+		if (customerMatchCount != expectedCustomerMatches)
+		{
+			throw new InvalidOperationException(
+				$"Customer snapshot count mismatch. Expected {expectedCustomerMatches}, got {customerMatchCount}."
+			);
+		}
+	}
+
+	async Task<int> SeedValueObjectAggregatesAsync(
+		SqlServerSnapshotEventStore<SnapshotValueObjectsAggregate> valueObjectStore,
+		int valueObjectAggregateCount,
+		string matchingDisplayName,
+		string matchingDisplayName2Prefix,
+		Guid matchingUserId,
+		CancellationToken cancellationToken
+	)
+	{
+		var expectedValueObjectMatches = 0;
+
+		for (var i = 0; i < valueObjectAggregateCount; i++)
+		{
+			var matches = i % 2 == 0;
+			if (matches)
+				expectedValueObjectMatches++;
+
+			var aggregate = new SnapshotValueObjectsAggregate { Details = { Id = $"{Guid.NewGuid():D}" } };
+			var userId = matches ? matchingUserId : Guid.Parse("44444444-4444-4444-4444-444444444444");
+
+			aggregate.CaptureUserDetails(
+				UserDetails.Create(userId, matches ? matchingDisplayName : $"other-user-{i}", true),
+				UserDetails2.Create(userId, matches ? $"{matchingDisplayName2Prefix}{i}" : $"other-v2-{i}")
+			);
+
+			await valueObjectStore.SnapshotAsync(aggregate, cancellationToken);
+		}
+
+		return expectedValueObjectMatches;
+	}
+
+	async Task VerifyValueObjectSnapshotCountAsync(
+		SqlServerSnapshotEventStore<SnapshotValueObjectsAggregate> valueObjectStore,
+		Guid matchingUserId,
+		string matchingDisplayName,
+		string matchingDisplayName2Prefix,
+		int expectedValueObjectMatches,
+		CancellationToken cancellationToken
+	)
+	{
+		var valueObjectMatchCount = await valueObjectStore.CountAsync(
+			aggregate =>
+				aggregate.UserDetails.Id == matchingUserId
+				&& aggregate.UserDetails.IsActive
+				&& aggregate.UserDetails.DisplayName == matchingDisplayName
+				&& aggregate.UserDetails2.DisplayName.StartsWith(matchingDisplayName2Prefix),
+			cancellationToken
+		);
+		if (valueObjectMatchCount != expectedValueObjectMatches)
+		{
+			throw new InvalidOperationException(
+				$"Value-object snapshot count mismatch. Expected {expectedValueObjectMatches}, got {valueObjectMatchCount}."
+			);
+		}
 	}
 
 	static SqlServerSnapshotEventStore<CustomerAggregate> CreateCustomerSnapshotStore(

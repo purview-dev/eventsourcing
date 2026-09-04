@@ -9,9 +9,19 @@ using Purview.EventSourcing.Postgres.Events.EntityFramework;
 
 namespace Purview.EventSourcing.Admin.Postgres;
 
+/// <summary>
+/// Provides aggregate summary queries against PostgreSQL for the Admin portal.
+/// </summary>
+/// <remarks>
+/// The service resolves the tables that can hold the requested aggregate type via
+/// <c>PostgresAdminTableResolver</c> and queries each one's stream-version rows. Results are combined, sorted and
+/// paged in memory.
+/// </remarks>
+/// <param name="options">The configured <see cref="PostgresEventStoreOptions"/>.</param>
 public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventStoreOptions> options)
 	: IAdminAggregateQueryService
 {
+	///<inheritdoc/>
 	public async Task<PagedResult<AggregateSummaryResponse>> SearchAsync(
 		AggregateSearchQuery query,
 		CancellationToken cancellationToken
@@ -37,6 +47,7 @@ public sealed class PostgresAdminAggregateQueryService(IOptions<PostgresEventSto
 		return new PagedResult<AggregateSummaryResponse>(pageItems, page, pageSize, totalCount);
 	}
 
+	///<inheritdoc/>
 	public async Task<AggregateSummaryResponse?> GetAsync(
 		string aggregateType,
 		string aggregateId,

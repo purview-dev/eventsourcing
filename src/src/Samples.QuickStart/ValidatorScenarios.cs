@@ -81,16 +81,14 @@ sealed class ValidatorScenarios() : IAsyncDisposable
 			Console.WriteLine("  FAILED: Did not validate correctly!!");
 		else
 		{
-			if (result.ValidationResult.Errors.Count != 1)
+			if (result.FailureCount != 1)
+				Console.WriteLine($"  FAILED: Should be exactly 1 error, but found {result.FailureCount}");
+			else if (result.ValidationResult.Failures[0].PropertyName != nameof(CustomerAggregate.PhoneNumber))
 				Console.WriteLine(
-					$"  FAILED: Should be exactly 1 error, but found {result.ValidationResult.Errors.Count}"
-				);
-			else if (result.ValidationResult.Errors[0].PropertyName != nameof(CustomerAggregate.PhoneNumber))
-				Console.WriteLine(
-					$"   FAILED: Error should have validatedd '{nameof(CustomerAggregate.PhoneNumber)}', but found '{result.ValidationResult.Errors[0].PropertyName}'"
+					$"   FAILED: Error should have validatedd '{nameof(CustomerAggregate.PhoneNumber)}', but found '{result.ValidationResult.Failures[0].PropertyName}'"
 				);
 			else
-				Console.WriteLine($"  SUCCESS: Found {result.ValidationResult.Errors[0].ErrorMessage}");
+				Console.WriteLine($"  SUCCESS: Found {result.ValidationResult.Failures[0].ErrorMessage}");
 		}
 
 		Console.WriteLine();

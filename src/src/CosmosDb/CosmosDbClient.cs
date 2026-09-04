@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Azure.Cosmos;
 using Purview.EventSourcing.CosmosDb.Snapshots;
@@ -186,10 +186,7 @@ sealed partial class CosmosDbClient : IAsyncDisposable
 				_cosmosDbOptions.ContainerThroughput,
 				cancellationToken
 			);
-			if (
-				containerResponse.StatusCode == System.Net.HttpStatusCode.OK
-				|| containerResponse.StatusCode == System.Net.HttpStatusCode.Accepted
-			)
+			if (containerResponse.StatusCode is System.Net.HttpStatusCode.OK or System.Net.HttpStatusCode.Accepted)
 				return containerResponse;
 
 			// Hoping that someone came in between and created it while we were waiting.

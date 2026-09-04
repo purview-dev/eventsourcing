@@ -3,6 +3,8 @@ using Purview.EventSourcing.Fixtures.CosmosDb;
 
 namespace Purview.EventSourcing.CosmosDb.Snapshots;
 
+// Holds the fixture and shared helpers for Cosmos-specific snapshot tests (dictionary/partition-key
+// queries). The provider-agnostic snapshot contract suite lives in SnapshotStoreContractTests.
 [ClassDataSource<CosmosDbSnapshotEventStoreFixture>(Shared = SharedType.PerTestSession)]
 [NotInParallel(nameof(CosmosDbClient))]
 public partial class CosmosDbSnapshotEventStoreTests(CosmosDbSnapshotEventStoreFixture fixture)

@@ -6,7 +6,7 @@ on:
       solution-path:
         required: false
         type: string
-        default: src/Purview.EventSourcing.slnx
+        default: src/EventSourcing.slnx
       configuration:
         required: false
         type: string

@@ -12,7 +12,7 @@ namespace Purview.EventSourcing.Samples.Domain;
 /// - Validation with DataAnnotations
 /// - Collection management (line items)
 /// </summary>
-[GenerateAggregate]
+[Aggregate]
 public sealed partial class OrderAggregate : AggregateBase
 {
 	public string CustomerId { get; private set; } = default!;
@@ -99,28 +99,28 @@ public sealed partial class OrderAggregate : AggregateBase
 	static decimal CalculateTotalAmount(IEnumerable<OrderLineItem> lineItems) =>
 		lineItems.Sum(lineItem => lineItem.Quantity * lineItem.UnitPrice);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate CreateOrder(string customerId);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate AddLineItem(EventStoreList<OrderLineItem> lineItems, decimal totalAmount);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate RemoveLineItem(EventStoreList<OrderLineItem> lineItems, decimal totalAmount);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate SetShippingAddress(string? shippingAddress);
 
-	[GenerateAggregateEvent]
+	[Event]
 	public partial OrderAggregate UpdateNotes(string? notes);
 
-	[GenerateAggregateEvent]
+	[Event]
 	private partial OrderAggregate SetStatusCode(OrderStatusCode status);
 
-	[GenerateAggregateEvent]
+	[Event]
 	private partial OrderAggregate ShipOrder(OrderStatusCode status, DateTimeOffset shippedAt);
 
-	[GenerateAggregateEvent]
+	[Event]
 	private partial OrderAggregate CompleteOrder(OrderStatusCode status, DateTimeOffset completedAt);
 }
 

@@ -4,6 +4,7 @@ namespace Purview.EventSourcing.MongoDB.Snapshots;
 
 partial class MongoDBSnapshotEventStore<T>
 {
+	///<inheritdoc/>
 	public IAsyncEnumerable<T> GetQueryEnumerableAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -14,6 +15,7 @@ partial class MongoDBSnapshotEventStore<T>
 			.GetQueryEnumerableAsync(whereClause, orderByClause, maxRecordsPerIteration, cancellationToken)
 			.SelectAsync(FulfilRequirements);
 
+	///<inheritdoc/>
 	public IAsyncEnumerable<T> GetListEnumerableAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		int maxRecordsPerIteration = ContinuationRequest.DefaultMaxRecords,
@@ -23,6 +25,7 @@ partial class MongoDBSnapshotEventStore<T>
 			.GetListEnumerableAsync(orderByClause, maxRecordsPerIteration, cancellationToken)
 			.SelectAsync(FulfilRequirements);
 
+	///<inheritdoc/>
 	public async Task<T?> SingleOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		CancellationToken cancellationToken = default
@@ -38,6 +41,7 @@ partial class MongoDBSnapshotEventStore<T>
 		return result;
 	}
 
+	///<inheritdoc/>
 	public async Task<T?> FirstOrDefaultAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -58,6 +62,7 @@ partial class MongoDBSnapshotEventStore<T>
 		return result;
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> QueryAsync(
 		Expression<Func<T, bool>> whereClause,
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
@@ -77,6 +82,7 @@ partial class MongoDBSnapshotEventStore<T>
 		return result;
 	}
 
+	///<inheritdoc/>
 	public async Task<ContinuationResponse<T>> ListAsync(
 		Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 		ContinuationRequest request,
@@ -92,6 +98,7 @@ partial class MongoDBSnapshotEventStore<T>
 		return results;
 	}
 
+	///<inheritdoc/>
 	public Task<long> CountAsync(
 		Expression<Func<T, bool>>? whereClause,
 		CancellationToken cancellationToken = default
