@@ -22,5 +22,5 @@ builder.Services.AddAzureStorageEventStore();
 
 ## Documentation
 
-- [Repository README](https://github.com/kjldev/purview-eventsourcing/blob/main/README.md)
-- [Provider feature matrix](https://github.com/kjldev/purview-eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)
+- [Repository README](https://github.com/purview-dev/eventsourcing/blob/main/README.md)
+- [Provider feature matrix](https://github.com/purview-dev/eventsourcing/blob/main/docs/wiki/Provider-Feature-Matrix.md)

@@ -177,9 +177,11 @@ Prefer the `Justfile` recipes or their equivalent commands:
 
 ```text
 dotnet tool restore
+just pipeline-pr                 # full PR pipeline (restore, build, lint, unit tests, pack, validate)
+just pipeline-build              # restore, build, lint, pack, validate (no tests)
 just restore
 just build
-just test                         # accepts a treenode filter and extra arguments
+just test                        # accepts a treenode filter and extra arguments
 just lint-check
 just pack
 just perf-source-generator
@@ -187,16 +189,19 @@ just perf-sql-server
 just current-version
 ```
 
-Direct CI-equivalent validation uses the canonical solution:
+The repository uses the shared `Purview.Build` pipeline (`purview-build.json` at the root), also driven in CI through the `purview-dev/build` reusable workflows. `just pipeline-pr` installs the pinned `Purview.Build` tool to `.tools/purview-build` when missing.
+
+Local CI-equivalent validation:
 
 ```text
 dotnet restore src/EventSourcing.slnx
 dotnet build src/EventSourcing.slnx --no-restore --configuration Release
-dotnet test src/EventSourcing.slnx --no-build --configuration Release --results-directory ./artifacts/test-runs --ignore-exit-code 8 -- --treenode-filter "/*UnitTest*/*/*/*" --report-trx
-dotnet csharpier check src
+dotnet test src/EventSourcing.slnx --no-build --configuration Release --ignore-exit-code 8 -- --treenode-filter "/*UnitTest*/*/*/*"
+dotnet csharpier check .
 ```
 
-- Use `dotnet csharpier check src` for validation. Run the rewriting formatter only when formatting changes are in scope, and ensure it does not touch unrelated user files.
+- Use `dotnet csharpier check .` for validation (the pipeline lints the repository root). Run the rewriting formatter only when formatting changes are in scope, and ensure it does not touch unrelated user files.
+- The pipeline discovers tests under `src/tests` with `Build:TestPatterns` (`*UnitTests.csproj`) and `Build:TestFilter`, so GH Actions never runs provider integration tests; run those locally with `just test` when Docker/Testcontainers infrastructure is available.
 - Pack when package assets, public package dependencies, analyzers, build targets, or packaging metadata change.
 - Build the canonical solution when shared contracts, project configuration, central packages, or generator/package wiring change.
 
@@ -206,7 +211,7 @@ dotnet csharpier check src
 - User-facing package changes normally require a Changeset when release preparation is in scope. Changeset text must describe actual consumer-visible behavior.
 - Version application updates `package.json`, `CHANGELOG.md`, and consumes the relevant `.changeset` files. Do not hand-edit only one part of that result.
 - Follow `.agents/skills/changesets-prerelease/SKILL.md` when preparing a prerelease.
-- The manual release workflow must run from `main`; it validates, packs, creates `v<version>`, creates the GitHub release, and publishes NuGet packages.
+- Release is automatic on push to `main`: the `Release` workflow runs the shared `Purview.Build` pipeline with `Release:Mode=NuGet`, publishing packages and creating the `v<version>` GitHub release only when that tag does not already exist. NuGet publishing uses the `NUGET__APIKEY` organization secret.
 - Never create release tags or publish packages manually unless the user explicitly requests a documented recovery procedure. See `docs/wiki/Release-Flow.md`.
 
 ## Completion checklist

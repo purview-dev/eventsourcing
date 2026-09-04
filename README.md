@@ -2,6 +2,8 @@
 
 Purview EventSourcing is a .NET event sourcing framework for building aggregate-based applications with provider-agnostic store facades, source-generated aggregates, transaction coordination, and storage packages for SQL Server, Azure Storage, MongoDB, and Azure Cosmos DB.
 
+[![Release](https://github.com/purview-dev/eventsourcing/actions/workflows/release.yml/badge.svg)](https://github.com/purview-dev/eventsourcing/actions/workflows/release.yml)
+
 ## Why use it
 
 - Build aggregates on top of `AggregateBase` and load/save them through `IEventStore`.
@@ -14,11 +16,11 @@ Purview EventSourcing is a .NET event sourcing framework for building aggregate-
 
 | Package ID | Purpose | Project README |
 | --- | --- | --- |
-| `Purview.EventSourcing` | Core abstractions, aggregate types, facades, transactions, DI extensions, and source generation support | [`src/src/EventSourcing/README.md`](src/src/EventSourcing/README.md) |
-| `Purview.EventSourcing.SqlServer` | Azure SQL / SQL Server event stream and queryable snapshot stores | [`src/src/SqlServer/README.md`](src/src/SqlServer/README.md) |
-| `Purview.EventSourcing.AzureStorage` | Azure Table / Blob event store | [`src/src/AzureStorage/README.md`](src/src/AzureStorage/README.md) |
-| `Purview.EventSourcing.MongoDB` | MongoDB event stream and queryable snapshot stores | [`src/src/MongoDB/README.md`](src/src/MongoDB/README.md) |
-| `Purview.EventSourcing.CosmosDb` | Azure Cosmos DB queryable snapshot store | [`src/src/CosmosDb/README.md`](src/src/CosmosDb/README.md) |
+| `Purview.EventSourcing` | Core abstractions, aggregate types, facades, transactions, DI extensions, and source generation support | [`src/src/EventSourcing/Sdk/README.md`](src/src/EventSourcing/Sdk/README.md) |
+| `Purview.EventSourcing.SqlServer` | Azure SQL / SQL Server event stream and queryable snapshot stores | [`src/src/SqlServer/Sdk/README.md`](src/src/SqlServer/Sdk/README.md) |
+| `Purview.EventSourcing.AzureStorage` | Azure Table / Blob event store | [`src/src/AzureStorage/Sdk/README.md`](src/src/AzureStorage/Sdk/README.md) |
+| `Purview.EventSourcing.MongoDB` | MongoDB event stream and queryable snapshot stores | [`src/src/MongoDB/Sdk/README.md`](src/src/MongoDB/Sdk/README.md) |
+| `Purview.EventSourcing.CosmosDb` | Azure Cosmos DB queryable snapshot store | [`src/src/CosmosDb/Sdk/README.md`](src/src/CosmosDb/Sdk/README.md) |
 | `Purview.EventSourcing.InMemory` | In-memory event/snapshot store implementation for local and test scenarios | (see package source at `src/src/InMemory`) |
 | `Purview.EventSourcing.FluentValidation` | `FluentValidation` adapter for aggregate save-time validation | (see package source at `src/src/FluentValidationImpl`) |
 | `Purview.EventSourcing.ZodSharp` | `ZodSharp` adapter for aggregate save-time validation | (see package source at `src/src/ZodSharpImpl`) |
@@ -169,31 +171,39 @@ The sample solution demonstrates how the framework is intended to be consumed:
 | `src/src` | Packable framework packages and sample applications |
 | `src/tests` | Unit, integration, and source generator test projects |
 | `docs/wiki` | Wiki-style project documentation (`Home.md`, SQL Server guide, release flow, source-generator behaviors) |
-| `Justfile` | Build, test, format, version, pack, and publish workflow definitions |
+| `Justfile` | Build, test, format, version, pack, and pipeline workflow definitions |
+| `purview-build.json` | Shared `Purview.Build` pipeline configuration (restore, build, lint, tests, pack) |
 
 ## Development workflow
 
+The repository uses the shared [`Purview.Build`](https://github.com/purview-dev/build) pipeline for the full PR/release cycle, and plain `dotnet`/`just` commands for focused local work:
+
 ```text
 dotnet tool restore
-dotnet restore src/EventSourcing.slnx
-dotnet build src/EventSourcing.slnx --configuration Release
-dotnet csharpier check src
-dotnet test --project src/tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj --configuration Release
+just pipeline-pr              # restore, build, lint, unit tests, pack, and package validation
+just pipeline-build           # restore, build, lint, pack, and package validation (no tests)
+just build                    # dotnet build src/EventSourcing.slnx --configuration Release
+just test                     # dotnet test with a TUnit tree-node filter
+just lint-check               # csharpier check
 ```
 
 Additional notes:
 
 - `just` recipes in the `Justfile` wrap the same restore, build, test, pack, and version commands for local development.
-- Integration tests use Testcontainers; local Docker support is recommended.
+- `just pipeline-pr` and `just pipeline-tests` run the unit test projects discovered under `src/tests` (`*UnitTests.csproj`); integration tests use Testcontainers and run locally via `just test` when Docker is available.
 - `package.json` is the release version source of truth for builds and packages.
 - `dotnet pack` or `just pack` writes packages to `artifacts/packages`.
 
 ## Release workflow
 
-1. Update the package version with the repository release process.
+Releases are fully automated from `main`:
+
+1. Update the package version with the repository release process (changesets).
 2. Review the generated `CHANGELOG.md` and package version changes.
-3. Build, test, and pack the repository.
-4. Let the GitHub Actions CD workflow create the tag, publish the GitHub release, and push NuGet packages.
+3. Merge to `main`; the `Release` workflow validates, builds, packs, and publishes through the shared `Purview.Build` pipeline.
+4. The pipeline creates the `v<version>` tag and GitHub release, and pushes NuGet packages to nuget.org.
+
+The release runs only when the `v<version>` tag does not already exist, so re-merging to `main` does not double-release. NuGet publishing uses the `NUGET__APIKEY` organization secret.
 
 Do not create release tags manually.
 
@@ -204,8 +214,8 @@ Do not create release tags manually.
 - [SQL Server event store guide](docs/wiki/SQL-Server-Guide.md)
 - [Dependency guardrails](docs/wiki/Dependency-Guardrails.md)
 - [Release flow](docs/wiki/Release-Flow.md)
-- [Core package README](src/src/EventSourcing/README.md)
-- [SQL Server provider README](src/src/SqlServer/README.md)
-- [Azure Storage provider README](src/src/AzureStorage/README.md)
-- [MongoDB provider README](src/src/MongoDB/README.md)
-- [Cosmos DB provider README](src/src/CosmosDb/README.md)
+- [Core package README](src/src/EventSourcing/Sdk/README.md)
+- [SQL Server provider README](src/src/SqlServer/Sdk/README.md)
+- [Azure Storage provider README](src/src/AzureStorage/Sdk/README.md)
+- [MongoDB provider README](src/src/MongoDB/Sdk/README.md)
+- [Cosmos DB provider README](src/src/CosmosDb/Sdk/README.md)
