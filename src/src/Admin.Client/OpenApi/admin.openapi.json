@@ -525,10 +525,93 @@
           }
         }
       }
+    },
+    "/admin/api/capabilities": {
+      "get": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Get event store capabilities",
+        "description": "Returns the merged event-store capability contract for the registered providers.",
+        "operationId": "GetCapabilities",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventStoreCapabilities"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/health": {
+      "get": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Get Admin portal health",
+        "description": "Reports whether the Admin portal can resolve the event-store capability contract.",
+        "operationId": "GetAdminHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AdminHealthResponse": {
+        "required": [
+          "status",
+          "timestampUtc",
+          "transactionGuarantee",
+          "supportsEventStreams",
+          "supportsQueries",
+          "supportsTransactionalOutbox",
+          "operationalLimitations"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "transactionGuarantee": {
+            "$ref": "#/components/schemas/EventStoreTransactionGuarantee"
+          },
+          "supportsEventStreams": {
+            "type": "boolean"
+          },
+          "supportsQueries": {
+            "type": "boolean"
+          },
+          "supportsTransactionalOutbox": {
+            "type": "boolean"
+          },
+          "operationalLimitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "AggregateSearchRequest": {
         "required": [
           "aggregateType",
@@ -635,6 +718,9 @@
           }
         }
       },
+      "ConcurrencyGuarantee": {
+        "type": "integer"
+      },
       "EventEnvelopeResponse": {
         "required": [
           "aggregateType",
@@ -718,6 +804,58 @@
             ]
           }
         }
+      },
+      "EventStoreCapabilities": {
+        "required": [
+          "transactionGuarantee",
+          "supportsEventStreams",
+          "supportsSnapshots",
+          "snapshotSchemaVersioning",
+          "preservedMetadata",
+          "supportsQueries",
+          "supportsIdempotencyMarkers",
+          "concurrency",
+          "operationalLimitations"
+        ],
+        "type": "object",
+        "properties": {
+          "transactionGuarantee": {
+            "$ref": "#/components/schemas/EventStoreTransactionGuarantee"
+          },
+          "supportsEventStreams": {
+            "type": "boolean"
+          },
+          "supportsSnapshots": {
+            "type": "boolean"
+          },
+          "snapshotSchemaVersioning": {
+            "$ref": "#/components/schemas/SnapshotSchemaSupport"
+          },
+          "preservedMetadata": {
+            "$ref": "#/components/schemas/PreservedEventMetadata"
+          },
+          "supportsQueries": {
+            "type": "boolean"
+          },
+          "supportsIdempotencyMarkers": {
+            "type": "boolean"
+          },
+          "concurrency": {
+            "$ref": "#/components/schemas/ConcurrencyGuarantee"
+          },
+          "operationalLimitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportsTransactionalOutbox": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EventStoreTransactionGuarantee": {
+        "type": "integer"
       },
       "HttpValidationProblemDetails": {
         "type": "object",
@@ -840,6 +978,9 @@
           }
         }
       },
+      "PreservedEventMetadata": {
+        "type": "integer"
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -945,6 +1086,9 @@
             "$ref": "#/components/schemas/ProjectionProvenance"
           }
         }
+      },
+      "SnapshotSchemaSupport": {
+        "type": "integer"
       }
     },
     "securitySchemes": {

@@ -91,6 +91,12 @@ public sealed class AdminFeatureOptions
 	public bool ExportEvents { get; set; }
 
 	/// <summary>
+	/// Gets or sets whether the event-store capability contract and operational health endpoints are
+	/// enabled. Opt-in and deny-by-default; a host must also grant the <c>ViewCapabilities</c> permission.
+	/// </summary>
+	public bool ViewCapabilities { get; set; }
+
+	/// <summary>
 	/// Validates the option object shape.
 	/// </summary>
 	/// <param name="options">The options instance to validate.</param>

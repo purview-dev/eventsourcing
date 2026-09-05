@@ -34,4 +34,9 @@ public enum AdminFeature
 	/// Export events from an aggregate stream.
 	/// </summary>
 	ExportEvents,
+
+	/// <summary>
+	/// View the event-store capability contract and operational health summary.
+	/// </summary>
+	ViewCapabilities,
 }

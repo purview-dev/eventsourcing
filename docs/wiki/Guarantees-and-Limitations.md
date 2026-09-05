@@ -75,6 +75,11 @@ facts for package selection.
   `ViewEventPayloads` permission. Without it, payloads are `null`.
 - Event export requires both export and payload permissions. Read permissions never imply mutation
   authority.
+- Operational endpoints (`GET /admin/api/capabilities` and `GET /admin/api/health`) are opt-in
+  (`AdminFeatureOptions.ViewCapabilities`), separately authorized (`ViewCapabilities`), and audited
+  through `IAdminAuditLogger` (default in-memory; replace with a durable implementation in
+  production). Health reflects whether the capability contract resolves; it does not probe live
+  storage.
 
 ## Query consistency and provider-specific translation limitations
 

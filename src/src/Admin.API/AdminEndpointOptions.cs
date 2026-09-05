@@ -15,8 +15,10 @@ public sealed class AdminEndpointOptions
 		[AdminFeature.SearchAggregates] = AdminPortalPolicies.SearchAggregates,
 		[AdminFeature.ViewAggregate] = AdminPortalPolicies.ViewAggregate,
 		[AdminFeature.ViewEvents] = AdminPortalPolicies.ViewEvents,
+		[AdminFeature.ViewEventPayloads] = AdminPortalPolicies.ViewEventPayloads,
 		[AdminFeature.ProjectPointInTime] = AdminPortalPolicies.ProjectPointInTime,
 		[AdminFeature.ExportEvents] = AdminPortalPolicies.ExportEvents,
+		[AdminFeature.ViewCapabilities] = AdminPortalPolicies.ViewCapabilities,
 	};
 
 	/// <summary>

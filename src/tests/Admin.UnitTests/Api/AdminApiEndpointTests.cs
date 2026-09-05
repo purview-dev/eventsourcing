@@ -382,13 +382,18 @@ sealed class AdminTestHost : IAsyncDisposable
 	public static async Task<AdminTestHost> CreateAsync(
 		Action<AdminEndpointOptions>? configureEndpoints = null,
 		Action<AuthorizationBuilder>? configureAuthorization = null,
-		IAdminPermissionProvider? permissionProvider = null
+		IAdminPermissionProvider? permissionProvider = null,
+		Action<AdminPortalOptions>? configureAdmin = null
 	)
 	{
 		var builder = WebApplication.CreateBuilder();
 		builder.Logging.ClearProviders();
 
-		builder.Services.AddPurviewEventSourcingAdminApi(options => options.Features.ExportEvents = true);
+		builder.Services.AddPurviewEventSourcingAdminApi(options =>
+		{
+			options.Features.ExportEvents = true;
+			configureAdmin?.Invoke(options);
+		});
 		builder.Services.AddPurviewEventSourcingAdminOpenApi();
 		builder
 			.Services.AddAuthentication(TestAuthHandler.SchemeName)
@@ -401,6 +406,7 @@ sealed class AdminTestHost : IAsyncDisposable
 		builder.Services.AddSingleton<IAdminAggregateQueryService>(aggregateQueryService);
 		builder.Services.AddSingleton<IAdminEventQueryService, RecordingEventQueryService>();
 		builder.Services.AddSingleton<IAdminProjectionService, RecordingProjectionService>();
+		builder.Services.AddSingleton<IEventStoreCapabilitiesProvider>(new TestCapabilitiesProvider());
 
 		var app = builder.Build();
 		app.MapPurviewEventSourcingAdminAPI(configureEndpoints: configureEndpoints);
@@ -441,6 +447,23 @@ sealed class TestAuthHandler(
 	}
 }
 
+sealed class TestCapabilitiesProvider : IEventStoreCapabilitiesProvider
+{
+	static readonly EventStoreCapabilities Capabilities = new(
+		EventStoreTransactionGuarantee.Atomic,
+		SupportsEventStreams: true,
+		SupportsSnapshots: true,
+		SnapshotSchemaVersioning: SnapshotSchemaSupport.Versioned,
+		PreservedMetadata: PreservedEventMetadata.All,
+		SupportsQueries: true,
+		SupportsIdempotencyMarkers: true,
+		Concurrency: ConcurrencyGuarantee.Optimistic,
+		System.Collections.Immutable.ImmutableArray<string>.Empty
+	);
+
+	public EventStoreCapabilities GetCapabilities() => Capabilities;
+}
+
 sealed class AllowAllPermissionProvider : IAdminPermissionProvider
 {
 	static readonly IReadOnlyList<AdminPermission> Permissions =
@@ -451,6 +474,7 @@ sealed class AllowAllPermissionProvider : IAdminPermissionProvider
 		new(AdminFeature.ViewEventPayloads, null, Allowed: true),
 		new(AdminFeature.ProjectPointInTime, null, Allowed: true),
 		new(AdminFeature.ExportEvents, null, Allowed: true),
+		new(AdminFeature.ViewCapabilities, null, Allowed: true),
 	];
 
 	public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(

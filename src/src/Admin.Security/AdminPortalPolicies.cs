@@ -34,4 +34,9 @@ public static class AdminPortalPolicies
 	/// Policy that authorizes exporting events from an aggregate stream.
 	/// </summary>
 	public const string ExportEvents = "AdminPortal.Events.Export";
+
+	/// <summary>
+	/// Policy that authorizes viewing the event-store capability contract and operational health.
+	/// </summary>
+	public const string ViewCapabilities = "AdminPortal.Capabilities.View";
 }

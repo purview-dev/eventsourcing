@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.Admin.Security.Handlers;
@@ -33,6 +34,9 @@ public static class AdminSecurityServiceCollectionExtensions
 		// Register authorization handlers
 		services.AddScoped<IAuthorizationHandler, AdminFeatureAuthorizationHandler>();
 		services.AddScoped<IAuthorizationHandler, AggregateTypeAccessHandler>();
+
+		// Default in-memory audit logger; applications may replace it with a durable implementation.
+		services.TryAddSingleton<IAdminAuditLogger, InMemoryAdminAuditLogger>();
 
 		return services;
 	}
@@ -89,6 +93,11 @@ public static class AdminSecurityServiceCollectionExtensions
 					new AdminFeatureRequirement(AdminFeature.ViewEventPayloads),
 					new AggregateTypeAccessRequirement()
 				)
+		);
+
+		builder.AddPolicy(
+			AdminPortalPolicies.ViewCapabilities,
+			policy => policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.ViewCapabilities))
 		);
 
 		return builder;
