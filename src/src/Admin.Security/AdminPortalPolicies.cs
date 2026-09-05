@@ -49,4 +49,9 @@ public static class AdminPortalPolicies
 	/// Policy that authorizes viewing the runtime event-contract manifest and its compatibility status.
 	/// </summary>
 	public const string ViewManifest = "AdminPortal.Manifest.View";
+
+	/// <summary>
+	/// Policy that authorizes viewing stored event type names the runtime cannot resolve.
+	/// </summary>
+	public const string ViewUnknownEvents = "AdminPortal.Events.Unknown.View";
 }

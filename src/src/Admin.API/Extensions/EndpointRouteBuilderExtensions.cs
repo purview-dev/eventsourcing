@@ -130,6 +130,16 @@ public static class AdminApiEndpointRouteBuilderExtensions
 				endpointOptions
 			);
 		}
+
+		if (options.Features.ViewUnknownEvents)
+		{
+			var policy = endpointOptions.GetPolicy(AdminFeature.ViewUnknownEvents);
+			ApplyConvention(
+				AdminFeature.ViewUnknownEvents,
+				AdminOperationalEndpoints.MapUnknownEvents(group, policy),
+				endpointOptions
+			);
+		}
 	}
 
 	static void ApplyConvention(AdminFeature feature, RouteHandlerBuilder endpoint, AdminEndpointOptions options) =>

@@ -110,6 +110,15 @@ public static class AdminSecurityServiceCollectionExtensions
 			policy => policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.ViewManifest))
 		);
 
+		builder.AddPolicy(
+			AdminPortalPolicies.ViewUnknownEvents,
+			policy =>
+				policy.AddRequirements(
+					new AdminFeatureRequirement(AdminFeature.ViewUnknownEvents),
+					new AggregateTypeAccessRequirement()
+				)
+		);
+
 		return builder;
 	}
 }

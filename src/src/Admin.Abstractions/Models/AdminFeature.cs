@@ -49,4 +49,9 @@ public enum AdminFeature
 	/// View the runtime event-contract manifest and its compatibility status.
 	/// </summary>
 	ViewManifest,
+
+	/// <summary>
+	/// View stored event type names the runtime cannot resolve (unknown events that would be skipped on replay).
+	/// </summary>
+	ViewUnknownEvents,
 }

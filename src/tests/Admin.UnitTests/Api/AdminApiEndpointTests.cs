@@ -479,6 +479,7 @@ sealed class AllowAllPermissionProvider : IAdminPermissionProvider
 		new(AdminFeature.ViewCapabilities, null, Allowed: true),
 		new(AdminFeature.ViewPoisonedOutbox, null, Allowed: true),
 		new(AdminFeature.ViewManifest, null, Allowed: true),
+		new(AdminFeature.ViewUnknownEvents, null, Allowed: true),
 	];
 
 	public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(

@@ -21,6 +21,7 @@ public sealed class AdminEndpointOptions
 		[AdminFeature.ViewCapabilities] = AdminPortalPolicies.ViewCapabilities,
 		[AdminFeature.ViewPoisonedOutbox] = AdminPortalPolicies.ViewPoisonedOutbox,
 		[AdminFeature.ViewManifest] = AdminPortalPolicies.ViewManifest,
+		[AdminFeature.ViewUnknownEvents] = AdminPortalPolicies.ViewUnknownEvents,
 	};
 
 	/// <summary>

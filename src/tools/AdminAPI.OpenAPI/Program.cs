@@ -22,6 +22,7 @@ builder.Services.AddPurviewEventSourcingAdminApi(options =>
 	options.Features.ViewCapabilities = true;
 	options.Features.ViewPoisonedOutbox = true;
 	options.Features.ViewManifest = true;
+	options.Features.ViewUnknownEvents = true;
 });
 builder.Services.AddPurviewEventSourcingAdminOpenApi();
 builder.Services.AddPurviewEventSourcingAdminSecurity();

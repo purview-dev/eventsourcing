@@ -619,6 +619,56 @@
           }
         }
       }
+    },
+    "/admin/api/aggregates/{aggregateType}/{aggregateId}/events/unknown": {
+      "get": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Get unknown events in an aggregate stream",
+        "description": "Reports stored event type names the runtime cannot resolve to a registered event type — events that would be skipped during replay.",
+        "operationId": "GetUnknownEvents",
+        "parameters": [
+          {
+            "name": "aggregateType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnknownEventsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1271,6 +1321,33 @@
       },
       "SnapshotSchemaSupport": {
         "type": "integer"
+      },
+      "UnknownEventsResponse": {
+        "required": [
+          "aggregateType",
+          "aggregateId",
+          "unknownEventNames",
+          "totalEvents"
+        ],
+        "type": "object",
+        "properties": {
+          "aggregateType": {
+            "type": "string"
+          },
+          "aggregateId": {
+            "type": "string"
+          },
+          "unknownEventNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalEvents": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       }
     },
     "securitySchemes": {

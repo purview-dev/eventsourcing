@@ -6,7 +6,10 @@ using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Queries;
 using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.Admin.Security;
+using Purview.EventSourcing.Aggregates;
+using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Outbox;
+using Purview.EventSourcing.Services;
 
 namespace Purview.EventSourcing.Admin.API;
 
@@ -248,6 +251,105 @@ public sealed class AdminOperationalEndpointsTests
 			System.Security.Claims.ClaimsPrincipal user,
 			CancellationToken cancellationToken
 		) => Task.FromResult<IReadOnlyList<AdminPermission>>([new(AdminFeature.ViewManifest, null, Allowed: false)]);
+	}
+
+	[Test]
+	[System.Diagnostics.CodeAnalysis.SuppressMessage(
+		"Maintainability",
+		"CA1506:Avoid excessive class coupling",
+		Justification = "Endpoint test that wires the Admin host and asserts the operational response."
+	)]
+	public async Task UnknownEvents_WhenEnabled_ReportsUnresolvableEventNames(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync(
+			configureAdmin: static options => options.Features.ViewUnknownEvents = true,
+			configureServices: static services =>
+			{
+				services.AddSingleton<IAggregateTypeRegistry>(new StubTypeRegistry("order"));
+				services.AddSingleton<IAggregateEventNameMapper>(
+					new StubEventNameMapper(known: ["Known.OrderCreated"])
+				);
+			}
+		);
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/aggregates/order/order-1/events/unknown", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		var json = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+		var root = json!.RootElement;
+		await Assert.That(root.GetProperty("aggregateId").GetString()).IsEqualTo("order-1");
+		await Assert.That(root.GetProperty("totalEvents").GetInt32()).IsEqualTo(1);
+		var names = root.GetProperty("unknownEventNames").EnumerateArray().Select(x => x.GetString()!).ToArray();
+		await Assert.That(names).IsEquivalentTo(["OrderCreatedEvent"]);
+	}
+
+	[Test]
+	public async Task UnknownEvents_GivenUnregisteredAggregate_ReturnsNotFound(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync(
+			configureAdmin: static options => options.Features.ViewUnknownEvents = true,
+			configureServices: static services =>
+			{
+				services.AddSingleton<IAggregateTypeRegistry>(new StubTypeRegistry("other"));
+				services.AddSingleton<IAggregateEventNameMapper>(new StubEventNameMapper());
+			}
+		);
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/aggregates/order/order-1/events/unknown", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+	}
+
+	[Test]
+	public async Task UnknownEvents_WhenFeatureDisabled_ReturnsNotFound(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync();
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/aggregates/order/order-1/events/unknown", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+	}
+
+	sealed class StubTypeRegistry : IAggregateTypeRegistry
+	{
+		readonly string _resolvableName;
+
+		public StubTypeRegistry(string resolvableName) => _resolvableName = resolvableName;
+
+		public bool TryResolve(
+			string aggregateTypeName,
+			[System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Type? aggregateType
+		)
+		{
+			if (System.StringComparer.Ordinal.Equals(aggregateTypeName, _resolvableName))
+			{
+				aggregateType = typeof(Purview.EventSourcing.Aggregates.Persistence.PersistenceAggregate);
+				return true;
+			}
+
+			aggregateType = null;
+			return false;
+		}
+	}
+
+	sealed class StubEventNameMapper(HashSet<string>? known = null) : IAggregateEventNameMapper
+	{
+		public string GetName<T>(IEvent aggregateEvent)
+			where T : IAggregate => throw new NotSupportedException();
+
+		public string GetName<T>(Type aggregateEventType)
+			where T : IAggregate => throw new NotSupportedException();
+
+		public string? GetTypeName<T>(string eventTypeName)
+			where T : IAggregate => throw new NotSupportedException();
+
+		public string? GetTypeName(string eventTypeName) => known?.Contains(eventTypeName) == true ? "KnownType" : null;
+
+		public string InitializeAggregate<T>()
+			where T : class, IAggregate, new() => throw new NotSupportedException();
 	}
 
 	sealed class PagingEventQueryService : IAdminEventQueryService

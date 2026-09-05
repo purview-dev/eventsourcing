@@ -37,6 +37,7 @@ public static class EventStoreServiceICollectionExtensions
 
 			services.TryAddSingleton<IEventStoreCorrelationIdProvider, ActivityEventStoreCorrelationIdProvider>();
 			services.TryAddSingleton<IEventStoreTransactionFactory, EventStoreTransactionFactory>();
+			services.TryAddSingleton<IAggregateTypeRegistry, AssemblyAggregateTypeRegistry>();
 
 			// Capability discovery is always available and reports the conservative default until a
 			// provider registers its truthful capabilities.

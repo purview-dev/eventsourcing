@@ -78,7 +78,8 @@ facts for package selection.
   signaled with the `Purview-Event-Export-Truncated` response header so callers can detect partial
   exports.
 - Operational endpoints (`GET /admin/api/capabilities`, `GET /admin/api/health`,
-  `GET /admin/api/manifest`, and `GET /admin/api/outbox/poisoned`) are opt-in, separately
+  `GET /admin/api/manifest`, `GET /admin/api/outbox/poisoned`, and
+  `GET /admin/api/aggregates/{aggregateType}/{aggregateId}/events/unknown`) are opt-in, separately
   authorized, and audited through `IAdminAuditLogger` (default in-memory; replace with a durable
   implementation in production). Health reflects whether the capability contract resolves; it does
   not probe live storage. The manifest endpoint reports the runtime event-contract manifest and its
@@ -98,3 +99,7 @@ facts for package selection.
   `AggregateBase.SkippedEvents` so callers can detect partial reconstruction.
 - Event-schema versioning and upcasters are the recovery path for payload evolution; the contract
   manifest prevents accidental breaking changes.
+- The Admin portal can report stored event type names the runtime cannot resolve to a registered
+  event type (`GET /admin/api/aggregates/{aggregateType}/{aggregateId}/events/unknown`, opt-in via
+  `ViewUnknownEvents`). Legacy event types handled only by an upcaster may appear in this report
+  because they are not registered current event types.

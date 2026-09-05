@@ -110,6 +110,12 @@ public sealed class AdminFeatureOptions
 	public bool ViewManifest { get; set; }
 
 	/// <summary>
+	/// Gets or sets whether the unknown-event visibility endpoint is enabled. Opt-in and
+	/// deny-by-default; a host must also grant the <c>ViewUnknownEvents</c> permission.
+	/// </summary>
+	public bool ViewUnknownEvents { get; set; }
+
+	/// <summary>
 	/// Validates the option object shape.
 	/// </summary>
 	/// <param name="options">The options instance to validate.</param>
