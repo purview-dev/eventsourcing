@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -79,6 +79,20 @@ public static class ServiceCollectionExtensions
 
 			services.AddSqlServerEventStoreTelemetry();
 
+			services.AddEventStoreCapabilities(
+				new EventStoreCapabilities(
+					EventStoreTransactionGuarantee.Atomic,
+					SupportsEventStreams: true,
+					SupportsSnapshots: true,
+					SnapshotSchemaVersioning: SnapshotSchemaSupport.Versioned,
+					PreservedMetadata: PreservedEventMetadata.All,
+					SupportsQueries: false,
+					SupportsIdempotencyMarkers: true,
+					Concurrency: ConcurrencyGuarantee.Optimistic,
+					OperationalLimitations: []
+				)
+			);
+
 			services
 				.AddOptions<SqlServerEventStoreOptions>()
 				.Configure<IConfiguration>(
@@ -142,6 +156,20 @@ public static class ServiceCollectionExtensions
 				services.AddTransient(typeof(IEventStoreCore<>), typeof(SqlServerSnapshotEventStore<>));
 				services.TryAddTransient<IEventStore, EventStoreFacade>();
 			}
+
+			services.AddEventStoreCapabilities(
+				new EventStoreCapabilities(
+					EventStoreTransactionGuarantee.Atomic,
+					SupportsEventStreams: false,
+					SupportsSnapshots: true,
+					SnapshotSchemaVersioning: SnapshotSchemaSupport.SingleVersion,
+					PreservedMetadata: PreservedEventMetadata.None,
+					SupportsQueries: true,
+					SupportsIdempotencyMarkers: false,
+					Concurrency: ConcurrencyGuarantee.Optimistic,
+					OperationalLimitations: []
+				)
+			);
 
 			services
 				.AddOptions<SqlServerSnapshotEventStoreOptions>()

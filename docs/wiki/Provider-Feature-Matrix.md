@@ -1,6 +1,10 @@
 # Provider Feature Matrix
 
 This page summarizes feature availability by package so provider selection is explicit and accurate.
+The capability values below are backed by executable capability definitions registered by each
+provider and asserted by the `Capabilities.UnitTests` contract suite — see
+[Provider Capabilities](Provider-Capabilities.md) for the runtime-queryable contract and the exact
+per-registration values.
 
 | Capability | `Purview.EventSourcing` (core) | `Purview.EventSourcing.SqlServer` | `Purview.EventSourcing.Postgres` | `Purview.EventSourcing.AzureStorage` | `Purview.EventSourcing.MongoDB` | `Purview.EventSourcing.CosmosDb` |
 | --- | --- | --- | --- | --- | --- | --- |

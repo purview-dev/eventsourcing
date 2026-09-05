@@ -75,6 +75,20 @@ public static class ServiceCollectionExtensions
 
 			services.AddPostgresEventStoreTelemetry();
 
+			services.AddEventStoreCapabilities(
+				new EventStoreCapabilities(
+					EventStoreTransactionGuarantee.Atomic,
+					SupportsEventStreams: true,
+					SupportsSnapshots: true,
+					SnapshotSchemaVersioning: SnapshotSchemaSupport.Versioned,
+					PreservedMetadata: PreservedEventMetadata.All,
+					SupportsQueries: false,
+					SupportsIdempotencyMarkers: true,
+					Concurrency: ConcurrencyGuarantee.Optimistic,
+					OperationalLimitations: []
+				)
+			);
+
 			services
 				.AddOptions<PostgresEventStoreOptions>()
 				.Configure<IConfiguration>(
@@ -134,6 +148,20 @@ public static class ServiceCollectionExtensions
 				services.AddTransient(typeof(IEventStoreCore<>), typeof(PostgresSnapshotEventStore<>));
 				services.TryAddTransient<IEventStore, EventStoreFacade>();
 			}
+
+			services.AddEventStoreCapabilities(
+				new EventStoreCapabilities(
+					EventStoreTransactionGuarantee.Atomic,
+					SupportsEventStreams: false,
+					SupportsSnapshots: true,
+					SnapshotSchemaVersioning: SnapshotSchemaSupport.SingleVersion,
+					PreservedMetadata: PreservedEventMetadata.None,
+					SupportsQueries: true,
+					SupportsIdempotencyMarkers: false,
+					Concurrency: ConcurrencyGuarantee.Optimistic,
+					OperationalLimitations: []
+				)
+			);
 
 			services
 				.AddOptions<PostgresSnapshotEventStoreOptions>()

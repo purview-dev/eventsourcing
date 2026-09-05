@@ -46,6 +46,7 @@
 		<Project Path="src/ZodSharpImpl/ZodSharpImpl.csproj" />
 	</Folder>
 	<Folder Name="/tests/">
+		<Project Path="tests/Capabilities.UnitTests/Capabilities.UnitTests.csproj" />
 		<Project Path="tests/EntityFrameworkCore.SourceGenerator.UnitTests/EntityFrameworkCore.SourceGenerator.UnitTests.csproj" />
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />

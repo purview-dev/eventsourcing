@@ -8,6 +8,7 @@ This wiki is the project documentation hub for framework features, provider capa
 - [Solution Design Guide](Solution-Design-Guide.md)
 - [Solution Design Worksheet](Solution-Design-Worksheet.md)
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)
+- [Provider Capabilities](Provider-Capabilities.md)
 - [Transaction Guarantees](Transaction-Guarantees.md)
 - [Event Contract Manifest](Event-Contract-Manifest.md)
 - [Source Generator Performance](Source-Generator-Performance.md)
