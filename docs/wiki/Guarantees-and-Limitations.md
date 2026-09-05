@@ -78,12 +78,16 @@ facts for package selection.
   signaled with the `Purview-Event-Export-Truncated` response header so callers can detect partial
   exports.
 - Operational endpoints (`GET /admin/api/capabilities`, `GET /admin/api/health`,
-  `GET /admin/api/manifest`, `GET /admin/api/outbox/poisoned`, and
-  `GET /admin/api/aggregates/{aggregateType}/{aggregateId}/events/unknown`) are opt-in, separately
-  authorized, and audited through `IAdminAuditLogger` (default in-memory; replace with a durable
-  implementation in production). Health reflects whether the capability contract resolves; it does
-  not probe live storage. The manifest endpoint reports the runtime event-contract manifest and its
-  compatibility status against a supplied baseline.
+  `GET /admin/api/manifest`, `GET /admin/api/outbox/poisoned`,
+  `GET /admin/api/aggregates/{aggregateType}/{aggregateId}/events/unknown`,
+  `GET /admin/api/aggregates/{aggregateType}/{aggregateId}/snapshot`, and the opt-in mutation
+  `POST /admin/api/aggregates/{aggregateType}/{aggregateId}/snapshot/rebuild`) are opt-in,
+  separately authorized, and audited through `IAdminAuditLogger` (default in-memory; replace with a
+  durable implementation in production). Health reflects whether the capability contract resolves;
+  it does not probe live storage. The manifest endpoint reports the runtime event-contract manifest
+  and its compatibility status against a supplied baseline. A snapshot rebuild reconstructs the
+  aggregate from its canonical event stream and persists a fresh snapshot; it is idempotent and
+  requires both an event-backed `IEventStore` and a registered `IQueryableEventStore`.
 
 ## Query consistency and provider-specific translation limitations
 

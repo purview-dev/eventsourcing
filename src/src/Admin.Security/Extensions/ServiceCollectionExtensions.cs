@@ -119,6 +119,24 @@ public static class AdminSecurityServiceCollectionExtensions
 				)
 		);
 
+		builder.AddPolicy(
+			AdminPortalPolicies.ViewSnapshot,
+			policy =>
+				policy.AddRequirements(
+					new AdminFeatureRequirement(AdminFeature.ViewSnapshot),
+					new AggregateTypeAccessRequirement()
+				)
+		);
+
+		builder.AddPolicy(
+			AdminPortalPolicies.RebuildSnapshot,
+			policy =>
+				policy.AddRequirements(
+					new AdminFeatureRequirement(AdminFeature.RebuildSnapshot),
+					new AggregateTypeAccessRequirement()
+				)
+		);
+
 		return builder;
 	}
 }

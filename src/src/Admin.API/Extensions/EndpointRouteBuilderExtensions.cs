@@ -140,6 +140,26 @@ public static class AdminApiEndpointRouteBuilderExtensions
 				endpointOptions
 			);
 		}
+
+		if (options.Features.ViewSnapshot)
+		{
+			var policy = endpointOptions.GetPolicy(AdminFeature.ViewSnapshot);
+			ApplyConvention(
+				AdminFeature.ViewSnapshot,
+				AdminSnapshotEndpoints.MapSnapshotStatus(group, policy),
+				endpointOptions
+			);
+		}
+
+		if (options.Features.RebuildSnapshot)
+		{
+			var policy = endpointOptions.GetPolicy(AdminFeature.RebuildSnapshot);
+			ApplyConvention(
+				AdminFeature.RebuildSnapshot,
+				AdminSnapshotEndpoints.MapRebuildSnapshot(group, policy),
+				endpointOptions
+			);
+		}
 	}
 
 	static void ApplyConvention(AdminFeature feature, RouteHandlerBuilder endpoint, AdminEndpointOptions options) =>

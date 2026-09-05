@@ -23,3 +23,13 @@ snapshot-eligible save writes the current schema and replaces or supersedes the 
 This fallback is safe because it never mutates the event stream and never treats a snapshot as canonical state. A
 version bump may temporarily increase replay work, so deploy it before removing runtime types or converters needed by
 old snapshot payloads if a rolling deployment must support both application versions.
+
+## Administrative inspection and rebuild
+
+The Admin portal reports whether a snapshot is materialized for an aggregate
+(`GET /admin/api/aggregates/{aggregateType}/{aggregateId}/snapshot`, opt-in via `ViewSnapshot`) and can
+reconstruct a snapshot from the canonical event stream
+(`POST /admin/api/aggregates/{aggregateType}/{aggregateId}/snapshot/rebuild`, opt-in, separately
+authorized, and audited via `RebuildSnapshot`). Rebuild is idempotent and requires both an
+event-backed `IEventStore` and a registered `IQueryableEventStore`; it never mutates the event
+stream.

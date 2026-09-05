@@ -54,4 +54,14 @@ public static class AdminPortalPolicies
 	/// Policy that authorizes viewing stored event type names the runtime cannot resolve.
 	/// </summary>
 	public const string ViewUnknownEvents = "AdminPortal.Events.Unknown.View";
+
+	/// <summary>
+	/// Policy that authorizes viewing aggregate snapshot status.
+	/// </summary>
+	public const string ViewSnapshot = "AdminPortal.Snapshots.View";
+
+	/// <summary>
+	/// Policy that authorizes rebuilding an aggregate snapshot from its event stream.
+	/// </summary>
+	public const string RebuildSnapshot = "AdminPortal.Snapshots.Rebuild";
 }

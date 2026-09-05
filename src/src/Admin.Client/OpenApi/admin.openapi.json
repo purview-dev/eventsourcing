@@ -669,6 +669,106 @@
           }
         }
       }
+    },
+    "/admin/api/aggregates/{aggregateType}/{aggregateId}/snapshot": {
+      "get": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Get aggregate snapshot status",
+        "description": "Reports whether a snapshot is materialized for the aggregate and its stored and declared schema versions.",
+        "operationId": "GetSnapshotStatus",
+        "parameters": [
+          {
+            "name": "aggregateType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/api/aggregates/{aggregateType}/{aggregateId}/snapshot/rebuild": {
+      "post": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Rebuild an aggregate snapshot",
+        "description": "Reconstructs the aggregate from its canonical event stream and persists a fresh snapshot. The operation is idempotent.",
+        "operationId": "RebuildSnapshot",
+        "parameters": [
+          {
+            "name": "aggregateType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotRebuildResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1319,8 +1419,61 @@
           }
         }
       },
+      "SnapshotRebuildResponse": {
+        "required": [
+          "aggregateType",
+          "aggregateId",
+          "rebuilt",
+          "currentVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "aggregateType": {
+            "type": "string"
+          },
+          "aggregateId": {
+            "type": "string"
+          },
+          "rebuilt": {
+            "type": "boolean"
+          },
+          "currentVersion": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SnapshotSchemaSupport": {
         "type": "integer"
+      },
+      "SnapshotStatusResponse": {
+        "required": [
+          "aggregateType",
+          "aggregateId",
+          "exists",
+          "currentVersion",
+          "schemaVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "aggregateType": {
+            "type": "string"
+          },
+          "aggregateId": {
+            "type": "string"
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "currentVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "UnknownEventsResponse": {
         "required": [

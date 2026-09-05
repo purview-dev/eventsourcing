@@ -54,4 +54,14 @@ public enum AdminFeature
 	/// View stored event type names the runtime cannot resolve (unknown events that would be skipped on replay).
 	/// </summary>
 	ViewUnknownEvents,
+
+	/// <summary>
+	/// View the snapshot status of an aggregate stream.
+	/// </summary>
+	ViewSnapshot,
+
+	/// <summary>
+	/// Rebuild an aggregate snapshot from its canonical event stream.
+	/// </summary>
+	RebuildSnapshot,
 }

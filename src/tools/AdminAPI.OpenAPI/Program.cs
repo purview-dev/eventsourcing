@@ -23,6 +23,8 @@ builder.Services.AddPurviewEventSourcingAdminApi(options =>
 	options.Features.ViewPoisonedOutbox = true;
 	options.Features.ViewManifest = true;
 	options.Features.ViewUnknownEvents = true;
+	options.Features.ViewSnapshot = true;
+	options.Features.RebuildSnapshot = true;
 });
 builder.Services.AddPurviewEventSourcingAdminOpenApi();
 builder.Services.AddPurviewEventSourcingAdminSecurity();
