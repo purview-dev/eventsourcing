@@ -29,6 +29,7 @@ public sealed class ProviderCapabilitiesTests
 		await Assert.That(capabilities.SupportsQueries).IsFalse();
 		await Assert.That(capabilities.SupportsIdempotencyMarkers).IsTrue();
 		await Assert.That(capabilities.Concurrency).IsEqualTo(ConcurrencyGuarantee.Optimistic);
+		await Assert.That(capabilities.SupportsTransactionalOutbox).IsFalse();
 		await Assert.That(capabilities.OperationalLimitations).Contains(EventStoreOperationalLimitation.NonPersistent);
 	}
 
@@ -58,6 +59,7 @@ public sealed class ProviderCapabilitiesTests
 		await Assert.That(capabilities.SupportsQueries).IsFalse();
 		await Assert.That(capabilities.SupportsIdempotencyMarkers).IsTrue();
 		await Assert.That(capabilities.Concurrency).IsEqualTo(ConcurrencyGuarantee.Optimistic);
+		await Assert.That(capabilities.SupportsTransactionalOutbox).IsTrue();
 	}
 
 	[Test]
@@ -104,6 +106,7 @@ public sealed class ProviderCapabilitiesTests
 		await Assert.That(capabilities.PreservedMetadata).IsEqualTo(PreservedEventMetadata.All);
 		await Assert.That(capabilities.SupportsQueries).IsFalse();
 		await Assert.That(capabilities.SupportsIdempotencyMarkers).IsTrue();
+		await Assert.That(capabilities.SupportsTransactionalOutbox).IsTrue();
 	}
 
 	[Test]

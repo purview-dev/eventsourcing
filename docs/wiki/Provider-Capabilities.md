@@ -70,18 +70,18 @@ concurrency. A provider is never assumed to offer stronger behavior than it impl
 The values below are asserted by the `Capabilities.UnitTests` contract suite so documentation and
 implementation cannot drift apart.
 
-| Provider | Transactions | Event streams | Snapshots | Snapshot versions | Metadata | Queries | Idempotency | Concurrency |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| InMemory event store | BestEffort | Yes | No | None | All | No | Yes | Optimistic |
-| InMemory snapshot store | BestEffort | Yes | Yes | SingleVersion | All | Yes | Yes | Optimistic |
-| SQL Server event store | Atomic | Yes | Yes | Versioned | All | No | Yes | Optimistic |
-| SQL Server snapshot query store | Atomic | No | Yes | SingleVersion | None | Yes | No | Optimistic |
-| PostgreSQL event store | Atomic | Yes | Yes | Versioned | All | No | Yes | Optimistic |
-| PostgreSQL snapshot query store | Atomic | No | Yes | SingleVersion | None | Yes | No | Optimistic |
-| Azure Storage | BestEffort | Yes | Yes | Versioned | All | No | Yes | Optimistic |
-| MongoDB event store | BestEffort | Yes | Yes | Versioned | All | No | Yes | Optimistic |
-| MongoDB snapshot query store | BestEffort | No | Yes | SingleVersion | None | Yes | No | Optimistic |
-| Cosmos DB snapshot query store | BestEffort | No | Yes | SingleVersion | None | Yes | No | Optimistic |
+| Provider | Transactions | Event streams | Snapshots | Snapshot versions | Metadata | Queries | Idempotency | Concurrency | Transactional outbox |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| InMemory event store | BestEffort | Yes | No | None | All | No | Yes | Optimistic | No |
+| InMemory snapshot store | BestEffort | Yes | Yes | SingleVersion | All | Yes | Yes | Optimistic | No |
+| SQL Server event store | Atomic | Yes | Yes | Versioned | All | No | Yes | Optimistic | Yes |
+| SQL Server snapshot query store | Atomic | No | Yes | SingleVersion | None | Yes | No | Optimistic | No |
+| PostgreSQL event store | Atomic | Yes | Yes | Versioned | All | No | Yes | Optimistic | Yes |
+| PostgreSQL snapshot query store | Atomic | No | Yes | SingleVersion | None | Yes | No | Optimistic | No |
+| Azure Storage | BestEffort | Yes | Yes | Versioned | All | No | Yes | Optimistic | No |
+| MongoDB event store | BestEffort | Yes | Yes | Versioned | All | No | Yes | Optimistic | No |
+| MongoDB snapshot query store | BestEffort | No | Yes | SingleVersion | None | Yes | No | Optimistic | No |
+| Cosmos DB snapshot query store | BestEffort | No | Yes | SingleVersion | None | Yes | No | Optimistic | No |
 
 The [Provider Feature Matrix](Provider-Feature-Matrix.md) summarizes the same facts for package
 selection.

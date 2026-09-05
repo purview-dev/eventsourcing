@@ -15,6 +15,7 @@ per-registration values.
 | Snapshot-backed query/list/count | Null provider only | Optional | Optional | No | Optional | Optional |
 | Blob-backed snapshots / large payloads | No | No | No | Yes | No | No |
 | Provider-neutral transaction guarantee | Explicit `BestEffort` or required `Atomic` | Atomic within one database boundary | Atomic within one database boundary | Best effort | Best effort | Best effort |
+| Transactional outbox (atomic with events) | No | Yes (`AddSqlServerOutbox<THandler>`) | Yes (`AddPostgresOutbox<THandler>`) | No | No | No |
 | Provider-specific native transaction factory | No | `ISqlServerEventStoreTransactionFactory` | `IPostgresEventStoreTransactionFactory` | No | No | No |
 | Runtime-configured JSON payload indexes | No | Yes (event + snapshot stores, auto-create path) | Yes (GIN + expression indexes for snapshots) | No | No | No |
 | DI registration helpers | `AddNullQueryableEventStore()` | `AddSqlServerEventStore()`, `AddSqlServerSnapshotQueryableEventStore()` | `AddPostgresEventStore()`, `AddPostgresSnapshotQueryableEventStore()` | `AddAzureStorageEventStore()` | `AddMongoDBEventStore()`, `AddMongoDBSnapshotQueryableEventStore()` | `AddCosmosDbSnapshotQueryableEventStore()` |

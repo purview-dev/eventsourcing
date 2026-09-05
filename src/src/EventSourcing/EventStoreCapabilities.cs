@@ -121,6 +121,13 @@ public sealed record EventStoreCapabilities(
 		);
 
 	/// <summary>
+	/// Whether the provider can persist outbox messages atomically with event saves (transactional
+	/// outbox). When <see langword="false"/>, outbox writes are not guaranteed to share the event
+	/// transaction boundary.
+	/// </summary>
+	public bool SupportsTransactionalOutbox { get; init; }
+
+	/// <summary>
 	/// Combines capability registrations into a single effective contract. The strongest applicable
 	/// guarantee wins, so an application that registers an event store and a query snapshot store for
 	/// the same provider reports the union of what is actually available.
@@ -149,6 +156,9 @@ public sealed record EventStoreCapabilities(
 				.Distinct(StringComparer.Ordinal)
 				.OrderBy(static limitation => limitation, StringComparer.Ordinal)
 				.ToImmutableArray()
-		);
+		)
+		{
+			SupportsTransactionalOutbox = all.Any(static part => part.SupportsTransactionalOutbox),
+		};
 	}
 }

@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Internal;
+using Purview.EventSourcing.Outbox;
 using Purview.EventSourcing.SqlServer.Events;
+using Purview.EventSourcing.SqlServer.Outbox;
 using Purview.EventSourcing.SqlServer.Snapshot;
 using Purview.EventSourcing.SqlServer.Snapshots;
 
@@ -91,6 +93,9 @@ public static class ServiceCollectionExtensions
 					Concurrency: ConcurrencyGuarantee.Optimistic,
 					OperationalLimitations: []
 				)
+				{
+					SupportsTransactionalOutbox = true,
+				}
 			);
 
 			services
@@ -188,6 +193,42 @@ public static class ServiceCollectionExtensions
 					}
 				)
 				.ValidateOnStart();
+
+			return services;
+		}
+
+		/// <summary>
+		/// Registers the SQL Server transactional outbox: an outbox store that persists messages
+		/// atomically with event saves, a lease-protected dispatcher, and a hosted dispatch loop.
+		/// </summary>
+		/// <typeparam name="TOutboxHandler">The <see cref="IOutboxHandler"/> implementation.</typeparam>
+		/// <param name="configure">Optional outbox dispatch configuration.</param>
+		/// <returns>The <paramref name="services"/> for chaining.</returns>
+		/// <remarks>
+		/// An outbox guarantees atomic persistence plus at-least-once delivery; the handler must be
+		/// idempotent. Enqueue messages inside the event transaction with
+		/// <c>SqlServerOutboxStore.EnqueueInTransactionAsync</c> (typically via
+		/// <see cref="ISqlServerEventStoreTransaction.Enlist(Func{Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient.SqlTransaction, System.Threading.CancellationToken, Task})"/>).
+		/// </remarks>
+		public IServiceCollection AddSqlServerOutbox<TOutboxHandler>(Action<OutboxDispatchOptions>? configure = null)
+			where TOutboxHandler : class, IOutboxHandler
+		{
+			services.AddEventSourcing();
+			services.AddOutbox<SqlServerOutboxStore, TOutboxHandler>(configure);
+
+			services
+				.AddOptions<SqlServerOutboxStoreOptions>()
+				.Configure<IConfiguration>(
+					(options, configuration) =>
+						configuration.GetSection(SqlServerOutboxStoreOptions.SqlServerOutbox).Bind(options)
+				);
+
+			services.TryAddEnumerable(
+				ServiceDescriptor.Singleton<
+					IValidateOptions<SqlServerOutboxStoreOptions>,
+					SqlServerOutboxStoreOptionsValidator
+				>()
+			);
 
 			return services;
 		}
