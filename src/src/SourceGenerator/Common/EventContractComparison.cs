@@ -57,7 +57,7 @@ static class EventContractComparer
 			CompareAggregate(currentAggregate, baselineAggregate, issues);
 		}
 
-		return new(new(issues.ToImmutableArray()));
+		return new(new([.. issues]));
 	}
 
 	static void CompareAggregate(
@@ -240,5 +240,5 @@ static class EventContractComparer
 		string[] messageArgs,
 		string? EventKey,
 		string? AggregateKey
-	) => new(descriptor, new(messageArgs.ToImmutableArray()), EventKey, AggregateKey);
+	) => new(descriptor, new([.. messageArgs]), EventKey, AggregateKey);
 }

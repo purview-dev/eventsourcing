@@ -36,12 +36,11 @@ static class EventContractManifestLibrary
 				contract.AggregateName,
 				contract.AggregateNamespace,
 				new EquatableArray<EventContractEntry>(
-					contract
+					[.. contract
 						.Events.OrderBy(static e => e.EventName, StringComparer.Ordinal)
 						.ThenBy(static e => e.EventNamespace, StringComparer.Ordinal)
 						.ThenBy(static e => e.SchemaVersion)
-						.ThenBy(static e => e.MethodName, StringComparer.Ordinal)
-						.ToImmutableArray()
+						.ThenBy(static e => e.MethodName, StringComparer.Ordinal)]
 				)
 			))
 			.ToImmutableArray();
@@ -216,6 +215,7 @@ static class EventContractManifestLibrary
 
 	static void AppendBoolean(StringBuilder builder, bool value) => builder.Append(value ? "true" : "false");
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors")]
 	public sealed class ManifestParseException(string message) : Exception(message);
 
 	sealed class ManifestParser(string json, string fileName)
@@ -228,7 +228,7 @@ static class EventContractManifestLibrary
 			var manifest = ReadRootObject();
 			if (manifest.FormatVersion != FormatVersion)
 			{
-				return new BaselineState(
+				return new(
 					null,
 					new BaselineError(
 						$"baseline '{fileName}' declares format version {manifest.FormatVersion.ToString(System.Globalization.CultureInfo.InvariantCulture)}, but this generator supports version {FormatVersion.ToString(System.Globalization.CultureInfo.InvariantCulture)}. Regenerate the baseline with the current version of the package."
@@ -236,7 +236,8 @@ static class EventContractManifestLibrary
 				);
 			}
 
-			return new BaselineState(manifest, null);
+			// The parser should have consumed the entire input; if not, it's an error.
+			return new(manifest, null);
 		}
 
 		EventContractManifest ReadRootObject()
@@ -265,6 +266,7 @@ static class EventContractManifestLibrary
 			if (formatVersion is null)
 				throw Error("the root object is missing the required 'formatVersion' property");
 
+			// The aggregates property is optional; if it's missing, the manifest is empty.
 			return new EventContractManifest(formatVersion.Value, new(aggregates.ToImmutable()));
 		}
 
@@ -321,6 +323,7 @@ static class EventContractManifestLibrary
 			if (string.IsNullOrEmpty(@namespace))
 				throw Error($"aggregate '{name}' is missing the required 'namespace' property");
 
+			// The events property is optional; if it's missing, the aggregate has no events.
 			return new AggregateContract(name, @namespace, new(events.ToImmutable()));
 		}
 
@@ -393,6 +396,7 @@ static class EventContractManifestLibrary
 					$"event '{name}' declares schema version {schemaVersion}, which must be greater than or equal to 1"
 				);
 
+			// The fields property is optional; if it's missing, the event has no fields.
 			return new EventContractEntry(name, @namespace, method, schemaVersion.Value, new(fields.ToImmutable()));
 		}
 
@@ -465,6 +469,7 @@ static class EventContractManifestLibrary
 			if (string.IsNullOrEmpty(type))
 				throw Error($"field '{name}' is missing the required 'type' property");
 
+			// The elementType property is optional; if it's missing, the field has no element type.
 			return new EventContractField(name, type, elementType, isArray, isNullable, isRequired, isString);
 		}
 
@@ -592,6 +597,7 @@ static class EventContractManifestLibrary
 			)
 				return value;
 
+			// The number is too large to fit in a 32-bit integer.
 			throw Error($"'{json.Substring(start, _position - start)}' is not a valid 32-bit integer");
 		}
 
@@ -601,6 +607,7 @@ static class EventContractManifestLibrary
 			if (TryConsume("null"))
 				return null!;
 
+			// The value is not null, so it must be a string.
 			return ReadString();
 		}
 
@@ -612,6 +619,7 @@ static class EventContractManifestLibrary
 			if (TryConsume("false"))
 				return false;
 
+			// The value is not a boolean, so it's an error.
 			throw Error("expected a boolean value");
 		}
 

@@ -110,21 +110,9 @@ static class EventContractBuilder
 	/// type token, so a nullable-to-non-nullable change is reported as a requiredness regression rather
 	/// than an opaque type change.
 	/// </summary>
-	static string NormalizeTypeName(string render)
-	{
-		if (render.EndsWith("?", StringComparison.Ordinal))
-			return render.Substring(0, render.Length - 1);
+	static string NormalizeTypeName(string render) => render.EndsWith("?", StringComparison.Ordinal) ? render.Substring(0, render.Length - 1) : render;
 
-		return render;
-	}
-
-	static TypeReference GetArrayElement(TypeReference type)
-	{
-		if (type.Identity.TypeArguments.Length > 0)
-			return type.Identity.TypeArguments[0];
-
-		return TypeReference.Empty;
-	}
+	static TypeReference GetArrayElement(TypeReference type) => type.Identity.TypeArguments.Length > 0 ? type.Identity.TypeArguments[0] : TypeReference.Empty;
 
 	static string? GetElementType(TypeReference type)
 	{

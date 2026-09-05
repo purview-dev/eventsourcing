@@ -40,7 +40,7 @@ static partial class SourceGenLibrary
 				var info = AggregateInfoBuilder.Build(classSymbol, syntax, ctx.SemanticModel.Compilation, ct);
 
 				if (!info.ShouldProcess || !info.HasValue)
-					return GeneratorResult<AggregateTarget>.Create(info.Diagnostics.ToArray());
+					return GeneratorResult<AggregateTarget>.Create([.. info.Diagnostics]);
 
 				var target = new AggregateTarget(
 					info.Value,
@@ -103,9 +103,9 @@ static partial class SourceGenLibrary
 					if (pairs.IsEmpty)
 						return new BaselineState(null, null);
 
-					var pair = pairs[0];
-					var content = pair.Left.GetText(ct)?.ToString() ?? string.Empty;
-					return EventContractManifestLibrary.Parse(content, pair.Right);
+					var (Left, Right) = pairs[0];
+					var content = Left.GetText(ct)?.ToString() ?? string.Empty;
+					return EventContractManifestLibrary.Parse(content, Right);
 				}
 			)
 			.WithTrackingName("EventContractBaseline");

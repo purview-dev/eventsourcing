@@ -67,7 +67,7 @@ public static class CodeFixTestHarness
 			var fixedDocument = await ApplySingleActionAsync(document, codeActions[0], cancellationToken);
 			return new HarnessResult(
 				(await fixedDocument.GetTextAsync(cancellationToken)).ToString(),
-				applicable.Select(static diagnostic => diagnostic.Id).ToImmutableArray()
+				[.. applicable.Select(static diagnostic => diagnostic.Id)]
 			);
 		}
 
@@ -96,7 +96,7 @@ public static class CodeFixTestHarness
 
 		return new HarnessResult(
 			(await fixedDocumentForAll.GetTextAsync(cancellationToken)).ToString(),
-			applicable.Select(static diagnostic => diagnostic.Id).ToImmutableArray()
+			[.. applicable.Select(static diagnostic => diagnostic.Id)]
 		);
 	}
 
