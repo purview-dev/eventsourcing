@@ -97,6 +97,12 @@ public sealed class AdminFeatureOptions
 	public bool ViewCapabilities { get; set; }
 
 	/// <summary>
+	/// Gets or sets whether the poisoned (dead-letter) outbox endpoint is enabled. Opt-in and
+	/// deny-by-default; a host must also grant the <c>ViewPoisonedOutbox</c> permission.
+	/// </summary>
+	public bool ViewPoisonedOutbox { get; set; }
+
+	/// <summary>
 	/// Validates the option object shape.
 	/// </summary>
 	/// <param name="options">The options instance to validate.</param>

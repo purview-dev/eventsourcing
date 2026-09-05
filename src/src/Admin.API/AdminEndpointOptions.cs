@@ -19,6 +19,7 @@ public sealed class AdminEndpointOptions
 		[AdminFeature.ProjectPointInTime] = AdminPortalPolicies.ProjectPointInTime,
 		[AdminFeature.ExportEvents] = AdminPortalPolicies.ExportEvents,
 		[AdminFeature.ViewCapabilities] = AdminPortalPolicies.ViewCapabilities,
+		[AdminFeature.ViewPoisonedOutbox] = AdminPortalPolicies.ViewPoisonedOutbox,
 	};
 
 	/// <summary>

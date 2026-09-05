@@ -20,6 +20,7 @@ builder.Services.AddPurviewEventSourcingAdminApi(options =>
 	// The exported document describes the full Admin API surface, so all feature-gated endpoints are enabled.
 	options.Features.ExportEvents = true;
 	options.Features.ViewCapabilities = true;
+	options.Features.ViewPoisonedOutbox = true;
 });
 builder.Services.AddPurviewEventSourcingAdminOpenApi();
 builder.Services.AddPurviewEventSourcingAdminSecurity();

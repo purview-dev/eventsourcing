@@ -39,4 +39,9 @@ public enum AdminFeature
 	/// View the event-store capability contract and operational health summary.
 	/// </summary>
 	ViewCapabilities,
+
+	/// <summary>
+	/// View poisoned (dead-letter) transactional outbox messages.
+	/// </summary>
+	ViewPoisonedOutbox,
 }

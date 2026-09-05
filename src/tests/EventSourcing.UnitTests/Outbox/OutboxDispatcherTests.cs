@@ -256,6 +256,18 @@ sealed class InMemoryOutboxStore : IOutboxStore
 		return Task.FromResult(removed.Length);
 	}
 
+	public Task<IReadOnlyList<OutboxEnvelope>> GetPoisonedAsync(int skip, int take, CancellationToken cancellationToken)
+	{
+		var poisoned = _messages
+			.Values.Where(static message => message.State == OutboxState.Poisoned)
+			.OrderByDescending(static message => message.CreatedUtc)
+			.ThenByDescending(static message => message.Id, StringComparer.Ordinal)
+			.Skip(skip)
+			.Take(take)
+			.ToArray();
+		return Task.FromResult<IReadOnlyList<OutboxEnvelope>>(poisoned);
+	}
+
 	public OutboxState GetState(string id) => _messages[id].State;
 
 	public int GetAttempts(string id) => _messages[id].AttemptCount;

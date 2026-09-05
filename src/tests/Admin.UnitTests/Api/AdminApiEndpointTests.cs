@@ -383,7 +383,8 @@ sealed class AdminTestHost : IAsyncDisposable
 		Action<AdminEndpointOptions>? configureEndpoints = null,
 		Action<AuthorizationBuilder>? configureAuthorization = null,
 		IAdminPermissionProvider? permissionProvider = null,
-		Action<AdminPortalOptions>? configureAdmin = null
+		Action<AdminPortalOptions>? configureAdmin = null,
+		Action<IServiceCollection>? configureServices = null
 	)
 	{
 		var builder = WebApplication.CreateBuilder();
@@ -407,6 +408,7 @@ sealed class AdminTestHost : IAsyncDisposable
 		builder.Services.AddSingleton<IAdminEventQueryService, RecordingEventQueryService>();
 		builder.Services.AddSingleton<IAdminProjectionService, RecordingProjectionService>();
 		builder.Services.AddSingleton<IEventStoreCapabilitiesProvider>(new TestCapabilitiesProvider());
+		configureServices?.Invoke(builder.Services);
 
 		var app = builder.Build();
 		app.MapPurviewEventSourcingAdminAPI(configureEndpoints: configureEndpoints);
@@ -475,6 +477,7 @@ sealed class AllowAllPermissionProvider : IAdminPermissionProvider
 		new(AdminFeature.ProjectPointInTime, null, Allowed: true),
 		new(AdminFeature.ExportEvents, null, Allowed: true),
 		new(AdminFeature.ViewCapabilities, null, Allowed: true),
+		new(AdminFeature.ViewPoisonedOutbox, null, Allowed: true),
 	];
 
 	public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(

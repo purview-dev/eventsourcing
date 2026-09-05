@@ -46,4 +46,18 @@ public interface IOutboxStore
 	/// Removes terminal messages (dispatched or poisoned) older than <paramref name="retention"/>.
 	/// </summary>
 	Task<int> CleanupAsync(TimeSpan retention, CancellationToken cancellationToken);
+
+	/// <summary>
+	/// Returns a page of poisoned (dead-letter) messages ordered most-recently-poisoned first.
+	/// Providers that do not support dead-letter inspection return an empty page.
+	/// </summary>
+	/// <param name="skip">The number of poisoned messages to skip.</param>
+	/// <param name="take">The maximum number of poisoned messages to return.</param>
+	/// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
+	Task<IReadOnlyList<OutboxEnvelope>> GetPoisonedAsync(int skip, int take, CancellationToken cancellationToken)
+	{
+		ArgumentOutOfRangeException.ThrowIfNegative(skip);
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(take);
+		return Task.FromResult<IReadOnlyList<OutboxEnvelope>>([]);
+	}
 }

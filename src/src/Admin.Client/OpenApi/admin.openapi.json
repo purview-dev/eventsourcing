@@ -569,6 +569,31 @@
           }
         }
       }
+    },
+    "/admin/api/outbox/poisoned": {
+      "get": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Get poisoned outbox messages",
+        "description": "Returns poisoned (dead-letter) transactional outbox messages.",
+        "operationId": "GetPoisonedOutbox",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoisonedOutboxResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -900,6 +925,89 @@
         }
       },
       "JsonElement": { },
+      "OutboxEnvelope": {
+        "required": [
+          "id",
+          "aggregateType",
+          "aggregateId",
+          "eventType",
+          "payloadJson",
+          "idempotencyKey",
+          "correlationId",
+          "createdUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "aggregateType": {
+            "type": "string"
+          },
+          "aggregateId": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "payloadJson": {
+            "type": "string"
+          },
+          "idempotencyKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correlationId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "$ref": "#/components/schemas/OutboxState"
+          },
+          "attemptCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "dispatchedUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "leaseExpiresUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "OutboxState": {
+        "type": "integer"
+      },
       "PagedResultOfAggregateSummaryResponse": {
         "required": [
           "items",
@@ -975,6 +1083,25 @@
           },
           "hasPreviousPage": {
             "type": "boolean"
+          }
+        }
+      },
+      "PoisonedOutboxResponse": {
+        "required": [
+          "items",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OutboxEnvelope"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

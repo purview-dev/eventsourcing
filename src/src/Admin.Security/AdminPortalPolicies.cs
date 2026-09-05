@@ -39,4 +39,9 @@ public static class AdminPortalPolicies
 	/// Policy that authorizes viewing the event-store capability contract and operational health.
 	/// </summary>
 	public const string ViewCapabilities = "AdminPortal.Capabilities.View";
+
+	/// <summary>
+	/// Policy that authorizes viewing poisoned (dead-letter) transactional outbox messages.
+	/// </summary>
+	public const string ViewPoisonedOutbox = "AdminPortal.Outbox.Poisoned.View";
 }

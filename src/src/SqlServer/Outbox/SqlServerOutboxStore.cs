@@ -192,6 +192,40 @@ public sealed partial class SqlServerOutboxStore(
 			cancellationToken
 		);
 
+	/// <inheritdoc/>
+	public async Task<IReadOnlyList<OutboxEnvelope>> GetPoisonedAsync(
+		int skip,
+		int take,
+		CancellationToken cancellationToken
+	) =>
+		await ExecuteWithConnectionAsync(
+			async (connection, token) =>
+			{
+				await using var command = new SqlCommand(
+					$"""
+					SELECT [Id], [AggregateType], [AggregateId], [EventType], [PayloadJson],
+						[IdempotencyKey], [CorrelationId], [CreatedUtc], [State], [AttemptCount],
+						[NextAttemptUtc], [DispatchedUtc], [LeaseExpiresUtc], [LastError]
+					FROM {_schema}.{_table}
+					WHERE [State] = 3
+					ORDER BY [CreatedUtc] DESC, [Id]
+					OFFSET @skip ROWS FETCH NEXT @take ROWS ONLY
+					""",
+					connection
+				);
+				command.Parameters.AddWithValue("@skip", skip);
+				command.Parameters.AddWithValue("@take", take);
+
+				var messages = new List<OutboxEnvelope>();
+				await using var reader = await command.ExecuteReaderAsync(token);
+				while (await reader.ReadAsync(token))
+					messages.Add(ReadMessage(reader));
+
+				return messages;
+			},
+			cancellationToken
+		);
+
 	async Task<int> EnqueueCoreAsync(
 		DbConnection connection,
 		DbTransaction? transaction,

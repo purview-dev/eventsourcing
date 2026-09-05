@@ -86,3 +86,10 @@ Multiple dispatchers (or hosts) may run concurrently. The lease claim is atomic,
 claimed by exactly one dispatcher at a time. See `SqlServerOutboxIntegrationTests` and
 `PostgresOutboxIntegrationTests` for real-provider coverage of atomic commit/rollback, retry/poison,
 deduplication, and concurrent claim disjointness.
+
+## Dead-letter visibility
+
+The Admin portal exposes poisoned (dead-letter) messages at `GET /admin/api/outbox/poisoned` when
+the `ViewPoisonedOutbox` feature and permission are enabled (opt-in, separately authorized, and
+audited). `IOutboxStore.GetPoisonedAsync` returns a page of poisoned messages ordered
+most-recently-poisoned first; providers without dead-letter inspection return an empty page.

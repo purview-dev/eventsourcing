@@ -110,6 +110,16 @@ public static class AdminApiEndpointRouteBuilderExtensions
 				endpointOptions
 			);
 		}
+
+		if (options.Features.ViewPoisonedOutbox)
+		{
+			var policy = endpointOptions.GetPolicy(AdminFeature.ViewPoisonedOutbox);
+			ApplyConvention(
+				AdminFeature.ViewPoisonedOutbox,
+				AdminOperationalEndpoints.MapPoisonedOutbox(group, policy),
+				endpointOptions
+			);
+		}
 	}
 
 	static void ApplyConvention(AdminFeature feature, RouteHandlerBuilder endpoint, AdminEndpointOptions options) =>

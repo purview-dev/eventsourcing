@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.Admin.Security;
+using Purview.EventSourcing.Outbox;
 
 namespace Purview.EventSourcing.Admin.API.Endpoints;
 
@@ -119,5 +121,61 @@ public static class AdminOperationalEndpoints
 		);
 	}
 
+	/// <summary>
+	/// Maps the <c>GET /outbox/poisoned</c> endpoint that lists poisoned (dead-letter) transactional
+	/// outbox messages.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
+	/// <param name="policyName">The host authorization policy required by the endpoint.</param>
+	public static RouteHandlerBuilder MapPoisonedOutbox(
+		RouteGroupBuilder group,
+		string policyName = AdminPortalPolicies.ViewPoisonedOutbox
+	)
+	{
+		return group
+			.MapGet("/outbox/poisoned", GetPoisonedOutboxAsync)
+			.WithName("GetPoisonedOutbox")
+			.WithSummary("Get poisoned outbox messages")
+			.WithDescription("Returns poisoned (dead-letter) transactional outbox messages.")
+			.WithTags(AdminPortalTag)
+			.Produces<PoisonedOutboxResponse>()
+			.RequireAuthorization(policyName);
+	}
+
+	static async Task<Results<Ok<PoisonedOutboxResponse>, NotFound>> GetPoisonedOutboxAsync(
+		IAdminAuditLogger auditLogger,
+		HttpContext httpContext,
+		CancellationToken cancellationToken
+	)
+	{
+		var outboxStore = httpContext.RequestServices.GetService<IOutboxStore>();
+		if (outboxStore is null)
+			return TypedResults.NotFound();
+
+		var messages = await outboxStore.GetPoisonedAsync(0, 100, cancellationToken);
+
+		await auditLogger.LogAsync(
+			new AdminAuditEntry(
+				DateTimeOffset.UtcNow,
+				AdminFeature.ViewPoisonedOutbox,
+				"Read",
+				Principal(httpContext),
+				Target: "outbox/poisoned",
+				Succeeded: true,
+				Details: null
+			),
+			cancellationToken
+		);
+
+		return TypedResults.Ok(new PoisonedOutboxResponse(messages, messages.Count));
+	}
+
 	static string? Principal(HttpContext httpContext) => httpContext.User.Identity?.Name;
 }
+
+/// <summary>
+/// A page of poisoned (dead-letter) transactional outbox messages.
+/// </summary>
+/// <param name="Items">The poisoned messages, most recently poisoned first.</param>
+/// <param name="Count">The number of messages returned.</param>
+public sealed record PoisonedOutboxResponse(IReadOnlyList<OutboxEnvelope> Items, int Count);
