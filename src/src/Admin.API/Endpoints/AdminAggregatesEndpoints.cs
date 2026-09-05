@@ -349,6 +349,7 @@ public static class AdminAggregatesEndpoints
 		[AsParameters] EventRangeRequest request,
 		IAdminEventQueryService queryService,
 		IOptions<AdminPortalOptions> options,
+		HttpContext httpContext,
 		CancellationToken cancellationToken
 	)
 	{
@@ -359,6 +360,7 @@ public static class AdminAggregatesEndpoints
 		var batchSize = ClampPageSize(request.PageSize, options.Value.Paging.MaxPageSize);
 		var remaining = (long)options.Value.Projections.MaxVersionsPerQuery;
 		var page = 1;
+		var truncated = false;
 
 		var firstPage = await queryService.GetRangeAsync(
 			aggregateType,
@@ -381,12 +383,16 @@ public static class AdminAggregatesEndpoints
 		)
 		{
 			var current = firstPage;
-			while (remaining > 0)
+			while (true)
 			{
 				foreach (var envelope in current.Items)
 				{
 					if (remaining <= 0)
+					{
+						// The export cap was reached before all events could be written.
+						truncated = true;
 						break;
+					}
 
 					remaining--;
 					await writer.WriteLineAsync(
@@ -395,7 +401,7 @@ public static class AdminAggregatesEndpoints
 					);
 				}
 
-				if (!current.HasNextPage || remaining <= 0)
+				if (truncated || !current.HasNextPage)
 					break;
 
 				page++;
@@ -415,6 +421,7 @@ public static class AdminAggregatesEndpoints
 		}
 
 		stream.Position = 0;
+		httpContext.Response.Headers["Purview-Event-Export-Truncated"] = truncated ? "true" : "false";
 		return TypedResults.Stream(stream, "application/x-ndjson");
 	}
 

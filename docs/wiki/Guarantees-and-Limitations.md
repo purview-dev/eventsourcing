@@ -74,7 +74,9 @@ facts for package selection.
 - `ViewEvents` grants metadata access; event **payloads** are only returned with
   `ViewEventPayloads` permission. Without it, payloads are `null`.
 - Event export requires both export and payload permissions. Read permissions never imply mutation
-  authority.
+  authority. Export is capped at `AdminProjectionOptions.MaxVersionsPerQuery`; a truncated stream is
+  signaled with the `Purview-Event-Export-Truncated` response header so callers can detect partial
+  exports.
 - Operational endpoints (`GET /admin/api/capabilities`, `GET /admin/api/health`, and
   `GET /admin/api/outbox/poisoned`) are opt-in (`AdminFeatureOptions.ViewCapabilities` /
   `ViewPoisonedOutbox`), separately authorized, and audited through `IAdminAuditLogger` (default

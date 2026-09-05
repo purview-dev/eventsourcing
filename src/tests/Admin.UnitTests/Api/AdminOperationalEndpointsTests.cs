@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions.Models;
+using Purview.EventSourcing.Admin.Abstractions.Queries;
 using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.Admin.Security;
 using Purview.EventSourcing.Outbox;
@@ -147,6 +148,82 @@ public sealed class AdminOperationalEndpointsTests
 		var response = await client.GetAsync("/admin/api/outbox/poisoned", cancellationToken);
 
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+	}
+
+	[Test]
+	public async Task ExportEvents_GivenCompleteStream_TruncationHeaderFalse(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync();
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/aggregates/order/order-1/events/export", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		await Assert.That(response.Headers.GetValues("Purview-Event-Export-Truncated").Single()).IsEqualTo("false");
+	}
+
+	[Test]
+	public async Task ExportEvents_GivenTruncatedStream_SetsTruncationHeader(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync(
+			configureAdmin: static options => options.Projections.MaxVersionsPerQuery = 2,
+			configureServices: static services =>
+				services.AddSingleton<IAdminEventQueryService>(new PagingEventQueryService())
+		);
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/aggregates/order/order-1/events/export", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		await Assert.That(response.Headers.GetValues("Purview-Event-Export-Truncated").Single()).IsEqualTo("true");
+
+		var text = await response.Content.ReadAsStringAsync(cancellationToken);
+		var lines = text.Split(['\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		await Assert.That(lines.Length).IsEqualTo(2);
+	}
+
+	sealed class PagingEventQueryService : IAdminEventQueryService
+	{
+		public Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(
+			string aggregateType,
+			string aggregateId,
+			EventRangeQuery query,
+			CancellationToken cancellationToken
+		)
+		{
+			const int total = 6;
+			var pageSize = Math.Max(1, query.PageSize);
+			var page = Math.Max(1, query.Page);
+			var items = new List<EventEnvelopeResponse>();
+			for (var i = 0; i < pageSize; i++)
+			{
+				var version = ((page - 1) * pageSize) + i + 1;
+				if (version > total)
+					break;
+
+				items.Add(
+					new EventEnvelopeResponse(
+						aggregateType,
+						aggregateId,
+						new EventMetadataResponse(
+							1,
+							new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero).AddSeconds(version),
+							"OrderCreatedEvent",
+							version,
+							null,
+							null,
+							null,
+							null
+						),
+						System.Text.Json.JsonDocument.Parse("{}").RootElement.Clone()
+					)
+				);
+			}
+
+			return Task.FromResult<PagedResult<EventEnvelopeResponse>?>(
+				new PagedResult<EventEnvelopeResponse>(items, page, pageSize, total)
+			);
+		}
 	}
 
 	sealed class DenyCapabilitiesPermissionProvider : IAdminPermissionProvider
