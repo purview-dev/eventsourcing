@@ -69,6 +69,35 @@ sealed partial class PostgresEventStoreClient
 		string? idempotencyId,
 		DateTimeOffset timestamp,
 		CancellationToken cancellationToken = default
+	) =>
+		await InsertAsync(
+			id,
+			entityType,
+			aggregateId,
+			aggregateType,
+			version,
+			isDeleted,
+			payload,
+			eventType,
+			idempotencyId,
+			timestamp,
+			1,
+			cancellationToken
+		);
+
+	public async Task InsertAsync(
+		string id,
+		int entityType,
+		string aggregateId,
+		string aggregateType,
+		int version,
+		bool isDeleted,
+		string? payload,
+		string? eventType,
+		string? idempotencyId,
+		DateTimeOffset timestamp,
+		int schemaVersion,
+		CancellationToken cancellationToken = default
 	)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
@@ -84,7 +113,8 @@ sealed partial class PostgresEventStoreClient
 				payload,
 				eventType,
 				idempotencyId,
-				timestamp
+				timestamp,
+				schemaVersion
 			)
 		);
 		await context.SaveChangesAsync(cancellationToken);
@@ -110,6 +140,35 @@ sealed partial class PostgresEventStoreClient
 		string? idempotencyId,
 		DateTimeOffset timestamp,
 		CancellationToken cancellationToken = default
+	) =>
+		await UpsertAsync(
+			id,
+			entityType,
+			aggregateId,
+			aggregateType,
+			version,
+			isDeleted,
+			payload,
+			eventType,
+			idempotencyId,
+			timestamp,
+			1,
+			cancellationToken
+		);
+
+	public async Task UpsertAsync(
+		string id,
+		int entityType,
+		string aggregateId,
+		string aggregateType,
+		int version,
+		bool isDeleted,
+		string? payload,
+		string? eventType,
+		string? idempotencyId,
+		DateTimeOffset timestamp,
+		int schemaVersion,
+		CancellationToken cancellationToken = default
 	)
 	{
 		await EnsureConfiguredAsync(cancellationToken);
@@ -126,6 +185,7 @@ sealed partial class PostgresEventStoreClient
 			eventType,
 			idempotencyId,
 			timestamp,
+			schemaVersion,
 			cancellationToken
 		);
 	}
@@ -143,6 +203,39 @@ sealed partial class PostgresEventStoreClient
 		DateTimeOffset timestamp,
 		NpgsqlConnection connection,
 		NpgsqlTransaction transaction,
+		CancellationToken cancellationToken = default
+	) =>
+		await UpsertAsync(
+			id,
+			entityType,
+			aggregateId,
+			aggregateType,
+			version,
+			isDeleted,
+			payload,
+			eventType,
+			idempotencyId,
+			timestamp,
+			connection,
+			transaction,
+			1,
+			cancellationToken
+		);
+
+	public async Task UpsertAsync(
+		string id,
+		int entityType,
+		string aggregateId,
+		string aggregateType,
+		int version,
+		bool isDeleted,
+		string? payload,
+		string? eventType,
+		string? idempotencyId,
+		DateTimeOffset timestamp,
+		NpgsqlConnection connection,
+		NpgsqlTransaction transaction,
+		int schemaVersion,
 		CancellationToken cancellationToken = default
 	)
 	{
@@ -162,6 +255,7 @@ sealed partial class PostgresEventStoreClient
 			eventType,
 			idempotencyId,
 			timestamp,
+			schemaVersion,
 			cancellationToken
 		);
 	}
@@ -196,6 +290,7 @@ sealed partial class PostgresEventStoreClient
 			eventType,
 			idempotencyId,
 			timestamp,
+			1,
 			cancellationToken
 		);
 
@@ -237,6 +332,7 @@ sealed partial class PostgresEventStoreClient
 			eventType,
 			idempotencyId,
 			timestamp,
+			1,
 			cancellationToken
 		);
 
@@ -532,6 +628,7 @@ sealed partial class PostgresEventStoreClient
 		string? eventType,
 		string? idempotencyId,
 		DateTimeOffset timestamp,
+		int schemaVersion,
 		CancellationToken cancellationToken
 	)
 	{
@@ -549,7 +646,8 @@ sealed partial class PostgresEventStoreClient
 					payload,
 					eventType,
 					idempotencyId,
-					timestamp
+					timestamp,
+					schemaVersion
 				)
 			);
 		}
@@ -563,6 +661,7 @@ sealed partial class PostgresEventStoreClient
 			entity.Payload = payload;
 			entity.EventType = eventType;
 			entity.IdempotencyId = idempotencyId;
+			entity.SchemaVersion = schemaVersion;
 			entity.Timestamp = timestamp;
 		}
 
@@ -579,7 +678,8 @@ sealed partial class PostgresEventStoreClient
 		string? payload,
 		string? eventType,
 		string? idempotencyId,
-		DateTimeOffset timestamp
+		DateTimeOffset timestamp,
+		int schemaVersion = 1
 	) =>
 		new()
 		{
@@ -592,6 +692,7 @@ sealed partial class PostgresEventStoreClient
 			Payload = payload,
 			EventType = eventType,
 			IdempotencyId = idempotencyId,
+			SchemaVersion = schemaVersion,
 			Timestamp = timestamp,
 		};
 

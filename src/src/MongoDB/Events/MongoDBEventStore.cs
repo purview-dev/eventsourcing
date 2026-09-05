@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using Purview.EventSourcing.Aggregates;
 using Purview.EventSourcing.Aggregates.Events.Upcasting;
+using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.MongoDB.Events;
 using Purview.EventSourcing.MongoDB.Events.Entities;
 using Purview.EventSourcing.MongoDB.StorageClient;
@@ -48,6 +49,7 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 
 	readonly string _aggregateTypeFullName;
 	readonly string _aggregateTypeShortName;
+	readonly int _snapshotSchemaVersion = AggregateSnapshotSchema.GetVersion<T>();
 
 	/// <summary>
 	/// Initializes a new <see cref="MongoDBEventStore{T}"/> instance.
@@ -279,7 +281,8 @@ public sealed partial class MongoDBEventStore<T> : IMongoDBEventStore<T>, IDispo
 	/// </summary>
 	/// <param name="aggregateId">The identifier of the aggregate.</param>
 	/// <returns>The case-insensitive cache key used to store and retrieve the aggregate snapshot.</returns>
-	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
+	public string CreateCacheKey(string aggregateId) =>
+		$"{_aggregateTypeShortName}:{aggregateId}{AggregateSnapshotSchema.GetStorageSuffix<T>()}".ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
 	/// <summary>

@@ -385,6 +385,7 @@ partial class MongoDBEventStore<T>
 			Id = aggregate.Id(),
 			AggregateType = _aggregateTypeShortName,
 			AggregateFullType = _aggregateTypeFullName,
+			SchemaVersion = _snapshotSchemaVersion,
 			Timestamp = DateTimeOffset.UtcNow,
 			Payload = snapshot,
 		};

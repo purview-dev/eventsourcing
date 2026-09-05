@@ -308,8 +308,13 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 	/// <seealso cref="GenerateSnapshotBlobPath"/>
 	/// <seealso cref="CreateCacheKey"/>
 	/// <exception cref="ArgumentException"><paramref name="aggregateId"/> is null, empty, or white space.</exception>
-	public string GenerateSnapshotBlobName(string aggregateId) =>
-		$"{GenerateSnapshotBlobPath(aggregateId)}/{TableEventStoreConstants.SnapshotFilename}".ToLowerInvariant();
+	public string GenerateSnapshotBlobName(string aggregateId)
+	{
+		var schemaVersion = AggregateSnapshotSchema.GetVersion<T>();
+		var fileName =
+			schemaVersion == 1 ? TableEventStoreConstants.SnapshotFilename : $"snapshot-sv{schemaVersion}.json";
+		return $"{GenerateSnapshotBlobPath(aggregateId)}/{fileName}".ToLowerInvariant();
+	}
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
 #pragma warning disable CA1308 // Normalize strings to uppercase
@@ -334,7 +339,8 @@ public sealed partial class TableEventStore<T> : ITableEventStore<T>, IAsyncDisp
 	/// <seealso cref="GenerateSnapshotBlobName"/>
 	/// <seealso cref="GenerateSnapshotBlobPath"/>
 	/// <exception cref="ArgumentException"><paramref name="aggregateId"/> is null, empty, or white space.</exception>
-	public string CreateCacheKey(string aggregateId) => $"{_aggregateTypeShortName}:{aggregateId}".ToLowerInvariant();
+	public string CreateCacheKey(string aggregateId) =>
+		$"{_aggregateTypeShortName}:{aggregateId}{AggregateSnapshotSchema.GetStorageSuffix<T>()}".ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
 	///<inheritdoc/>

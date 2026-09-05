@@ -503,7 +503,8 @@ partial class PostgresEventStore<T>
 					null,
 					null,
 					DateTimeOffset.UtcNow,
-					cancellationToken
+					schemaVersion: _snapshotSchemaVersion,
+					cancellationToken: cancellationToken
 				);
 			}
 			else
@@ -521,7 +522,8 @@ partial class PostgresEventStore<T>
 					DateTimeOffset.UtcNow,
 					connection,
 					transaction!,
-					cancellationToken
+					schemaVersion: _snapshotSchemaVersion,
+					cancellationToken: cancellationToken
 				);
 			}
 		}
