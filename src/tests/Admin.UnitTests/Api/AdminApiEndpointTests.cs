@@ -4,10 +4,12 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,6 +22,42 @@ namespace Purview.EventSourcing.Admin.API;
 
 public sealed class AdminApiEndpointTests
 {
+	[Test]
+	public async Task HostPolicyOverride_IsEnforced(CancellationToken cancellationToken)
+	{
+		const string hostPolicy = "HostAdminPolicy";
+		await using var host = await AdminTestHost.CreateAsync(
+			endpoints => endpoints.RequirePolicy(AdminFeature.SearchAggregates, hostPolicy),
+			authorization => authorization.AddPolicy(hostPolicy, policy => policy.RequireAssertion(_ => false))
+		);
+
+		var response = await host.Client.PostAsJsonAsync(
+			"/admin/api/aggregates/search",
+			new { page = 1, pageSize = 25 },
+			cancellationToken
+		);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+	}
+
+	[Test]
+	public async Task HostEndpointConvention_ReceivesFeatureAndChangesMetadata()
+	{
+		await using var host = await AdminTestHost.CreateAsync(endpoints =>
+			endpoints.EndpointConvention = (feature, endpoint) =>
+				endpoint.WithMetadata(new HostConventionMetadata(feature))
+		);
+
+		var dataSources = ((IEndpointRouteBuilder)host.App).DataSources;
+		var endpoint = dataSources
+			.SelectMany(source => source.Endpoints)
+			.Single(candidate => candidate.DisplayName?.Contains("SearchAggregates", StringComparison.Ordinal) == true);
+
+		await Assert
+			.That(endpoint.Metadata.GetMetadata<HostConventionMetadata>()?.Feature)
+			.IsEqualTo(AdminFeature.SearchAggregates);
+	}
+
 	[Test]
 	public async Task OpenApiDocument_ContainsOnlyAdminPathsAndBearerSecurity(CancellationToken cancellationToken)
 	{
@@ -305,7 +343,10 @@ sealed class AdminTestHost : IAsyncDisposable
 		"CA1506:Avoid excessive class coupling",
 		Justification = "Test host builder that wires the Admin API endpoints and their service dependencies."
 	)]
-	public static async Task<AdminTestHost> CreateAsync()
+	public static async Task<AdminTestHost> CreateAsync(
+		Action<AdminEndpointOptions>? configureEndpoints = null,
+		Action<AuthorizationBuilder>? configureAuthorization = null
+	)
 	{
 		var builder = WebApplication.CreateBuilder();
 		builder.Logging.ClearProviders();
@@ -315,7 +356,8 @@ sealed class AdminTestHost : IAsyncDisposable
 		builder
 			.Services.AddAuthentication(TestAuthHandler.SchemeName)
 			.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, null);
-		builder.Services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
+		var authorization = builder.Services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
+		configureAuthorization?.Invoke(authorization);
 		builder.Services.AddPurviewEventSourcingAdminSecurity(new AllowAllPermissionProvider());
 
 		var aggregateQueryService = new RecordingAggregateQueryService();
@@ -324,7 +366,7 @@ sealed class AdminTestHost : IAsyncDisposable
 		builder.Services.AddSingleton<IAdminProjectionService, RecordingProjectionService>();
 
 		var app = builder.Build();
-		app.MapPurviewEventSourcingAdminAPI();
+		app.MapPurviewEventSourcingAdminAPI(configureEndpoints: configureEndpoints);
 		app.MapOpenApi();
 
 		app.Urls.Clear();
@@ -344,6 +386,8 @@ sealed class AdminTestHost : IAsyncDisposable
 		return App.DisposeAsync();
 	}
 }
+
+sealed record HostConventionMetadata(AdminFeature Feature);
 
 sealed class TestAuthHandler(
 	IOptionsMonitor<AuthenticationSchemeOptions> options,
