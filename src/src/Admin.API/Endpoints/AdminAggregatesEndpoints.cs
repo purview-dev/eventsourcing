@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -240,6 +241,8 @@ public static class AdminAggregatesEndpoints
 		string aggregateId,
 		[AsParameters] EventRangeRequest request,
 		IAdminEventQueryService queryService,
+		[FromServices] IAuthorizationService authorizationService,
+		HttpContext httpContext,
 		IOptions<AdminPortalOptions> options,
 		CancellationToken cancellationToken
 	)
@@ -259,7 +262,22 @@ public static class AdminAggregatesEndpoints
 		);
 
 		var result = await queryService.GetRangeAsync(aggregateType, aggregateId, query, cancellationToken);
-		return result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
+		if (result is null)
+			return TypedResults.NotFound();
+
+		var payloadAuthorization = await authorizationService.AuthorizeAsync(
+			httpContext.User,
+			aggregateType,
+			AdminPortalPolicies.ViewEventPayloads
+		);
+		if (payloadAuthorization.Succeeded)
+			return TypedResults.Ok(result);
+
+		var redacted = result with
+		{
+			Items = result.Items.Select(envelope => envelope with { Payload = null }).ToArray(),
+		};
+		return TypedResults.Ok(redacted);
 	}
 
 	static async Task<Results<Ok<ProjectionResponse>, NotFound, ValidationProblem>> GetProjectionAtVersionAsync(

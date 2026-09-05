@@ -21,6 +21,11 @@ public static class AdminPortalPolicies
 	public const string ViewEvents = "AdminPortal.Events.View";
 
 	/// <summary>
+	/// Policy that authorizes viewing serialized event payloads.
+	/// </summary>
+	public const string ViewEventPayloads = "AdminPortal.Events.Payload.View";
+
+	/// <summary>
 	/// Policy that authorizes projecting aggregate state at a point in time.
 	/// </summary>
 	public const string ProjectPointInTime = "AdminPortal.Projections.Execute";

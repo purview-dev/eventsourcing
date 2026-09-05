@@ -993,7 +993,7 @@ namespace Purview.EventSourcing.Admin.Client
         public EventMetadataResponse Metadata { get; set; } = new EventMetadataResponse();
 
         [System.Text.Json.Serialization.JsonPropertyName("payload")]
-        public JsonElement Payload { get; set; } = default!;
+        public JsonElement? Payload { get; set; } = default!;
 
         private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

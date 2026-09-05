@@ -68,6 +68,11 @@ public static class AdminSecurityServiceCollectionExtensions
 		);
 
 		builder.AddPolicy(
+			AdminPortalPolicies.ViewEventPayloads,
+			policy => policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.ViewEventPayloads))
+		);
+
+		builder.AddPolicy(
 			AdminPortalPolicies.ProjectPointInTime,
 			policy =>
 				policy.AddRequirements(
@@ -81,6 +86,7 @@ public static class AdminSecurityServiceCollectionExtensions
 			policy =>
 				policy.AddRequirements(
 					new AdminFeatureRequirement(AdminFeature.ExportEvents),
+					new AdminFeatureRequirement(AdminFeature.ViewEventPayloads),
 					new AggregateTypeAccessRequirement()
 				)
 		);

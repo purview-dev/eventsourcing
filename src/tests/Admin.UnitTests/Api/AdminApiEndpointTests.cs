@@ -59,6 +59,42 @@ public sealed class AdminApiEndpointTests
 	}
 
 	[Test]
+	public async Task EventRange_WithoutPayloadPermission_ReturnsMetadataWithRedactedPayload(
+		CancellationToken cancellationToken
+	)
+	{
+		await using var host = await AdminTestHost.CreateAsync(
+			permissionProvider: new MetadataOnlyPermissionProvider()
+		);
+
+		var response = await host.Client.GetAsync(
+			"/admin/api/aggregates/Order/order-1/events?page=1&pageSize=25",
+			cancellationToken
+		);
+		var json = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		var envelope = json!.RootElement.GetProperty("items")[0];
+		await Assert.That(envelope.GetProperty("metadata").GetProperty("eventType").GetString()).IsNotEmpty();
+		await Assert.That(envelope.GetProperty("payload").ValueKind).IsEqualTo(JsonValueKind.Null);
+	}
+
+	[Test]
+	public async Task Export_WithoutPayloadPermission_IsForbidden(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync(
+			permissionProvider: new MetadataOnlyPermissionProvider(includeExport: true)
+		);
+
+		var response = await host.Client.GetAsync(
+			"/admin/api/aggregates/Order/order-1/events/export?page=1&pageSize=25",
+			cancellationToken
+		);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+	}
+
+	[Test]
 	public async Task OpenApiDocument_ContainsOnlyAdminPathsAndBearerSecurity(CancellationToken cancellationToken)
 	{
 		await using var host = await AdminTestHost.CreateAsync();
@@ -345,7 +381,8 @@ sealed class AdminTestHost : IAsyncDisposable
 	)]
 	public static async Task<AdminTestHost> CreateAsync(
 		Action<AdminEndpointOptions>? configureEndpoints = null,
-		Action<AuthorizationBuilder>? configureAuthorization = null
+		Action<AuthorizationBuilder>? configureAuthorization = null,
+		IAdminPermissionProvider? permissionProvider = null
 	)
 	{
 		var builder = WebApplication.CreateBuilder();
@@ -358,7 +395,7 @@ sealed class AdminTestHost : IAsyncDisposable
 			.AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, null);
 		var authorization = builder.Services.AddAuthorizationBuilder().AddPurviewEventSourcingAdminPolicies();
 		configureAuthorization?.Invoke(authorization);
-		builder.Services.AddPurviewEventSourcingAdminSecurity(new AllowAllPermissionProvider());
+		builder.Services.AddPurviewEventSourcingAdminSecurity(permissionProvider ?? new AllowAllPermissionProvider());
 
 		var aggregateQueryService = new RecordingAggregateQueryService();
 		builder.Services.AddSingleton<IAdminAggregateQueryService>(aggregateQueryService);
@@ -411,6 +448,7 @@ sealed class AllowAllPermissionProvider : IAdminPermissionProvider
 		new(AdminFeature.SearchAggregates, null, Allowed: true),
 		new(AdminFeature.ViewAggregate, null, Allowed: true),
 		new(AdminFeature.ViewEvents, null, Allowed: true),
+		new(AdminFeature.ViewEventPayloads, null, Allowed: true),
 		new(AdminFeature.ProjectPointInTime, null, Allowed: true),
 		new(AdminFeature.ExportEvents, null, Allowed: true),
 	];
@@ -419,6 +457,23 @@ sealed class AllowAllPermissionProvider : IAdminPermissionProvider
 		ClaimsPrincipal user,
 		CancellationToken cancellationToken
 	) => Task.FromResult(Permissions);
+}
+
+sealed class MetadataOnlyPermissionProvider(bool includeExport = false) : IAdminPermissionProvider
+{
+	public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(
+		ClaimsPrincipal user,
+		CancellationToken cancellationToken
+	) =>
+		Task.FromResult<IReadOnlyList<AdminPermission>>(
+			includeExport
+				?
+				[
+					new(AdminFeature.ViewEvents, null, Allowed: true),
+					new(AdminFeature.ExportEvents, null, Allowed: true),
+				]
+				: [new(AdminFeature.ViewEvents, null, Allowed: true)]
+		);
 }
 
 sealed class RecordingAggregateQueryService : IAdminAggregateQueryService

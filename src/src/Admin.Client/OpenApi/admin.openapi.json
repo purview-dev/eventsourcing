@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "AdminApi.OpenApi | admin",
+    "title": "Purview.EventSourcing.AdminAPI.OpenAPI | admin",
     "version": "1.0.0"
   },
   "paths": {
@@ -654,7 +654,14 @@
             "$ref": "#/components/schemas/EventMetadataResponse"
           },
           "payload": {
-            "$ref": "#/components/schemas/JsonElement"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
           }
         }
       },

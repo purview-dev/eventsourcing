@@ -21,6 +21,11 @@ public enum AdminFeature
 	ViewEvents,
 
 	/// <summary>
+	/// View the serialized payloads contained in an aggregate's event history.
+	/// </summary>
+	ViewEventPayloads,
+
+	/// <summary>
 	/// Project aggregate state at a specific point in time.
 	/// </summary>
 	ProjectPointInTime,
