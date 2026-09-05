@@ -120,6 +120,16 @@ public static class AdminApiEndpointRouteBuilderExtensions
 				endpointOptions
 			);
 		}
+
+		if (options.Features.ViewManifest)
+		{
+			var policy = endpointOptions.GetPolicy(AdminFeature.ViewManifest);
+			ApplyConvention(
+				AdminFeature.ViewManifest,
+				AdminOperationalEndpoints.MapManifest(group, policy),
+				endpointOptions
+			);
+		}
 	}
 
 	static void ApplyConvention(AdminFeature feature, RouteHandlerBuilder endpoint, AdminEndpointOptions options) =>

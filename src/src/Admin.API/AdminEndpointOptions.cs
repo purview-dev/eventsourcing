@@ -20,6 +20,7 @@ public sealed class AdminEndpointOptions
 		[AdminFeature.ExportEvents] = AdminPortalPolicies.ExportEvents,
 		[AdminFeature.ViewCapabilities] = AdminPortalPolicies.ViewCapabilities,
 		[AdminFeature.ViewPoisonedOutbox] = AdminPortalPolicies.ViewPoisonedOutbox,
+		[AdminFeature.ViewManifest] = AdminPortalPolicies.ViewManifest,
 	};
 
 	/// <summary>

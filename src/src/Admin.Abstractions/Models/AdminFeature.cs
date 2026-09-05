@@ -44,4 +44,9 @@ public enum AdminFeature
 	/// View poisoned (dead-letter) transactional outbox messages.
 	/// </summary>
 	ViewPoisonedOutbox,
+
+	/// <summary>
+	/// View the runtime event-contract manifest and its compatibility status.
+	/// </summary>
+	ViewManifest,
 }

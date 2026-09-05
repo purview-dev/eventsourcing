@@ -144,9 +144,11 @@ static class EventContractManifestLibrary
 		builder.AppendLine("{");
 		builder.AppendLine("	/// <summary>");
 		builder.AppendLine("	/// The deterministic event-contract manifest for this compilation.");
-		builder.AppendLine("	/// Supplied as a baseline (AdditionalFiles) to validate contract compatibility.");
+		builder.AppendLine(
+			"	/// Register it at startup with AddEventContractManifest to enable runtime and Admin inspection."
+		);
 		builder.AppendLine("	/// </summary>");
-		builder.AppendLine("	internal static class EventContractManifest");
+		builder.AppendLine("	public static class EventContractManifest");
 		builder.AppendLine("	{");
 		builder.AppendLine("		/// <summary>The manifest format version.</summary>");
 		builder.AppendLine(

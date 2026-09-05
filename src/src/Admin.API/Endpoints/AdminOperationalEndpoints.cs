@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Purview.EventSourcing.Admin.Abstractions.Models;
 using Purview.EventSourcing.Admin.Abstractions.Services;
 using Purview.EventSourcing.Admin.Security;
+using Purview.EventSourcing.Manifest;
 using Purview.EventSourcing.Outbox;
 
 namespace Purview.EventSourcing.Admin.API.Endpoints;
@@ -168,6 +169,55 @@ public static class AdminOperationalEndpoints
 		);
 
 		return TypedResults.Ok(new PoisonedOutboxResponse(messages, messages.Count));
+	}
+
+	/// <summary>
+	/// Maps the <c>GET /manifest</c> endpoint that reports the runtime event-contract manifest and its
+	/// compatibility status.
+	/// </summary>
+	/// <param name="group">The route group to map the endpoint onto.</param>
+	/// <param name="policyName">The host authorization policy required by the endpoint.</param>
+	public static RouteHandlerBuilder MapManifest(
+		RouteGroupBuilder group,
+		string policyName = AdminPortalPolicies.ViewManifest
+	)
+	{
+		return group
+			.MapGet("/manifest", GetManifestAsync)
+			.WithName("GetEventContractManifest")
+			.WithSummary("Get event contract manifest")
+			.WithDescription("Returns the runtime event-contract manifest and its compatibility status.")
+			.WithTags(AdminPortalTag)
+			.Produces<EventContractManifestInfo>()
+			.RequireAuthorization(policyName);
+	}
+
+	static async Task<Results<Ok<EventContractManifestInfo>, NotFound>> GetManifestAsync(
+		IAdminAuditLogger auditLogger,
+		HttpContext httpContext,
+		CancellationToken cancellationToken
+	)
+	{
+		var provider = httpContext.RequestServices.GetService<IEventContractManifestProvider>();
+		if (provider is null)
+			return TypedResults.NotFound();
+
+		var info = await provider.GetAsync(cancellationToken);
+
+		await auditLogger.LogAsync(
+			new AdminAuditEntry(
+				DateTimeOffset.UtcNow,
+				AdminFeature.ViewManifest,
+				"Read",
+				Principal(httpContext),
+				Target: "manifest",
+				Succeeded: true,
+				Details: info.CompatibilityStatus.ToString()
+			),
+			cancellationToken
+		);
+
+		return TypedResults.Ok(info);
 	}
 
 	static string? Principal(HttpContext httpContext) => httpContext.User.Identity?.Name;

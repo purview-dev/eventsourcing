@@ -103,6 +103,13 @@ public sealed class AdminFeatureOptions
 	public bool ViewPoisonedOutbox { get; set; }
 
 	/// <summary>
+	/// Gets or sets whether the runtime event-contract manifest endpoint is enabled. Opt-in and
+	/// deny-by-default; a host must also grant the <c>ViewManifest</c> permission and register an
+	/// <c>IEventContractManifestProvider</c>.
+	/// </summary>
+	public bool ViewManifest { get; set; }
+
+	/// <summary>
 	/// Validates the option object shape.
 	/// </summary>
 	/// <param name="options">The options instance to validate.</param>

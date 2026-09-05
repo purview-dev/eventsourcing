@@ -105,6 +105,11 @@ public static class AdminSecurityServiceCollectionExtensions
 			policy => policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.ViewPoisonedOutbox))
 		);
 
+		builder.AddPolicy(
+			AdminPortalPolicies.ViewManifest,
+			policy => policy.AddRequirements(new AdminFeatureRequirement(AdminFeature.ViewManifest))
+		);
+
 		return builder;
 	}
 }

@@ -182,6 +182,74 @@ public sealed class AdminOperationalEndpointsTests
 		await Assert.That(lines.Length).IsEqualTo(2);
 	}
 
+	[Test]
+	public async Task Manifest_WhenEnabledAndProviderRegistered_ReturnsManifestAndStatus(
+		CancellationToken cancellationToken
+	)
+	{
+		const string manifestJson = """{"formatVersion":1,"aggregates":[]}""";
+		await using var host = await AdminTestHost.CreateAsync(
+			configureAdmin: static options => options.Features.ViewManifest = true,
+			configureServices: static services =>
+				services.AddEventContractManifest(1, manifestJson, baselineJson: manifestJson)
+		);
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/manifest", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+		var json = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+		var root = json!.RootElement;
+		await Assert.That(root.GetProperty("formatVersion").GetInt32()).IsEqualTo(1);
+		await Assert.That(root.GetProperty("compatibilityStatus").GetInt32()).IsEqualTo(1);
+	}
+
+	[Test]
+	public async Task Manifest_WhenNoProviderRegistered_ReturnsNotFound(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync(configureAdmin: static options =>
+			options.Features.ViewManifest = true
+		);
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/manifest", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+	}
+
+	[Test]
+	public async Task Manifest_WhenFeatureDisabled_ReturnsNotFound(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync();
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/manifest", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
+	}
+
+	[Test]
+	public async Task Manifest_GivenDeniedPermission_ReturnsForbidden(CancellationToken cancellationToken)
+	{
+		await using var host = await AdminTestHost.CreateAsync(
+			configureAdmin: static options => options.Features.ViewManifest = true,
+			permissionProvider: new DenyManifestPermissionProvider()
+		);
+		var client = host.Client;
+
+		var response = await client.GetAsync("/admin/api/manifest", cancellationToken);
+
+		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Forbidden);
+	}
+
+	sealed class DenyManifestPermissionProvider : IAdminPermissionProvider
+	{
+		public Task<IReadOnlyList<AdminPermission>> GetPermissionsAsync(
+			System.Security.Claims.ClaimsPrincipal user,
+			CancellationToken cancellationToken
+		) => Task.FromResult<IReadOnlyList<AdminPermission>>([new(AdminFeature.ViewManifest, null, Allowed: false)]);
+	}
+
 	sealed class PagingEventQueryService : IAdminEventQueryService
 	{
 		public Task<PagedResult<EventEnvelopeResponse>?> GetRangeAsync(

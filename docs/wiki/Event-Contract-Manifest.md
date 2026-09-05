@@ -98,6 +98,24 @@ Each diagnostic points at the current method or aggregate declaration and explai
 remediation: retain compatibility, bump the schema version and add an upcaster, or introduce a
 new event type.
 
+## Runtime access and Admin inspection
+
+The generated `EventContractManifest` class is public, so applications can register it for runtime
+inspection:
+
+```csharp
+builder.Services.AddEventContractManifest(
+	EventContractManifest.FormatVersion,
+	EventContractManifest.Json,
+	baselineJson: /* the committed baseline, when available */);
+```
+
+`IEventContractManifestProvider` then reports the manifest and a compatibility status
+(`Compatible` when the current manifest matches the supplied baseline, `Incompatible` when it
+differs, `NotConfigured` when no baseline was supplied). The Admin portal exposes it at
+`GET /admin/api/manifest` when the `ViewManifest` feature and permission are enabled (opt-in,
+separately authorized, audited).
+
 ## Format version
 
 The manifest carries a `formatVersion` field. When the generator supports a different format,

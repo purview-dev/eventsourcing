@@ -44,4 +44,9 @@ public static class AdminPortalPolicies
 	/// Policy that authorizes viewing poisoned (dead-letter) transactional outbox messages.
 	/// </summary>
 	public const string ViewPoisonedOutbox = "AdminPortal.Outbox.Poisoned.View";
+
+	/// <summary>
+	/// Policy that authorizes viewing the runtime event-contract manifest and its compatibility status.
+	/// </summary>
+	public const string ViewManifest = "AdminPortal.Manifest.View";
 }

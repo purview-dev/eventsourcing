@@ -594,6 +594,31 @@
           }
         }
       }
+    },
+    "/admin/api/manifest": {
+      "get": {
+        "tags": [
+          "AdminPortal"
+        ],
+        "summary": "Get event contract manifest",
+        "description": "Returns the runtime event-contract manifest and its compatibility status.",
+        "operationId": "GetEventContractManifest",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventContractManifestInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -745,6 +770,36 @@
       },
       "ConcurrencyGuarantee": {
         "type": "integer"
+      },
+      "EventContractCompatibilityStatus": {
+        "type": "integer"
+      },
+      "EventContractManifestInfo": {
+        "required": [
+          "formatVersion",
+          "json",
+          "baselineJson",
+          "compatibilityStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "formatVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "json": {
+            "type": "string"
+          },
+          "baselineJson": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "compatibilityStatus": {
+            "$ref": "#/components/schemas/EventContractCompatibilityStatus"
+          }
+        }
       },
       "EventEnvelopeResponse": {
         "required": [

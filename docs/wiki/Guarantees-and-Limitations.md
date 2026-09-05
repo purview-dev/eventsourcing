@@ -77,11 +77,12 @@ facts for package selection.
   authority. Export is capped at `AdminProjectionOptions.MaxVersionsPerQuery`; a truncated stream is
   signaled with the `Purview-Event-Export-Truncated` response header so callers can detect partial
   exports.
-- Operational endpoints (`GET /admin/api/capabilities`, `GET /admin/api/health`, and
-  `GET /admin/api/outbox/poisoned`) are opt-in (`AdminFeatureOptions.ViewCapabilities` /
-  `ViewPoisonedOutbox`), separately authorized, and audited through `IAdminAuditLogger` (default
-  in-memory; replace with a durable implementation in production). Health reflects whether the
-  capability contract resolves; it does not probe live storage.
+- Operational endpoints (`GET /admin/api/capabilities`, `GET /admin/api/health`,
+  `GET /admin/api/manifest`, and `GET /admin/api/outbox/poisoned`) are opt-in, separately
+  authorized, and audited through `IAdminAuditLogger` (default in-memory; replace with a durable
+  implementation in production). Health reflects whether the capability contract resolves; it does
+  not probe live storage. The manifest endpoint reports the runtime event-contract manifest and its
+  compatibility status against a supplied baseline.
 
 ## Query consistency and provider-specific translation limitations
 
