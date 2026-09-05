@@ -3,6 +3,8 @@
 - [Solution Design Guide](Solution-Design-Guide.md)
 - [Solution Design Worksheet](Solution-Design-Worksheet.md)
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)
+- [Transaction Guarantees](Transaction-Guarantees.md)
+- [Event Contract Manifest](Event-Contract-Manifest.md)
 - [Dependency Guardrails](Dependency-Guardrails.md)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
