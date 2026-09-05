@@ -208,6 +208,7 @@ partial class MongoDBEventStore<T>
 				changeEvent.Details.IdempotencyId = idempotencyIdAsString;
 				changeEvent.Details.UserId = userId;
 				changeEvent.Details.CorrelationId ??= operationContext.CorrelationId;
+				changeEvent.Details.SchemaVersion = changeEvent.SchemaVersion;
 
 				var serializedEvent = SerializeEvent(changeEvent);
 				var eventEntity = CreateSerializedEvent(
@@ -409,6 +410,10 @@ partial class MongoDBEventStore<T>
 			Payload = serializedEvent,
 			EventType = _eventNameMapper.GetName<T>(@event),
 			IdempotencyId = idempotencyId,
+			SchemaVersion = @event.SchemaVersion,
+			CorrelationId = @event.Details.CorrelationId,
+			CausationId = @event.Details.CausationId,
+			UserId = @event.Details.UserId,
 			Timestamp = DateTimeOffset.UtcNow,
 		};
 

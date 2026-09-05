@@ -226,6 +226,7 @@ partial class PostgresEventStore<T>
 				var changeEvent = changeEvents[i];
 
 				changeEvent.Details.IdempotencyId = idempotencyIdAsString;
+				changeEvent.Details.SchemaVersion = changeEvent.SchemaVersion;
 				changeEvent.Details.UserId = userId;
 				changeEvent.Details.CorrelationId ??= operationContext.CorrelationId;
 
@@ -241,6 +242,10 @@ partial class PostgresEventStore<T>
 						Payload = serializedEvent,
 						EventType = _eventNameMapper.GetName<T>(changeEvent),
 						IdempotencyId = idempotencyMarkerId,
+						SchemaVersion = changeEvent.SchemaVersion,
+						CorrelationId = changeEvent.Details.CorrelationId,
+						CausationId = changeEvent.Details.CausationId,
+						UserId = changeEvent.Details.UserId,
 						Timestamp = now,
 					}
 				);

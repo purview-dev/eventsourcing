@@ -1,5 +1,14 @@
 # Event Versioning Strategy
 
+Each persisted event row/document records `SchemaVersion`, `CorrelationId`, `CausationId`, and `UserId` separately
+from its payload. `IdempotencyId`, aggregate version, timestamp, event name, and aggregate identity are likewise
+first-class metadata. This allows Admin and history consumers to inspect an event envelope without deserializing
+sensitive or obsolete payload JSON.
+
+Legacy SQL rows are assigned schema version 1 by the metadata migration. Document and table providers also treat a
+missing schema-version field as version 1. Correlation, causation, and user identifiers remain null when they were not
+recorded by the original write; they are never inferred during a migration.
+
 This document codifies the product-wide approach to event versioning and schema evolution across all Purview EventSourcing providers.
 
 ## Core Principles

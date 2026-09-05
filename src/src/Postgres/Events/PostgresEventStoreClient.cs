@@ -23,6 +23,10 @@ sealed partial class PostgresEventStoreClient
 		"Payload",
 		"EventType",
 		"IdempotencyId",
+		"SchemaVersion",
+		"CorrelationId",
+		"CausationId",
+		"UserId",
 		"Timestamp",
 	];
 
@@ -361,6 +365,10 @@ sealed partial class PostgresEventStoreClient
 				Payload = x.Payload,
 				EventType = x.EventType,
 				IdempotencyId = x.IdempotencyId,
+				SchemaVersion = x.SchemaVersion,
+				CorrelationId = x.CorrelationId,
+				CausationId = x.CausationId,
+				UserId = x.UserId,
 				Timestamp = x.Timestamp,
 			})
 			.AsAsyncEnumerable();
@@ -599,6 +607,10 @@ sealed partial class PostgresEventStoreClient
 			Payload = row.Payload,
 			EventType = row.EventType,
 			IdempotencyId = row.IdempotencyId,
+			SchemaVersion = row.SchemaVersion,
+			CorrelationId = row.CorrelationId,
+			CausationId = row.CausationId,
+			UserId = row.UserId,
 			Timestamp = row.Timestamp,
 		};
 
@@ -614,6 +626,10 @@ sealed partial class PostgresEventStoreClient
 			Payload = entity.Payload,
 			EventType = entity.EventType,
 			IdempotencyId = entity.IdempotencyId,
+			SchemaVersion = entity.SchemaVersion,
+			CorrelationId = entity.CorrelationId,
+			CausationId = entity.CausationId,
+			UserId = entity.UserId,
 			Timestamp = entity.Timestamp,
 		};
 
@@ -664,6 +680,10 @@ sealed partial class PostgresEventStoreClient
 		public string? Payload { get; set; }
 		public string? EventType { get; set; }
 		public string? IdempotencyId { get; set; }
+		public int SchemaVersion { get; set; } = 1;
+		public string? CorrelationId { get; set; }
+		public string? CausationId { get; set; }
+		public string? UserId { get; set; }
 		public DateTimeOffset Timestamp { get; set; }
 	}
 }
