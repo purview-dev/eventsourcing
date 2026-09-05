@@ -9,5 +9,6 @@
 - [Source Generator Performance](Source-Generator-Performance.md)
 - [Dependency Guardrails](Dependency-Guardrails.md)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
+- [Source Generator Code Fixes](Code-Fixes.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
 - [Release Flow](Release-Flow.md)

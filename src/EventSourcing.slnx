@@ -12,6 +12,7 @@
 		<Project Path="src/EntityFrameworkCore.SourceGenerator/EntityFrameworkCore.SourceGenerator.csproj" />
 		<Project Path="src/EventSourcing/EventSourcing.csproj" />
 		<Project Path="src/SourceGenerator/SourceGenerator.csproj" />
+		<Project Path="src/SourceGenerator.CodeFixes/SourceGenerator.CodeFixes.csproj" />
 	</Folder>
 	<Folder Name="/src/admin/">
 		<Project Path="src/Admin.Abstractions/Admin.Abstractions.csproj" />
@@ -50,6 +51,7 @@
 		<Project Path="tests/EntityFrameworkCore.SourceGenerator.UnitTests/EntityFrameworkCore.SourceGenerator.UnitTests.csproj" />
 		<Project Path="tests/EventSourcing.UnitTests/EventSourcing.UnitTests.csproj" />
 		<Project Path="tests/SharedTestingFramework/SharedTestingFramework.csproj" />
+		<Project Path="tests/SourceGenerator.CodeFixes.UnitTests/SourceGenerator.CodeFixes.UnitTests.csproj" />
 		<Project Path="tests/SourceGenerator.PerformanceTests/SourceGenerator.PerformanceTests.csproj" />
 		<Project Path="tests/SourceGenerator.UnitTests/SourceGenerator.UnitTests.csproj" />
 	</Folder>
