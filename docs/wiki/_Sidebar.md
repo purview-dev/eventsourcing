@@ -1,5 +1,6 @@
 - [Home](Home.md)
 - [Getting Started](Getting-Started.md)
+- [Guarantees and Limitations](Guarantees-and-Limitations.md)
 - [Solution Design Guide](Solution-Design-Guide.md)
 - [Solution Design Worksheet](Solution-Design-Worksheet.md)
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)

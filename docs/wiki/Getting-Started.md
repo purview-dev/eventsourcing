@@ -10,6 +10,7 @@ Add one or more provider packages based on your persistence target:
 
 ```bash
 dotnet add package Purview.EventSourcing.SqlServer
+dotnet add package Purview.EventSourcing.Postgres
 dotnet add package Purview.EventSourcing.AzureStorage
 dotnet add package Purview.EventSourcing.MongoDB
 dotnet add package Purview.EventSourcing.CosmosDb
@@ -41,16 +42,16 @@ If your project references the `ZodSharpImpl` project directly and uses `ZodShar
 ```csharp
 using Purview.EventSourcing.Aggregates;
 
-[GenerateAggregate]
+[Aggregate]
 public partial class OrderAggregate : AggregateBase
 {
     public string CustomerId { get; private set; } = default!;
     public decimal Total { get; private set; }
 
-    [GenerateAggregateEvent]
+    [Event]
     public partial void CreateOrder(string customerId);
 
-    [GenerateAggregateEvent]
+    [Event]
     public partial void AddLineItem(string productId, string productName, int quantity, decimal unitPrice);
 }
 ```
@@ -68,6 +69,10 @@ Other provider registrations:
 ```csharp
 // Azure Storage (event store with blob support)
 builder.Services.AddAzureStorageEventStore();
+
+// PostgreSQL (events + queryable snapshots)
+builder.Services.AddPostgresEventStore();
+builder.Services.AddPostgresSnapshotQueryableEventStore();
 
 // MongoDB (events + queryable snapshots)
 builder.Services.AddMongoDBEventStore();
@@ -118,9 +123,14 @@ foreach (var item in history.Results)
 
 ## Next pages
 
+- [Guarantees and Limitations](Guarantees-and-Limitations.md)
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)
+- [Provider Capabilities](Provider-Capabilities.md)
+- [Transaction Guarantees](Transaction-Guarantees.md)
+- [Event Contract Manifest](Event-Contract-Manifest.md)
 - [Dependency Guardrails](Dependency-Guardrails.md)
 - [Source Generator Behaviors](Source-Generator-Behaviors.md)
+- [Source Generator Code Fixes](Code-Fixes.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
 - [Release Flow](Release-Flow.md)
 

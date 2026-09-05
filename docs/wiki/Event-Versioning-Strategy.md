@@ -31,7 +31,7 @@ This document codifies the product-wide approach to event versioning and schema 
 - Property is **required** and has no safe default (e.g., changes meaning or becomes non-nullable).
 - Property is **removed or renamed** without a clear mapping.
 - **Example:** `OrderCreated` v1 has optional `Currency`; v2 makes it required. Or `Price` → `UnitPrice` with different semantics.
-- **Action:** Use `[GenerateAggregateEvent(Version = 2)]` or manually override `SchemaVersion => 2`. Implement an upcaster.
+- **Action:** Use `[Event(Version = 2)]` or manually override `SchemaVersion => 2`. Implement an upcaster.
 
 ### Create a new event type (semantic change)
 - The event's **meaning fundamentally changes** (e.g., `UserRegistered` → `UserRegisteredWithEmailVerification`).
@@ -54,7 +54,7 @@ This document codifies the product-wide approach to event versioning and schema 
 
 **Via the source generator:**
 ```csharp
-[GenerateAggregate]
+[Aggregate]
 public partial class OrderAggregate : AggregateBase
 {
     public string OrderId { get; private set; } = default!;
@@ -64,7 +64,7 @@ public partial class OrderAggregate : AggregateBase
     // public partial void Create(string orderId);
 
     // Version 2: Currency is now part of the event
-    [GenerateAggregateEvent(Version = 2)]
+    [Event(Version = 2)]
     public partial void Create(string orderId, string currency);
 }
 ```

@@ -5,6 +5,7 @@ This wiki is the project documentation hub for framework features, provider capa
 ## Start here
 
 - [Getting Started](Getting-Started.md)
+- [Guarantees and Limitations](Guarantees-and-Limitations.md)
 - [Solution Design Guide](Solution-Design-Guide.md)
 - [Solution Design Worksheet](Solution-Design-Worksheet.md)
 - [Provider Feature Matrix](Provider-Feature-Matrix.md)
@@ -40,7 +41,7 @@ This wiki is the project documentation hub for framework features, provider capa
   - Validation adapters: FluentValidation and ZodSharp adapters for `IAggregateValidator<T>`.
   - SQL snapshot translation distinguishes between provider-converted scalar value objects and directly mapped complex snapshot graphs; see the provider matrix and SQL guide for details.
 - **Generator behavior**
-  - `[GenerateAggregate]` supports no base, direct `AggregateBase`, and transitive base-chain inheritance.
+  - `[Aggregate]` supports no base, direct `AggregateBase`, and transitive base-chain inheritance.
   - Property hooks are property-scoped across generated events that map that property.
   - `On<Property>Changed` runs in `Apply(...)` (including replay); `On<Property>Changing` runs on command/event-raise path only.
   - Event hooks (`OnRaising...`, `OnRaised...`, `OnApplied...`) are event-scoped.

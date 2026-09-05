@@ -6,7 +6,7 @@ When an aggregate change makes older serialized snapshots unsafe to read, declar
 
 ```csharp
 [SnapshotSchemaVersion(2)]
-[GenerateAggregate]
+[Aggregate]
 public sealed partial class Order : AggregateBase
 {
 }

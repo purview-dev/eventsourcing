@@ -68,11 +68,13 @@ See the provider guides for provider-specific scaling configuration (for example
 ## Related docs
 
 - [Getting Started](Getting-Started.md)
+- [Guarantees and Limitations](Guarantees-and-Limitations.md)
+- [Provider Capabilities](Provider-Capabilities.md)
 - [Dependency Guardrails](Dependency-Guardrails.md)
 - [SQL Server Guide](SQL-Server-Guide.md)
-- Postgres package README: `src/src/Postgres/README.md`
-- Core package README: `src/src/EventSourcing/README.md`
-- SQL Server package README: `src/src/SqlServer/README.md`
-- Azure Storage package README: `src/src/AzureStorage/README.md`
-- MongoDB package README: `src/src/MongoDB/README.md`
-- Cosmos DB package README: `src/src/CosmosDb/README.md`
+- Postgres package README: `src/src/Postgres/Sdk/README.md`
+- Core package README: `src/src/EventSourcing/Sdk/README.md`
+- SQL Server package README: `src/src/SqlServer/Sdk/README.md`
+- Azure Storage package README: `src/src/AzureStorage/Sdk/README.md`
+- MongoDB package README: `src/src/MongoDB/Sdk/README.md`
+- Cosmos DB package README: `src/src/CosmosDb/Sdk/README.md`
