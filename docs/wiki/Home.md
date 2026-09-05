@@ -18,6 +18,7 @@ This wiki is the project documentation hub for framework features, provider capa
 
 - **Core framework (`Purview.EventSourcing`)**
   - `AggregateBase`, `IEventStore`, `IQueryableEventStore`, and `IEventStoreTransactionFactory`.
+  - [Transaction guarantees](Transaction-Guarantees.md): atomic requirements, best-effort fallback, and failure behavior.
   - Source-generated aggregate events/command wiring from partial methods.
   - Provider-agnostic aggregate load/save/query APIs.
 - **Solution design**

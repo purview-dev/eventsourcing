@@ -10,7 +10,8 @@ This page summarizes feature availability by package so provider selection is ex
 | Event-stream persistence | Not persistent by itself | Yes | Yes | Yes | Yes | No |
 | Snapshot-backed query/list/count | Null provider only | Optional | Optional | No | Optional | Optional |
 | Blob-backed snapshots / large payloads | No | No | No | Yes | No | No |
-| SQL-specific transaction factory (`ISqlServerEventStoreTransactionFactory`) | No | Yes | Yes | No | No | No |
+| Provider-neutral transaction guarantee | Explicit `BestEffort` or required `Atomic` | Atomic within one database boundary | Atomic within one database boundary | Best effort | Best effort | Best effort |
+| Provider-specific native transaction factory | No | `ISqlServerEventStoreTransactionFactory` | `IPostgresEventStoreTransactionFactory` | No | No | No |
 | Runtime-configured JSON payload indexes | No | Yes (event + snapshot stores, auto-create path) | Yes (GIN + expression indexes for snapshots) | No | No | No |
 | DI registration helpers | `AddNullQueryableEventStore()` | `AddSqlServerEventStore()`, `AddSqlServerSnapshotQueryableEventStore()` | `AddPostgresEventStore()`, `AddPostgresSnapshotQueryableEventStore()` | `AddAzureStorageEventStore()` | `AddMongoDBEventStore()`, `AddMongoDBSnapshotQueryableEventStore()` | `AddCosmosDbSnapshotQueryableEventStore()` |
 
