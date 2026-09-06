@@ -265,8 +265,7 @@ static partial class AggregateSourceEmitter
 			},
 			writeBody =>
 			{
-				writeBody.Block(
-					$"if ({collectionEvent.PropertyName} is null)",
+				writeBody.IfBlock($"{collectionEvent.PropertyName} is null",
 					block =>
 						block.Throw(
 							TypeLibrary.System.InvalidOperationException,

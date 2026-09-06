@@ -61,8 +61,7 @@ static partial class AggregateSourceEmitter
 
 		static void EmitCollectionGuard(CodeWriter writer, CollectionEventInfo collectionEvent)
 		{
-			writer.Block(
-				$"if ({collectionEvent.PropertyName} is null)",
+			writer.IfBlock($"{collectionEvent.PropertyName} is null",
 				block =>
 					block.Throw(
 						TypeLibrary.System.InvalidOperationException,

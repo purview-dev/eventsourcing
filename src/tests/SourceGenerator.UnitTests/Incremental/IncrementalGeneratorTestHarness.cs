@@ -17,6 +17,18 @@ static class IncrementalGeneratorTestHarness
 			)
 		);
 
+	public static GeneratorDriver CreateDriver<TGenerator>(ImmutableArray<AdditionalText> additionalTexts)
+		where TGenerator : class, IIncrementalGenerator, new() =>
+		CSharpGeneratorDriver.Create(
+			[new TGenerator().AsSourceGenerator()],
+			additionalTexts: additionalTexts,
+			parseOptions: new CSharpParseOptions(LanguageVersion.Latest),
+			driverOptions: new GeneratorDriverOptions(
+				IncrementalGeneratorOutputKind.None,
+				trackIncrementalGeneratorSteps: true
+			)
+		);
+
 	public static CSharpCompilation CreateCompilation(IEnumerable<SyntaxTree> trees) =>
 		CSharpCompilation.Create(
 			"TestAssembly",
@@ -50,6 +62,10 @@ static class IncrementalGeneratorTestHarness
 				typeof(System.ComponentModel.DataAnnotations.RequiredAttribute).Assembly.Location
 			)
 		);
+		builder.Add(
+			MetadataReference.CreateFromFile(typeof(Aggregates.IAggregate).Assembly.Location)
+		);
+		builder.Add(MetadataReference.CreateFromFile(typeof(System.Text.Json.JsonSerializer).Assembly.Location));
 
 		return builder.ToImmutable();
 	}
@@ -64,13 +80,14 @@ static class IncrementalGeneratorTestHarness
 	{
 		if (
 			step.Outputs.Length > 0
-			&& step.Outputs[0].Value is SourceGeneratorFramework.GeneratorResult<AggregateInfo> result
+			&& step.Outputs[0].Value
+				is SourceGeneratorFramework.GeneratorResult<AggregateTarget> result
 		)
 		{
-			return result.HasValue ? result.Value.AggregateClass.Identity.Name : "(failed)";
+			return result.HasValue ? result.Value.Info.AggregateClass.Identity.Name : "(failed)";
 		}
 
-		// If the output is not an AggregateInfo, it might be a ValueObjectModel
+		// If the output is not an AggregateTarget, it might be a ValueObjectModel
 		return "(unknown)";
 	}
 
