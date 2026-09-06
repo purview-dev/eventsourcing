@@ -323,7 +323,7 @@ public sealed class EventContractCompatibilityTests : AggregateSourceGeneratorTe
 		CancellationToken cancellationToken
 	)
 	{
-		const string unsupportedVersion = """{"formatVersion":99,"aggregates":[]}""";
+		const string unsupportedVersion = /*lang=json,strict*/ """{"formatVersion":99,"aggregates":[]}""";
 
 		var result = await GenerateAsync(
 			OrderAggregateSingleEvent,

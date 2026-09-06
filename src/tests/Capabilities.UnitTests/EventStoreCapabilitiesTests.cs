@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Purview.EventSourcing.Capabilities;
@@ -40,7 +39,7 @@ public sealed class EventStoreCapabilitiesTests
 			SupportsQueries: false,
 			SupportsIdempotencyMarkers: true,
 			Concurrency: ConcurrencyGuarantee.Optimistic,
-			OperationalLimitations: ImmutableArray.Create("limitation-a")
+			OperationalLimitations: ["limitation-a"]
 		);
 		var snapshotPart = new EventStoreCapabilities(
 			EventStoreTransactionGuarantee.Atomic,
@@ -51,7 +50,7 @@ public sealed class EventStoreCapabilitiesTests
 			SupportsQueries: true,
 			SupportsIdempotencyMarkers: false,
 			Concurrency: ConcurrencyGuarantee.LastWriterWins,
-			OperationalLimitations: ImmutableArray.Create("limitation-b")
+			OperationalLimitations: ["limitation-b"]
 		);
 
 		var merged = EventStoreCapabilities.Merge([eventPart, snapshotPart]);

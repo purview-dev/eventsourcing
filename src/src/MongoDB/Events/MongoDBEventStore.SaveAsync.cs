@@ -8,7 +8,6 @@ using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.MongoDB.Events.Entities;
 using Purview.EventSourcing.MongoDB.Events.Exceptions;
 using Purview.EventSourcing.MongoDB.StorageClient;
-using Purview.EventSourcing.Services;
 using Purview.EventSourcing.Storage;
 using Purview.EventSourcing.Validation;
 

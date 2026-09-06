@@ -74,7 +74,7 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 
 		await Assert.That(steps.Length).IsEqualTo(2);
 		await Assert
-			.That(steps.All(step => IncrementalGeneratorTestHarness.GetReason(step) == IncrementalStepRunReason.New))
+			.That(steps.All(step => IncrementalGeneratorTestHarness.GetReason(step) == StepReason.New))
 			.IsTrue();
 	}
 
@@ -98,7 +98,7 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 				steps.All(step =>
 				{
 					var reason = IncrementalGeneratorTestHarness.GetReason(step);
-					return reason is IncrementalStepRunReason.Cached or IncrementalStepRunReason.Unchanged;
+					return reason is StepReason.Cached or StepReason.Unchanged;
 				})
 			)
 			.IsTrue();
@@ -132,10 +132,10 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 
 		await Assert
 			.That(IncrementalGeneratorTestHarness.GetReason(orderStep))
-			.IsEqualTo(IncrementalStepRunReason.Modified);
+			.IsEqualTo(StepReason.Modified);
 		await Assert
 			.That(IncrementalGeneratorTestHarness.GetReason(customerStep))
-			.IsNotEqualTo(IncrementalStepRunReason.Modified);
+			.IsNotEqualTo(StepReason.Modified);
 	}
 
 	[Test]
@@ -159,17 +159,17 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 		await Assert.That(steps.Length).IsEqualTo(2);
 		await Assert
 			.That(
-				steps.Count(step => IncrementalGeneratorTestHarness.GetReason(step) == IncrementalStepRunReason.Removed)
+				steps.Count(step => IncrementalGeneratorTestHarness.GetReason(step) == StepReason.Removed)
 			)
 			.IsEqualTo(1);
 
 		var orderStep = steps.Single(step =>
-			IncrementalGeneratorTestHarness.GetReason(step) != IncrementalStepRunReason.Removed
+			IncrementalGeneratorTestHarness.GetReason(step) != StepReason.Removed
 			&& IncrementalGeneratorTestHarness.GetAggregateName(step) == "OrderAggregate"
 		);
 		await Assert
 			.That(IncrementalGeneratorTestHarness.GetReason(orderStep))
-			.IsNotEqualTo(IncrementalStepRunReason.Modified);
+			.IsNotEqualTo(StepReason.Modified);
 	}
 
 	[Test]
@@ -210,7 +210,7 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 
 		await Assert.That(steps.Length).IsEqualTo(3);
 		await Assert
-			.That(steps.Count(step => IncrementalGeneratorTestHarness.GetReason(step) == IncrementalStepRunReason.New))
+			.That(steps.Count(step => IncrementalGeneratorTestHarness.GetReason(step) == StepReason.New))
 			.IsEqualTo(1);
 
 		var inventoryStep = steps.Single(step =>
@@ -218,7 +218,7 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 		);
 		await Assert
 			.That(IncrementalGeneratorTestHarness.GetReason(inventoryStep))
-			.IsEqualTo(IncrementalStepRunReason.New);
+			.IsEqualTo(StepReason.New);
 
 		var orderStep = steps.Single(step =>
 			IncrementalGeneratorTestHarness.GetAggregateName(step) == "OrderAggregate"
@@ -228,10 +228,10 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 		);
 		await Assert
 			.That(IncrementalGeneratorTestHarness.GetReason(orderStep))
-			.IsNotEqualTo(IncrementalStepRunReason.Modified);
+			.IsNotEqualTo(StepReason.Modified);
 		await Assert
 			.That(IncrementalGeneratorTestHarness.GetReason(customerStep))
-			.IsNotEqualTo(IncrementalStepRunReason.Modified);
+			.IsNotEqualTo(StepReason.Modified);
 	}
 
 	[Test]
@@ -297,7 +297,7 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 				invalidRerunSteps.All(step =>
 				{
 					var reason = IncrementalGeneratorTestHarness.GetReason(step);
-					return reason is IncrementalStepRunReason.Cached or IncrementalStepRunReason.Unchanged;
+					return reason is StepReason.Cached or StepReason.Unchanged;
 				})
 			)
 			.IsTrue();
@@ -315,7 +315,7 @@ public sealed class AggregateSourceGeneratorIncrementalTests
 	{
 		var unrelated = new InMemoryAdditionalText("notes.txt", "first");
 		var driver = IncrementalGeneratorTestHarness.CreateDriver<AggregateSourceGenerator>(
-			ImmutableArray.Create<AdditionalText>(unrelated)
+			[unrelated]
 		);
 		var compilation = IncrementalGeneratorTestHarness.CreateCompilation([
 			IncrementalGeneratorTestHarness.ParseTree(OrderAggregateSource, "Order.cs"),

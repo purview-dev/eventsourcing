@@ -115,6 +115,7 @@ public sealed class EventStoreTransaction : IEventStoreTransaction
 		if (availableGuarantee < RequiredGuarantee)
 			throw new EventStoreTransactionGuaranteeException(RequiredGuarantee, availableGuarantee);
 
+		// If no aggregates were enlisted, return an empty result.
 		return _enlisted.Count == 0 ? new([])
 			: availableGuarantee == EventStoreTransactionGuarantee.Atomic
 				? await CommitWithNativeTransactionAsync(cancellationToken)

@@ -460,7 +460,7 @@ sealed class TestCapabilitiesProvider : IEventStoreCapabilitiesProvider
 		SupportsQueries: true,
 		SupportsIdempotencyMarkers: true,
 		Concurrency: ConcurrencyGuarantee.Optimistic,
-		System.Collections.Immutable.ImmutableArray<string>.Empty
+		[]
 	);
 
 	public EventStoreCapabilities GetCapabilities() => Capabilities;

@@ -197,7 +197,7 @@ public sealed class SqlServerOutboxIntegrationTests(SqlServerEventStoreFixture f
 			"PersistenceAggregate",
 			aggregateId,
 			"StringValueSet",
-			"""{"value":"outbox"}""",
+			/*lang=json,strict*/ """{"value":"outbox"}""",
 			IdempotencyKey: null,
 			CorrelationId: null,
 			CreatedUtc: DateTimeOffset.UtcNow
@@ -216,6 +216,7 @@ public sealed class SqlServerOutboxIntegrationTests(SqlServerEventStoreFixture f
 		if (!await reader.ReadAsync(cancellationToken))
 			return null;
 
+		// ReSharper disable once UseDeconstruction
 		return new OutboxRow(
 			(OutboxState)reader.GetInt32(0),
 			reader.GetInt32(1),

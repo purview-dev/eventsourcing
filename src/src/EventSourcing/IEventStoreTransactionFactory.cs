@@ -30,6 +30,7 @@ public interface IEventStoreTransactionFactory
 			);
 		}
 
+		// If no explicit correlation ID is supplied, consult the ambient correlation ID provider.
 		return Create(options.CorrelationId);
 	}
 }

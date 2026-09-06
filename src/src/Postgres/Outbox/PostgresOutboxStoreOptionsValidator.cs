@@ -15,6 +15,7 @@ sealed class PostgresOutboxStoreOptionsValidator : IValidateOptions<PostgresOutb
 				validationResults.Select(static x => x.ErrorMessage ?? "Options validation failed.")
 			);
 
+		// Additional custom validation logic can be added here if needed
 		return ValidateOptionsResult.Success;
 	}
 }

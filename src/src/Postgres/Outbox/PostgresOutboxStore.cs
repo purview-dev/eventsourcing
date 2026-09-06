@@ -365,6 +365,7 @@ public sealed partial class PostgresOutboxStore(
 				$"The outbox table identifier '{identifier}' is invalid. Identifiers may only contain letters, digits, underscores, dots, and hyphens."
 			);
 
+		// PostgreSQL identifiers are case-insensitive unless quoted, so we quote them to preserve the exact casing.
 		return $"\"{identifier}\"";
 	}
 }

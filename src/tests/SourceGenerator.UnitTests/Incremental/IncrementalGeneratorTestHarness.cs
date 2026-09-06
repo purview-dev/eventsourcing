@@ -63,7 +63,7 @@ static class IncrementalGeneratorTestHarness
 			)
 		);
 		builder.Add(
-			MetadataReference.CreateFromFile(typeof(Purview.EventSourcing.Aggregates.IAggregate).Assembly.Location)
+			MetadataReference.CreateFromFile(typeof(Aggregates.IAggregate).Assembly.Location)
 		);
 		builder.Add(MetadataReference.CreateFromFile(typeof(System.Text.Json.JsonSerializer).Assembly.Location));
 
@@ -81,7 +81,7 @@ static class IncrementalGeneratorTestHarness
 		if (
 			step.Outputs.Length > 0
 			&& step.Outputs[0].Value
-				is SourceGeneratorFramework.GeneratorResult<Purview.EventSourcing.SourceGenerator.Common.AggregateTarget> result
+				is SourceGeneratorFramework.GeneratorResult<AggregateTarget> result
 		)
 		{
 			return result.HasValue ? result.Value.Info.AggregateClass.Identity.Name : "(failed)";

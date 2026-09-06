@@ -208,7 +208,7 @@ public static class ServiceCollectionExtensions
 		/// An outbox guarantees atomic persistence plus at-least-once delivery; the handler must be
 		/// idempotent. Enqueue messages inside the event transaction with
 		/// <c>SqlServerOutboxStore.EnqueueInTransactionAsync</c> (typically via
-		/// <see cref="ISqlServerEventStoreTransaction.Enlist(Func{Microsoft.Data.SqlClient.SqlConnection, Microsoft.Data.SqlClient.SqlTransaction, System.Threading.CancellationToken, Task})"/>).
+		/// <see cref="ISqlServerEventStoreTransaction.Enlist(Func{Data.SqlClient.SqlConnection, Data.SqlClient.SqlTransaction, CancellationToken, Task})"/>).
 		/// </remarks>
 		public IServiceCollection AddSqlServerOutbox<TOutboxHandler>(Action<OutboxDispatchOptions>? configure = null)
 			where TOutboxHandler : class, IOutboxHandler

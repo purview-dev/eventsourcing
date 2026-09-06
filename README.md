@@ -23,8 +23,8 @@ Purview EventSourcing is a .NET event sourcing framework for building aggregate-
 | `Purview.EventSourcing.MongoDB` | MongoDB event stream and queryable snapshot stores | [`src/src/MongoDB/Sdk/README.md`](src/src/MongoDB/Sdk/README.md) |
 | `Purview.EventSourcing.CosmosDb` | Azure Cosmos DB queryable snapshot store | [`src/src/CosmosDb/Sdk/README.md`](src/src/CosmosDb/Sdk/README.md) |
 | `Purview.EventSourcing.InMemory` | In-memory event/snapshot store implementation for local and test scenarios | (see package source at `src/src/InMemory`) |
-| `Purview.EventSourcing.FluentValidation` | `FluentValidation` adapter for aggregate save-time validation | (see package source at `src/src/FluentValidationImpl`) |
-| `Purview.EventSourcing.ZodSharp` | `ZodSharp` adapter for aggregate save-time validation | (see package source at `src/src/ZodSharpImpl`) |
+| `Purview.EventSourcing.Validation.FluentValidation` | `FluentValidation` adapter for aggregate save-time validation | (see package source at `src/src/Validation.FluentValidation`) |
+| `Purview.EventSourcing.Validation.ZodSharp` | `ZodSharp` adapter for aggregate save-time validation | (see package source at `src/src/Validation.ZodSharp`) |
 
 ## Install the packages you need
 
@@ -38,19 +38,19 @@ Provider packages layer on top of the core `Purview.EventSourcing` package. Add 
 ### Validation adapters
 
 ```bash
-dotnet add package Purview.EventSourcing.FluentValidation
-dotnet add package Purview.EventSourcing.ZodSharp
+dotnet add package Purview.EventSourcing.Validation.FluentValidation
+dotnet add package Purview.EventSourcing.Validation.ZodSharp
 ```
 
 ### ZodSharp direct-reference requirement
 
-If your project directly references `ZodSharpImpl` (project reference) and uses types from `ZodSharp`, you must include a direct package reference:
+If your project directly references `Purview.EventSourcing.Validation.ZodSharp` (project reference) and uses types from `ZodSharp`, you must include a direct package reference:
 
 ```xml
 <PackageReference Include="ZodSharp" />
 ```
 
-`Purview.EventSourcing.ZodSharp` now ships a build-time guard target (`ValidateZodSharpDirectReference`) via NuGet `buildTransitive` assets. If the direct `ZodSharp` reference is missing, the consumer build fails with remediation guidance instead of allowing a runtime assembly-load failure.
+`Purview.EventSourcing.Validation.ZodSharp` now ships a build-time guard target (`ValidateZodSharpDirectReference`) via NuGet `buildTransitive` assets. If the direct `ZodSharp` reference is missing, the consumer build fails with remediation guidance instead of allowing a runtime assembly-load failure.
 
 ## Quick start
 

@@ -4,7 +4,8 @@ namespace Purview.EventSourcing.Manifest;
 
 public sealed class EventContractManifestProviderTests
 {
-	const string ManifestJson = """{"formatVersion":1,"aggregates":[]}""";
+	const string ManifestJson = /*lang=json,strict*/
+		"""{"formatVersion":1,"aggregates":[]}""";
 
 	[Test]
 	public async Task GetAsync_GivenNoBaseline_ReportsNotConfigured(CancellationToken cancellationToken)
@@ -32,6 +33,7 @@ public sealed class EventContractManifestProviderTests
 	public async Task GetAsync_GivenMismatchedBaseline_ReportsIncompatible(CancellationToken cancellationToken)
 	{
 		const string changedManifest =
+			/*lang=json,strict*/
 			"""{"formatVersion":1,"aggregates":[{"name":"OrderAggregate","namespace":"Testing","events":[]}]}""";
 		var provider = new EventContractManifestProvider(1, ManifestJson, baselineJson: changedManifest);
 
@@ -43,7 +45,7 @@ public sealed class EventContractManifestProviderTests
 	[Test]
 	public async Task AddEventContractManifest_RegistersProvider(CancellationToken cancellationToken)
 	{
-		var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+		var services = new ServiceCollection();
 		services.AddEventContractManifest(1, ManifestJson, baselineJson: ManifestJson);
 
 		using var provider = services.BuildServiceProvider();

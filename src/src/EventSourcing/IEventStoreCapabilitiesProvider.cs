@@ -22,7 +22,7 @@ public interface IEventStoreCapabilitiesProvider
 public sealed class EventStoreCapabilitiesProvider(IEnumerable<EventStoreCapabilities> parts)
 	: IEventStoreCapabilitiesProvider
 {
-	readonly ImmutableArray<EventStoreCapabilities> _parts = parts.ToImmutableArray();
+	readonly ImmutableArray<EventStoreCapabilities> _parts = [.. parts];
 
 	/// <inheritdoc/>
 	public EventStoreCapabilities GetCapabilities() =>

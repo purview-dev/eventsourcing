@@ -58,7 +58,7 @@ static class ManifestTestHelpers
 		if (valueStart <= markerIndex || valueEnd <= valueStart)
 			throw new InvalidOperationException("Generated manifest constant is malformed.");
 
-		var literal = generatedSource.Substring(valueStart, valueEnd - valueStart);
+		var literal = generatedSource[valueStart..valueEnd];
 		return Unescape(literal);
 	}
 

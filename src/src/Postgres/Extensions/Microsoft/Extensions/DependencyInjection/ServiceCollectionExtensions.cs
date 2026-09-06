@@ -200,7 +200,7 @@ public static class ServiceCollectionExtensions
 		/// An outbox guarantees atomic persistence plus at-least-once delivery; the handler must be
 		/// idempotent. Enqueue messages inside the event transaction with
 		/// <c>PostgresOutboxStore.EnqueueInTransactionAsync</c> (typically via
-		/// <see cref="IPostgresEventStoreTransaction.Enlist(Func{Npgsql.NpgsqlConnection, Npgsql.NpgsqlTransaction, System.Threading.CancellationToken, Task})"/>).
+		/// <see cref="IPostgresEventStoreTransaction.Enlist(Func{Npgsql.NpgsqlConnection, Npgsql.NpgsqlTransaction, CancellationToken, Task})"/>).
 		/// </remarks>
 		public IServiceCollection AddPostgresOutbox<TOutboxHandler>(Action<OutboxDispatchOptions>? configure = null)
 			where TOutboxHandler : class, IOutboxHandler

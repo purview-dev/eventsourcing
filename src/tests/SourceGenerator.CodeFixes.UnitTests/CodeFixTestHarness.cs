@@ -164,7 +164,7 @@ public static class CodeFixTestHarness
 			builder.Add(MetadataReference.CreateFromFile(path));
 
 		builder.Add(
-			MetadataReference.CreateFromFile(typeof(Purview.EventSourcing.Aggregates.IAggregate).Assembly.Location)
+			MetadataReference.CreateFromFile(typeof(Aggregates.IAggregate).Assembly.Location)
 		);
 		builder.Add(MetadataReference.CreateFromFile(typeof(System.Text.Json.JsonSerializer).Assembly.Location));
 		return builder.ToImmutable();

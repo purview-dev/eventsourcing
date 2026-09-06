@@ -23,14 +23,14 @@ public sealed class OutboxDispatcherTests
 	public async Task Validate_GivenInvalidOptions_Throws()
 	{
 		var invalid = new OutboxDispatchOptions { BatchSize = 0 };
-		await Assert.That(() => invalid.Validate()).Throws<InvalidOperationException>();
+		await Assert.That(invalid.Validate).Throws<InvalidOperationException>();
 	}
 
 	[Test]
 	public async Task Validate_GivenValidOptions_DoesNotThrow()
 	{
 		var valid = new OutboxDispatchOptions();
-		await Assert.That(() => valid.Validate()).ThrowsNothing();
+		await Assert.That(valid.Validate).ThrowsNothing();
 	}
 
 	[Test]

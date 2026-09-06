@@ -190,7 +190,7 @@ public sealed class AdminOperationalEndpointsTests
 		CancellationToken cancellationToken
 	)
 	{
-		const string manifestJson = """{"formatVersion":1,"aggregates":[]}""";
+		const string manifestJson = /*lang=json,strict*/ """{"formatVersion":1,"aggregates":[]}""";
 		await using var host = await AdminTestHost.CreateAsync(
 			configureAdmin: static options => options.Features.ViewManifest = true,
 			configureServices: static services =>
@@ -313,20 +313,16 @@ public sealed class AdminOperationalEndpointsTests
 		await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
 	}
 
-	sealed class StubTypeRegistry : IAggregateTypeRegistry
+	sealed class StubTypeRegistry(string resolvableName) : IAggregateTypeRegistry
 	{
-		readonly string _resolvableName;
-
-		public StubTypeRegistry(string resolvableName) => _resolvableName = resolvableName;
-
 		public bool TryResolve(
 			string aggregateTypeName,
 			[System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Type? aggregateType
 		)
 		{
-			if (System.StringComparer.Ordinal.Equals(aggregateTypeName, _resolvableName))
+			if (StringComparer.Ordinal.Equals(aggregateTypeName, resolvableName))
 			{
-				aggregateType = typeof(Purview.EventSourcing.Aggregates.Persistence.PersistenceAggregate);
+				aggregateType = typeof(Aggregates.Persistence.PersistenceAggregate);
 				return true;
 			}
 
@@ -385,7 +381,7 @@ public sealed class AdminOperationalEndpointsTests
 							null,
 							null
 						),
-						System.Text.Json.JsonDocument.Parse("{}").RootElement.Clone()
+						JsonDocument.Parse("{}").RootElement.Clone()
 					)
 				);
 			}

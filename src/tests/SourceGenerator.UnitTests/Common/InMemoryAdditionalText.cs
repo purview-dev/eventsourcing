@@ -9,17 +9,11 @@ namespace Purview.EventSourcing.SourceGenerator.Common;
 /// to generator tests without touching the filesystem. Equality is value-based (path and content)
 /// so incremental runs can observe content changes.
 /// </summary>
-sealed class InMemoryAdditionalText : AdditionalText
+sealed class InMemoryAdditionalText(string path, string text) : AdditionalText
 {
-	public InMemoryAdditionalText(string path, string text)
-	{
-		Path = path;
-		_text = text;
-	}
+	public override string Path { get; } = path;
 
-	public override string Path { get; }
-
-	readonly string _text;
+	readonly string _text = text;
 
 	public override SourceText GetText(CancellationToken cancellationToken = default) =>
 		SourceText.From(_text, Encoding.UTF8);

@@ -159,14 +159,14 @@ public sealed class AdminSnapshotEndpointsTests
 			EventStoreOperationContext? operationContext,
 			CancellationToken cancellationToken = default
 		)
-			where T : class, IAggregate, new() => Task.FromResult<T?>(Snapshot as T);
+			where T : class, IAggregate, new() => Task.FromResult(Snapshot as T);
 
 		public Task<T?> FirstOrDefaultAsync<T>(
 			Expression<Func<T, bool>> whereClause,
 			Func<IQueryable<T>, IQueryable<T>>? orderByClause,
 			CancellationToken cancellationToken = default
 		)
-			where T : class, IAggregate, new() => Task.FromResult<T?>(Snapshot as T);
+			where T : class, IAggregate, new() => Task.FromResult(Snapshot as T);
 
 		public Task<SaveResult<T>> SaveAsync<T>(
 			T aggregate,
@@ -179,7 +179,7 @@ public sealed class AdminSnapshotEndpointsTests
 			return Task.FromResult(
 				new SaveResult<T>(
 					aggregate,
-					Purview.EventSourcing.Validation.ValidationResult.Success,
+					Validation.ValidationResult.Success,
 					saved: true,
 					skipped: false
 				)
@@ -287,18 +287,14 @@ public sealed class AdminSnapshotEndpointsTests
 			where T : class, IAggregate, new() => throw new NotSupportedException();
 	}
 
-	sealed class StubTypeRegistry : IAggregateTypeRegistry
+	sealed class StubTypeRegistry(string resolvableName) : IAggregateTypeRegistry
 	{
-		readonly string _resolvableName;
-
-		public StubTypeRegistry(string resolvableName) => _resolvableName = resolvableName;
-
 		public bool TryResolve(
 			string aggregateTypeName,
 			[System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Type? aggregateType
 		)
 		{
-			if (System.StringComparer.Ordinal.Equals(aggregateTypeName, _resolvableName))
+			if (StringComparer.Ordinal.Equals(aggregateTypeName, resolvableName))
 			{
 				aggregateType = typeof(PersistenceAggregate);
 				return true;

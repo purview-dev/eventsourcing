@@ -15,6 +15,7 @@ sealed class SqlServerOutboxStoreOptionsValidator : IValidateOptions<SqlServerOu
 				validationResults.Select(static x => x.ErrorMessage ?? "Options validation failed.")
 			);
 
+		//	If the options are valid, return success
 		return ValidateOptionsResult.Success;
 	}
 }

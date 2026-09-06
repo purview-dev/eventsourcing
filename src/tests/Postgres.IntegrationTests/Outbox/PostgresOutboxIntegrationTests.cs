@@ -197,6 +197,7 @@ public sealed class PostgresOutboxIntegrationTests(PostgresEventStoreFixture fix
 			"PersistenceAggregate",
 			aggregateId,
 			"StringValueSet",
+			/*lang=json,strict*/
 			"""{"value":"outbox"}""",
 			IdempotencyKey: null,
 			CorrelationId: null,
@@ -216,7 +217,8 @@ public sealed class PostgresOutboxIntegrationTests(PostgresEventStoreFixture fix
 		if (!await reader.ReadAsync(cancellationToken))
 			return null;
 
-		return new OutboxRow(
+		// The outbox table schema is known and controlled, so we can safely read the columns by index.
+		return new(
 			(OutboxState)reader.GetInt32(0),
 			reader.GetInt32(1),
 			await reader.IsDBNullAsync(2, cancellationToken) ? null : reader.GetString(2)

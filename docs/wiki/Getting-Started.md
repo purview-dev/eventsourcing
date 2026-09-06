@@ -23,19 +23,19 @@ Optional packages:
 dotnet add package Purview.EventSourcing.InMemory
 
 # Validation adapters
-dotnet add package Purview.EventSourcing.FluentValidation
-dotnet add package Purview.EventSourcing.ZodSharp
+dotnet add package Purview.EventSourcing.Validation.FluentValidation
+dotnet add package Purview.EventSourcing.Validation.ZodSharp
 ```
 
 ## Dependency guardrail for ZodSharp
 
-If your project references the `ZodSharpImpl` project directly and uses `ZodSharp` types, you must add:
+If your project references the `Purview.EventSourcing.Validation.ZodSharp` project directly and uses `ZodSharp` types, you must add:
 
 ```xml
 <PackageReference Include="ZodSharp" />
 ```
 
-`Purview.EventSourcing.ZodSharp` ships a build-time check (`ValidateZodSharpDirectReference`) in package `buildTransitive` assets so consumer projects fail fast with remediation guidance when this direct package reference is missing.
+`Purview.EventSourcing.Validation.ZodSharp` ships a build-time check (`ValidateZodSharpDirectReference`) in package `buildTransitive` assets so consumer projects fail fast with remediation guidance when this direct package reference is missing.
 
 ## Define an aggregate (source generator)
 

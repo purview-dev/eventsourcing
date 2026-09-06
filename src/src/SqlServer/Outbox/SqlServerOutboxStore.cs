@@ -368,6 +368,7 @@ public sealed partial class SqlServerOutboxStore(
 				$"The outbox table identifier '{identifier}' is invalid. Identifiers may only contain letters, digits, underscores, dots, and hyphens."
 			);
 
+		// SQL Server identifiers are quoted with square brackets, and any closing bracket inside the identifier is escaped by doubling it.
 		return $"[{identifier}]";
 	}
 }

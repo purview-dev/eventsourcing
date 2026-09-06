@@ -117,7 +117,7 @@ public sealed record EventStoreCapabilities(
 			SupportsQueries: false,
 			SupportsIdempotencyMarkers: false,
 			Concurrency: ConcurrencyGuarantee.LastWriterWins,
-			ImmutableArray<string>.Empty
+			[]
 		);
 
 	/// <summary>
@@ -141,6 +141,7 @@ public sealed record EventStoreCapabilities(
 		if (all.Length == 1)
 			return all[0];
 
+		// Merge the strongest guarantees from all parts, and union the operational limitations.
 		return new EventStoreCapabilities(
 			(EventStoreTransactionGuarantee)all.Max(static part => (int)part.TransactionGuarantee),
 			all.Any(static part => part.SupportsEventStreams),
@@ -152,10 +153,9 @@ public sealed record EventStoreCapabilities(
 			all.Any(static part => part.Concurrency == ConcurrencyGuarantee.LastWriterWins)
 				? ConcurrencyGuarantee.LastWriterWins
 				: ConcurrencyGuarantee.Optimistic,
-			all.SelectMany(static part => part.OperationalLimitations)
+			[.. all.SelectMany(static part => part.OperationalLimitations)
 				.Distinct(StringComparer.Ordinal)
-				.OrderBy(static limitation => limitation, StringComparer.Ordinal)
-				.ToImmutableArray()
+				.OrderBy(static limitation => limitation, StringComparer.Ordinal)]
 		)
 		{
 			SupportsTransactionalOutbox = all.Any(static part => part.SupportsTransactionalOutbox),

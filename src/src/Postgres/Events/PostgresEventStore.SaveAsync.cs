@@ -9,7 +9,6 @@ using Purview.EventSourcing.Aggregates.Events;
 using Purview.EventSourcing.Aggregates.Snapshotting;
 using Purview.EventSourcing.Internal;
 using Purview.EventSourcing.Postgres.Events.Exceptions;
-using Purview.EventSourcing.Services;
 using Purview.EventSourcing.Storage;
 using Purview.EventSourcing.Validation;
 
